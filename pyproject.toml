@@ -1,0 +1,21 @@
+[project]
+name = "pybalmorel"
+version = "0.0.2"
+authors = [
+  { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
+]
+dependencies = [
+  "pandas>2.0.3"
+]
+description = "A package for convenient python functions when processing Balmorel data or results"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Mathias157"
+Issues = "https://github.com/Mathias157/balmorel-preprocessing/issues"
