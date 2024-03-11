@@ -1,0 +1,4 @@
+.testenv/*
+dist/*
+src/*
+!src/pybalmorel
