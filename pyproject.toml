@@ -1,11 +1,8 @@
 [project]
 name = "pybalmorel"
-version = "0.0.3"
+version = "0.0.8"
 authors = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
-]
-dependencies = [
-  "pandas>2.0.3"
 ]
 description = "A package for convenient python functions when processing Balmorel data or results"
 readme = "README.md"
