@@ -5,7 +5,7 @@ Functions
 import pandas as pd
 
 ### 1.0 Converting a GDX file to a pandas dataframe
-def symbol_to_df(db, symbol, cols='None'):
+def symbol_to_df(db, symbol, cols='None', parameter_or_set='parameter'):
     """
     Loads a symbol from a GDX database into a pandas dataframe
 
@@ -13,9 +13,17 @@ def symbol_to_df(db, symbol, cols='None'):
         db (GamsDatabase): The loaded gdx file
         symbol (string): The wanted symbol in the gdx file
         cols (list): The columns
+        parameter_or_set (str): Choose either 'parameter' or 'set'
     """   
-    df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
-    df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
+    if parameter_or_set == 'parameter':
+        df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
+        df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
+    elif parameter_or_set == 'set':
+        df = dict( (tuple(rec.keys) ) for rec in db[symbol] )
+        df = pd.DataFrame(dict( (tuple(rec.keys)) for rec in db[symbol] ), index=['Set']).T.reset_index()
+    else:
+        print('Choose either parameter or set!')
+
     if cols != 'None':
         try:
             df.columns = cols

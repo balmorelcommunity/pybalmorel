@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
 ]
