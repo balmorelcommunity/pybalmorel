@@ -76,6 +76,15 @@ class IncFile:
                 new_ind += ' . ' + self.body.index.get_level_values(level) 
 
             self.body.index = new_ind
+        
+        # Check if there are multiple levels in columns and 
+        # concatenate with " . "
+        if hasattr(self.body.columns, 'levels'):
+            new_ind = pd.Series(self.body.columns.get_level_values(0))
+            for level in range(1, len(self.body.columns.levels)):
+                new_ind += ' . ' + self.body.columns.get_level_values(level) 
+
+            self.body.columns = new_ind
             
         # Delete names
         self.body.columns.name = ''
