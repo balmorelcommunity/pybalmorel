@@ -89,7 +89,7 @@ class IncFile:
         # Delete names
         self.body.columns.name = ''
         self.body.index.name = ''
-                
+
 
     def save(self):
         if self.name[-4:] != '.inc':
@@ -97,7 +97,13 @@ class IncFile:
        
         with open(os.path.join(self.path, self.name), 'w') as f:
             f.write(self.prefix)
-            f.write(self.body)
+            if type(self.body) == str:
+                f.write(self.body)
+            elif type(self.body) == pd.DataFrame:
+                f.write(self.body.to_string())
+            else:
+                print('Wrong format of %s.body!'%self.name)
+                print('No body written')
             f.write(self.suffix)
  
  
