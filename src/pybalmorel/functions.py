@@ -47,6 +47,11 @@ class IncFile:
         self.suffix = suffix
         self.name = name
         self.path = path
+    
+    def body_concat(self, df):
+        """Concatenate a df to the df in the body
+        """
+        self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function..
  
     def save(self):
         if self.path[-1] != '/':
