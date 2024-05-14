@@ -19,7 +19,7 @@ DE.body = pd.DataFrame(index=['DK1', 'DK2'], columns=[2030, 2040, 2050],
                             [14e6, 17e6, 20e6]])
 
 # Fix the index format (in this case, append the DEUSER set to RRR)
-DE.body.index = DE.body.index + ' . RESE'
+DE.body.index += ' . RESE'
 
 # Save .inc file to path (will save as ./Balmorel/sc1/data/DE.inc)
 DE.save()
