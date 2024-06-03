@@ -37,7 +37,6 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
     # from mpl_toolkits.basemap import Basemap as Basemap
     iter = '0'
     exo_end = 'Both' # Choose from ['Endogenous', 'Exogenous', 'Total']. For 'CongestionFlow', exo_end automatically switches to 'Total'.
-    style = 'dark'
 
     # Find the MainResults file
     found_scenario = False
@@ -727,6 +726,12 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
             ax.legend(lines, string, loc='center',
                     bbox_to_anchor=(.2, .88 ))
             
+        if style == 'light':
+            plt.style.context('default')
+            fc = 'white'
+        elif style == 'dark':
+            plt.style.context('dark_background')
+            fc = 'none'
         ##% 3.4 Save map
         # plt.savefig("network_MUNI_2DE_NoS_MoreFLH_noBio_LSNOstevns.svg", bbox_inches="tight", transparent=True)
         # plt.savefig("Output/balmorelmap.png", bbox_inches="tight", transparent=True)

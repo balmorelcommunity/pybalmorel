@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.0.14"
+version = "0.0.15"
 authors = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
 ]
@@ -13,7 +13,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-dependencies = ['geopandas']
+dependencies = ['pandas', 'matplotlib', 'geopandas', 'gamsapi[transfer]']
 
 [project.urls]
 Homepage = "https://github.com/Mathias157"
