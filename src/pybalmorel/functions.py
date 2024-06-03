@@ -6,8 +6,6 @@ from typing import Union
 import gams
 import os
 import pandas as pd
-# Implement the scripts from balmorel-postprocessing tool below (write functions)
-# from plotting import MapsBalmorel, ProductionProfile, ProductionMap, LoadGDX
 
 #%% ------------------------------- ###
 ###       1. GAMS Interface         ###
@@ -128,4 +126,7 @@ def read_lines(name, file_path, make_space=True):
 ### ------------------------------- ###
 
 
+# Implement the scripts from balmorel-postprocessing tool below (write functions)
+# from plotting import MapsBalmorel, ProductionProfile, ProductionMap, LoadGDX
+from .plotting.maps_balmorel import plot_map
 

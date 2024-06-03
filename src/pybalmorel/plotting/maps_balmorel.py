@@ -11,103 +11,66 @@ regions that are NOT in the geofile will not be shown!
 ###       0. Script Settings      ###
 ### ----------------------------- ###
 
+import traceback
+import geopandas as gpd
 try:
+    import cartopy.crs as ccrs
+    cartopy_installed = True
+except ModuleNotFoundError:
+    cartopy_installed = False
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+# import xarray as xr
+from matplotlib.lines import Line2D
+import os
+import glob
+from gams import GamsWorkspace
 
-    import traceback
-    import geopandas as gpd
-    try:
-        import cartopy.crs as ccrs
-        cartopy_installed = True
-    except ModuleNotFoundError:
-        cartopy_installed = False
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    import numpy as np
-    # import xarray as xr
-    from matplotlib.lines import Line2D
+def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int, COMMODITY: str, 
+             bypass_path: str = '', geo_file_region_column: str = 'id', style: str = 'light'):
     # import atlite # It worked to import it in console, and then outcomment here
     # from csv import reader
 
     # import json
     # from descartes import PolygonPatch
     # from mpl_toolkits.basemap import Basemap as Basemap
-
-    from pathlib import Path
-    import sys
-    import os
-    import glob
-
-    # sys.path.append(r'C:\GAMS\39\apifiles\Python\api_38')
-    # sys.path.append(r'C:\GAMS\39\apifiles\Python\gams')
-
-    from gams import GamsWorkspace
-
-    # os.chdir(__file__.replace(r'\Scripts\MapsBalmorel.py', ''))
-
-    ### 0.0 Load Arguments
-    if len(sys.argv) > 2:
-        paths   = (r'%s'%sys.argv[1]).split(',')
-        path_to_geofile = r'%s'%sys.argv[2]
-        geo_file_region_column = sys.argv[3]
-        SCENARIO        = sys.argv[4]
-        iter        = sys.argv[5]
-        year       = int(sys.argv[6])
-        COMMODITY       = sys.argv[7].lower().capitalize() # Should be a column, e.g. TECH_TYPE, RRR, AAA, G
-        exo_end = sys.argv[8] # Choose from ['Endogenous', 'Exogenous', 'Total']. For 'CongestionFlow', exo_end automatically switches to 'Total'.
-        style      = sys.argv[9].lower()
-        
-    ### 0.1 If no arguments, then you are probably running this script stand-alone
-    else:
-        import os
-        print('-------------------------------\n'+'           TEST MODE           \n'+'-------------------------------\n')
-        os.chdir(__file__.replace(r'\Scripts\MapsBalmorel.py', ''))
-        paths = r'C:\Users\mathi\gitRepos\balmorel-antares\Balmorel\...'.split(',')
-        path_to_geofile = r'.\Input\2022 BalmorelMap.geojson'
-        geo_file_region_column = 'id'
-        SCENARIO = 'W5T8'
-        iter = '0'
-        reg = 'All'
-        year = 2050 #Year to be displayed
-        COMMODITY = 'Hydrogen' #Choose from: ['Electricity', 'H2', 'Other']. Add to csv-files name (only relevant if filetype_input == 'csv'). If 'Other': go to cell 1.4.0.
-        exo_end = 'Both' # Choose from ['Endogenous', 'Exogenous', 'Total']. For 'CongestionFlow', exo_end automatically switches to 'Total'.
-        style = 'dark'
+    iter = '0'
+    exo_end = 'Both' # Choose from ['Endogenous', 'Exogenous', 'Total']. For 'CongestionFlow', exo_end automatically switches to 'Total'.
+    style = 'dark'
 
     # Find the MainResults file
     found_scenario = False
-     
-    for path_to_results in paths:
-        path_to_results = path_to_results.lstrip(' ').rstrip(' ')
-        if path_to_results[-4:] == '\...':
-            path_to_results = path_to_results[:-4]
-            for subdir in pd.Series(os.listdir(path_to_results.rstrip('\...'))):  
-                subpath = os.path.join(path_to_results, subdir, 'model')
-                if os.path.isdir(subpath):
-                    if os.path.exists(subpath + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
-                        path_to_results = subpath
-                        print('Found %s_Iter%s in %s'%(SCENARIO, iter, path_to_results))
-                        SCENARIO = SCENARIO + '_Iter%s'%iter
-                        found_scenario = True
-                        break
-                        
-                    elif os.path.exists(subpath + '/MainResults_%s.gdx'%SCENARIO):
-                        path_to_results = subpath
-                        print('Found %s in %s'%(SCENARIO, path_to_results))
-                        found_scenario = True
-                        break
-                    
-        else:
-            if os.path.exists(path_to_results + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
-                print('Found %s_Iter%s in %s'%(SCENARIO, iter, path_to_results))
-                SCENARIO = SCENARIO + '_Iter%s'%iter
-                found_scenario = True
-                
-            elif os.path.exists(path_to_results + '/MainResults_%s.gdx'%SCENARIO):
-                print('Found %s in %s'%(SCENARIO, path_to_results))
-                found_scenario = True
-                
     
-        if found_scenario:
-            break
+    path_to_result = path_to_result.lstrip(' ').rstrip(' ')
+    if path_to_result[-4:] == '\...':
+        path_to_result = path_to_result[:-4]
+        for subdir in pd.Series(os.listdir(path_to_result.rstrip('\...'))):  
+            subpath = os.path.join(path_to_result, subdir, 'model')
+            if os.path.isdir(subpath):
+                if os.path.exists(subpath + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
+                    path_to_result = subpath
+                    print('Found %s_Iter%s in %s'%(SCENARIO, iter, path_to_result))
+                    SCENARIO = SCENARIO + '_Iter%s'%iter
+                    found_scenario = True
+                    break
+                    
+                elif os.path.exists(subpath + '/MainResults_%s.gdx'%SCENARIO):
+                    path_to_result = subpath
+                    print('Found %s in %s'%(SCENARIO, path_to_result))
+                    found_scenario = True
+                    break
+                
+    else:
+        if os.path.exists(path_to_result + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
+            print('Found %s_Iter%s in %s'%(SCENARIO, iter, path_to_result))
+            SCENARIO = SCENARIO + '_Iter%s'%iter
+            found_scenario = True
+            
+        elif os.path.exists(path_to_result + '/MainResults_%s.gdx'%SCENARIO):
+            print('Found %s in %s'%(SCENARIO, path_to_result))
+            found_scenario = True
+
     
     if found_scenario:
 
@@ -269,7 +232,11 @@ try:
         # #Load coordinates files 
         # df_unique = pd.read_csv('./Input/coordinates_RRR.csv')
         # df_region = df_unique.loc[df_unique['Type'] == 'region', ]
-        df_bypass = pd.read_csv('./Input/bypass_lines.csv') # coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
+        if bypass_path != '':
+            df_bypass = pd.read_csv(bypass_path) # coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
+        else:
+            df_bypass = pd.DataFrame()
+        
         # if AltGeo == 'MUNI':
         #     df_altreg = gpd.read_file(AltGeoPath)
         #     df_altreg.GID_2 = df_altreg.GID_2.str.replace('.', '_').str.replace('DNK', 'DK')
@@ -384,7 +351,7 @@ try:
             #gdx_file_list = gdx_file_list + glob.glob('./input/results/'+ market + '/*.gdx')
             
             if (YEAR == '') & (SUBSET == ''):
-                gdx_file =  glob.glob(path_to_results + '\\MainResults_' + SCENARIO + '.gdx')
+                gdx_file =  glob.glob(path_to_result + '\\MainResults_' + SCENARIO + '.gdx')
             else:
                 gdx_file =  glob.glob('./input/results/'+ market + '\\MainResults_' + SCENARIO + '_'  + YEAR + '_' + SUBSET + '.gdx')
             gdx_file = gdx_file[0]
@@ -762,27 +729,13 @@ try:
             
         ##% 3.4 Save map
         # plt.savefig("network_MUNI_2DE_NoS_MoreFLH_noBio_LSNOstevns.svg", bbox_inches="tight", transparent=True)
-        plt.savefig("Output/balmorelmap.png", bbox_inches="tight", transparent=True)
-        plt.savefig("Output/balmorelmap.pdf", bbox_inches="tight", transparent=True)
+        # plt.savefig("Output/balmorelmap.png", bbox_inches="tight", transparent=True)
+        # plt.savefig("Output/balmorelmap.pdf", bbox_inches="tight", transparent=True)
 
         print('\nSuccesful execution of MapsBalmorel.py')
-        with open('Output/Log.txt', 'w') as f:
-            f.write('No errors\nFound scenario in %s'%path_to_results)
+        
+        return fig, ax
             
     else:
         print("\nDidn't find a scenario in the paths given")
-        with open('Output/Log.txt', 'w') as f:
-            f.write('Nothing loaded! Check path and MainResults files.')
-        
-except Exception as e:
-    
-    message = traceback.format_exc()
-    
-    print('\nAn error occurred - check the Python environment')
-    with open('Output/Log.txt', 'w') as f:
-        if 'error_message' in locals():
-            f.write(error_message)
-        else:
-            f.write('Something went wrong. Make sure you typed an existing scenario, iteration, symbol, region, year, legend type and/or plot style.')
-            f.write('\n\n' + message)
-    
+      
