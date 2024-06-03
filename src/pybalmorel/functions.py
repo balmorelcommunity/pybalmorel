@@ -6,6 +6,12 @@ from typing import Union
 import gams
 import os
 import pandas as pd
+# Implement the scripts from balmorel-postprocessing tool below (write functions)
+# from plotting import MapsBalmorel, ProductionProfile, ProductionMap, LoadGDX
+
+#%% ------------------------------- ###
+###       1. GAMS Interface         ###
+### ------------------------------- ###
 
 ### 1.0 Converting a GDX file to a pandas dataframe
 def symbol_to_df(db: gams.GamsDatabase, symbol: str, 
@@ -115,3 +121,11 @@ def read_lines(name, file_path, make_space=True):
         string = ''.join(open(file_path + '/%s'%name).readlines())
    
     return string
+
+
+#%% ------------------------------- ###
+###       2. Plotting Tools         ###
+### ------------------------------- ###
+
+
+
