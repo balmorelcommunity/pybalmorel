@@ -1,5 +1,38 @@
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel 
 
+## Outputs
+Check out tests/Test.py for how to use some of the plotting tools:
+```
+from pybalmorel.functions import MainResults, plot_map
+
+### 1.1 Interactive bar chart tool
+res = MainResults('MainResults_ScenarioName.gdx', 'Files')
+res.bar_chart()
+
+### 1.2 Plotting maps
+plot_map('files', 'files/2024 BalmorelMap.geojson', 'ScenarioName',
+         2050, 'Electricity', 'files/bypass_lines.csv')
+```
+
+Results can be loaded into a pandas DataFrame from a .gdx file using gams and symbol_to_df:
+```
+import gams
+import os
+from pybalmorel.functions import symbol_to_df
+import pandas as pd
+
+
+# Load .gdx file
+ws = gams.GamsWorkspace()
+db = ws.add_database_from_gdx(os.path.abspath('Balmorel/base/model/MainResults_Base.gdx'))
+
+# Load the annual production into a pandas DataFrame
+pro = symbol_to_df(db, 'PRO_YCRAGF', cols=['Y', 'C', 'R', 'A', 'G', 'F', 
+                                           'Commodity', 'Tech', 'Unit', 'Value'])
+```
+
+
+## Inputs
 ### Example of creating an .inc file
 ```
 from pybalmorel.functions import IncFile
@@ -23,21 +56,4 @@ DE.body.index += ' . RESE'
 
 # Save .inc file to path (will save as ./Balmorel/sc1/data/DE.inc)
 DE.save()
-```
-
-### Example of loading results from a .gdx file
-```
-import gams
-import os
-from pybalmorel.functions import symbol_to_df
-import pandas as pd
-
-
-# Load .gdx file
-ws = gams.GamsWorkspace()
-db = ws.add_database_from_gdx(os.path.abspath('Balmorel/base/model/MainResults_Base.gdx'))
-
-# Load the annual production into a pandas DataFrame
-pro = symbol_to_df(db, 'PRO_YCRAGF', cols=['Y', 'C', 'R', 'A', 'G', 'F', 
-                                           'Commodity', 'Tech', 'Unit', 'Value'])
 ```
