@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
 import numpy as np
-from pybalmorel.functions import symbol_to_df
-from pybalmorel.formatting import balmorel_colours 
+from ..functions import symbol_to_df
+from ..formatting import balmorel_colours, mainresults_symbol_columns
 import ipywidgets as widgets
 from ipywidgets import interact, interactive
 import os
@@ -38,31 +38,7 @@ class MainResults:
         # self:db[colcustom] = something
         
         """ We could add this to the formatting file"""
-        self.table_select = {'F_CONS_YCRA': ['Year','Country','Region','Area','Generation','Fuel','Technology'],
-                             'F_CONS_YCRAST': ['Year','Country','Region','Area','Generation','Fuel','Season','Time','Technology'],
-                             'G_CAP_YCRAF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology','Category'],
-                             'G_STO_YCRAF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology','Category'],
-                             'H2_DEMAND_YCR': ['Year','Country','Region','Category'],
-                             'H2_DEMAND_YCRST': ['Year','Country','Region','Season','Time','Category'],
-                             'H2_PRICE_YCR': ['Year','Country','Region','Category'],
-                             'H2_DEMAND_YCRST': ['Year','Country','Region','Season','Time','Category'],
-                             'H_BALANCE_YCRAST': ['Year','Country','Region','Area','Technology','Season','Time'],
-                             'H_DEMAND_YCRA': ['Year','Country','Region','Area','Category'],
-                             'H_DEMAND_YCRAST': ['Year','Country','Region','Area','Season','Time','Category'],
-                             'H_PRICE_YCRA': ['Year','Country','Region','Area','Category'],
-                             'H_PRICE_YCRAST': ['Year','Country','Region','Area','Season','Time'],
-                             'OBJ_YCR': ['Year','Country','Region','Category'],
-                             'PRO_YCRAGF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology'],
-                             'PRO_YCRAGFST': ['Year','Country','Region','Area','Generation','Fuel','Season','Time','Commodity','Technology'],
-                             'X_CAP_YCR': ['Year','Country','From','To','Category'],
-                             'X_FLOW_YCR': ['Year','Country','From','To'],
-                             'X_FLOW_YCRST': ['Year','Country','From','To','Season','Time'],
-                             'XH2_CAP_YCR': ['Year','Country','From','To','Category'],
-                             'XH2_FLOW_YCR': ['Year','Country','From','To'],
-                             'XH2_FLOW_YCRST': ['Year','Country','From','To','Season','Time'],
-                             'XH_CAP_YCA': ['Year','Country','From','To','Category'],
-                             'XH_FLOW_YCA': ['Year','Country','From','To'],
-                             'XH_FLOW_YCAST': ['Year','Country','From','To','Season','Time']}
+        self.table_select = mainresults_symbol_columns
 
     def plot_bar_chart(self, df: pd.core.frame.DataFrame, filter: dict, table: str, series: Union[str, list], categories: Union[str, list],
                        title: tuple, size: tuple):

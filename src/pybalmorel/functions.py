@@ -6,6 +6,7 @@ from typing import Union
 import gams
 import os
 import pandas as pd
+from .formatting import mainresults_symbol_columns
 
 #%% ------------------------------- ###
 ###       1. GAMS Interface         ###
@@ -32,11 +33,11 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
     else:
         print('Choose either parameter or set!')
 
-    if cols != 'None':
+    if cols == 'None':
         try:
-            df.columns = cols
-        except:
-            pass
+            df.columns = mainresults_symbol_columns[symbol] + ['Unit', 'Value']
+        except KeyError:
+            print('Standard column format not found for this symbol')
     return df 
 
 class IncFile:

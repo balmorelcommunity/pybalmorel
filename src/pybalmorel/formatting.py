@@ -70,3 +70,33 @@ fuel_colours = {
 
 
 balmorel_colours = tech_colours | fuel_colours
+
+#%% ------------------------------- ###
+###            2. Other             ###
+### ------------------------------- ###
+
+mainresults_symbol_columns = {'F_CONS_YCRA': ['Year','Country','Region','Area','Generation','Fuel','Technology'],
+                             'F_CONS_YCRAST': ['Year','Country','Region','Area','Generation','Fuel','Season','Time','Technology'],
+                             'G_CAP_YCRAF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology','Category'],
+                             'G_STO_YCRAF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology','Category'],
+                             'H2_DEMAND_YCR': ['Year','Country','Region','Category'],
+                             'H2_DEMAND_YCRST': ['Year','Country','Region','Season','Time','Category'],
+                             'H2_PRICE_YCR': ['Year','Country','Region','Category'],
+                             'H2_DEMAND_YCRST': ['Year','Country','Region','Season','Time','Category'],
+                             'H_BALANCE_YCRAST': ['Year','Country','Region','Area','Technology','Season','Time'],
+                             'H_DEMAND_YCRA': ['Year','Country','Region','Area','Category'],
+                             'H_DEMAND_YCRAST': ['Year','Country','Region','Area','Season','Time','Category'],
+                             'H_PRICE_YCRA': ['Year','Country','Region','Area','Category'],
+                             'H_PRICE_YCRAST': ['Year','Country','Region','Area','Season','Time'],
+                             'OBJ_YCR': ['Year','Country','Region','Category'],
+                             'PRO_YCRAGF': ['Year','Country','Region','Area','Generation','Fuel','Commodity','Technology'],
+                             'PRO_YCRAGFST': ['Year','Country','Region','Area','Generation','Fuel','Season','Time','Commodity','Technology'],
+                             'X_CAP_YCR': ['Year','Country','From','To','Category'],
+                             'X_FLOW_YCR': ['Year','Country','From','To'],
+                             'X_FLOW_YCRST': ['Year','Country','From','To','Season','Time'],
+                             'XH2_CAP_YCR': ['Year','Country','From','To','Category'],
+                             'XH2_FLOW_YCR': ['Year','Country','From','To'],
+                             'XH2_FLOW_YCRST': ['Year','Country','From','To','Season','Time'],
+                             'XH_CAP_YCA': ['Year','Country','From','To','Category'],
+                             'XH_FLOW_YCA': ['Year','Country','From','To'],
+                             'XH_FLOW_YCAST': ['Year','Country','From','To','Season','Time']}
