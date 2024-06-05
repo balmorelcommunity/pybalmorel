@@ -38,6 +38,8 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
             df.columns = mainresults_symbol_columns[symbol] + ['Unit', 'Value']
         except KeyError:
             print('Standard column format not found for this symbol')
+    elif type(cols) == list:
+        df.columns = cols
     return df 
 
 class IncFile:
