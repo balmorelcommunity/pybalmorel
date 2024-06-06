@@ -4,6 +4,7 @@
 
 from typing import Union
 import gams
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pandas as pd
@@ -86,13 +87,13 @@ class MainResults:
             except KeyError:
                 temp.plot(ax=ax, kind='bar', stacked=True, legend=False)
 
-            fig.legend(bbox_to_anchor=(0.9, 0.8), loc=2)
+            ax.legend(bbox_to_anchor=(0.9, 0.8), loc=2)
             
-            # Fixing the labels on x-axis
-            list_xticks = copy.deepcopy(ax.get_xticks())
-            list_xticks_label = copy.deepcopy(ax.get_xticklabels())
-            if len(series) == 1 :
-                ax.set_xticklabels([ticks_label.get_text() for ticks_label in list_xticks_label])
+            # Fixing the labels on x-axis - this deepcopy copies the figure itself
+            # list_xticks = copy.deepcopy(ax.get_xticks())
+            # list_xticks_label = copy.deepcopy(ax.get_xticklabels())
+            # if len(series) == 1 :
+            #     ax.set_xticklabels([ticks_label.get_text() for ticks_label in list_xticks_label])
                 
             # Not working for now
             # elif len(series) == 2 :
@@ -110,7 +111,9 @@ class MainResults:
             ax.set_ylabel(f'Value ({unit})')
             ax.set_xlabel('')
             
-            plt.title(title[0], fontsize=title[1])
+            ax.set_title(title[0], fontsize=title[1])
+            
+            return fig
             
         
 
@@ -244,12 +247,14 @@ class MainResults:
                 nb_series = len(series_select_button.value)
                 series_order_selection=[series_order_button1.value, series_order_button2.value, series_order_button3.value][:nb_series]
                 if None in series_order_selection:
-                    self.plot_bar_chart(df, filter, table_select_button.value, series_select_button.value, categories_select_button.value,
+                    fig = self.plot_bar_chart(df, filter, table_select_button.value, series_select_button.value, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
                 else:
-                    self.plot_bar_chart(df, filter, table_select_button.value, series_order_selection, categories_select_button.value,
+                    fig = self.plot_bar_chart(df, filter, table_select_button.value, series_order_selection, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
 
+                plt.show(fig)
+                
         # Dynamic behaviour of the buttons
         table_select_function(table_select_button.value)
         table_select_button.observe(lambda change: table_select_function(change['new']), names='value')
