@@ -22,7 +22,8 @@ import copy
 ### ------------------------------- ###
 
 class MainResults:
-    def __init__(self, SC: Union[str, list, tuple], path: str = '.'):
+    def __init__(self, files: Union[str, list, tuple], path: str = '.', 
+                 scenario_names: Union[str, list, tuple] = None):
         """
         Initialize the MainResults class by charging a gdx result file
 
@@ -31,18 +32,29 @@ class MainResults:
             path (str): Path to the gdx result file
         """
 
+        # Change filenames to list
+        if type(files) == str:
+            files = [files]
+            
+        # Try to make scenario names if not specified
+        if scenario_names == None:
+            scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
+            
+            # Check if names are identical or empty
+            if (len(scenario_names.unique()) != len(scenario_names)) or (np.all(scenario_names == '')):
+                scenario_names = ['SC%d'%(i+1) for i in range(len(files))] # if so, just make generic names
+            else:
+                scenario_names = list(scenario_names)
+        
+        elif type(scenario_names) == str:
+            scenario_names = [scenario_names]
+            
+        # Store MainResult databases
+        self.sc = scenario_names
+        self.db = {}
         ws = gams.GamsWorkspace()
-
-        if type(SC) == str:
-            self.db = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), SC))
-        else:
-            self.db = {}
-            for sc in SC:
-                self.db[sc] = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), sc))
-
-        # Think about importing multiple scenarios
-        # self:db['SC'] = SC
-        # self:db[colcustom] = something
+        for i in range(len(files)):
+            self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), files[i]))
         
         """ We could add this to the formatting file"""
         self.table_select = mainresults_symbol_columns
@@ -236,7 +248,7 @@ class MainResults:
         def df_update(table_name):
             if table_name :
                 global df
-                df = symbol_to_df(self.db, table_name, self.table_select[table_name]+['Unit', 'Value'])
+                df = self.get_result(table_name, self.table_select[table_name]+['Unit', 'Value'])
                 with filter_out:
                     filter_out.clear_output() # Clear previous output
                     for filter_button in filter_options[table_name]:
@@ -280,7 +292,18 @@ class MainResults:
 
 
     def get_result(self, symbol: str, cols: str = 'None'):
-        return symbol_to_df(self.db, symbol, cols)
+        df = pd.DataFrame()
+        for SC in self.sc:
+            temp = symbol_to_df(self.db[SC], symbol, cols)
+            temp['SC'] = SC 
+            
+            # Put scenario in first column
+            temp = temp.loc[:, ['SC'] + list(temp.columns[:-1])]
+            
+            # Save
+            df = pd.concat((df, temp), ignore_index=True)
+            
+        return df
 	
         
         
