@@ -1,6 +1,7 @@
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel 
 
 Check out Test.ipynb in https://github.com/Mathias157/pybalmorel/tree/master/tests for examples on how to use. 
+
 A few examples are provided on processing outputs and inputs below.
 
 ## Outputs
