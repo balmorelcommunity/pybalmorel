@@ -3,6 +3,7 @@ Convenient python functions for pre- or post-processing the GAMS framework Balmo
 Check out tests/Test.ipynb for examples, a few examples are provided on processing outputs and inputs below.
 
 ## Outputs
+### Example of plotting MainResults
 ```
 from pybalmorel.functions import plot_map
 from pybalmorel import MainResults
