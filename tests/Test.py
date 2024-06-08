@@ -9,8 +9,10 @@ This script serve as an example on how to use the package, and as a test in deve
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-from pybalmorel.functions import MainResults, plot_map
-
+import sys
+sys.path.append('../')
+from src.pybalmorel import MainResults
+from src.pybalmorel.functions import plot_map
 
 #%% ------------------------------- ###
 ###        1. Plotting Tools        ###
