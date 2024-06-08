@@ -163,53 +163,20 @@ class MainResults:
         table_select_button = widgets.Dropdown(options= list(self.table_select.keys()), value=None, description='Table:', disabled=False)
         series_select_button = widgets.SelectMultiple(options=[], value=[], description='Series:', disabled=False)
         categories_select_button = widgets.SelectMultiple(options=[], value=[], description='Categories:', disabled=False)
+        
         # Order options for series and categories
         series_order_button1 = widgets.Dropdown(options=[], value=None, description='First:', disabled=False)
         series_order_button2 = widgets.Dropdown(options=[], value=None, description='Second:', disabled=False)
         series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False)
+        
         # Filter buttons
-        Y_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Year:', disabled=False)
-        C_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Country:', disabled=False)
-        R_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Region:', disabled=False)
-        A_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Area:', disabled=False)
-        G_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Generation:', disabled=False)
-        F_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Fuel:', disabled=False)
-        Com_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Commodity:', disabled=False)
-        Tech_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Technology:', disabled=False)
-        Cat_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Category:', disabled=False)
-        S_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Season:', disabled=False)
-        T_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='Time:', disabled=False)
-        From_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='From:', disabled=False)
-        To_filter_button = widgets.SelectMultiple(options=['None'], value=['None'], description='To:', disabled=False)
-        # Dictionnary useful for the filtering (It would be difficult to put it in formatting I think)
-        filter_options = {'F_CONS_YCRA': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, Tech_filter_button],
-                          'F_CONS_YCRAST': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, S_filter_button, T_filter_button, Tech_filter_button],
-                          'G_CAP_YCRAF': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, Com_filter_button, Tech_filter_button, Cat_filter_button],
-                          'G_STO_YCRAF': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, Com_filter_button, Tech_filter_button, Cat_filter_button],
-                          'H2_DEMAND_YCR': [Y_filter_button, C_filter_button, R_filter_button, Cat_filter_button],
-                          'H2_DEMAND_YCRST': [Y_filter_button, C_filter_button, R_filter_button, S_filter_button, T_filter_button, Cat_filter_button],
-                          'H2_PRICE_YCR': [Y_filter_button, C_filter_button, R_filter_button, Cat_filter_button],
-                          'H2_DEMAND_YCRST': [Y_filter_button, C_filter_button, R_filter_button, S_filter_button, T_filter_button, Cat_filter_button],
-                          'H_BALANCE_YCRAST': [Y_filter_button, C_filter_button, R_filter_button, Tech_filter_button, S_filter_button, T_filter_button],
-                          'H_DEMAND_YCRA': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, Cat_filter_button],
-                          'H_DEMAND_YCRAST': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, S_filter_button, T_filter_button, Cat_filter_button],
-                          'H_PRICE_YCRA': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, Cat_filter_button],
-                          'H_PRICE_YCRAST': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, S_filter_button, T_filter_button],
-                          'OBJ_YCR': [Y_filter_button, C_filter_button, R_filter_button, Cat_filter_button],
-                          'PRO_YCRAGF': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, Com_filter_button, Tech_filter_button],
-                          'PRO_YCRAGFST': [Y_filter_button, C_filter_button, R_filter_button, A_filter_button, G_filter_button, F_filter_button, S_filter_button, T_filter_button, Com_filter_button, Tech_filter_button],
-                          'X_CAP_YCR': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, Cat_filter_button],
-                          'X_FLOW_YCR': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button],
-                          'X_FLOW_YCRST': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, S_filter_button, T_filter_button],
-                          'XH2_CAP_YCR': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, Cat_filter_button],
-                          'XH2_FLOW_YCR': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button],
-                          'XH2_FLOW_YCRST': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, S_filter_button, T_filter_button],
-                          'XH_CAP_YCA': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, Cat_filter_button],
-                          'XH_FLOW_YCA': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button],
-                          'XH_FLOW_YCAST': [Y_filter_button, C_filter_button, From_filter_button, To_filter_button, S_filter_button, T_filter_button]}
-        button_to_name = {Y_filter_button:'Year', C_filter_button:'Country', R_filter_button:'Region', A_filter_button:'Area',G_filter_button:'Generation',
-                          F_filter_button:'Fuel', Com_filter_button:'Commodity', Tech_filter_button:'Technology', Cat_filter_button:'Category',
-                          S_filter_button: 'Season', T_filter_button: 'Time', From_filter_button:'From', To_filter_button: 'To'}
+        filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'],
+                                                    description=column, disabled=False)
+                            for column in mainresults_symbol_columns[symbol]\
+                            ]\
+                          for symbol in mainresults_symbol_columns.keys()    
+                        }
+        
         # For the plotting layout
         plot_title_button = widgets.Text(description='Title:', disabled=False)
         plot_sizetitle_button = widgets.FloatSlider(value=12, min=8, max=20, step=0.1, description='Size:', disabled=False, 
@@ -228,7 +195,7 @@ class MainResults:
         pivot_selection_out = widgets.Output()
         
         # For the filtering of the table
-        filter_layout = [widgets.GridBox(filter_options[key], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(self.table_select.keys())]
+        filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(self.table_select.keys())]
         filter_stack = widgets.Stack(filter_layout)
         widgets.jslink((table_select_button,'index'),(filter_stack,'selected_index'))
         filter_out = widgets.Output()
@@ -265,28 +232,27 @@ class MainResults:
                 
         def df_update(table_name):
             if table_name :
-                global df
-                df = self.get_result(table_name, self.table_select[table_name]+['Unit', 'Value'])
+                self.df = self.get_result(table_name, self.table_select[table_name]+['Unit', 'Value'])
                 with filter_out:
                     filter_out.clear_output() # Clear previous output
-                    for filter_button in filter_options[table_name]:
-                        filter_button.options = list(sorted(df[button_to_name[filter_button]].unique()))
-                        filter_button.value = list(sorted(df[button_to_name[filter_button]].unique()))
+                    for filter_button in filter_buttons[table_name]:
+                        filter_button.options = list(sorted(self.df[filter_button.description].unique()))
+                        filter_button.value = list(sorted(self.df[filter_button.description].unique()))
 
         def wrap_plot_bar_chart(click):
             with plot_out:
                 plot_out.clear_output()  # Clear previous output
                 # Filtering options
                 filter = {}
-                for filter_button in filter_options[table_select_button.value] :
-                    filter[button_to_name[filter_button]] = list(filter_button.value)
+                for filter_button in filter_buttons[table_select_button.value]:
+                    filter[filter_button.description] = list(filter_button.value)
                 nb_series = len(series_select_button.value)
                 series_order_selection=[series_order_button1.value, series_order_button2.value, series_order_button3.value][:nb_series]
                 if None in series_order_selection:
-                    fig = self.plot_bar_chart(df, filter, table_select_button.value, series_select_button.value, categories_select_button.value,
+                    fig = self.plot_bar_chart(self.df, filter, table_select_button.value, series_select_button.value, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
                 else:
-                    fig = self.plot_bar_chart(df, filter, table_select_button.value, series_order_selection, categories_select_button.value,
+                    fig = self.plot_bar_chart(self.df, filter, table_select_button.value, series_order_selection, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
 
                 plt.show(fig)
@@ -321,10 +287,5 @@ class MainResults:
             # Save
             df = pd.concat((df, temp), ignore_index=True)
             
-        return df
-	
-        
-        
-if __name__ == "__main__":
-    mr = MainResults('MainResults_EXP_6_S_TH_FR.gdx', os.path.dirname(os.path.abspath(__file__)))
-    mr.bar_chart()
+        return df    
+    
