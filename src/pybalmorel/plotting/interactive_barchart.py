@@ -22,7 +22,7 @@ import copy
 ### ------------------------------- ###
 
 class MainResults:
-    def __init__(self, SC: str, path: str = '.'):
+    def __init__(self, SC: Union[str, list], path: str = '.'):
         """
         Initialize the MainResults class by charging a gdx result file
 
@@ -30,10 +30,18 @@ class MainResults:
             SC (str): Name of the gdx result file
             path (str): Path to the gdx result file
         """
-        
+
         ws = gams.GamsWorkspace()
-        self.db = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), SC))
-        
+
+        if type(SC) == str:
+            self.db = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), SC))
+        elif type(SC) == list:
+            self.db = pd.DataFrame()
+            for sc in SC:
+                temp =  ws.add_database_from_gdx(os.path.join(os.path.abspath(path), sc))
+                temp['SC'] = sc
+                self.db = pd.concat((self.db, temp), ignore_index=True)
+
         # Think about importing multiple scenarios
         # self:db['SC'] = SC
         # self:db[colcustom] = something
