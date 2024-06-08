@@ -22,22 +22,36 @@ import copy
 ### ------------------------------- ###
 
 class MainResults:
-    def __init__(self, files: Union[str, list, tuple], path: str = '.', 
+    def __init__(self, files: Union[str, list, tuple], paths: Union[str, list, tuple] = '.', 
                  scenario_names: Union[str, list, tuple] = None):
         """
-        Initialize the MainResults class by charging a gdx result file
+        Initialises the MainResults class and loads gdx result file(s)
 
         Args:
-            SC (str): Name of the gdx result file
-            path (str): Path to the gdx result file
+            files (str, list, tuple): Name(s) of the gdx result file(s)
+            paths (str, list, tuple): Path(s) to the gdx result file(s), assumed in same path if only one path given, defaults to working directory
+            scenario_names (str, list, tuple): Name of scenarios corresponding to each gdx file, defaults to ['SC1', 'SC2', ..., 'SCN'] if None given
         """
 
-        # Change filenames to list
         if type(files) == str:
+            # Change filenames to list
             files = [files]
             
-        # Try to make scenario names if not specified
+        ## File paths
+        if type(paths) == str:
+            # Create identical paths if only one given
+            paths = [paths]*len(files)
+            
+        elif ((type(paths) == list) or (type(paths) == tuple)) and (len(paths) == 1):
+            paths = paths*len(files)
+            
+        elif len(files) != len(paths):
+            # Raise error if not given same amount of paths and files     
+            raise Exception("%d files, but %d paths given!\nProvide only one path or the same amount of paths as files"%(len(files), len(paths)))
+        
+        ## Scenario Names
         if scenario_names == None:
+            # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
             
             # Check if names are identical or empty
@@ -45,16 +59,20 @@ class MainResults:
                 scenario_names = ['SC%d'%(i+1) for i in range(len(files))] # if so, just make generic names
             else:
                 scenario_names = list(scenario_names)
-        
+                
         elif type(scenario_names) == str:
             scenario_names = [scenario_names]
+            
+        if len(files) != len(scenario_names):    
+            # Raise error if not given same amount of scenario_names and files
+            raise Exception("%d files, but %d scenario names given!\nProvide none or the same amount of scenario names as files"%(len(files), len(scenario_names)))
             
         # Store MainResult databases
         self.sc = scenario_names
         self.db = {}
         ws = gams.GamsWorkspace()
         for i in range(len(files)):
-            self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), files[i]))
+            self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
         
         """ We could add this to the formatting file"""
         self.table_select = mainresults_symbol_columns
