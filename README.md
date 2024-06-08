@@ -1,9 +1,11 @@
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel 
 
+Check out tests/Test.ipynb for examples, a few examples are provided on processing outputs and inputs below.
+
 ## Outputs
-Check out tests/Test.py for how to use some of the plotting tools:
 ```
-from pybalmorel.functions import MainResults, plot_map
+from pybalmorel.functions import plot_map
+from pybalmorel import MainResults
 
 ### 1.1 Interactive bar chart tool
 res = MainResults('MainResults_ScenarioName.gdx', 'Files')
@@ -35,7 +37,7 @@ pro = symbol_to_df(db, 'PRO_YCRAGF', cols=['Y', 'C', 'R', 'A', 'G', 'F',
 ## Inputs
 ### Example of creating an .inc file
 ```
-from pybalmorel.functions import IncFile
+from pybalmorel import IncFile
 import pandas as pd
 
 
