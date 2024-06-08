@@ -14,6 +14,7 @@ import gams
 import numpy as np
 from .functions import symbol_to_df
 from .plotting.interactive_barchart import bar_chart
+from .plotting.production_profile import plot_profile
 
 #%% ------------------------------- ###
 ###           1. Outputs            ###
@@ -90,9 +91,20 @@ class MainResults:
             df = pd.concat((df, temp), ignore_index=True)
             
         return df  
-       
+    
+    ### Plotting Functions
+    
+    # Interactive Bar Chart
     def bar_chart(self):
         bar_chart(self)
+        
+    # Production Profile
+    def plot_profile(self, scenario: str, year: int,
+                     commodity: str, columns: str,
+                     region: str, style: str = 'light'):
+        plot_profile(self, scenario=scenario, year=year,
+                     commodity=commodity, columns=columns,
+                     region=region, style=style)
 
 #%% ------------------------------- ###
 ###            2. Inputs            ###

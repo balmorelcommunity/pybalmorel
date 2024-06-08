@@ -29,7 +29,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
 
     Args:
         df (DataFrame): Dataframe with the result
-        filter (dict): Dictionnary with the filters to apply
+        filter (dict): Dictionary with the filters to apply
         table (str): Table selected in the result file
         series (Union[str, list]): Columns used as series
         categories (Union[str, list]): Columns used as categories
