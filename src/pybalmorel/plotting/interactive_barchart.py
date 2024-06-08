@@ -22,7 +22,7 @@ import copy
 ### ------------------------------- ###
 
 class MainResults:
-    def __init__(self, SC: Union[str, list], path: str = '.'):
+    def __init__(self, SC: Union[str, list, tuple], path: str = '.'):
         """
         Initialize the MainResults class by charging a gdx result file
 
@@ -35,12 +35,10 @@ class MainResults:
 
         if type(SC) == str:
             self.db = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), SC))
-        elif type(SC) == list:
-            self.db = pd.DataFrame()
+        else:
+            self.db = {}
             for sc in SC:
-                temp =  ws.add_database_from_gdx(os.path.join(os.path.abspath(path), sc))
-                temp['SC'] = sc
-                self.db = pd.concat((self.db, temp), ignore_index=True)
+                self.db[sc] = ws.add_database_from_gdx(os.path.join(os.path.abspath(path), sc))
 
         # Think about importing multiple scenarios
         # self:db['SC'] = SC
