@@ -22,7 +22,7 @@ import copy
 ### ------------------------------- ###
 
 class MainResults:
-    def __init__(self, SC: str, path: str):
+    def __init__(self, SC: str, path: str = '.'):
         """
         Initialize the MainResults class by charging a gdx result file
 
@@ -273,8 +273,8 @@ class MainResults:
 	
 
 
-    def get(self, symbol):
-        return symbol_to_df(self.db, symbol)
+    def get_result(self, symbol: str, cols: str = 'None'):
+        return symbol_to_df(self.db, symbol, cols)
 	
         
         
