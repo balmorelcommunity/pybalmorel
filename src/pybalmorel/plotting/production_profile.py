@@ -42,7 +42,7 @@ def plot_profile(MainResults, scenario: str,
     ### Try to load the non-iteration scenario suffix first
     db = MainResults.db[scenario]
 
-    fProd = symbol_to_df(db, "PRO_YCRAGFST", cols=['Y', 'C', 'RRR', 'AAA', 'G', 'FFF', 'SSS', 'TTT', 'COMMODITY', 'TECH_TYPE', 'UNITS', 'Val'])
+    fProd = symbol_to_df(db, "PRO_YCRAGFST", cols=['Y', 'C', 'RRR', 'AAA', 'G', 'Fuel', 'SSS', 'TTT', 'COMMODITY', 'Technology', 'UNITS', 'Val'])
     
     if commodity == 'ELECTRICITY':
         fPrice  = symbol_to_df(db, "EL_PRICE_YCRST", cols=['Y', 'C', 'RRR', 'SSS', 'TTT', 'UNITS', 'Val']) 
