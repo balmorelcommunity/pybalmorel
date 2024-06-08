@@ -18,7 +18,7 @@ import os
 import copy
 
 #%% ------------------------------- ###
-###        1. MainResults class
+###        1. MainResults class     ###
 ### ------------------------------- ###
 
 class MainResults:
@@ -34,7 +34,7 @@ class MainResults:
         """
 
         if type(files) == str:
-            # Change filenames to list
+            # Change filenames to list if just one string
             files = [files]
             
         ## File paths
@@ -67,17 +67,15 @@ class MainResults:
             # Raise error if not given same amount of scenario_names and files
             raise Exception("%d files, but %d scenario names given!\nProvide none or the same amount of scenario names as files"%(len(files), len(scenario_names)))
             
-        # Store MainResult databases
+        ## Store MainResult databases
         self.sc = scenario_names
         self.db = {}
         ws = gams.GamsWorkspace()
         for i in range(len(files)):
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
         
-        """ We could add this to the formatting file"""
-        self.table_select = mainresults_symbol_columns
 
-    def plot_bar_chart(self, df: pd.core.frame.DataFrame, filter: dict, table: str, series: Union[str, list], categories: Union[str, list],
+    def plot_bar_chart(self, df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
                        title: tuple, size: tuple):
         """
         Plotting function for the bar chart
@@ -160,7 +158,7 @@ class MainResults:
 
         """ Buttons definition """
         # Initial selection for plotting
-        table_select_button = widgets.Dropdown(options= list(self.table_select.keys()), value=None, description='Table:', disabled=False)
+        table_select_button = widgets.Dropdown(options= list(mainresults_symbol_columns.keys()), value=None, description='Table:', disabled=False)
         series_select_button = widgets.SelectMultiple(options=[], value=[], description='Series:', disabled=False)
         categories_select_button = widgets.SelectMultiple(options=[], value=[], description='Categories:', disabled=False)
         
@@ -170,10 +168,12 @@ class MainResults:
         series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False)
         
         # Filter buttons
-        filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'],
-                                                    description=column, disabled=False)
-                            for column in mainresults_symbol_columns[symbol]\
-                            ]\
+        filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], 
+                                                           value=['None'],
+                                                           description=column, 
+                                                           disabled=False)
+                            for column in mainresults_symbol_columns[symbol]
+                            ]
                           for symbol in mainresults_symbol_columns.keys()    
                         }
         
@@ -183,6 +183,7 @@ class MainResults:
                                               orientation='horizontal', readout=True, readout_format='.1f')
         plot_sizex_button = widgets.BoundedFloatText(value=12, min=5, max=20, step=0.1, description='Size x:', disabled=False)
         plot_sizey_button = widgets.BoundedFloatText(value=8, min=5, max=20, step=0.1, description='Size y:', disabled=False)
+        
         # Plotting button
         plot_button = widgets.Button( description='Plot', disabled=False, button_style='', tooltip='Click to plot', icon='check')
         
@@ -195,7 +196,7 @@ class MainResults:
         pivot_selection_out = widgets.Output()
         
         # For the filtering of the table
-        filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(self.table_select.keys())]
+        filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(mainresults_symbol_columns.keys())]
         filter_stack = widgets.Stack(filter_layout)
         widgets.jslink((table_select_button,'index'),(filter_stack,'selected_index'))
         filter_out = widgets.Output()
@@ -211,8 +212,8 @@ class MainResults:
                 pivot_selection_out.clear_output()  # Clear previous output
                 if table_name :
                     # Update dropdown options based on selected table
-                    series_select_button.options = self.table_select[table_name]
-                    categories_select_button.options = self.table_select[table_name]
+                    series_select_button.options = mainresults_symbol_columns[table_name]
+                    categories_select_button.options = mainresults_symbol_columns[table_name]
                 else:
                     # Reset dropdown options if no table is selected
                     series_select_button.options = []
@@ -232,7 +233,7 @@ class MainResults:
                 
         def df_update(table_name):
             if table_name :
-                self.df = self.get_result(table_name, self.table_select[table_name]+['Unit', 'Value'])
+                self.df = self.get_result(table_name)
                 with filter_out:
                     filter_out.clear_output() # Clear previous output
                     for filter_button in filter_buttons[table_name]:
@@ -249,10 +250,10 @@ class MainResults:
                 nb_series = len(series_select_button.value)
                 series_order_selection=[series_order_button1.value, series_order_button2.value, series_order_button3.value][:nb_series]
                 if None in series_order_selection:
-                    fig = self.plot_bar_chart(self.df, filter, table_select_button.value, series_select_button.value, categories_select_button.value,
+                    fig = self.plot_bar_chart(self.df, filter,series_select_button.value, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
                 else:
-                    fig = self.plot_bar_chart(self.df, filter, table_select_button.value, series_order_selection, categories_select_button.value,
+                    fig = self.plot_bar_chart(self.df, filter, series_order_selection, categories_select_button.value,
                                         (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value))
 
                 plt.show(fig)
@@ -276,13 +277,16 @@ class MainResults:
 
 
     def get_result(self, symbol: str, cols: str = 'None'):
+        # Placeholder
         df = pd.DataFrame()
+        
         for SC in self.sc:
+            # Get results from each scenario
             temp = symbol_to_df(self.db[SC], symbol, cols)
-            temp['SC'] = SC 
+            temp['Scenario'] = SC 
             
             # Put scenario in first column
-            temp = temp.loc[:, ['SC'] + list(temp.columns[:-1])]
+            temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
             
             # Save
             df = pd.concat((df, temp), ignore_index=True)
