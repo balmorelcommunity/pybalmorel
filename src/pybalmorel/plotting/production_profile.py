@@ -10,6 +10,7 @@ Created on 28.05.2022
 
 import pandas as pd
 import numpy as np
+from gams import GamsException
 from typing import Tuple
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -24,7 +25,7 @@ def plot_profile(MainResults,
                  scenario: str = 0,
                  columns: str = 'Technology',
                  region: str = 'ALL',
-                 style: str = 'light'):
+                 style: str = 'light') -> Tuple[Figure, Axes]:
     """Plots the production profile of a commodity, in a year, for a certain scenario
 
     Args:
@@ -44,7 +45,6 @@ def plot_profile(MainResults,
     if type(scenario) == int:
         scenario = MainResults.sc[scenario] 
     
-    region = 'All'.upper()
     commodity = commodity.upper()
     year = str(year)
 
@@ -83,37 +83,41 @@ def plot_profile(MainResults,
     ### ----------------------------- ###
 
     # Choices
-    if region in fProd.C.unique():
-        CorRorA = 'C' # Region or country level?
-        country = region 
-        # Load transmission
-        if commodity == 'ELECTRICITY':
-            fFlow = symbol_to_df(db, "X_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        elif commodity == 'HYDROGEN':
-            fFlow = symbol_to_df(db, "XH2_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        elif commodity == 'HEAT':
+    try:
+        if region.upper() in fProd.C.unique():
+            CorRorA = 'C' # Region or country level?
+            country = region.upper()
+            # Load transmission
+            if commodity == 'ELECTRICITY':
+                fFlow = symbol_to_df(db, "X_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            elif commodity == 'HYDROGEN':
+                fFlow = symbol_to_df(db, "XH2_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            elif commodity == 'HEAT':
+                fFlow = symbol_to_df(db, "XH_FLOW_YCAST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            else:
+                pass
+        elif region in fProd.RRR.unique():
+            CorRorA = 'R'
+            # Load transmission
+            if commodity == 'ELECTRICITY':
+                fFlow = symbol_to_df(db, "X_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            elif commodity == 'HYDROGEN':
+                fFlow = symbol_to_df(db, "XH2_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            elif commodity == 'HEAT':
+                fFlow = symbol_to_df(db, "XH_FLOW_YCAST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
+            else:
+                pass   
+        elif region in fProd.AAA.unique():
+            CorRorA = 'A'
             fFlow = symbol_to_df(db, "XH_FLOW_YCAST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        else:
-            pass
-    elif region in fProd.RRR.unique():
-        CorRorA = 'R'
-        # Load transmission
-        if commodity == 'ELECTRICITY':
-            fFlow = symbol_to_df(db, "X_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        elif commodity == 'HYDROGEN':
-            fFlow = symbol_to_df(db, "XH2_FLOW_YCRST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        elif commodity == 'HEAT':
-            fFlow = symbol_to_df(db, "XH_FLOW_YCAST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-        else:
-            pass   
-    elif region in fProd.AAA.unique():
-        CorRorA = 'A'
-        fFlow = symbol_to_df(db, "XH_FLOW_YCAST", cols=['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
-    elif region == 'ALL':
-        CorRorA = 'All'
+        elif region.upper() == 'ALL':
+            region = 'All'
+            CorRorA = 'All'
+    except GamsException:
+        fFlow = pd.DataFrame(columns = ['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
         
     # Check if flow is empty
-    if (region != 'ALL'):
+    if region != 'All':
         if (len(fFlow) == 0):
             fFlow = pd.DataFrame(columns = ['Y', 'C', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Val'])
         
@@ -169,8 +173,8 @@ def plot_profile(MainResults,
         idx1 = fFlow['IRRRE'] == region
         idx2 = fFlow['IRRRI'] == region
         
-        fFlE = fFlow[idx & idx1].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc=sum)    
-        fFlI = fFlow[idx & idx2].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc=sum)
+        fFlE = fFlow[idx & idx1].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum')    
+        fFlI = fFlow[idx & idx2].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum')
         
         # Make sure no values are missing
         fFlE = df_placeholder.join(fFlE, how='left')
@@ -180,11 +184,11 @@ def plot_profile(MainResults,
         fFlI.fillna(0, inplace=True)
     
         print('\n' + region + ' Main Export-To Regions: [TWh]')
-        print(fFlow[idx & idx1].pivot_table(values='Val', index=['IRRRI'], aggfunc=sum)/1e6*resfactor  )
+        print(fFlow[idx & idx1].pivot_table(values='Val', index=['IRRRI'], aggfunc='sum')/1e6*resfactor  )
         print('\n')
 
         print(region + ' Main Import-From Regions: [TWh]')
-        print(fFlow[idx & idx2].pivot_table(values='Val', index=['IRRRE'], aggfunc=sum)/1e6*resfactor  )
+        print(fFlow[idx & idx2].pivot_table(values='Val', index=['IRRRE'], aggfunc='sum')/1e6*resfactor  )
         print('\n')
         no_trans_data = False
     except (KeyError, NameError):

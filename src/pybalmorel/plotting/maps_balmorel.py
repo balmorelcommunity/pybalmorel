@@ -76,6 +76,8 @@ def plot_map(path_to_result: str,
     if 'MainResults' in path_to_result:
         if os.path.exists(path_to_result):
             found_scenario = True
+            print('Found MainResults in %s'%(path_to_result))
+            
     elif path_to_result[-4:] == '\...':
         path_to_result = path_to_result[:-4]
         for subdir in pd.Series(os.listdir(path_to_result.rstrip('\...'))):  
@@ -327,7 +329,9 @@ def plot_map(path_to_result: str,
                     market = 'Invest'
                 else:
                     # if no: use nan instead
-                    scenario = 'nan'
+                    scenario = ''
+                    subset = SUBSET
+                    market = ''
 
                 # create empty temporary dataframe and load the gdx data into it
                 temp = pd.DataFrame()
@@ -770,7 +774,7 @@ def plot_map(path_to_result: str,
         # plt.savefig("Output/balmorelmap.png", bbox_inches="tight", transparent=True)
         # plt.savefig("Output/balmorelmap.pdf", bbox_inches="tight", transparent=True)
 
-        print('\nSuccesful execution of MapsBalmorel.py')
+        # print('\nSuccesful execution of MapsBalmorel.py')
         
         return fig, ax
             

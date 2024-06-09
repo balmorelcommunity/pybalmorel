@@ -59,11 +59,11 @@ class MainResults:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
             
-            # Check if names are identical or empty
+            # Check if names are identical
             if (len(scenario_names.unique()) != len(scenario_names)) or (np.all(scenario_names == '')):
                 scenario_names = ['SC%d'%(i+1) for i in range(len(files))] # if so, just make generic names
             else:
-                scenario_names = list(scenario_names)
+                scenario_names = list(scenario_names) 
                 
         elif type(scenario_names) == str:
             scenario_names = [scenario_names]
@@ -73,6 +73,7 @@ class MainResults:
             raise Exception("%d files, but %d scenario names given!\nProvide none or the same amount of scenario names as files"%(len(files), len(scenario_names)))
             
         ## Store MainResult databases
+        self.files = files
         self.paths = paths
         self.sc = scenario_names
         self.db = {}
@@ -140,8 +141,8 @@ class MainResults:
         
     
     def plot_map(self, 
-                SCENARIO: str, 
-                COMMODITY: str, 
+                scenario: str, 
+                commodity: str, 
                 year: int,
                 path_to_geofile: str = None,  
                 bypass_path: str = None, 
@@ -151,8 +152,8 @@ class MainResults:
 
         Args:
             path_to_result (str): Path to the .gdx file
-            SCENARIO (str): The scenario name
-            COMMODITY (str): Electricity or hydrogen
+            scenario (str): The scenario name
+            commodity (str): Electricity or hydrogen
             year (int): Model year 
             path_to_geofile (str, optional): The path to the fitting geofile. Defaults to '../geofiles/2024 BalmorelMap.geojson' in package directory.
             bypass_path (str, optional): Extra coordinates for transmission lines for beauty. Defaults to '../geofiles/bypass_lines' in package directory.
@@ -162,11 +163,13 @@ class MainResults:
         Returns:
             Tuple[Figure, Axes]: The figure and axes objects of the plot
         """
-        # Get path of scenario
-        idx = np.array(self.sc) == SCENARIO
+        # Find path of scenario
+        idx = np.array(self.sc) == scenario
         path = np.array(self.paths)[idx][0]
+        files = np.array(self.files)[idx][0]
+        path = os.path.join(path, files)
         
-        return plot_map(path, SCENARIO, COMMODITY, 
+        return plot_map(path, scenario, commodity, 
                         year, path_to_geofile, bypass_path,
                         geo_file_region_column, style)
         
