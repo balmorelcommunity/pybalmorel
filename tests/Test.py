@@ -24,6 +24,5 @@ res.interactive_bar_chart()
 
 
 ### 1.2 Plotting maps
-plot_map('files', 'files/2024 BalmorelMap.geojson', 'ScenarioName',
-         2050, 'Electricity', 'files/bypass_lines.csv')
+res.plot_map('ScenarioName', 'Hydrogen', 2050)
 

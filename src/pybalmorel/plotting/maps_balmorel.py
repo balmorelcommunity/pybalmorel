@@ -11,7 +11,9 @@ regions that are NOT in the geofile will not be shown!
 ###       0. Script Settings      ###
 ### ----------------------------- ###
 
-import traceback
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+from typing import Tuple
 import geopandas as gpd
 try:
     import cartopy.crs as ccrs
@@ -27,8 +29,37 @@ import os
 import glob
 from gams import GamsWorkspace
 
-def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int, COMMODITY: str, 
-             bypass_path: str = '', geo_file_region_column: str = 'id', style: str = 'light'):
+def plot_map(path_to_result: str, 
+             SCENARIO: str, 
+             COMMODITY: str, 
+             year: int,
+             path_to_geofile: str = None,  
+             bypass_path: str = None, 
+             geo_file_region_column: str = 'id', 
+             style: str = 'light') -> Tuple[Figure, Axes]:
+    """Plots the transmission capacities in a scenario, of a certain commodity
+
+    Args:
+        path_to_result (str): Path to the .gdx file
+        SCENARIO (str): The scenario name
+        COMMODITY (str): Electricity or hydrogen
+        year (int): Model year 
+        path_to_geofile (str, optional): The path to the fitting geofile. Defaults to '../geofiles/2024 BalmorelMap.geojson'.
+        bypass_path (str, optional): Extra coordinates for transmission lines for beauty. Defaults to '../geofiles/bypass_lines'.
+        geo_file_region_column (str, optional): The columns containing the region names of MainResults. Defaults to 'id'.
+        style (str, optional): Plot style. Defaults to 'light'.
+
+    Returns:
+        Tuple[Figure, Axes]: The figure and axes objects of the plot
+    """
+
+    if bypass_path == None:
+        wk_dir = os.path.dirname(__file__)
+        bypass_path = os.path.abspath(os.path.join(wk_dir, '../geofiles/bypass_lines.csv'))
+                
+    if path_to_geofile == None:
+        wk_dir = os.path.dirname(__file__)
+        path_to_geofile = os.path.abspath(os.path.join(wk_dir, '../geofiles/2024 BalmorelMap.geojson'))
     # import atlite # It worked to import it in console, and then outcomment here
     # from csv import reader
 
@@ -42,7 +73,10 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
     found_scenario = False
     
     path_to_result = path_to_result.lstrip(' ').rstrip(' ')
-    if path_to_result[-4:] == '\...':
+    if 'MainResults' in path_to_result:
+        if os.path.exists(path_to_result):
+            found_scenario = True
+    elif path_to_result[-4:] == '\...':
         path_to_result = path_to_result[:-4]
         for subdir in pd.Series(os.listdir(path_to_result.rstrip('\...'))):  
             subpath = os.path.join(path_to_result, subdir, 'model')
@@ -59,7 +93,6 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
                     print('Found %s in %s'%(SCENARIO, path_to_result))
                     found_scenario = True
                     break
-                
     else:
         if os.path.exists(path_to_result + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
             print('Found %s_Iter%s in %s'%(SCENARIO, iter, path_to_result))
@@ -225,16 +258,13 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
 
         # project_dir = Path('.\Input')
         project_dir = './Input'
-
         geo_file = gpd.read_file(path_to_geofile)
 
         # #Load coordinates files 
         # df_unique = pd.read_csv('./Input/coordinates_RRR.csv')
         # df_region = df_unique.loc[df_unique['Type'] == 'region', ]
-        if bypass_path != '':
-            df_bypass = pd.read_csv(bypass_path) # coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
-        else:
-            df_bypass = pd.DataFrame()
+        df_bypass = pd.read_csv(bypass_path) # coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
+
         
         # if AltGeo == 'MUNI':
         #     df_altreg = gpd.read_file(AltGeoPath)
@@ -290,7 +320,7 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
                 df = pd.DataFrame()
                 if '_' in gdx_file:
                         # if yes: extract scenario name from gdx filename
-                    print(gdx_file)
+                    # print(gdx_file)
                     scenario = SCENARIO
                     # year = year
                     subset = SUBSET
@@ -349,7 +379,9 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
             # directory to the input gdx file(s)
             #gdx_file_list = gdx_file_list + glob.glob('./input/results/'+ market + '/*.gdx')
             
-            if (YEAR == '') & (SUBSET == ''):
+            if ('MainResults' in path_to_result) or ('.gdx' in path_to_result):
+                gdx_file =  glob.glob(path_to_result)
+            elif (YEAR == '') & (SUBSET == ''):
                 gdx_file =  glob.glob(path_to_result + '\\MainResults_' + SCENARIO + '.gdx')
             else:
                 gdx_file =  glob.glob('./input/results/'+ market + '\\MainResults_' + SCENARIO + '_'  + YEAR + '_' + SUBSET + '.gdx')
@@ -669,7 +701,8 @@ def plot_map(path_to_result: str, path_to_geofile: str, SCENARIO: str, year: int
                 l, = ax.plot([x1,x2], [y1,y2], color = net_colour, linewidth = width/line_width_constant)
                 lines.append(l)
             else:
-                print("There's a NaN value in line\nIRRRE %s\nIRRRI %s"%(df_capacity.loc[i, 'IRRRE'], df_capacity.loc[i, 'IRRRI']))
+                pass
+                # print("There's a NaN value in line\nIRRRE %s\nIRRRI %s"%(df_capacity.loc[i, 'IRRRE'], df_capacity.loc[i, 'IRRRI']))
 
             # Add labels to lines   
             if df_capacity.loc[i,'Value'] >= label_min:
