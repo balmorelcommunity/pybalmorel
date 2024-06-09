@@ -8,12 +8,15 @@ Created on 08.06.2024
 ### ------------------------------- ###
 
 import pandas as pd
-from typing import Union
+from typing import Union, Tuple
+from functools import partial
 import os
 import gams
 import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from .functions import symbol_to_df
-from .plotting.interactive_barchart import bar_chart
+from .plotting.interactive_barchart import interactive_bar_chart
 from .plotting.production_profile import plot_profile
 
 #%% ------------------------------- ###
@@ -33,6 +36,7 @@ class MainResults:
             scenario_names (str, list, tuple): Name of scenarios corresponding to each gdx file, defaults to ['SC1', 'SC2', ..., 'SCN'] if None given
         """
 
+        ## Loading scenarios
         if type(files) == str:
             # Change filenames to list if just one string
             files = [files]
@@ -74,8 +78,17 @@ class MainResults:
         for i in range(len(files)):
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
+    # Getting a certain result
+    def get_result(self, symbol: str, cols: str = 'None') -> pd.DataFrame:
+        """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
-    def get_result(self, symbol: str, cols: str = 'None'):
+        Args:
+            symbol (str): The desired result, e.g. PRO_YCRAGF
+            cols (str, optional): Specify custom columns. Defaults to pre-defined formats.
+
+        Returns:
+            pd.DataFrame: The output DataFrame
+        """
         # Placeholder
         df = pd.DataFrame()
         
@@ -92,19 +105,41 @@ class MainResults:
             
         return df  
     
-    ### Plotting Functions
+    ## Plotting tools
+    # Interactive bar chart plotting
+    def interactive_bar_chart(self):
+        """
+        GUI for bar chart plotting
+        """
+        return  interactive_bar_chart(self)        
     
-    # Interactive Bar Chart
-    def bar_chart(self):
-        bar_chart(self)
+    # Plotting a production profile
+    def plot_profile(self,
+                     commodity: str,  
+                     year: int, 
+                     scenario: str = 0,
+                     columns: str = 'Technology',
+                     region: str = 'ALL',
+                     style: str = 'light') -> Tuple[Figure, Axes]:
+        """Plots the production profile of a commodity, in a year, for a certain scenario
+
+        Args:
+            commodity (str): The commodity (Electricity, Heat or Hydrogen)
+            year (int): The model year to plot
+            scenario (str, optional): Defaults to the first scenario in MainResults.
+            columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+            region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+            style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+        Returns:
+            Figure, Axes: The figure and axes objects for further manipulations 
+        """
+        return plot_profile(self, commodity, year, scenario, columns, region, style)
         
-    # Production Profile
-    def plot_profile(self, scenario: str, year: int,
-                     commodity: str, columns: str,
-                     region: str, style: str = 'light'):
-        plot_profile(self, scenario=scenario, year=year,
-                     commodity=commodity, columns=columns,
-                     region=region, style=style)
+    # For wrapping functions, makes it possible to add imported functions in __init__ easily
+    def _existing_func_wrapper(self, function, *args, **kwargs):
+        return function(self, *args, **kwargs)     
+
 
 #%% ------------------------------- ###
 ###            2. Inputs            ###

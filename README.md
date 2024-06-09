@@ -12,7 +12,7 @@ from pybalmorel import MainResults
 
 ### 1.1 Interactive bar chart tool
 res = MainResults('MainResults_ScenarioName.gdx', 'Files')
-res.bar_chart()
+res.interactive_bar_chart()
 
 ### 1.2 Plotting maps
 plot_map('files', 'files/2024 BalmorelMap.geojson', 'ScenarioName',

@@ -98,9 +98,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         
     
 
-def bar_chart(MainResults):
+def interactive_bar_chart(MainResults):
     """
     GUI for bar chart plotting
+    
+    MainResults (MainResults): Takes a MainResults class and opens a GUI for plotting
     """
 
     """ Buttons definition """

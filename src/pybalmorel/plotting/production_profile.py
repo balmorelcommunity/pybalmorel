@@ -10,15 +10,39 @@ Created on 28.05.2022
 
 import pandas as pd
 import numpy as np
+from typing import Tuple
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 from ..functions import symbol_to_df
+from ..formatting import balmorel_colours
 
 
-def plot_profile(MainResults, scenario: str,
-                 year: int, commodity: str, 
-                 columns: str,
+def plot_profile(MainResults,
+                 commodity: str,  
+                 year: int, 
+                 scenario: str = 0,
+                 columns: str = 'Technology',
                  region: str = 'ALL',
-                 style: str = 'light'): 
+                 style: str = 'light'):
+    """Plots the production profile of a commodity, in a year, for a certain scenario
+
+    Args:
+        MainResults (_type_): The MainResults class containing results
+        commodity (str): The commodity (Electricity, Heat or Hydrogen)
+        year (int): The model year to plot
+        scenario (str, optional): Defaults to the first scenario in MainResults.
+        columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+        region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+        style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+    Returns:
+        Figure, Axes: The figure and axes objects for further manipulations 
+    """
+    
+        
+    if type(scenario) == int:
+        scenario = MainResults.sc[scenario] 
     
     region = 'All'.upper()
     commodity = commodity.upper()
@@ -99,30 +123,7 @@ def plot_profile(MainResults, scenario: str,
 
 
     ### Colours
-    c = {'IMPORT' : [150/255, 185/255, 252/255],
-        'BIOGAS' : [128/255, 159/255, 121/255],
-        'CONDENSING' : [0.2, 0.2, 0.2],
-        'NATGAS' : [0.2, 0.2, 0.2],
-        'COAL' : [0, 0, 0],
-        'LIGHTOIL' : [0.4, 0.4, 0.4],
-        'FUELOIL' : [.4, .4, .4],
-        'WATER' : [63/255, 37/255, 1],
-        'HYDRO-RESERVOIRS' : [63/255, 37/255, 1],
-        'HYDRO-RUN-OF-RIVER' : [63/255*0.8, 37/255*0.8, 1*0.8],
-        'WIND' : [83/255, 243/255, 133/255],
-        'WIND-ON' : [83/255, 243/255, 133/255],
-        'WIND-OFF' : [83/255*0.8, 243/255*0.8, 133/255*0.8],
-        'SUN' : [255/255, 254/255, 0],
-        'SOLAR-PV' : [255/255, 254/255, 0],
-        'MUNIWASTE' : [150/255, 150/255, 150/255],
-        'WOODCHIPS' : [233/255, 67/255, 67/255],
-        'WOODPELLETS' : [215/255, 60/255, 60/255],
-        'STRAW' : [241/255, 135/255, 135/255],
-        'PEAT' : [.8, .8, .8],
-        'ELECTRIC' : [252/255, 1, 137/255],
-        'HYDROGEN' : [137/255, 224/255, 1],
-        'NUCLEAR' : [204/255, 0, 204/255],
-        'WASTEHEAT' : [1,0,0]}
+    c = balmorel_colours
 
 
     ### ----------------------------- ###
@@ -147,7 +148,7 @@ def plot_profile(MainResults, scenario: str,
     df_placeholder = pd.DataFrame(index=t_index)
 
     # Create production dataframe
-    fPr = fProd[idx].pivot_table(values='Val', index=['SSS', 'TTT'], columns=[columns],aggfunc=sum)
+    fPr = fProd[idx].pivot_table(values='Val', index=['SSS', 'TTT'], columns=[columns],aggfunc='sum')
     fPr = df_placeholder.join(fPr, how='left')
     fPr.fillna(0, inplace=True)
     
@@ -161,7 +162,7 @@ def plot_profile(MainResults, scenario: str,
         fFlow = fFlow[~((fFlow.IRRRE == region) & (fFlow.IRRRI == region))]
 
     # Get year
-    print('Note that the following flows have not been scaled to fit annual flows\n')
+    # print('Note that the following flows have not been scaled to fit annual flows\n')
     try:
         idx = fFlow['Y'] == year
 
@@ -188,7 +189,7 @@ def plot_profile(MainResults, scenario: str,
         no_trans_data = False
     except (KeyError, NameError):
         no_trans_data = True
-        print('No transmission data')
+        # print('No transmission data')
 
 
     ### Electricity Demand and price
@@ -199,26 +200,26 @@ def plot_profile(MainResults, scenario: str,
         
         fD = fDem.groupby(['Y', 'C', 'VARIABLE_CATEGORY', 'SSS', 'TTT'], as_index=False)
         fD = fD.aggregate({'Val' : np.sum}) 
-        dems = fD[(fD['Y']==Y) & (fD['C'] == country)]
+        dems = fD[(fD['Y']==year) & (fD['C'] == country)]
         fD = fDem[fDem.C == country] 
     elif CorRorA == 'R':
-        dems = fDem[(fDem['Y']==Y) & (fDem['RRR'] == region)]
+        dems = fDem[(fDem['Y']==year) & (fDem['RRR'] == region)]
         fP = fPrice[fPrice['RRR'] == region]    
         fD = fDem[fDem['RRR'] == region] 
     elif CorRorA == 'A':
-        dems = fDem[(fDem['Y']==Y) & (fDem['AAA'] == region)]
+        dems = fDem[(fDem['Y']==year) & (fDem['AAA'] == region)]
         fP = fPrice[fPrice['AAA'] == region]    
         fD = fDem[fDem['AAA'] == region] 
     elif CorRorA == 'All':
         fP = fPrice.groupby(['Y', 'C', 'SSS', 'TTT'], as_index=False)
         fP = fP.aggregate({'Val' : price_agg_func}) # For aggregation of electricity price, max or average? (maybe max if nodal representation of a market?)        
         fD = fDem.groupby(['Y', 'C', 'VARIABLE_CATEGORY', 'SSS', 'TTT'], as_index=False)
-        fD = fD.aggregate({'Val' : np.sum}) 
+        fD = fD.aggregate({'Val' : 'sum'}) 
         dems = fD[(fD['Y']==year)]
 
-    print('Electricity Demand: [TWh]')
-    for cat in np.unique(dems['VARIABLE_CATEGORY']):
-        print(cat, ' = ', round(dems[dems['VARIABLE_CATEGORY'] == cat]['Val'].sum()/1e6*resfactor,2))
+    # print('Electricity Demand: [TWh]')
+    # for cat in np.unique(dems['VARIABLE_CATEGORY']):
+    #     print(cat, ' = ', round(dems[dems['VARIABLE_CATEGORY'] == cat]['Val'].sum()/1e6*resfactor,2))
 
     # Subtract import from export
     f = pd.DataFrame({'IMPORT' : np.zeros(len(fPr))}, index=fPr.index)
@@ -259,7 +260,7 @@ def plot_profile(MainResults, scenario: str,
     
     # Demand
     idx = fD['Y'] == year 
-    fD = fD[idx].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc=sum)
+    fD = fD[idx].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum')
     
     # Make sure no values are missing
     fD = df_placeholder.join(fD, how='left')
@@ -282,7 +283,8 @@ def plot_profile(MainResults, scenario: str,
     ps = []
     for col in f:
         try:
-            ps.append(ax.fill_between(x, temp, temp+f.loc[xticks, col].values/1e3, label=col, facecolor=np.array(c[col]).round(2)))
+            # ps.append(ax.fill_between(x, temp, temp+f.loc[xticks, col].values/1e3, label=col, facecolor=np.array(c[col]).round(2)))
+            ps.append(ax.fill_between(x, temp, temp+f.loc[xticks, col].values/1e3, label=col, facecolor=c[col]))
         except KeyError:
             print('No defined colour for %s'%col)
             ps.append(ax.fill_between(x, temp, temp+f.loc[xticks, col].values/1e3, label=col))

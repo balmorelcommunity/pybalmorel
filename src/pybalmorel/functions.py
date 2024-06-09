@@ -60,5 +60,5 @@ def read_lines(name, file_path, make_space=True):
 # from plotting import MapsBalmorel, ProductionProfile, ProductionMap, LoadGDX
 from .plotting.maps_balmorel import plot_map
 
-from .plotting.interactive_barchart import bar_chart, plot_bar_chart
+from .plotting.interactive_barchart import interactive_bar_chart, plot_bar_chart
 

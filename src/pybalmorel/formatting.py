@@ -41,6 +41,7 @@ tech_colours = {
             'WIND-ON': '#006460',
             'WIND-OFF': '#08bdba',
             'INTRASEASONAL-ELECT-STORAGE': '#ba4e00',
+            'H2-STORAGE': '#E8C3A8',
             'ELECTROLYZER': '#ADD8E6',
             'SALT-CAVERN': '#E8C3A8',
             'STEEL-TANK':'#C0C0C0',
@@ -51,8 +52,8 @@ tech_colours = {
 
 fuel_colours = {
             'HYDRO': '#08bdba',
-            'WIND-ON': '#5e45ff',
-            'WIND-OFF': '#4589ff',
+            # 'WIND-ON': '#5e45ff',
+            # 'WIND-OFF': '#4589ff',
             'BIOGAS': '#23932d',
             'COAL': '#595959',
             'ELECTRIC': '#BA000F',
@@ -66,11 +67,50 @@ fuel_colours = {
             'SOLAR': '#fad254',
             'NUCLEAR': '#cd6f00',
             'LIGNITE': '#2b1d1d',
-            'HYDROGEN': '#dbdcec'
+            'HYDROGEN': '#dbdcec',
+
+            'IMPORT': '#96b9fc',
+            'LIGHTOIL': '#666666',
+            'FUELOIL': '#666666',
+            'WATER': '#3f2500',
+            'WIND': '#53f385',
+            'SUN': '#ffff00',
+            'WOODCHIPS': '#e94343',
+            'WOODPELLETS': '#d73c3c',
+            'PEAT': '#cccccc',
+            'STRAW': '#f18787',
+            'WASTEHEAT': '#ff0000'
             }
 
 
 balmorel_colours = tech_colours | fuel_colours
+
+mberos_colours = {
+        'IMPORT' : [150/255, 185/255, 252/255],
+        'BIOGAS' : [128/255, 159/255, 121/255],
+        'CONDENSING' : [0.2, 0.2, 0.2],
+        'NATGAS' : [0.2, 0.2, 0.2],
+        'COAL' : [0, 0, 0],
+        'LIGHTOIL' : [0.4, 0.4, 0.4],
+        'FUELOIL' : [.4, .4, .4],
+        'WATER' : [63/255, 37/255, 1],
+        'HYDRO-RESERVOIRS' : [63/255, 37/255, 1],
+        'HYDRO-RUN-OF-RIVER' : [63/255*0.8, 37/255*0.8, 1*0.8],
+        'WIND' : [83/255, 243/255, 133/255],
+        'WIND-ON' : [83/255, 243/255, 133/255],
+        'WIND-OFF' : [83/255*0.8, 243/255*0.8, 133/255*0.8],
+        'SUN' : [255/255, 254/255, 0],
+        'SOLAR-PV' : [255/255, 254/255, 0],
+        'MUNIWASTE' : [150/255, 150/255, 150/255],
+        'WOODCHIPS' : [233/255, 67/255, 67/255],
+        'WOODPELLETS' : [215/255, 60/255, 60/255],
+        'STRAW' : [241/255, 135/255, 135/255],
+        'PEAT' : [.8, .8, .8],
+        'ELECTRIC' : [252/255, 1, 137/255],
+        'HYDROGEN' : [137/255, 224/255, 1],
+        'NUCLEAR' : [204/255, 0, 204/255],
+        'WASTEHEAT' : [1,0,0]
+        }
 
 #%% ------------------------------- ###
 ###            2. Other             ###
