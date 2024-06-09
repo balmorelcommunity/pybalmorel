@@ -9,8 +9,19 @@ A few examples are provided on processing outputs and inputs below.
 ```
 from pybalmorel import MainResults
 
+### 1.0 Loading MainResults in different ways
+# Using MainResults files in the same path, with different suffixes
+res = MainResults(files=['MainResults_Example1.gdx', 
+                         'MainResults_Example2.gdx'], 
+                  paths='Files')
+# Using the Balmorel scenario folder structure, with optional scenario_names (otherwise, default is SC1, SC2, ..., SCN)
+res = MainResults(files=['MainResults.gdx', 
+                         'MainResults.gdx'], 
+                  paths=['Balmorel/Example1/model',
+                         'Balmorel/Example2/model'],
+                  scenario_names=['Example1', 'Example2'])
+
 ### 1.1 Getting a specific result
-res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='Files', scenario_names=['SC1', 'SC2'])
 df = res.get_result('G_CAP_YCRAF')
 
 ### 1.2 Plotting maps
