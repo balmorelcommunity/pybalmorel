@@ -14,7 +14,7 @@ from pybalmorel import MainResults
 res = MainResults(files=['MainResults_Example1.gdx', 
                          'MainResults_Example2.gdx'], 
                   paths='Files')
-# Using the Balmorel scenario folder structure, with optional scenario_names (otherwise, default is SC1, SC2, ..., SCN)
+# Using the Balmorel scenario folder structure, with optional scenario_names (otherwise, different scenarios by default get these generic names: SC1, SC2, ..., SCN)
 res = MainResults(files=['MainResults.gdx', 
                          'MainResults.gdx'], 
                   paths=['Balmorel/Example1/model',
