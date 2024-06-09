@@ -7,16 +7,20 @@ A few examples are provided on processing outputs and inputs below.
 ## Outputs
 ### Example of plotting MainResults
 ```
-from pybalmorel.functions import plot_map
 from pybalmorel import MainResults
 
-### 1.1 Interactive bar chart tool
-res = MainResults('MainResults_ScenarioName.gdx', 'Files')
-res.interactive_bar_chart()
+### 1.1 Getting a specific result
+res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='Files', scenario_names=['SC1', 'SC2'])
+df = res.get_result('G_CAP_YCRAF')
 
 ### 1.2 Plotting maps
-plot_map('files', 'files/2024 BalmorelMap.geojson', 'ScenarioName',
-         2050, 'Electricity', 'files/bypass_lines.csv')
+fig, ax = res.plot_map(scenario='SC1', commodity='Electricity', year=2050)
+
+### 1.3 Plotting production profiles
+fig, ax = res.plot_profile(scenario='SC2', year=2050, commodity='Heat', columns='Technology', region='all')
+
+### 1.4 Interactive bar chart tool
+res.interactive_bar_chart()
 ```
 
 Results can be loaded into a pandas DataFrame from a .gdx file using gams and symbol_to_df:
@@ -29,7 +33,7 @@ import pandas as pd
 
 # Load .gdx file
 ws = gams.GamsWorkspace()
-db = ws.add_database_from_gdx(os.path.abspath('Balmorel/base/model/MainResults_Base.gdx'))
+db = ws.add_database_from_gdx(os.path.abspath('Balmorel/base/model/MainResults_ScenarioName.gdx'))
 
 # Load the annual production into a pandas DataFrame
 pro = symbol_to_df(db, 'PRO_YCRAGF', cols=['Y', 'C', 'R', 'A', 'G', 'F', 
