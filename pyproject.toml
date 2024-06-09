@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.1.3"
+version = "0.2.0"
 authors = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
 ]
@@ -12,10 +12,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-
 dependencies = ['pandas>=2.1.4', 'matplotlib>=3.9.0', 'geopandas>=0.14.4', 
                 'gamsapi[transfer]>=45.0.0', 'ipywidgets>=8.1.3']
 
 [project.urls]
 Repository = "https://github.com/Mathias157/pybalmorel"
 Issues = "https://github.com/Mathias157/pybalmorel/issues"
+
+[tool.setuptools.package-data]
+"pybalmorel" = ["geofiles/*.*"]
