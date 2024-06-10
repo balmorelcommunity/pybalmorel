@@ -1,3 +1,4 @@
+# pybalmorel
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel 
 
 Check out [this jupyter notebook](https://github.com/Mathias157/pybalmorel/tree/master/tests/Test.ipynb) with examples of how to use it. 
