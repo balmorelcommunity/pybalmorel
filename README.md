@@ -1,11 +1,11 @@
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel 
 
-Check out Test.ipynb in https://github.com/Mathias157/pybalmorel/tree/master/tests for examples on how to use. 
+Check out [this jupyter notebook](https://github.com/Mathias157/pybalmorel/tree/master/tests/Test.ipynb) with examples of how to use it. 
 
-A few examples are provided on processing outputs and inputs below.
+A few examples of processing outputs and inputs are also provided below.
 
 ## Outputs
-### Example of plotting MainResults
+### Example of using MainResults
 ```
 from pybalmorel import MainResults
 
@@ -33,24 +33,6 @@ fig, ax = res.plot_profile(scenario='Scenario2', year=2050, commodity='Heat', co
 ### 1.4 Interactive bar chart tool
 res.interactive_bar_chart()
 ```
-
-Results can be loaded into a pandas DataFrame from a .gdx file using gams and symbol_to_df:
-```
-import gams
-import os
-from pybalmorel.functions import symbol_to_df
-import pandas as pd
-
-
-# Load .gdx file
-ws = gams.GamsWorkspace()
-db = ws.add_database_from_gdx(os.path.abspath('Balmorel/base/model/MainResults_Scenario1.gdx'))
-
-# Load the annual production into a pandas DataFrame
-pro = symbol_to_df(db, 'PRO_YCRAGF', cols=['Y', 'C', 'R', 'A', 'G', 'F', 
-                                           'Commodity', 'Tech', 'Unit', 'Value'])
-```
-
 
 ## Inputs
 ### Example of creating an .inc file
