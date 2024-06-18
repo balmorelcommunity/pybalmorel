@@ -183,13 +183,13 @@ def plot_profile(MainResults,
         fFlI = df_placeholder.join(fFlI, how='left')
         fFlI.fillna(0, inplace=True)
     
-        print('\n' + region + ' Main Export-To Regions: [TWh]')
-        print(fFlow[idx & idx1].pivot_table(values='Val', index=['IRRRI'], aggfunc='sum')/1e6*resfactor  )
-        print('\n')
+        # print('\n' + region + ' Main Export-To Regions: [TWh]')
+        # print(fFlow[idx & idx1].pivot_table(values='Val', index=['IRRRI'], aggfunc='sum')/1e6*resfactor  )
+        # print('\n')
 
-        print(region + ' Main Import-From Regions: [TWh]')
-        print(fFlow[idx & idx2].pivot_table(values='Val', index=['IRRRE'], aggfunc='sum')/1e6*resfactor  )
-        print('\n')
+        # print(region + ' Main Import-From Regions: [TWh]')
+        # print(fFlow[idx & idx2].pivot_table(values='Val', index=['IRRRE'], aggfunc='sum')/1e6*resfactor  )
+        # print('\n')
         no_trans_data = False
     except (KeyError, NameError):
         no_trans_data = True
@@ -253,7 +253,7 @@ def plot_profile(MainResults,
     if bypass_eps.lower() == 'y':
         idx = fP.Val == 'Eps'
         fP.loc[idx, 'Val'] = 0 # If you chose to bypass eps values in el-price, it's probably because the actual prices are very small
-        fP.Val = fP.Val.astype(float)
+        fP.loc[:, 'Val'] = fP.Val.astype(float).values
         
     idx = fP['Y'] == year
     fP = fP[idx].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc=price_agg_func)

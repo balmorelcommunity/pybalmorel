@@ -27,7 +27,8 @@ from .plotting.maps_balmorel import plot_map
 class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
-                 scenario_names: Union[str, list, tuple] = None):
+                 scenario_names: Union[str, list, tuple] = None,
+                 system_directory: str = None):
         """
         Initialises the MainResults class and loads gdx result file(s)
 
@@ -35,6 +36,7 @@ class MainResults:
             files (str, list, tuple): Name(s) of the gdx result file(s)
             paths (str, list, tuple): Path(s) to the gdx result file(s), assumed in same path if only one path given, defaults to working directory
             scenario_names (str, list, tuple): Name of scenarios corresponding to each gdx file, defaults to ['SC1', 'SC2', ..., 'SCN'] if None given
+            system_directory (str, optional): GAMS system directory. Is not used if not specified.
         """
 
         ## Loading scenarios
@@ -77,7 +79,11 @@ class MainResults:
         self.paths = paths
         self.sc = scenario_names
         self.db = {}
-        ws = gams.GamsWorkspace()
+        if system_directory != None:
+            ws = gams.GamsWorkspace(system_directory=system_directory)
+        else:
+            ws = gams.GamsWorkspace()
+            
         for i in range(len(files)):
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      

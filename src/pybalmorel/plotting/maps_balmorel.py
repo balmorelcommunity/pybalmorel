@@ -36,7 +36,8 @@ def plot_map(path_to_result: str,
              path_to_geofile: str = None,  
              bypass_path: str = None, 
              geo_file_region_column: str = 'id', 
-             style: str = 'light') -> Tuple[Figure, Axes]:
+             style: str = 'light',
+             system_directory: str = None) -> Tuple[Figure, Axes]:
     """Plots the transmission capacities in a scenario, of a certain commodity
 
     Args:
@@ -48,6 +49,7 @@ def plot_map(path_to_result: str,
         bypass_path (str, optional): Extra coordinates for transmission lines for beauty. Defaults to '../geofiles/bypass_lines'.
         geo_file_region_column (str, optional): The columns containing the region names of MainResults. Defaults to 'id'.
         style (str, optional): Plot style. Defaults to 'light'.
+        system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
 
     Returns:
         Tuple[Figure, Axes]: The figure and axes objects of the plot
@@ -225,9 +227,12 @@ def plot_map(path_to_result: str,
         
 
 
-        def dataframe_from_gdx(gdx_name,parameter_name,**read_options):
+        def dataframe_from_gdx(gdx_name,parameter_name,system_directory,**read_options):
             
-            ws = GamsWorkspace(os.getcwd(),)
+            if system_directory != None:
+                ws = GamsWorkspace(os.getcwd(), system_directory=system_directory)
+            else:
+                ws = GamsWorkspace(os.getcwd())
 
 
             var, cols= read_paramenter_from_gdx(ws,gdx_name,parameter_name,**read_options)
@@ -318,7 +323,7 @@ def plot_map(path_to_result: str,
         ## 1.4A.1 Function: reading gdx-files
 
         if filetype_input == 'gdx':
-            def df_creation(gdx_file, varname):
+            def df_creation(gdx_file, varname, system_directory):
                 df = pd.DataFrame()
                 if '_' in gdx_file:
                         # if yes: extract scenario name from gdx filename
@@ -338,7 +343,7 @@ def plot_map(path_to_result: str,
                 # temp = gdxpds.to_dataframe(gdx_file, varname, gams_dir=gams_dir,
                 #                        old_interface=False)
                 
-                temp=dataframe_from_gdx(gdx_file,varname)
+                temp=dataframe_from_gdx(gdx_file,varname, system_directory)
 
                 # add a scenario column with the scenario name of the current iteration
                 temp['Scenario'] = scenario
@@ -395,7 +400,7 @@ def plot_map(path_to_result: str,
 
 
             for varname, df in zip(var_list, var_list):
-                all_df[varname] = df_creation(gdx_file, varname)
+                all_df[varname] = df_creation(gdx_file, varname, system_directory)
                 if all_df[varname]['run'][0] not in runs:
                     runs.append(all_df[varname]['run'][0])
 
