@@ -71,6 +71,8 @@ def plot_profile(MainResults,
     if commodity == 'ELECTRICITY':
         fPrice  = symbol_to_df(db, "EL_PRICE_YCRST", cols=['Y', 'C', 'RRR', 'SSS', 'TTT', 'UNITS', 'Val']) 
         fDem  = symbol_to_df(db, "EL_DEMAND_YCRST", cols=['Y', 'C', 'RRR', 'SSS', 'TTT', 'VARIABLE_CATEGORY', 'UNIT', 'Val'])  
+        fBal  = symbol_to_df(db, "EL_BALANCE_YCRST", cols=['Y', 'C', 'RRR', 'Technology', 'SSS', 'TTT', 'UNIT', 'Val'])  
+        fBal = fBal[fBal.Technology == 'EXPORT3RD']
     elif commodity == 'HYDROGEN':
         fPrice  = symbol_to_df(db, "H2_PRICE_YCRST", cols=['Y', 'C', 'RRR', 'SSS', 'TTT', 'UNITS', 'Val']) 
         fDem  = symbol_to_df(db, "H2_DEMAND_YCRST", cols=['Y', 'C', 'RRR', 'SSS', 'TTT', 'VARIABLE_CATEGORY', 'UNIT', 'Val'])  
@@ -202,6 +204,8 @@ def plot_profile(MainResults,
         fP = fP.aggregate({'Val' : price_agg_func}) # For aggregation of electricity price, max or average? (maybe max if nodal representation of a market?)
         fP = fP[fP.C == country]    
         
+        if commodity == 'ELECTRICITY':
+            fBal = fBal[(fBal.C == country) & (fBal.Y == year)].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum').fillna(0)
         fD = fDem.groupby(['Y', 'C', 'VARIABLE_CATEGORY', 'SSS', 'TTT'], as_index=False)
         fD = fD.aggregate({'Val' : np.sum}) 
         dems = fD[(fD['Y']==year) & (fD['C'] == country)]
@@ -209,6 +213,8 @@ def plot_profile(MainResults,
     elif CorRorA == 'R':
         dems = fDem[(fDem['Y']==year) & (fDem['RRR'] == region)]
         fP = fPrice[fPrice['RRR'] == region]    
+        if commodity == 'ELECTRICITY':
+            fBal = fBal[(fBal.RRR == region) & (fBal.Y == year)].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum').fillna(0)
         fD = fDem[fDem['RRR'] == region] 
     elif CorRorA == 'A':
         dems = fDem[(fDem['Y']==year) & (fDem['AAA'] == region)]
@@ -217,6 +223,8 @@ def plot_profile(MainResults,
     elif CorRorA == 'All':
         fP = fPrice.groupby(['Y', 'C', 'SSS', 'TTT'], as_index=False)
         fP = fP.aggregate({'Val' : price_agg_func}) # For aggregation of electricity price, max or average? (maybe max if nodal representation of a market?)        
+        if commodity == 'ELECTRICITY':
+            fBal = fBal[(fBal.Y == year)].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum').fillna(0)
         fD = fDem.groupby(['Y', 'C', 'VARIABLE_CATEGORY', 'SSS', 'TTT'], as_index=False)
         fD = fD.aggregate({'Val' : 'sum'}) 
         dems = fD[(fD['Y']==year)]
@@ -264,11 +272,19 @@ def plot_profile(MainResults,
     
     # Demand
     idx = fD['Y'] == year 
-    fD = fD[idx].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum')
+    fD = fD[idx].pivot_table(values='Val', index=['SSS', 'TTT'], aggfunc='sum') 
     
     # Make sure no values are missing
     fD = df_placeholder.join(fD, how='left')
-    fD.fillna(0, inplace=True)
+    fD = fD.fillna(0) 
+    
+    # Add import/export from 3rd countries
+    if commodity == 'ELECTRICITY':
+        try:
+            fD = fD.add(fBal, fill_value=0)
+        except ValueError:
+            # In case no 3RD country export/import
+            pass
     
     # x-axis
     xticks = fD.index.sort_values()
