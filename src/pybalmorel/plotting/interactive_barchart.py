@@ -224,4 +224,4 @@ def interactive_bar_chart(MainResults):
     display(plot_out)
 	
   
-    
+print("Oui")
