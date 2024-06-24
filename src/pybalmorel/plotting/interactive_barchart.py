@@ -222,6 +222,3 @@ def interactive_bar_chart(MainResults):
     display(plot_options_layout, plot_options_out)
     display(plot_button)
     display(plot_out)
-	
-  
-print("Oui")
