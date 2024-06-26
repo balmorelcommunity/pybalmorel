@@ -86,6 +86,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             for cat, pos in zip(categories_second, category_positions_second):
                 if xaxis[3]==True :
                     ax.text(pos + len(categories_final)/2-0.5, xaxis[4], cat, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
+                    if pos != 0 :
+                        ax.axvline(x=pos-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
                 
         # Add x-axis labels for triple stage
         if len(temp.index[0]) == 3 :
@@ -95,11 +97,15 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             category_positions_third = [temp.index.get_level_values(-3).tolist().index(cat) for cat in categories_third]
             
             for cat1, pos1 in zip(categories_third, category_positions_third):
-                if xaxis[7]==True :
-                    ax.text(pos1 + (len(categories_final)*len(categories_second))/2-0.5, xaxis[8], cat1, ha='center', va='center', fontsize=xaxis[9], fontweight=dict_fw[xaxis[10]], rotation=0)
+                if xaxis[8]==True :
+                    ax.text(pos1 + (len(categories_final)*len(categories_second))/2-0.5, xaxis[9], cat1, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0)
+                    if pos1 != 0 :
+                        ax.axvline(x=pos1-0.5, ymin=xaxis[12], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
                 for cat2, pos2 in zip(categories_second, category_positions_second):
                     if xaxis[3]==True :
                         ax.text(pos1 + pos2 + len(categories_final)/2-0.5, xaxis[4], cat2, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
+                        if pos2 != 0 :
+                            ax.axvline(x=pos1+pos2-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
         
         
         ax.set_ylabel(f'Value ({unit})')

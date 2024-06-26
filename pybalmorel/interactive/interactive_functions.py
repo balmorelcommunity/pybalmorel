@@ -63,18 +63,22 @@ def interactive_bar_chart(MainResults_instance):
     xaxis1_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis1_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
-    xaxis2_button = widgets.ToggleButton(value=True, description='First series', disabled=False, icon='check')
-    xaxis2_position_button = widgets.FloatSlider(value=-2, min=-10, max=0, step=0.1, description='Position:', disabled=False, 
-                                                 orientation='horizontal', readout=True, readout_format='.1f')
+    xaxis2_button = widgets.ToggleButton(value=True, description='Second series', disabled=False, icon='check')
+    xaxis2_position_button = widgets.FloatText(value=-2, description='Position:', disabled=False, 
+                                               orientation='horizontal', readout=True, readout_format='.1f')
     xaxis2_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis2_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
-    xaxis3_button = widgets.ToggleButton(value=True, description='First series', disabled=False, icon='check')
-    xaxis3_position_button = widgets.FloatSlider(value=-4, min=-10, max=0, step=0.1, description='Position:', disabled=False, 
-                                                 orientation='horizontal', readout=True, readout_format='.1f')
+    xaxis2_sep_button = widgets.FloatSlider(value=-0.05, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
+                                            orientation='horizontal', readout=True, readout_format='.3f')
+    xaxis3_button = widgets.ToggleButton(value=True, description='Third series', disabled=False, icon='check')
+    xaxis3_position_button = widgets.FloatText(value=-4, description='Position:', disabled=False, 
+                                               orientation='horizontal', readout=True, readout_format='.1f')
     xaxis3_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis3_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
+    xaxis3_sep_button = widgets.FloatSlider(value=-0.1, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
+                                            orientation='horizontal', readout=True, readout_format='.3f')
     
     # Plotting button
     plot_button = widgets.Button( description='Plot', disabled=False, button_style='', tooltip='Click to plot', icon='check')
@@ -83,8 +87,8 @@ def interactive_bar_chart(MainResults_instance):
     series_order_stack = widgets.Stack([widgets.VBox([series_order_button1]),widgets.VBox([series_order_button1,series_order_button2]),
                                         widgets.VBox([series_order_button1,series_order_button2,series_order_button3])])   
     xaxis_order_stack =  widgets.Stack([widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button])]),
-                                        widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button])]),
-                                        widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button]),widgets.HBox([xaxis3_button,xaxis3_position_button,xaxis3_size_button,xaxis3_bold_button])])])
+                                        widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button])]),
+                                        widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button]),widgets.HBox([xaxis3_button,xaxis3_position_button,xaxis3_size_button,xaxis3_bold_button,xaxis3_sep_button])])])
     
     # For the pivot table options selection
     pivot_selection_layout = widgets.GridBox([table_select_button, widgets.VBox([series_select_button,series_order_stack]) , categories_select_button], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px'))
@@ -154,12 +158,12 @@ def interactive_bar_chart(MainResults_instance):
                 fig = plot_bar_chart(MainResults_instance.df, filter,series_select_button.value, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
-                                     xaxis2_bold_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value))
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value))
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
-                                     xaxis2_bold_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value))
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value))
 
             plt.show(fig)
             
