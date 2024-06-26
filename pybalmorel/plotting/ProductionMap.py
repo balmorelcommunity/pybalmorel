@@ -15,7 +15,7 @@ import numpy as np
 import os
 import cmcrameri
 from PIL import Image
-from Functions import symbol_to_df
+from ..utils import symbol_to_df
 
 style = 'report'
 

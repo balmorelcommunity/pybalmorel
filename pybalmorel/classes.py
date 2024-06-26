@@ -7,16 +7,16 @@ Created on 08.06.2024
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-import pandas as pd
-from typing import Union, Tuple
-from functools import partial
 import os
 import gams
+import pandas as pd
 import numpy as np
+from typing import Union, Tuple
+from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from .functions import symbol_to_df
-from .plotting.interactive_barchart import interactive_bar_chart
+from .utils import symbol_to_df
+from .interactive.interactive_functions import interactive_bar_chart
 from .plotting.production_profile import plot_profile
 from .plotting.maps_balmorel import plot_map
 
@@ -85,6 +85,7 @@ class MainResults:
             ws = gams.GamsWorkspace()
             
         for i in range(len(files)):
+            print(os.path.join(os.path.abspath(paths[i]), files[i]))
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
     # Getting a certain result
