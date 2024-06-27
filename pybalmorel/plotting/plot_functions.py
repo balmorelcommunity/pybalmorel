@@ -19,7 +19,7 @@ from ..formatting import balmorel_colours
 
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
-                    title: tuple, size: tuple, xaxis: tuple, legend: tuple, print: bool, namefile: str):
+                    title: tuple, size: tuple, xaxis: tuple, legend: tuple, save: bool, namefile: str):
     """
     Plotting function for the bar chart
 
@@ -33,12 +33,13 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         size (tuple): Size of the plot
         xaxis (tuple): Options for the x axis
         legend (tuple): Options for the legend
-        print (bool): Do the plot have to be saved
+        save (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
     """
     
     # Unit
     unit = df['Unit'][0]
+    unit_dict = {'GW': 'Capacity', 'TWh': 'Energy', 'GWh': 'Energy'}
     
     # Filtering the dataframe 
     query_parts = []
@@ -59,7 +60,18 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         values='Value',
                         aggfunc='sum').fillna(0)
         
+        #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
+        all_combinations = pd.MultiIndex.from_product([temp.index.get_level_values(i).unique() for i in range(len(temp.index[0]))], names=series)
+        temp = temp.reindex(all_combinations).reset_index()
+        temp = df.pivot_table(index=series,
+                        columns=categories,
+                        values='Value',
+                        aggfunc='sum',
+                        dropna=False).fillna(0)
+        
         # print(temp)
+        
+        max_bar = temp.sum(axis=1).max()
         
         # Object oriented plotting
         fig, ax = plt.subplots(figsize=size)
@@ -89,7 +101,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             
             for cat, pos in zip(categories_second, category_positions_second):
                 if xaxis[3]==True :
-                    ax.text(pos + len(categories_final)/2-0.5, xaxis[4], cat, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
+                    ax.text(pos + len(categories_final)/2-0.5, xaxis[4]*max_bar*0.03, cat, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
                     if pos != 0 :
                         ax.axvline(x=pos-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
                 
@@ -102,22 +114,26 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             
             for cat1, pos1 in zip(categories_third, category_positions_third):
                 if xaxis[8]==True :
-                    ax.text(pos1 + (len(categories_final)*len(categories_second))/2-0.5, xaxis[9], cat1, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0)
+                    ax.text(pos1 + (len(categories_final)*len(categories_second))/2-0.5, xaxis[9]*max_bar*0.03, cat1, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0)
                     if pos1 != 0 :
                         ax.axvline(x=pos1-0.5, ymin=xaxis[12], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
                 for cat2, pos2 in zip(categories_second, category_positions_second):
                     if xaxis[3]==True :
-                        ax.text(pos1 + pos2 + len(categories_final)/2-0.5, xaxis[4], cat2, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
+                        ax.text(pos1 + pos2 + len(categories_final)/2-0.5, xaxis[4]*max_bar*0.03, cat2, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
                         if pos2 != 0 :
                             ax.axvline(x=pos1+pos2-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
         
+        # Y label
+        if unit in unit_dict:
+            ax.set_ylabel(f'{unit_dict[unit]} ({unit})')
+        else :
+            ax.set_ylabel(f'Value ({unit})')
         
-        ax.set_ylabel(f'Value ({unit})')
         ax.set_xlabel('')
         
         ax.set_title(title[0], fontsize=title[1])
         
-        if print == True :
+        if save == True :
             # Ensure the 'output' directory exists
             output_dir = 'output'
             if not os.path.exists(output_dir):
@@ -125,6 +141,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 
             output_path = os.path.join(output_dir, f'{namefile}.png')
             plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight')
+    
+    return(fig)
             
         
 
