@@ -5,6 +5,7 @@
 import os
 import copy
 import gams
+import datetime
 import pandas as pd
 import numpy as np
 from typing import Union
@@ -42,12 +43,8 @@ def interactive_bar_chart(MainResults_instance):
     series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False)
     
     # Filter buttons
-    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], 
-                                                        value=['None'],
-                                                        description=column, 
-                                                        disabled=False)
-                        for column in mainresults_symbol_columns[symbol]
-                        ]
+    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False)
+                        for column in mainresults_symbol_columns[symbol]]
                         for symbol in mainresults_symbol_columns.keys()    
                     }
     
@@ -80,8 +77,10 @@ def interactive_bar_chart(MainResults_instance):
     xaxis3_sep_button = widgets.FloatSlider(value=-0.1, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
                                             orientation='horizontal', readout=True, readout_format='.3f')
     
-    # Plotting button
+    # Plotting buttons
     plot_button = widgets.Button( description='Plot', disabled=False, button_style='', tooltip='Click to plot', icon='check')
+    print_button = widgets.Button( description='Print', disabled=False, button_style='', tooltip='Click to save', icon='check')
+    namefile_button = widgets.Text(description='Title:', disabled=False)
     
     # For the pivot table order selection
     series_order_stack = widgets.Stack([widgets.VBox([series_order_button1]),widgets.VBox([series_order_button1,series_order_button2]),
@@ -103,6 +102,10 @@ def interactive_bar_chart(MainResults_instance):
     # For the plotting 
     plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]),widgets.HBox([plot_sizex_button, plot_sizey_button]),xaxis_order_stack])
     plot_options_out = widgets.Output()
+    
+    # Plotting button
+    plot_layout = widgets.HBox([plot_button, print_button, namefile_button])
+    plot_print_out = widgets.Output()
     plot_out = widgets.Output()
 
     # Function to update dropdowns based on table selection
@@ -153,19 +156,50 @@ def interactive_bar_chart(MainResults_instance):
             for filter_button in filter_buttons[table_select_button.value]:
                 filter[filter_button.description] = list(filter_button.value)
             nb_series = len(series_select_button.value)
-            series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][:nb_series]
+            series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
             if None in series_order_selection:
-                fig = plot_bar_chart(MainResults_instance.df, filter,series_select_button.value, categories_select_button.value,
+                fig = plot_bar_chart(MainResults_instance.df, filter, series_select_button.value, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
-                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value))
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                    False, '')
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
-                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value))
-
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                    False, '')
             plt.show(fig)
+            
+    def wrap_print_bar_chart(click):
+        with plot_out:
+            plot_out.clear_output()  # Clear previous output
+            # Filtering options
+            filter = {}
+            for filter_button in filter_buttons[table_select_button.value]:
+                filter[filter_button.description] = list(filter_button.value)
+            nb_series = len(series_select_button.value)
+            series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
+            # Name of the file
+            if namefile_button.value == '':
+                namefile = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+            else : 
+                namefile = namefile_button.value
+            
+            if None in series_order_selection:
+                fig = plot_bar_chart(MainResults_instance.df, filter, series_select_button.value, categories_select_button.value,
+                                    (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
+                                    (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                    True, namefile)
+            else:
+                fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
+                                    (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
+                                    (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
+                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                    True, namefile)
+            plt.show(fig)
+            
             
     # Dynamic behaviour of the buttons
     table_select_function(table_select_button.value)
@@ -176,10 +210,12 @@ def interactive_bar_chart(MainResults_instance):
 
     # Activate the plotting of the bar chart on the click
     plot_button.on_click(wrap_plot_bar_chart)
+    print_button.on_click(wrap_print_bar_chart)
     
     # Display the UI and output areas
     display(pivot_selection_layout, pivot_selection_out)
     display(filter_stack, filter_out)
     display(plot_options_layout, plot_options_out)
-    display(plot_button)
+    display(plot_layout, plot_print_out)
     display(plot_out)
+# %%

@@ -19,7 +19,7 @@ from ..formatting import balmorel_colours
 
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
-                    title: tuple, size: tuple, xaxis: tuple):
+                    title: tuple, size: tuple, xaxis: tuple, print: bool, namefile: str):
     """
     Plotting function for the bar chart
 
@@ -32,6 +32,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         title (tuple): Plot title and size
         size (tuple): Size of the plot
         xaxis (tuple): Options for the x axis
+        print (bool): Do the plot have to be saved
+        namefile (str): Name of the saved file
     """
     
     # Unit
@@ -113,5 +115,14 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         
         ax.set_title(title[0], fontsize=title[1])
         
-        return fig
+        if print == True :
+            # Ensure the 'output' directory exists
+            output_dir = 'output'
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                
+            output_path = os.path.join(output_dir, f'{namefile}.png')
+            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight')
+            
+        
 
