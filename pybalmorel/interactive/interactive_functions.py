@@ -56,7 +56,8 @@ def interactive_bar_chart(MainResults_instance):
     plot_sizey_button = widgets.BoundedFloatText(value=8, min=5, max=20, step=0.1, description='Size y:', disabled=False)
     
     # For the y-axis layout
-    
+    yaxis_title_button = widgets.Text(value='', description='Y Title:', disabled=False)
+    yaxis_max_button = widgets.FloatText(value=1000000000000, description='Y max:', disabled=False)
     
     # For the x-axis layout
     xaxis1_button = widgets.ToggleButton(value=True, description='First series', disabled=False, icon='check')
@@ -113,8 +114,8 @@ def interactive_bar_chart(MainResults_instance):
     filter_out = widgets.Output()
     
     # For the plotting 
-    plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]), widgets.HBox([plot_sizex_button, plot_sizey_button]), xaxis_order_stack,
-                                        widgets.HBox([legend_button, legend_location_button, legend_xpos_button, legend_ypos_button, legend_col_button])])
+    plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]), widgets.HBox([plot_sizex_button, plot_sizey_button]), widgets.HBox([yaxis_title_button, yaxis_max_button]),
+                                        xaxis_order_stack, widgets.HBox([legend_button, legend_location_button, legend_xpos_button, legend_ypos_button, legend_col_button])])
     plot_options_out = widgets.Output()
     
     # Plotting button
@@ -176,13 +177,15 @@ def interactive_bar_chart(MainResults_instance):
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),False, '')
+                                    (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                    False, '')
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),False, '')
+                                    (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                    False, '')
             plt.show(fig)
             
     def wrap_print_bar_chart(click):
@@ -205,13 +208,15 @@ def interactive_bar_chart(MainResults_instance):
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),True, namefile)
+                                    (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                    True, namefile)
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),True, namefile)
+                                    (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                    True, namefile)
             plt.show(fig)
             
             

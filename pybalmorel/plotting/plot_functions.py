@@ -19,7 +19,7 @@ from ..formatting import balmorel_colours
 
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
-                    title: tuple, size: tuple, xaxis: tuple, legend: tuple, save: bool, namefile: str):
+                    title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, save: bool, namefile: str):
     """
     Plotting function for the bar chart
 
@@ -32,6 +32,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         title (tuple): Plot title and size
         size (tuple): Size of the plot
         xaxis (tuple): Options for the x axis
+        yaxis (tuple): Options for the y axis
         legend (tuple): Options for the legend
         save (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
@@ -124,10 +125,16 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                             ax.axvline(x=pos1+pos2-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
         
         # Y label
-        if unit in unit_dict:
-            ax.set_ylabel(f'{unit_dict[unit]} ({unit})')
+        if yaxis[0] != '':
+            ax.set_ylabel(yaxis[0])
         else :
-            ax.set_ylabel(f'Value ({unit})')
+            if unit in unit_dict:
+                ax.set_ylabel(f'{unit_dict[unit]} ({unit})')
+            else :
+                ax.set_ylabel(f'Value ({unit})')
+                
+        if yaxis[1] != 1000000000000:
+            ax.set_ylim([0,yaxis[1]])
         
         ax.set_xlabel('')
         
