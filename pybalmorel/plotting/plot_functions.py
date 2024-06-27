@@ -92,7 +92,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         categories_final = temp.index.get_level_values(-1).unique()
         ax.set_xticks(range(len(temp)))
         if xaxis[0]==True :
-            if type(temp.index[0]) == list:
+            if type(temp.index[0]) != str:
                 ax.set_xticklabels([f'{i[-1]}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
             else :
                 ax.set_xticklabels([f'{i}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
