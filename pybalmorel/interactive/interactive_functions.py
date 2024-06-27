@@ -77,6 +77,16 @@ def interactive_bar_chart(MainResults_instance):
     xaxis3_sep_button = widgets.FloatSlider(value=-0.1, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
                                             orientation='horizontal', readout=True, readout_format='.3f')
     
+    # For the legend layout
+    legend_button = widgets.ToggleButton(value=True, description='Legend', disabled=False, icon='check')
+    legend_location_button = widgets.Dropdown(value='center left', options=['upper right', 'upper left', 'lower left', 'lower right', 'center left', 'center right', 'lower center',
+                                                                       'upper center', 'center'], description='Location:', disabled=False)
+    legend_xpos_button = widgets.FloatSlider(value=1.1, min=0, max=2, step=0.01, description='X position:', disabled=False, 
+                                             orientation='horizontal', readout=True, readout_format='.2f')
+    legend_ypos_button = widgets.FloatSlider(value=0.5, min=0, max=2, step=0.01, description='Y position:', disabled=False, 
+                                             orientation='horizontal', readout=True, readout_format='.2f')
+    legend_col_button = widgets.BoundedIntText(value=1, min=1, max=10, step=1, description='Number columns:', disabled=False)
+    
     # Plotting buttons
     plot_button = widgets.Button( description='Plot', disabled=False, button_style='', tooltip='Click to plot', icon='check')
     print_button = widgets.Button( description='Print', disabled=False, button_style='', tooltip='Click to save', icon='check')
@@ -100,7 +110,8 @@ def interactive_bar_chart(MainResults_instance):
     filter_out = widgets.Output()
     
     # For the plotting 
-    plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]),widgets.HBox([plot_sizex_button, plot_sizey_button]),xaxis_order_stack])
+    plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]), widgets.HBox([plot_sizex_button, plot_sizey_button]), xaxis_order_stack,
+                                        widgets.HBox([legend_button, legend_location_button, legend_xpos_button, legend_ypos_button, legend_col_button])])
     plot_options_out = widgets.Output()
     
     # Plotting button
@@ -162,13 +173,13 @@ def interactive_bar_chart(MainResults_instance):
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    False, '')
+                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),False, '')
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    False, '')
+                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),False, '')
             plt.show(fig)
             
     def wrap_print_bar_chart(click):
@@ -191,13 +202,13 @@ def interactive_bar_chart(MainResults_instance):
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    True, namefile)
+                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),True, namefile)
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    True, namefile)
+                                    (legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),True, namefile)
             plt.show(fig)
             
             
@@ -218,4 +229,3 @@ def interactive_bar_chart(MainResults_instance):
     display(plot_options_layout, plot_options_out)
     display(plot_layout, plot_print_out)
     display(plot_out)
-# %%

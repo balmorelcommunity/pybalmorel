@@ -19,7 +19,7 @@ from ..formatting import balmorel_colours
 
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
-                    title: tuple, size: tuple, xaxis: tuple, print: bool, namefile: str):
+                    title: tuple, size: tuple, xaxis: tuple, legend: tuple, print: bool, namefile: str):
     """
     Plotting function for the bar chart
 
@@ -32,6 +32,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         title (tuple): Plot title and size
         size (tuple): Size of the plot
         xaxis (tuple): Options for the x axis
+        legend (tuple): Options for the legend
         print (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
     """
@@ -68,8 +69,9 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             temp.plot(ax=ax, kind='bar', stacked=True, legend=False, color=balmorel_colours)
         except KeyError:
             temp.plot(ax=ax, kind='bar', stacked=True, legend=False)
-
-        ax.legend(bbox_to_anchor=(0.9, 0.8), loc=2)
+        
+        if legend[0] == True:
+            ax.legend(bbox_to_anchor=(legend[2], legend[3]), loc=legend[1], ncols=legend[4])
         
         # Customizing x-axis
         dict_fw = {True:'bold',False:'normal'}
