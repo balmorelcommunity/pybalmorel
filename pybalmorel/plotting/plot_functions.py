@@ -62,13 +62,14 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         aggfunc='sum').fillna(0)
         
         #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
-        all_combinations = pd.MultiIndex.from_product([temp.index.get_level_values(i).unique() for i in range(len(temp.index[0]))], names=series)
-        temp = temp.reindex(all_combinations).reset_index()
-        temp = df.pivot_table(index=series,
-                        columns=categories,
-                        values='Value',
-                        aggfunc='sum',
-                        dropna=False).fillna(0)
+        if type(temp.index[0]) == list:
+            all_combinations = pd.MultiIndex.from_product([temp.index.get_level_values(i).unique() for i in range(len(temp.index[0]))], names=series)
+            temp = temp.reindex(all_combinations).reset_index()
+            temp = df.pivot_table(index=series,
+                            columns=categories,
+                            values='Value',
+                            aggfunc='sum',
+                            dropna=False).fillna(0)
         
         # print(temp)
         
@@ -91,7 +92,10 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         categories_final = temp.index.get_level_values(-1).unique()
         ax.set_xticks(range(len(temp)))
         if xaxis[0]==True :
-            ax.set_xticklabels([f'{i[-1]}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
+            if type(temp.index[0]) == list:
+                ax.set_xticklabels([f'{i[-1]}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
+            else :
+                ax.set_xticklabels([f'{i}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
         else :
             ax.set_xticklabels([f'' for i in temp.index])
 

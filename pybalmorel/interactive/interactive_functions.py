@@ -85,7 +85,7 @@ def interactive_bar_chart(MainResults_instance):
     legend_button = widgets.ToggleButton(value=True, description='Legend', disabled=False, icon='check')
     legend_location_button = widgets.Dropdown(value='center left', options=['upper right', 'upper left', 'lower left', 'lower right', 'center left', 'center right', 'lower center',
                                                                        'upper center', 'center'], description='Location:', disabled=False)
-    legend_xpos_button = widgets.FloatSlider(value=1.1, min=0, max=2, step=0.01, description='X position:', disabled=False, 
+    legend_xpos_button = widgets.FloatSlider(value=1, min=0, max=2, step=0.01, description='X position:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.2f')
     legend_ypos_button = widgets.FloatSlider(value=0.5, min=0, max=2, step=0.01, description='Y position:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.2f')
