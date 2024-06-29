@@ -43,6 +43,8 @@ else:
 
 b = Balmorel(r'C:\Users\mathi\gitRepos\Balmorel')
 
-print(b.scenarios)
+# print(b.scenarios)
 b.collect_results()
-print(b.results.sc)
+# print(b.results.sc)
+
+print(b.results.get_result('OBJ_YCR').Scenario.unique())

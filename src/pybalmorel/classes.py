@@ -66,11 +66,14 @@ class MainResults:
                 idx = list(scenario_names[scenario_names == ''].index)
                 for ind in idx:
                     scenario_names[ind] = paths[ind].split('/model')[0].split(r'Balmorel')[1].replace('\\','')
-                
-                scenario_names = list(scenario_names)
-            else:
-                scenario_names = list(scenario_names) 
-                
+                                
+            # Check if some names are identical
+            if len(scenario_names.unique()) != len(scenario_names):
+                print('\n--------------WARNING!--------------\nIdentical scenario names detected, which will result in double counting when analysing')
+                print('Scenarios: ', ', '.join(list(scenario_names)), '\n--------------WARNING!--------------\n')                
+
+            scenario_names = list(scenario_names)
+
         elif type(scenario_names) == str:
             scenario_names = [scenario_names]
             
