@@ -3,3 +3,4 @@ dist/*
 src/*
 !src/pybalmorel
 tests/files/DE.inc
+__pycache__/*
