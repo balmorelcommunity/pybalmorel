@@ -50,15 +50,3 @@ def read_lines(name, file_path, make_space=True):
    
     return string
 
-
-#%% ------------------------------- ###
-###       2. Plotting Tools         ###
-### ------------------------------- ###
-
-
-# Implement the scripts from balmorel-postprocessing tool below (write functions)
-# from plotting import MapsBalmorel, ProductionProfile, ProductionMap, LoadGDX
-from .plotting.maps_balmorel import plot_map
-
-from .plotting.interactive_barchart import interactive_bar_chart, plot_bar_chart
-

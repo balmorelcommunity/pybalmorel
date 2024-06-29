@@ -15,7 +15,7 @@ from typing import Tuple
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
-from ..functions import symbol_to_df
+from ..utils import symbol_to_df
 from ..formatting import balmorel_colours
 
 
