@@ -61,9 +61,13 @@ class MainResults:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
             
-            # Check if names are identical
-            if (len(scenario_names.unique()) != len(scenario_names)) or (np.all(scenario_names == '')):
-                scenario_names = ['SC%d'%(i+1) for i in range(len(files))] # if so, just make generic names
+            # Rename MainResults with no suffix
+            if np.any(scenario_names == ''):
+                idx = list(scenario_names[scenario_names == ''].index)
+                for ind in idx:
+                    scenario_names[ind] = paths[ind].split('/model')[0].split(r'Balmorel')[1].replace('\\','')
+                
+                scenario_names = list(scenario_names)
             else:
                 scenario_names = list(scenario_names) 
                 
@@ -79,12 +83,13 @@ class MainResults:
         self.paths = paths
         self.sc = scenario_names
         self.db = {}
+            
         if system_directory != None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
         else:
             ws = gams.GamsWorkspace()
             
-        for i in range(len(files)):
+        for i in range(len(files)):    
             print(os.path.join(os.path.abspath(paths[i]), files[i]))
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
@@ -260,3 +265,42 @@ class IncFile:
                 print('No body written')
             f.write(self.suffix)
  
+class Balmorel:
+    """A class that recognises the Balmorel folder structure, can be used to run scenarios or results
+
+    Args:
+        model_folder (str): The top level folder of Balmorel, where base and simex are located
+    """
+
+    def __init__(self, model_folder: str):
+        if not('base' in os.listdir(model_folder)) or not('simex' in os.listdir(model_folder)):
+            raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%model_folder)
+        
+        self.path = model_folder
+        
+        # Get scenario folders
+        scenarios = [SC for SC in os.listdir(model_folder) if os.path.isdir(os.path.join(self.path, SC)) and SC != 'simex' and SC != '.git']
+        
+        # Check validity of scenario folders and make list of scenarios
+        self.scenarios = []
+        for SC in scenarios:
+            if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
+                os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
+                    self.scenarios.append(SC)
+            else:
+                print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
+
+    def collect_results(self):
+        
+        files = []
+        paths = []
+        for SC in self.scenarios:
+            path = os.path.join(self.path, '%s/model'%SC)
+            mainresults_files = pd.Series(os.listdir(path))
+            mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
+            files += list(mainresults_files)
+            paths += [path]*len(mainresults_files)
+
+        self.results = MainResults(files=files ,paths=paths)
+            
+            

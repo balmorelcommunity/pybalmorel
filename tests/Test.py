@@ -14,11 +14,9 @@ use_development = True
 if use_development:
     import sys
     sys.path.append('../')
-    from src.pybalmorel import MainResults 
-    from src.pybalmorel.functions import plot_map
+    from src.pybalmorel import MainResults, Balmorel
 else:
-    from pybalmorel import IncFile, MainResults 
-    from pybalmorel.functions import plot_map
+    from pybalmorel import IncFile, MainResults
 
 
 #%% ------------------------------- ###
@@ -26,15 +24,25 @@ else:
 ### ------------------------------- ###
 
 ### 1.1 Interactive bar chart tool
-res = MainResults(['MainResults_Example1.gdx',
-                   'MainResults_Example2.gdx'], 
-                  'files',
-                  scenario_names=['SC1', 'SC2'])
+# res = MainResults(['MainResults_Example1.gdx',
+#                    'MainResults_Example2.gdx'], 
+#                   'files',
+#                   scenario_names=['SC1', 'SC2'])
 # res.interactive_bar_chart()
 
 
 ### 1.2 Plotting maps
-res.plot_map('SC2', 'Electricity', 2050)
+# res.plot_map('SC2', 'Electricity', 2050)
 
 ### 1.3 Plot profiles
-res.plot_profile('Hydrogen', 2050, 'SC2')
+# res.plot_profile('Hydrogen', 2050, 'SC2')
+
+#%% ------------------------------- ###
+###          2. Run Balmorel        ###
+### ------------------------------- ###
+
+b = Balmorel(r'C:\Users\mathi\gitRepos\Balmorel')
+
+print(b.scenarios)
+b.collect_results()
+print(b.results.sc)
