@@ -186,7 +186,6 @@ def interactive_bar_chart(MainResults_instance):
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
                                     False, '')
-            plt.show(fig)
             
     def wrap_print_bar_chart(click):
         with plot_out:
@@ -217,7 +216,6 @@ def interactive_bar_chart(MainResults_instance):
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
                                     True, namefile)
-            plt.show(fig)
             
             
     # Dynamic behaviour of the buttons
