@@ -61,12 +61,19 @@ class MainResults:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
             
-            # Check if names are identical
-            if (len(scenario_names.unique()) != len(scenario_names)) or (np.all(scenario_names == '')):
-                scenario_names = ['SC%d'%(i+1) for i in range(len(files))] # if so, just make generic names
-            else:
-                scenario_names = list(scenario_names) 
-                
+            # Rename MainResults with no suffix
+            if np.any(scenario_names == ''):
+                idx = list(scenario_names[scenario_names == ''].index)
+                for ind in idx:
+                    scenario_names[ind] = paths[ind].split('/model')[0].split(r'Balmorel')[1].replace('\\','')
+                                
+            # Check if some names are identical
+            if len(scenario_names.unique()) != len(scenario_names):
+                print('\n--------------WARNING!--------------\nIdentical scenario names detected, which will result in double counting when analysing')
+                print('Scenarios: ', ', '.join(list(scenario_names)), '\n--------------WARNING!--------------\n')                
+
+            scenario_names = list(scenario_names)
+
         elif type(scenario_names) == str:
             scenario_names = [scenario_names]
             
@@ -79,12 +86,13 @@ class MainResults:
         self.paths = paths
         self.sc = scenario_names
         self.db = {}
+            
         if system_directory != None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
         else:
             ws = gams.GamsWorkspace()
             
-        for i in range(len(files)):
+        for i in range(len(files)):    
             print(os.path.join(os.path.abspath(paths[i]), files[i]))
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
@@ -260,3 +268,77 @@ class IncFile:
                 print('No body written')
             f.write(self.suffix)
  
+class Balmorel:
+    """A class that recognises the Balmorel folder structure, can be used to run scenarios or results
+
+    Args:
+        model_folder (str): The top level folder of Balmorel, where base and simex are located
+    """
+
+    def __init__(self, model_folder: str, gams_system_directory: str = None):
+        
+        # Get GAMS system directory (the default none will make GAMS find it by itself)
+        self._gams_system_directory = gams_system_directory
+        
+        # Get full path
+        self.path = os.path.abspath(model_folder)
+        
+        if not('base' in os.listdir(self.path)) or not('simex' in os.listdir(self.path)):
+            raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
+        
+        # Get scenario folders
+        scenarios = [SC for SC in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, SC)) and SC != 'simex' and SC != '.git']
+        
+        # Check validity of scenario folders and make list of scenarios
+        self.scenarios = []
+        for SC in scenarios:
+            if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
+                os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
+                    self.scenarios.append(SC)
+            else:
+                print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
+
+    def collect_results(self):
+        
+        files = []
+        paths = []
+        for SC in self.scenarios:
+            path = os.path.join(self.path, '%s/model'%SC)
+            mainresults_files = pd.Series(os.listdir(path))
+            mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
+            files += list(mainresults_files)
+            paths += [path]*len(mainresults_files)
+
+        self.results = MainResults(files=files ,paths=paths, system_directory=self._gams_system_directory)
+            
+    def run(self, scenario: str, cmd_line_options: dict = {}):
+        
+        # Working directory
+        wk_dir = os.path.join(self.path, '%s/model'%scenario)
+        
+        # Add options
+        ws = gams.GamsWorkspace(working_directory=wk_dir, system_directory=self._gams_system_directory)
+        opt = ws.add_options()
+        for key in cmd_line_options.keys():
+            opt.defines[key] = cmd_line_options[key]
+        
+        # Run Balmorel
+        try:
+            job = ws.add_job_from_file(os.path.join(wk_dir, 'Balmorel'), job_name=scenario)
+            job.run(opt)
+        except gams.GamsExceptionExecution as e:
+            exec_error = e
+            print('Execution error! Check output, division by zero in OUTPUT_SUMMARY can happen and may not be a problem')
+        
+        # Check feasibility
+        with open(os.path.join(wk_dir, '%s.lst'%scenario), 'r') as f:
+            output = pd.Series(f.readlines())
+
+        output = output[(output.str.find('LP status') != -1) | (output.str.find('MIP status') != -1)] # Find all status
+        all_feasible = output[output.str.find('infeasible') != -1].empty # Check if none are infeasible
+        if not(all_feasible):
+            raise Exception('Model run infeasible!')
+        
+        # Raise error from before
+        if 'exec_error' in locals():
+            raise exec_error
