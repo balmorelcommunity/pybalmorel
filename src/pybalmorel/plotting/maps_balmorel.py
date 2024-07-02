@@ -644,15 +644,23 @@ def plot_map(path_to_result: str,
 
         ### 3 Plotting the Results
         if cartopy_installed:
-            projection = ccrs.EqualEarth()
-            fig, ax = plt.subplots(figsize=(12, 12), subplot_kw={"projection": projection}, dpi=100,
-                                facecolor=fc)
+            try:
+                projection = ccrs.EqualEarth()
+                fig, ax = plt.subplots(figsize=(12, 12), subplot_kw={"projection": projection}, dpi=100,
+                                    facecolor=fc)
 
-            # Adding shapefiles
-            ax.add_geometries(geo_file.geometry, crs = projection,
-                    facecolor=[.6, .6, .6], edgecolor='grey',
-                    linewidth=.2)
+                # Adding shapefiles
+                ax.add_geometries(geo_file.geometry, crs = projection,
+                        facecolor=[.6, .6, .6], edgecolor='grey',
+                        linewidth=.2)
+            except:
+                print('Cartopy did not work. Try installing 0.22.0')
+                fig, ax = plt.subplots(figsize=(12, 12), dpi=100,
+                        facecolor=fc)
             
+                # Adding shapefiles
+                geo_file.plot(ax=ax, facecolor=[.6, .6, .6], edgecolor='grey', linewidth=.2)
+
         else:
             fig, ax = plt.subplots(figsize=(12, 12), dpi=100,
                                 facecolor=fc)
