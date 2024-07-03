@@ -2,6 +2,6 @@
 dist/*
 src/*
 !src/pybalmorel
-tests/files/DE.inc
+examples/files/DE.inc
 __pycache__
 output
