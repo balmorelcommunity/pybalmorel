@@ -98,9 +98,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 ax.set_xticklabels([f'{i}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
         else :
             ax.set_xticklabels([f'' for i in temp.index])
+            
+        print(temp.index[0])
 
         # Add x-axis labels for double stage
-        if type(temp.index[0]) == list and len(temp.index[0]) == 2 :
+        if type(temp.index[0]) == tuple and len(temp.index[0]) == 2 :
             categories_second = temp.index.get_level_values(-2).unique()
             category_positions_second = [temp.index.get_level_values(-2).tolist().index(cat) for cat in categories_second]
             
@@ -111,7 +113,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         ax.axvline(x=pos-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
                 
         # Add x-axis labels for triple stage
-        if type(temp.index[0]) == list and len(temp.index[0]) == 3 :
+        if type(temp.index[0]) == tuple and len(temp.index[0]) == 3 :
             categories_second = temp.index.get_level_values(-2).unique()
             category_positions_second = [temp.index.get_level_values(-2).tolist().index(cat) for cat in categories_second]
             categories_third = temp.index.get_level_values(-3).unique()
