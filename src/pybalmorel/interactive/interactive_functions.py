@@ -5,6 +5,8 @@
 import os
 import copy
 import gams
+import codecs
+import ast
 import datetime
 import pandas as pd
 import numpy as np
@@ -32,6 +34,7 @@ def interactive_bar_chart(MainResults_instance):
     """
 
     """ Buttons definition """
+    
     # Initial selection for plotting
     table_select_button = widgets.Dropdown(options= list(mainresults_symbol_columns.keys()), value=None, description='Table:', disabled=False)
     series_select_button = widgets.SelectMultiple(options=[], value=[], description='Series:', disabled=False)
@@ -96,6 +99,23 @@ def interactive_bar_chart(MainResults_instance):
     print_button = widgets.Button( description='Print', disabled=False, button_style='', tooltip='Click to save', icon='check')
     namefile_button = widgets.Text(description='Name file:', disabled=False)
     
+    # Configuration buttons
+    config_save_button = widgets.Button( description='Save config', disabled=False, button_style='', tooltip='Click to save', icon='check')
+    nameconfig_button = widgets.Text(description='Name config:', disabled=False)
+    config_upload_button = widgets.FileUpload(description='Upload config', tooltip='Click to upload', accept='.txt', multiple=False)
+    
+    # Dictionnary associating to each button its name
+    dict_frombutton = {table_select_button : 'table_select', series_select_button : 'series_select', categories_select_button : 'categories_select', series_order_button1 : 'series_order1',
+                       series_order_button2 : 'series_order2', series_order_button3 : 'series_order3', plot_title_button : 'plot_title', plot_sizetitle_button : 'plot_sizetitle',
+                       plot_sizex_button : 'plot_sizex', plot_sizey_button : 'plot_sizey', yaxis_title_button : 'yaxis_title', yaxis_max_button : 'yaxis_max', xaxis1_size_button : 'xaxis1_size',
+                       xaxis1_bold_button : 'xaxis1_bold', xaxis2_position_button : 'xaxis2_position', xaxis2_size_button : 'xaxis2_size', xaxis2_bold_button : 'xaxis2_bold',
+                       xaxis2_sep_button : 'xaxis2_sep', xaxis3_position_button : 'xaxis3_position', xaxis3_size_button : 'xaxis3_size', xaxis3_bold_button : 'xaxis3_bold',
+                       xaxis3_sep_button : 'xaxis3_sep', legend_location_button : 'legend_location', legend_xpos_button : 'legend_xpos', legend_ypos_button : 'legend_ypos', 
+                       legend_col_button : 'legend_col', namefile_button : 'namefile'}
+    dict_tobutton = {v: k for k, v in dict_frombutton.items()}
+    
+    ### Layout and plot part
+    
     # For the pivot table order selection
     series_order_stack = widgets.Stack([widgets.VBox([series_order_button1]),widgets.VBox([series_order_button1,series_order_button2]),
                                         widgets.VBox([series_order_button1,series_order_button2,series_order_button3])])   
@@ -119,7 +139,9 @@ def interactive_bar_chart(MainResults_instance):
     plot_options_out = widgets.Output()
     
     # Plotting button
-    plot_layout = widgets.HBox([plot_button, print_button, namefile_button])
+    left_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-start')
+    right_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-end')
+    plot_layout = widgets.HBox([widgets.Box([plot_button, print_button, namefile_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([config_save_button, nameconfig_button, config_upload_button], layout=right_button_layout)], layout=widgets.Layout(width='100%'))
     plot_print_out = widgets.Output()
     plot_out = widgets.Output()
 
@@ -229,6 +251,89 @@ def interactive_bar_chart(MainResults_instance):
             # Close the figure to avoid implicit display by Jupyter
             plt.close(fig)
             
+    # Function to save a config
+    def save_config(click):
+        # Ensure the 'config' directory exists
+        config_dir = 'config'
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+        # Get the name of the config
+        if nameconfig_button.value == '':
+            nameconfig = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+        else : 
+            nameconfig = nameconfig_button.value
+        # Create the text file
+        file_path = os.path.join(config_dir, f'{nameconfig}.txt')
+        
+        # Config dict creation
+        dict_config = {v: k.value for k,v in dict_frombutton.items()}
+        
+        # Writting the text file
+        with open(file_path, 'w') as file:
+            for key, value in dict_config.items():
+                file.write(f"{key},{value}\n")
+            file.write(".\n")
+            for key, value in filter_buttons.items():
+                file.write(f'{key},[')
+                for i in range(len(value)) :
+                    if i == 0 :
+                        file.write(f'{value[i].value}')
+                    else :
+                        file.write(f',{value[i].value}')
+                file.write(f']\n')
+                
+    # Function to upload a config
+    def upload_config(config):
+        # Upload the text file
+        uploaded_file = config[-1]
+        text = codecs.decode(uploaded_file.content, encoding="utf-8")
+        # Put the text file as a dict 
+        dict_config = {}
+        filter = 0
+        for line in text.strip().splitlines():
+            if line == '.' :
+                filter = 1
+                # Put back the values inside the buttons
+                for k, v in dict_tobutton.items() :
+                    v.value = dict_config[k] 
+            else :
+                if filter == 0 :
+                    if line.strip():  
+                        key, value = line.split(',', 1) 
+                        key = key.strip()  
+                        value = value.strip()  
+                        # Convert special cases like 'None' or tuples into appropriate Python types
+                        if value == 'None':
+                            value = None
+                        elif value.lower() == 'true':
+                            value = True
+                        elif value.lower() == 'false':
+                            value = False
+                        elif value.startswith('(') and value.endswith(')'):
+                            try:
+                                value = eval(value)  # Evaluate tuple-like strings to actual tuples
+                            except SyntaxError:
+                                pass  # If evaluation fails, keep the string value
+                        else:
+                            # Try converting the value to float if possible
+                            try:
+                                value = float(value)
+                            except ValueError:
+                                pass  # If conversion fails, keep the string value
+                        # Assign key-value pair to the dictionary
+                        dict_config[key] = value
+                else :
+                    key, list_str = line.split(',', 1) 
+                    key = key.strip()
+                    list_str = list_str.strip()
+                    if key == dict_config['table_select'] :
+                        # Convert the list string to an actual list using ast.literal_eval
+                        value_list = ast.literal_eval(list_str)
+                        i = 0
+                        for filter_button in filter_buttons[key]:
+                            filter_button.value = list(value_list[i])
+                            i += 1
+        
             
     # Dynamic behaviour of the buttons
     table_select_function(table_select_button.value)
@@ -236,10 +341,12 @@ def interactive_bar_chart(MainResults_instance):
     table_select_button.observe(lambda change: df_update(change['new']), names='value')
     series_select_button.observe(lambda change: series_order_function(change['new']), names='value')
     series_select_button.observe(lambda change: xaxis_option_function(change['new']), names='value')
+    config_upload_button.observe(lambda change: upload_config(change['new']), names='value')
 
     # Activate the plotting of the bar chart on the click
     plot_button.on_click(wrap_plot_bar_chart)
     print_button.on_click(wrap_print_bar_chart)
+    config_save_button.on_click(save_config)
     
     # Display the UI and output areas
     display(pivot_selection_layout, pivot_selection_out)

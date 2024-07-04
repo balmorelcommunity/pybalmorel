@@ -98,8 +98,6 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 ax.set_xticklabels([f'{i}' for i in temp.index], fontsize=xaxis[1], fontweight=dict_fw[xaxis[2]], rotation=0, ha='center')
         else :
             ax.set_xticklabels([f'' for i in temp.index])
-            
-        print(temp.index[0])
 
         # Add x-axis labels for double stage
         if type(temp.index[0]) == tuple and len(temp.index[0]) == 2 :
