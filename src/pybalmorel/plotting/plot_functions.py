@@ -152,8 +152,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 
             output_path = os.path.join(output_dir, f'{namefile}.png')
             plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight')
-    
-    return(fig)
+        
+        return fig
             
         
 
