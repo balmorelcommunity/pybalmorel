@@ -99,6 +99,12 @@ def interactive_bar_chart(MainResults_instance):
     print_button = widgets.Button( description='Print', disabled=False, button_style='', tooltip='Click to save', icon='check')
     namefile_button = widgets.Text(description='Name file:', disabled=False)
     
+    # Iteration printing
+    iter_choice_button = widgets.Dropdown(options=[], value=None, description='Iterate on:', disabled=False)
+    iter_namefile_button = widgets.Text(description='Name iter:', disabled=False)
+    iter_print_button = widgets.Button( description='Iterative print', disabled=False, button_style='', tooltip='Click to print', icon='check')
+    iter_title_button = widgets.Checkbox(value=False, description='In the title', disabled=False, indent=False)
+    
     # Configuration buttons
     config_save_button = widgets.Button( description='Save config', disabled=False, button_style='', tooltip='Click to save', icon='check')
     nameconfig_button = widgets.Text(description='Name config:', disabled=False)
@@ -141,7 +147,7 @@ def interactive_bar_chart(MainResults_instance):
     # Plotting button
     left_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-start')
     right_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-end')
-    plot_layout = widgets.HBox([widgets.Box([plot_button, print_button, namefile_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([config_save_button, nameconfig_button, config_upload_button], layout=right_button_layout)], layout=widgets.Layout(width='100%'))
+    plot_layout = widgets.VBox([widgets.HBox([widgets.Box([plot_button, print_button, namefile_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([config_save_button, nameconfig_button, config_upload_button], layout=right_button_layout)], layout=widgets.Layout(width='100%')),widgets.HBox([iter_choice_button, iter_namefile_button, iter_print_button, iter_title_button])])
     plot_print_out = widgets.Output()
     plot_out = widgets.Output()
 
@@ -153,6 +159,7 @@ def interactive_bar_chart(MainResults_instance):
                 # Update dropdown options based on selected table
                 series_select_button.options = mainresults_symbol_columns[table_name]
                 categories_select_button.options = mainresults_symbol_columns[table_name]
+                iter_choice_button.options = mainresults_symbol_columns[table_name]
             else:
                 # Reset dropdown options if no table is selected
                 series_select_button.options = []
@@ -251,6 +258,58 @@ def interactive_bar_chart(MainResults_instance):
             # Close the figure to avoid implicit display by Jupyter
             plt.close(fig)
             
+    def wrap_iter_print_bar_chart(click):
+        with plot_out:
+            plot_out.clear_output(wait=True)  # Clear previous output
+            
+            # Filtering options
+            filter = {}
+            for filter_button in filter_buttons[table_select_button.value]:
+                filter[filter_button.description] = list(filter_button.value)
+            nb_series = len(series_select_button.value)
+            series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
+            # Iteration on
+            iteration_cat = iter_choice_button.value
+            iteration_cat_index = mainresults_symbol_columns[table_select_button.value].index(iteration_cat)
+            iteration_cat_list = filter_buttons[table_select_button.value][iteration_cat_index].options
+            
+            # Name of the files
+            if iter_namefile_button.value == '':
+                nameiter = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+            else : 
+                nameiter = iter_namefile_button.value
+                
+            # Iteration of the print
+            for value in iteration_cat_list :
+                filter[iteration_cat] = [value]
+                namefile = nameiter + '-' + value
+                
+                # Should we put the value in the title
+                add_title = ''
+                if iter_title_button.value == True:
+                    add_title = add_title + ' - ' + value
+                
+                if None in series_order_selection:
+                    fig = plot_bar_chart(MainResults_instance.df, filter, series_select_button.value, categories_select_button.value,
+                                        (plot_title_button.value + add_title,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
+                                        (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
+                                        xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                        (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                        True, namefile)
+                else:
+                    fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
+                                        (plot_title_button.value + add_title,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
+                                        (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
+                                        xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                        (yaxis_title_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                        True, namefile)
+                    
+                display(fig)
+                
+                # Close the figure to avoid implicit display by Jupyter
+                plt.close(fig)
+            
+
     # Function to save a config
     def save_config(click):
         # Ensure the 'config' directory exists
@@ -347,6 +406,7 @@ def interactive_bar_chart(MainResults_instance):
     plot_button.on_click(wrap_plot_bar_chart)
     print_button.on_click(wrap_print_bar_chart)
     config_save_button.on_click(save_config)
+    iter_print_button.on_click(wrap_iter_print_bar_chart)
     
     # Display the UI and output areas
     display(pivot_selection_layout, pivot_selection_out)
