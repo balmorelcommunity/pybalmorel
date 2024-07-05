@@ -64,25 +64,25 @@ def interactive_bar_chart(MainResults_instance):
     
     # For the x-axis layout
     xaxis1_button = widgets.ToggleButton(value=True, description='First series', disabled=False, icon='check')
-    xaxis1_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
+    xaxis1_size_button = widgets.FloatSlider(value=10, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis1_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
     xaxis2_button = widgets.ToggleButton(value=True, description='Second series', disabled=False, icon='check')
-    xaxis2_position_button = widgets.FloatText(value=-2, description='Position:', disabled=False, 
+    xaxis2_position_button = widgets.FloatText(value=-6, description='Position:', disabled=False, 
                                                orientation='horizontal', readout=True, readout_format='.1f')
-    xaxis2_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
+    xaxis2_size_button = widgets.FloatSlider(value=11, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis2_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
-    xaxis2_sep_button = widgets.FloatSlider(value=-0.05, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
-                                            orientation='horizontal', readout=True, readout_format='.3f')
+    xaxis2_sep_button = widgets.FloatSlider(value=1, min=0, max=2, step=0.01, description='Separation', disabled=False,
+                                            orientation='horizontal', readout=True, readout_format='.2f')
     xaxis3_button = widgets.ToggleButton(value=True, description='Third series', disabled=False, icon='check')
-    xaxis3_position_button = widgets.FloatText(value=-3, description='Position:', disabled=False, 
+    xaxis3_position_button = widgets.FloatText(value=-9.5, description='Position:', disabled=False, 
                                                orientation='horizontal', readout=True, readout_format='.1f')
     xaxis3_size_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                              orientation='horizontal', readout=True, readout_format='.1f')
     xaxis3_bold_button = widgets.Checkbox(value=False, description='Bold', disabled=False, indent=False)
-    xaxis3_sep_button = widgets.FloatSlider(value=-0.1, min=-0.5, max=-0.001, step=0.001, description='Separation', disabled=False,
-                                            orientation='horizontal', readout=True, readout_format='.3f')
+    xaxis3_sep_button = widgets.FloatSlider(value=1, min=0, max=2, step=0.01, description='Separation', disabled=False,
+                                            orientation='horizontal', readout=True, readout_format='.2f')
     
     # For the legend layout
     legend_button = widgets.ToggleButton(value=True, description='Legend', disabled=False, icon='check')

@@ -89,7 +89,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         
         # Customizing x-axis
         dict_fw = {True:'bold',False:'normal'}
-        categories_final = temp.index.get_level_values(-1).unique()
+        categories_first = temp.index.get_level_values(-1).unique()
         ax.set_xticks(range(len(temp)))
         if xaxis[0]==True :
             if type(temp.index[0]) != str:
@@ -102,31 +102,31 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         # Add x-axis labels for double stage
         if type(temp.index[0]) == tuple and len(temp.index[0]) == 2 :
             categories_second = temp.index.get_level_values(-2).unique()
-            category_positions_second = [temp.index.get_level_values(-2).tolist().index(cat) for cat in categories_second]
             
-            for cat, pos in zip(categories_second, category_positions_second):
+            for ind, cat in enumerate(categories_second):
                 if xaxis[3]==True :
-                    ax.text(pos + len(categories_final)/2-0.5, xaxis[4]*max_bar*0.03, cat, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
-                    if pos != 0 :
-                        ax.axvline(x=pos-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
+                    ax.text((2*ind+1)/(2*len(categories_second)), xaxis[4]*0.01, cat, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0, transform=ax.transAxes)
+                    if ind != 0 :
+                        line = plt.Line2D([ind*1/(len(categories_second)), ind*1/(len(categories_second))], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
+                        ax.add_line(line)
                 
         # Add x-axis labels for triple stage
         if type(temp.index[0]) == tuple and len(temp.index[0]) == 3 :
             categories_second = temp.index.get_level_values(-2).unique()
-            category_positions_second = [temp.index.get_level_values(-2).tolist().index(cat) for cat in categories_second]
             categories_third = temp.index.get_level_values(-3).unique()
-            category_positions_third = [temp.index.get_level_values(-3).tolist().index(cat) for cat in categories_third]
             
-            for cat1, pos1 in zip(categories_third, category_positions_third):
+            for ind3, cat3 in enumerate(categories_third):
                 if xaxis[8]==True :
-                    ax.text(pos1 + (len(categories_final)*len(categories_second))/2-0.5, xaxis[9]*max_bar*0.03, cat1, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0)
-                    if pos1 != 0 :
-                        ax.axvline(x=pos1-0.5, ymin=xaxis[12], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
-                for cat2, pos2 in zip(categories_second, category_positions_second):
+                    ax.text((2*ind3+1)/(2*len(categories_third)), xaxis[9]*0.01, cat3, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0, transform=ax.transAxes)
+                    if ind3 != 0 :
+                        line = plt.Line2D([ind3*1/(len(categories_third)), ind3*1/(len(categories_third))], [xaxis[12]*xaxis[9]*0.01, 0], transform=ax.transAxes, clip_on=False, color='black', linestyle='-')
+                        ax.add_line(line)
+                for ind2, cat2 in enumerate(categories_second):
                     if xaxis[3]==True :
-                        ax.text(pos1 + pos2 + len(categories_final)/2-0.5, xaxis[4]*max_bar*0.03, cat2, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0)
-                        if pos2 != 0 :
-                            ax.axvline(x=pos1+pos2-0.5, ymin=xaxis[7], ymax=-0.001, clip_on=False, color='black', linestyle='-', linewidth=1)
+                        ax.text(ind3*1/(len(categories_third))+(2*ind2+1)/(2*len(categories_third)*len(categories_second)), xaxis[4]*0.01, cat2, ha='center', va='center', fontsize=xaxis[5], fontweight=dict_fw[xaxis[6]], rotation=0, transform=ax.transAxes)
+                        if ind2 != 0 :
+                            line = plt.Line2D([ind3*1/(len(categories_third))+ind2*1/(len(categories_third)*len(categories_second)), ind3*1/(len(categories_third))+ind2*1/(len(categories_third)*len(categories_second))], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
+                            ax.add_line(line)
         
         # Y label
         if yaxis[0] != '':
