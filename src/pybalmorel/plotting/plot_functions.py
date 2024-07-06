@@ -133,12 +133,12 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             ax.set_ylabel(yaxis[0])
         else :
             if unit in unit_dict:
-                ax.set_ylabel(f'{unit_dict[unit]} ({unit})')
+                ax.set_ylabel(f'{unit_dict[unit]} ({unit})', fontsize=yaxis[1])
             else :
-                ax.set_ylabel(f'Value ({unit})')
+                ax.set_ylabel(f'Value ({unit})', fontsize=yaxis[1])
                 
-        if yaxis[1] != yaxis[2]:
-            ax.set_ylim(yaxis[1],yaxis[2])
+        if yaxis[2] != yaxis[3]:
+            ax.set_ylim(yaxis[2],yaxis[3])
         
         ax.set_xlabel('')
         
