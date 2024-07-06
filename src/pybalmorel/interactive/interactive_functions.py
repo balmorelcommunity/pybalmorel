@@ -46,7 +46,7 @@ def interactive_bar_chart(MainResults_instance):
     series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False)
     
     # Filter buttons
-    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False)
+    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False, layout=widgets.Layout(height='99%', width='99%'))
                         for column in mainresults_symbol_columns[symbol]]
                         for symbol in mainresults_symbol_columns.keys()    
                     }
@@ -137,7 +137,7 @@ def interactive_bar_chart(MainResults_instance):
     pivot_selection_out = widgets.Output()
     
     # For the filtering of the table
-    filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(mainresults_symbol_columns.keys())]
+    filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(height='50%', width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(mainresults_symbol_columns.keys())]
     filter_stack = widgets.Stack(filter_layout)
     widgets.jslink((table_select_button,'index'),(filter_stack,'selected_index'))
     filter_out = widgets.Output()
