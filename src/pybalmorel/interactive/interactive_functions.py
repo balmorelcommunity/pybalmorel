@@ -8,6 +8,7 @@ import gams
 import codecs
 import ast
 import datetime
+import functools
 import pandas as pd
 import numpy as np
 from typing import Union
@@ -55,6 +56,11 @@ def interactive_bar_chart(MainResults_instance):
     plot_title_button = widgets.Text(description='Title:', disabled=False)
     plot_sizetitle_button = widgets.FloatSlider(value=12, min=2, max=20, step=0.1, description='Size:', disabled=False, 
                                             orientation='horizontal', readout=True, readout_format='.1f')
+    plot_fontmin1_button = widgets.Button( description='-1', disabled=False, button_style='', tooltip='-1 on all fonts', icon='')
+    plot_fontmin5_button = widgets.Button( description='-0.5', disabled=False, button_style='', tooltip='-0.5 on all fonts', icon='')
+    plot_fontlabel_button = widgets.Label(value="Change all fonts")
+    plot_fontmax5_button = widgets.Button( description='+0.5', disabled=False, button_style='', tooltip='+0.5 on all fonts', icon='')
+    plot_fontmax1_button = widgets.Button( description='+1', disabled=False, button_style='', tooltip='+1 on all fonts', icon='')
     plot_sizex_button = widgets.BoundedFloatText(value=12, min=5, max=20, step=0.1, description='Size x:', disabled=False)
     plot_sizey_button = widgets.BoundedFloatText(value=8, min=5, max=20, step=0.1, description='Size y:', disabled=False)
     
@@ -142,14 +148,17 @@ def interactive_bar_chart(MainResults_instance):
     widgets.jslink((table_select_button,'index'),(filter_stack,'selected_index'))
     filter_out = widgets.Output()
     
-    # For the plotting 
-    plot_options_layout = widgets.VBox([widgets.HBox([plot_title_button, plot_sizetitle_button]), widgets.HBox([plot_sizex_button, plot_sizey_button]), widgets.HBox([yaxis_title_button, yaxis_size_button, yaxis_min_button, yaxis_max_button]),
+    # For putting buttons on opposite side of a same line
+    left_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-start')
+    right_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-end')
+    
+    # For the plotting options
+    plot_options_layout = widgets.VBox([widgets.HBox([widgets.Box([plot_title_button, plot_sizetitle_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([plot_fontmin1_button, plot_fontmin5_button, plot_fontlabel_button, plot_fontmax5_button, plot_fontmax1_button], layout=right_button_layout)], layout=widgets.Layout(width='100%')),
+                                        widgets.HBox([plot_sizex_button, plot_sizey_button]), widgets.HBox([yaxis_title_button, yaxis_size_button, yaxis_min_button, yaxis_max_button]),
                                         xaxis_order_stack, widgets.HBox([legend_button, legend_location_button, legend_xpos_button, legend_ypos_button, legend_col_button])])
     plot_options_out = widgets.Output()
     
     # Plotting button
-    left_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-start')
-    right_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-end')
     plot_layout = widgets.VBox([widgets.HBox([widgets.Box([plot_button, print_button, namefile_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([config_save_button, nameconfig_button, config_upload_button], layout=right_button_layout)], layout=widgets.Layout(width='100%')),widgets.HBox([iter_choice_button, iter_namefile_button, iter_print_button, iter_title_button])])
     plot_print_out = widgets.Output()
     plot_out = widgets.Output()
@@ -199,6 +208,14 @@ def interactive_bar_chart(MainResults_instance):
                 for filter_button in filter_buttons[table_name]:
                     filter_button.options = list(sorted(MainResults_instance.df[filter_button.description].unique()))
                     filter_button.value = list(sorted(MainResults_instance.df[filter_button.description].unique()))
+                    
+    def change_fonts(numb, click):
+        with plot_options_out:
+            plot_options_out.clear_output()
+            dict_font = {plot_sizetitle_button : plot_sizetitle_button.value, yaxis_size_button : yaxis_size_button.value, xaxis1_size_button : xaxis1_size_button.value,
+                         xaxis2_size_button : xaxis2_size_button.value, xaxis3_size_button : xaxis3_size_button.value}
+            for key, value in dict_font.items():
+                key.value = value + float(numb)
 
     def wrap_plot_bar_chart(click):
         with plot_out:
@@ -415,6 +432,10 @@ def interactive_bar_chart(MainResults_instance):
     print_button.on_click(wrap_print_bar_chart)
     config_save_button.on_click(save_config)
     iter_print_button.on_click(wrap_iter_print_bar_chart)
+    plot_fontmin1_button.on_click(functools.partial(change_fonts, -1))
+    plot_fontmin5_button.on_click(functools.partial(change_fonts, -0.5))
+    plot_fontmax5_button.on_click(functools.partial(change_fonts, 0.5))
+    plot_fontmax1_button.on_click(functools.partial(change_fonts, 1))
     
     # Display the UI and output areas
     display(pivot_selection_layout, pivot_selection_out)
