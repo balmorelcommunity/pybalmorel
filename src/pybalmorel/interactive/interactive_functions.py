@@ -37,17 +37,17 @@ def interactive_bar_chart(MainResults_instance):
     """ Buttons definition """
     
     # Initial selection for plotting
-    table_select_button = widgets.Dropdown(options= list(mainresults_symbol_columns.keys()), value=None, description='Table:', disabled=False)
-    series_select_button = widgets.SelectMultiple(options=[], value=[], description='Series:', disabled=False)
-    categories_select_button = widgets.SelectMultiple(options=[], value=[], description='Categories:', disabled=False)
+    table_select_button = widgets.Dropdown(options= list(mainresults_symbol_columns.keys()), value=None, description='Table:', disabled=False, layout=widgets.Layout(width='80%'))
+    series_select_button = widgets.SelectMultiple(options=[], value=[], description='Series:', disabled=False, layout=widgets.Layout(width='80%'))
+    categories_select_button = widgets.SelectMultiple(options=[], value=[], description='Categories:', disabled=False, layout=widgets.Layout(width='80%'))
     
     # Order options for series and categories
-    series_order_button1 = widgets.Dropdown(options=[], value=None, description='First:', disabled=False)
-    series_order_button2 = widgets.Dropdown(options=[], value=None, description='Second:', disabled=False)
-    series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False)
+    series_order_button1 = widgets.Dropdown(options=[], value=None, description='First:', disabled=False, layout=widgets.Layout(width='99%'))
+    series_order_button2 = widgets.Dropdown(options=[], value=None, description='Second:', disabled=False, layout=widgets.Layout(width='99%'))
+    series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False, layout=widgets.Layout(width='99%'))
     
     # Filter buttons
-    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False, layout=widgets.Layout(height='99%', width='99%'))
+    filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False, layout=widgets.Layout(height='99%', width='80%', overflow='visible'))
                         for column in mainresults_symbol_columns[symbol]]
                         for symbol in mainresults_symbol_columns.keys()    
                     }
@@ -132,8 +132,8 @@ def interactive_bar_chart(MainResults_instance):
     ### Layout and plot part
     
     # For the pivot table order selection
-    series_order_stack = widgets.Stack([widgets.VBox([series_order_button1]),widgets.VBox([series_order_button1,series_order_button2]),
-                                        widgets.VBox([series_order_button1,series_order_button2,series_order_button3])])   
+    series_order_stack = widgets.Stack([widgets.VBox([series_order_button1], layout=widgets.Layout(width='80%')),widgets.VBox([series_order_button1,series_order_button2], layout=widgets.Layout(width='80%')),
+                                        widgets.VBox([series_order_button1,series_order_button2,series_order_button3], layout=widgets.Layout(width='80%'))])   
     xaxis_order_stack =  widgets.Stack([widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button])]),
                                         widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button])]),
                                         widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button]),widgets.HBox([xaxis3_button,xaxis3_position_button,xaxis3_size_button,xaxis3_bold_button,xaxis3_sep_button])])])
@@ -143,7 +143,7 @@ def interactive_bar_chart(MainResults_instance):
     pivot_selection_out = widgets.Output()
     
     # For the filtering of the table
-    filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(height='50%', width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(mainresults_symbol_columns.keys())]
+    filter_layout = [widgets.GridBox(filter_buttons[key], layout=widgets.Layout(height='100%', width='100%', overflow='visible', grid_template_columns='repeat(3, 1fr)', grid_gap='2px')) for key in list(mainresults_symbol_columns.keys())]
     filter_stack = widgets.Stack(filter_layout)
     widgets.jslink((table_select_button,'index'),(filter_stack,'selected_index'))
     filter_out = widgets.Output()

@@ -119,7 +119,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 if xaxis[8]==True :
                     ax.text((2*ind3+1)/(2*len(categories_third)), xaxis[9]*0.01, cat3, ha='center', va='center', fontsize=xaxis[10], fontweight=dict_fw[xaxis[11]], rotation=0, transform=ax.transAxes)
                     if ind3 != 0 :
-                        line = plt.Line2D([ind3*1/(len(categories_third)), ind3*1/(len(categories_third))], [xaxis[12]*xaxis[9]*0.01, -0.001], transform=ax.transAxes, clip_on=False, color='black', linestyle='-')
+                        line = plt.Line2D([ind3*1/(len(categories_third)), ind3*1/(len(categories_third))], [xaxis[12]*xaxis[9]*0.01, -0.001], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
                         ax.add_line(line)
                 for ind2, cat2 in enumerate(categories_second):
                     if xaxis[3]==True :
