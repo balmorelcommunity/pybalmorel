@@ -112,14 +112,16 @@ class MainResults:
         
         for SC in self.sc:
             # Get results from each scenario
-            temp = symbol_to_df(self.db[SC], symbol, cols)
-            temp['Scenario'] = SC 
+            try :
+                temp = symbol_to_df(self.db[SC], symbol, cols)
+                temp['Scenario'] = SC 
+                # Put scenario in first column
+                temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
+                # Save
+                df = pd.concat((df, temp), ignore_index=True)
             
-            # Put scenario in first column
-            temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
-            
-            # Save
-            df = pd.concat((df, temp), ignore_index=True)
+            except ValueError :
+                print(f'{SC} doesn\'t have any value in the table {symbol}')
             
         return df  
     
