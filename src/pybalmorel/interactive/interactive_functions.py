@@ -15,7 +15,7 @@ from typing import Union
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from IPython.display import display
+from IPython.display import display, HTML, Javascript
 import ipywidgets as widgets
 from ipywidgets import interact, interactive
 from ..plotting.plot_functions import plot_bar_chart
@@ -103,6 +103,10 @@ def interactive_bar_chart(MainResults_instance):
                                              orientation='horizontal', readout=True, readout_format='.2f')
     legend_col_button = widgets.BoundedIntText(value=1, min=1, max=10, step=1, description='Number columns:', disabled=False)
     
+    # Ordering elements, initialization
+    order_display_button = widgets.Button( description='Choose order', disabled=False, button_style='', tooltip='Click to choose order', icon='')
+    order_buttons = {}
+    
     # Plotting buttons
     plot_button = widgets.Button( description='Plot', disabled=False, button_style='', tooltip='Click to plot', icon='check')
     print_button = widgets.Button( description='Print', disabled=False, button_style='', tooltip='Click to save', icon='check')
@@ -151,6 +155,10 @@ def interactive_bar_chart(MainResults_instance):
     # For putting buttons on opposite side of a same line
     left_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-start')
     right_button_layout = widgets.Layout(display='flex', flex_flow='row', justify_content='flex-end')
+    
+    # Ordering elements, initialization
+    order_layout = widgets.HBox([])
+    order_out = widgets.Output()
     
     # For the plotting options
     plot_options_layout = widgets.VBox([widgets.HBox([widgets.Box([plot_title_button, plot_sizetitle_button], layout=left_button_layout), widgets.Box(layout=widgets.Layout(flex='1 1 auto')), widgets.Box([plot_fontmin1_button, plot_fontmin5_button, plot_fontlabel_button, plot_fontmax5_button, plot_fontmax1_button], layout=right_button_layout)], layout=widgets.Layout(width='100%')),
@@ -216,6 +224,34 @@ def interactive_bar_chart(MainResults_instance):
                          xaxis2_size_button : xaxis2_size_button.value, xaxis3_size_button : xaxis3_size_button.value}
             for key, value in dict_font.items():
                 key.value = value + float(numb)
+                
+    def show_order(serie_name):
+        with order_out:
+            order_out.clear_output()
+            table_order = table_select_button.value
+            MainResults_instance.df = MainResults_instance.get_result(table_order)
+            if type(serie_name) is tuple :
+                for name in serie_name :
+                    if name not in order_buttons :
+                        # Create the list of buttons in the dictionnary
+                        series_name_options = list(sorted(MainResults_instance.df[name].unique()))
+                        order_buttons[name] = [widgets.Label(value=f"{name}", layout=widgets.Layout(justify_content='center'))] + [widgets.Dropdown(options=series_name_options, value=None, description=f'Order {i+1}:', disabled=False, layout=widgets.Layout(width='95%')) for i in range(len(series_name_options))]
+            else :
+                if serie_name not in order_buttons :
+                    # Create the list of buttons in the dictionnary
+                    series_name_options = list(sorted(MainResults_instance.df[serie_name].unique()))
+                    order_buttons[serie_name] = [widgets.Label(value=f"{serie_name}", layout=widgets.Layout(justify_content='center'))] + [widgets.Dropdown(options=series_name_options, value=None, description=f'Order {i+1}:', disabled=False, layout=widgets.Layout(width='95%')) for i in range(len(series_name_options))]
+                    
+                
+            # Update the layout to plot the ordering buttons
+            list_order = []
+            for key in [series_order_button1.value, series_order_button2.value, series_order_button3.value][:len(series_select_button.value)]:
+                if key != None :
+                    list_order.append(widgets.VBox(order_buttons[key]))
+            for key in categories_select_button.value :
+                list_order.append(widgets.VBox(order_buttons[key]))
+                
+            order_layout.children = list_order
 
     def wrap_plot_bar_chart(click):
         with plot_out:
@@ -227,6 +263,7 @@ def interactive_bar_chart(MainResults_instance):
                 filter[filter_button.description] = list(filter_button.value)
             nb_series = len(series_select_button.value)
             series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
+            # Ordering options
             if None in series_order_selection:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_select_button.value, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
@@ -425,6 +462,10 @@ def interactive_bar_chart(MainResults_instance):
     table_select_button.observe(lambda change: df_update(change['new']), names='value')
     series_select_button.observe(lambda change: series_order_function(change['new']), names='value')
     series_select_button.observe(lambda change: xaxis_option_function(change['new']), names='value')
+    series_order_button1.observe(lambda change: show_order(change['new']), names='value')
+    series_order_button2.observe(lambda change: show_order(change['new']), names='value')
+    series_order_button3.observe(lambda change: show_order(change['new']), names='value')
+    categories_select_button.observe(lambda change: show_order(change['new']), names='value')
     config_upload_button.observe(lambda change: upload_config(change['new']), names='value')
 
     # Activate the plotting of the bar chart on the click
@@ -441,5 +482,6 @@ def interactive_bar_chart(MainResults_instance):
     display(pivot_selection_layout, pivot_selection_out)
     display(filter_stack, filter_out)
     display(plot_options_layout, plot_options_out)
+    display(order_layout, order_out)
     display(plot_layout, plot_print_out)
     display(plot_out)
