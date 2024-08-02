@@ -19,7 +19,8 @@ from ..formatting import balmorel_colours
 
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
-                    title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, save: bool, namefile: str):
+                    title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, series_order: dict, categories_order:dict,
+                    save: bool, namefile: str):
     """
     Plotting function for the bar chart
 
@@ -34,6 +35,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         xaxis (tuple): Options for the x axis
         yaxis (tuple): Options for the y axis
         legend (tuple): Options for the legend
+        series_order (dict): Order of the index
+        categories_order (dict): Order of the stacking
         save (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
     """
@@ -60,6 +63,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         columns=categories,
                         values='Value',
                         aggfunc='sum').fillna(0)
+        
+        # Ordering
+        for serie, order in series_order.items():
+            print(serie, order)
+            temp = temp.reorder_levels(series).sort_index(level=serie, key=lambda x: x.map({v: i for i, v in enumerate(order)}))
         
         #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
         if type(temp.index[0]) == list:

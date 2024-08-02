@@ -105,6 +105,7 @@ def interactive_bar_chart(MainResults_instance):
     
     # Ordering elements, initialization
     order_display_button = widgets.Button( description='Choose order', disabled=False, button_style='', tooltip='Click to choose order', icon='')
+    global order_buttons
     order_buttons = {}
     
     # Plotting buttons
@@ -264,20 +265,33 @@ def interactive_bar_chart(MainResults_instance):
             nb_series = len(series_select_button.value)
             series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
             # Ordering options
+            series_order, categories_order = {}, {}
+            for name in series_select_button.value :
+                series_order[name] = []
+                for i in range(1,len(order_buttons[name])) :
+                    value = order_buttons[name][i].value
+                    if value != None :
+                        series_order[name].append(value)
+            for name in categories_select_button.value :
+                categories_order[name] = []
+                for i in range(1,len(order_buttons[name])) :
+                    value = order_buttons[name][i].value
+                    if value != None :
+                        categories_order[name].append(value)
             if None in series_order_selection:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_select_button.value, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    False, '')
+                                    series_order, categories_order, False, '')
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    False, '')
+                                    series_order, categories_order, False, '')
                 
             display(fig)
             
@@ -294,6 +308,20 @@ def interactive_bar_chart(MainResults_instance):
                 filter[filter_button.description] = list(filter_button.value)
             nb_series = len(series_select_button.value)
             series_order_selection=[series_order_button3.value, series_order_button2.value, series_order_button1.value][-nb_series:]
+            # Ordering options
+            series_order, categories_order = {}, {}
+            for name in series_select_button.value :
+                series_order[name] = []
+                for i in range(1,len(order_buttons[name])) :
+                    value = order_buttons[name][i].value
+                    if value != None :
+                        series_order[name].append(value)
+            for name in categories_select_button.value :
+                categories_order[name] = []
+                for i in range(1,len(order_buttons[name])) :
+                    value = order_buttons[name][i].value
+                    if value != None :
+                        categories_order[name].append(value)
             # Name of the file
             if namefile_button.value == '':
                 namefile = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
@@ -306,14 +334,14 @@ def interactive_bar_chart(MainResults_instance):
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    True, namefile)
+                                    series_order, categories_order, True, namefile)
             else:
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
                                     (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                      xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    True, namefile)
+                                    series_order, categories_order, True, namefile)
                 
             display(fig)
             
