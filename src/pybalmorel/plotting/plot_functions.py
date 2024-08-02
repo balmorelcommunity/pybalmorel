@@ -64,10 +64,21 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         values='Value',
                         aggfunc='sum').fillna(0)
         
-        # Ordering
-        for serie, order in series_order.items():
-            print(serie, order)
-            temp = temp.reorder_levels(series).sort_index(level=serie, key=lambda x: x.map({v: i for i, v in enumerate(order)}))
+        # Ordering the index
+        order_list = []
+        for serie, order in series_order.items() :
+            serie_string = f'{serie}_order'
+            order_list.append(serie_string)
+            # To make sure we give an order when the user does not specify it
+            if len(order) >= 1 :
+                used_order = order
+            else : 
+                used_order = temp.index.get_level_values(serie).unique()
+            # Creating a column for ordering
+            temp[serie_string] = temp.index.get_level_values(serie).map({value: idx for idx, value in enumerate(used_order)})
+        # Ordering with the columns created
+        temp = temp.sort_values(by=order_list)
+        temp = temp.drop(columns=order_list)
         
         #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
         if type(temp.index[0]) == list:
