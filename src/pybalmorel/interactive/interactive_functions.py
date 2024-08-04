@@ -250,26 +250,19 @@ def interactive_bar_chart(MainResults_instance):
             order_out.clear_output()
             table_order = table_select_button.value
             MainResults_instance.df = MainResults_instance.get_result(table_order)
-            if type(serie_name) is tuple :
-                for name in serie_name :
-                    if name not in order_buttons :
-                        # Create the list of buttons in the dictionnary
-                        series_name_options = list(sorted(MainResults_instance.df[name].unique()))
-                        order_buttons[name] = [widgets.Label(value=f"{name}", layout=widgets.Layout(justify_content='center'))] + [widgets.Dropdown(options=series_name_options, value=None, description=f'Order {i+1}:', disabled=False, layout=widgets.Layout(width='95%')) for i in range(len(series_name_options))]
-            else :
-                if serie_name not in order_buttons :
-                    # Create the list of buttons in the dictionnary
-                    series_name_options = list(sorted(MainResults_instance.df[serie_name].unique()))
-                    order_buttons[serie_name] = [widgets.Label(value=f"{serie_name}", layout=widgets.Layout(justify_content='center'))] + [widgets.Dropdown(options=series_name_options, value=None, description=f'Order {i+1}:', disabled=False, layout=widgets.Layout(width='95%')) for i in range(len(series_name_options))]
+            if serie_name not in order_buttons :
+                # Create the list of buttons in the dictionnary
+                series_name_options = list(sorted(MainResults_instance.df[serie_name].unique()))
+                order_buttons[serie_name] = [widgets.Label(value=f"{serie_name}", layout=widgets.Layout(justify_content='center'))] + [widgets.Dropdown(options=series_name_options, value=None, description=f'Order {i+1}:', disabled=False, layout=widgets.Layout(width='95%')) for i in range(len(series_name_options))]
                     
-                
             # Update the layout to plot the ordering buttons
             list_order = []
             for key in [series_order_button1.value, series_order_button2.value, series_order_button3.value][:len(series_select_button.value)]:
                 if key != None :
                     list_order.append(widgets.VBox(order_buttons[key]))
-            for key in categories_select_button.value :
-                list_order.append(widgets.VBox(order_buttons[key]))
+            for key in [categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:len(categories_select_button.value)]:
+                if key != None :
+                    list_order.append(widgets.VBox(order_buttons[key]))
                 
             order_layout.children = list_order
 
@@ -305,13 +298,14 @@ def interactive_bar_chart(MainResults_instance):
             if None in categories_order_selection :
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
-                
-            for name in categories_select_button.value :
-                categories_order[name] = []
-                for i in range(1,len(order_buttons[name])) :
-                    value = order_buttons[name][i].value
-                    if value != None :
-                        categories_order[name].append(value)
+            
+            else :
+                for name in categories_order_selection :
+                    categories_order[name] = []
+                    for i in range(1,len(order_buttons[name])) :
+                        value = order_buttons[name][i].value
+                        if value != None :
+                            categories_order[name].append(value)
             
             fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_order_selection,
                                 (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
@@ -358,12 +352,13 @@ def interactive_bar_chart(MainResults_instance):
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
                 
-            for name in categories_select_button.value :
-                categories_order[name] = []
-                for i in range(1,len(order_buttons[name])) :
-                    value = order_buttons[name][i].value
-                    if value != None :
-                        categories_order[name].append(value)
+            else :
+                for name in categories_order_selection :
+                    categories_order[name] = []
+                    for i in range(1,len(order_buttons[name])) :
+                        value = order_buttons[name][i].value
+                        if value != None :
+                            categories_order[name].append(value)
             
             # Name of the file
             if namefile_button.value == '':
@@ -416,12 +411,13 @@ def interactive_bar_chart(MainResults_instance):
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
                 
-            for name in categories_select_button.value :
-                categories_order[name] = []
-                for i in range(1,len(order_buttons[name])) :
-                    value = order_buttons[name][i].value
-                    if value != None :
-                        categories_order[name].append(value)
+            else :
+                for name in categories_order_selection :
+                    categories_order[name] = []
+                    for i in range(1,len(order_buttons[name])) :
+                        value = order_buttons[name][i].value
+                        if value != None :
+                            categories_order[name].append(value)
             
             # Iteration on
             iteration_cat = iter_choice_button.value
@@ -449,7 +445,7 @@ def interactive_bar_chart(MainResults_instance):
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                     (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    True, namefile)
+                                    series_order, categories_order, True, namefile)
                     
                 display(fig)
                 
@@ -551,7 +547,9 @@ def interactive_bar_chart(MainResults_instance):
     series_order_button1.observe(lambda change: show_order(change['new']), names='value')
     series_order_button2.observe(lambda change: show_order(change['new']), names='value')
     series_order_button3.observe(lambda change: show_order(change['new']), names='value')
-    categories_select_button.observe(lambda change: show_order(change['new']), names='value')
+    categories_order_button1.observe(lambda change: show_order(change['new']), names='value')
+    categories_order_button2.observe(lambda change: show_order(change['new']), names='value')
+    categories_order_button3.observe(lambda change: show_order(change['new']), names='value')
     config_upload_button.observe(lambda change: upload_config(change['new']), names='value')
 
     # Activate the plotting of the bar chart on the click
