@@ -45,6 +45,9 @@ def interactive_bar_chart(MainResults_instance):
     series_order_button1 = widgets.Dropdown(options=[], value=None, description='First:', disabled=False, layout=widgets.Layout(width='99%'))
     series_order_button2 = widgets.Dropdown(options=[], value=None, description='Second:', disabled=False, layout=widgets.Layout(width='99%'))
     series_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False, layout=widgets.Layout(width='99%'))
+    categories_order_button1 = widgets.Dropdown(options=[], value=None, description='First:', disabled=False, layout=widgets.Layout(width='99%'))
+    categories_order_button2 = widgets.Dropdown(options=[], value=None, description='Second:', disabled=False, layout=widgets.Layout(width='99%'))
+    categories_order_button3 = widgets.Dropdown(options=[], value=None, description='Third:', disabled=False, layout=widgets.Layout(width='99%'))
     
     # Filter buttons
     filter_buttons = {symbol : [widgets.SelectMultiple(options=['None'], value=['None'], description=column, disabled=False, layout=widgets.Layout(height='99%', width='80%', overflow='visible'))
@@ -138,13 +141,15 @@ def interactive_bar_chart(MainResults_instance):
     
     # For the pivot table order selection
     series_order_stack = widgets.Stack([widgets.VBox([series_order_button1], layout=widgets.Layout(width='80%')),widgets.VBox([series_order_button1,series_order_button2], layout=widgets.Layout(width='80%')),
-                                        widgets.VBox([series_order_button1,series_order_button2,series_order_button3], layout=widgets.Layout(width='80%'))])   
+                                        widgets.VBox([series_order_button1,series_order_button2,series_order_button3], layout=widgets.Layout(width='80%'))])  
+    categories_order_stack = widgets.Stack([widgets.VBox([categories_order_button1], layout=widgets.Layout(width='80%')),widgets.VBox([categories_order_button1,categories_order_button2], layout=widgets.Layout(width='80%')),
+                                        widgets.VBox([categories_order_button1,categories_order_button2,categories_order_button3], layout=widgets.Layout(width='80%'))])   
     xaxis_order_stack =  widgets.Stack([widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button])]),
                                         widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button])]),
                                         widgets.VBox([widgets.HBox([xaxis1_button,xaxis1_size_button,xaxis1_bold_button]),widgets.HBox([xaxis2_button,xaxis2_position_button,xaxis2_size_button,xaxis2_bold_button,xaxis2_sep_button]),widgets.HBox([xaxis3_button,xaxis3_position_button,xaxis3_size_button,xaxis3_bold_button,xaxis3_sep_button])])])
     
     # For the pivot table options selection
-    pivot_selection_layout = widgets.GridBox([table_select_button, widgets.VBox([series_select_button,series_order_stack]) , categories_select_button], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px'))
+    pivot_selection_layout = widgets.GridBox([table_select_button, widgets.VBox([series_select_button,series_order_stack]) , widgets.VBox([categories_select_button,categories_order_stack])], layout=widgets.Layout(width='100%', grid_template_columns='repeat(3, 1fr)', grid_gap='2px'))
     pivot_selection_out = widgets.Output()
     
     # For the filtering of the table
@@ -202,6 +207,20 @@ def interactive_bar_chart(MainResults_instance):
                     series_order_button2.value = ser_ord_but2_old
                 if ser_ord_but3_old in series_order_button3.options :
                     series_order_button3.value = ser_ord_but3_old
+                    
+    def categories_order_function(categories_name):
+        with pivot_selection_out:
+            pivot_selection_out.clear_output()
+            if categories_name :
+                cat_ord_but1_old, cat_ord_but2_old, cat_ord_but3_old = categories_order_button1.value, categories_order_button2.value, categories_order_button3.value
+                categories_order_stack.selected_index=len(categories_name)-1
+                categories_order_button1.options, categories_order_button2.options, categories_order_button3.options = categories_name, categories_name, categories_name
+                if cat_ord_but1_old in categories_order_button1.options :
+                    categories_order_button1.value = cat_ord_but1_old
+                if cat_ord_but2_old in categories_order_button2.options :
+                    categories_order_button2.value = cat_ord_but2_old
+                if cat_ord_but3_old in categories_order_button3.options :
+                    categories_order_button3.value = cat_ord_but3_old
         
     def xaxis_option_function(series_name):
         with plot_options_out:
@@ -279,6 +298,13 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
+                            
+            # Categories priority selection 
+            nb_categories = len(categories_select_button.value)
+            categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
+            if None in categories_order_selection :
+                categories_order_selection = categories_select_button.value
+                print("If you want another categories order, you must select the entire order")
                 
             for name in categories_select_button.value :
                 categories_order[name] = []
@@ -287,7 +313,7 @@ def interactive_bar_chart(MainResults_instance):
                     if value != None :
                         categories_order[name].append(value)
             
-            fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
+            fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_order_selection,
                                 (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                 (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                  xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
@@ -324,6 +350,13 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
+                            
+            # Categories priority selection 
+            nb_categories = len(categories_select_button.value)
+            categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
+            if None in categories_order_selection :
+                categories_order_selection = categories_select_button.value
+                print("If you want another categories order, you must select the entire order")
                 
             for name in categories_select_button.value :
                 categories_order[name] = []
@@ -338,7 +371,7 @@ def interactive_bar_chart(MainResults_instance):
             else : 
                 namefile = namefile_button.value
             
-            fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
+            fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_order_selection,
                                 (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                 (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                  xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
@@ -375,6 +408,13 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
+                            
+            # Categories priority selection 
+            nb_categories = len(categories_select_button.value)
+            categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
+            if None in categories_order_selection :
+                categories_order_selection = categories_select_button.value
+                print("If you want another categories order, you must select the entire order")
                 
             for name in categories_select_button.value :
                 categories_order[name] = []
@@ -404,7 +444,7 @@ def interactive_bar_chart(MainResults_instance):
                 if iter_title_button.value == True:
                     add_title = add_title + ' - ' + value
                 
-                fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_select_button.value,
+                fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_order_selection,
                                     (plot_title_button.value + add_title,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
                                     (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                     xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
@@ -506,6 +546,7 @@ def interactive_bar_chart(MainResults_instance):
     table_select_button.observe(lambda change: table_select_function(change['new']), names='value')
     table_select_button.observe(lambda change: df_update(change['new']), names='value')
     series_select_button.observe(lambda change: series_order_function(change['new']), names='value')
+    categories_select_button.observe(lambda change: categories_order_function(change['new']), names='value')
     series_select_button.observe(lambda change: xaxis_option_function(change['new']), names='value')
     series_order_button1.observe(lambda change: show_order(change['new']), names='value')
     series_order_button2.observe(lambda change: show_order(change['new']), names='value')
