@@ -128,13 +128,12 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                             aggfunc='sum',
                             dropna=False).fillna(0)
         
-        # print(temp)
-        
         max_bar = temp.sum(axis=1).max()
         
         # Object oriented plotting
         fig, ax = plt.subplots(figsize=size)
         transform_to_axes = ax.transData + ax.transAxes.inverted()
+        print(temp)
         
         # Colors 
         try:
