@@ -8,6 +8,7 @@ import gams
 import codecs
 import ast
 import datetime
+import time
 import functools
 import pandas as pd
 import numpy as np
@@ -129,12 +130,12 @@ def interactive_bar_chart(MainResults_instance):
     
     # Dictionnary associating to each button its name
     dict_frombutton = {table_select_button : 'table_select', series_select_button : 'series_select', categories_select_button : 'categories_select', series_order_button1 : 'series_order1',
-                       series_order_button2 : 'series_order2', series_order_button3 : 'series_order3', plot_title_button : 'plot_title', plot_sizetitle_button : 'plot_sizetitle',
-                       plot_sizex_button : 'plot_sizex', plot_sizey_button : 'plot_sizey', yaxis_title_button : 'yaxis_title', yaxis_size_button : 'yaxis_size', yaxis_min_button : 'yaxis_min', yaxis_max_button : 'yaxis_max', 
-                       xaxis1_size_button : 'xaxis1_size', xaxis1_bold_button : 'xaxis1_bold', xaxis2_position_button : 'xaxis2_position', xaxis2_size_button : 'xaxis2_size', 
+                       series_order_button2 : 'series_order2', series_order_button3 : 'series_order3', categories_order_button1 : 'categories_order1', categories_order_button2 : 'categories_order2', categories_order_button3 : 'categories_order3', 
+                       plot_title_button : 'plot_title', plot_sizetitle_button : 'plot_sizetitle', plot_sizex_button : 'plot_sizex', plot_sizey_button : 'plot_sizey', yaxis_title_button : 'yaxis_title', yaxis_size_button : 'yaxis_size', 
+                       yaxis_min_button : 'yaxis_min', yaxis_max_button : 'yaxis_max', xaxis1_size_button : 'xaxis1_size', xaxis1_bold_button : 'xaxis1_bold', xaxis2_position_button : 'xaxis2_position', xaxis2_size_button : 'xaxis2_size', 
                        xaxis2_bold_button : 'xaxis2_bold', xaxis2_sep_button : 'xaxis2_sep', xaxis3_position_button : 'xaxis3_position', xaxis3_size_button : 'xaxis3_size', 
                        xaxis3_bold_button : 'xaxis3_bold', xaxis3_sep_button : 'xaxis3_sep', legend_location_button : 'legend_location', legend_xpos_button : 'legend_xpos', 
-                       legend_ypos_button : 'legend_ypos', legend_col_button : 'legend_col', namefile_button : 'namefile'}
+                       legend_ypos_button : 'legend_ypos', legend_col_button : 'legend_col', namefile_button : 'namefile', xaxis1_button : 'xaxis1', xaxis2_button : 'xaxis2', xaxis3_button : 'xaxis3', legend_button : 'legend'}
     dict_tobutton = {v: k for k, v in dict_frombutton.items()}
     
     ### Layout and plot part
@@ -483,6 +484,15 @@ def interactive_bar_chart(MainResults_instance):
                     else :
                         file.write(f',{value[i].value}')
                 file.write(f']\n')
+            file.write(".\n")
+            for key, value in order_buttons.items():
+                file.write(f'{key},[')
+                for i in range(1, len(value)) :
+                    if i == 1 :
+                        file.write(f'\'{value[i].value}\'')
+                    else :
+                        file.write(f',\'{value[i].value}\'')
+                file.write(f']\n')
                 
     # Function to upload a config
     def upload_config(config):
@@ -494,7 +504,7 @@ def interactive_bar_chart(MainResults_instance):
         filter = 0
         for line in text.strip().splitlines():
             if line == '.' :
-                filter = 1
+                filter += 1
                 # Put back the values inside the buttons
                 for k, v in dict_tobutton.items() :
                     v.value = dict_config[k] 
@@ -524,7 +534,7 @@ def interactive_bar_chart(MainResults_instance):
                                 pass  # If conversion fails, keep the string value
                         # Assign key-value pair to the dictionary
                         dict_config[key] = value
-                else :
+                elif filter == 1 :
                     key, list_str = line.split(',', 1) 
                     key = key.strip()
                     list_str = list_str.strip()
@@ -535,6 +545,14 @@ def interactive_bar_chart(MainResults_instance):
                         for filter_button in filter_buttons[key]:
                             filter_button.value = list(value_list[i])
                             i += 1
+                else :
+                    key, list_str = line.split(',', 1) 
+                    key = key.strip()
+                    list_str = list_str.strip()
+                    value_list = ast.literal_eval(list_str)
+                    for ind, value in enumerate(value_list) :
+                        if value != 'None' :
+                            order_buttons[key][ind+1].value = value
         
             
     # Dynamic behaviour of the buttons
