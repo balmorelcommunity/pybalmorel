@@ -84,7 +84,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         order_list = []
         if len(categories_order) == 1 :
             for categorie, order in categories_order.items():
-                order_list = order
+                order_list = order_list + order
+            all_categories = temp.columns.tolist()
+            for element in all_categories :
+                if element not in order_list :
+                    order_list.append(element)
         elif len(categories_order) >= 1 :
             # Create a dictionary for fast look-up of index
             order_index = []
@@ -112,28 +116,23 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             # Sort the list
             order_list = sorted(all_categories, key=custom_sort_key)
             
-        all_categories = temp.columns.tolist()
-        for element in all_categories :
-            if element not in order_list :
-                order_list.append(element)
         temp = temp[order_list]
         
         #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
-        if type(temp.index[0]) == list:
-            all_combinations = pd.MultiIndex.from_product([temp.index.get_level_values(i).unique() for i in range(len(temp.index[0]))], names=series)
-            temp = temp.reindex(all_combinations).reset_index()
-            temp = df.pivot_table(index=series,
-                            columns=categories,
-                            values='Value',
-                            aggfunc='sum',
-                            dropna=False).fillna(0)
+        # if type(temp.index[0]) == list:
+        #     all_combinations = pd.MultiIndex.from_product([temp.index.get_level_values(i).unique() for i in range(len(temp.index[0]))], names=series)
+        #     temp = temp.reindex(all_combinations).reset_index()
+        #     temp = df.pivot_table(index=series,
+        #                     columns=categories,
+        #                     values='Value',
+        #                     aggfunc='sum',
+        #                     dropna=False).fillna(0)
         
         max_bar = temp.sum(axis=1).max()
         
         # Object oriented plotting
         fig, ax = plt.subplots(figsize=size)
         transform_to_axes = ax.transData + ax.transAxes.inverted()
-        print(temp)
         
         # Colors 
         try:
@@ -142,7 +141,10 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             temp.plot(ax=ax, kind='bar', stacked=True, legend=False)
         
         if legend[0] == True:
-            ax.legend(bbox_to_anchor=(legend[2], legend[3]), loc=legend[1], ncols=legend[4], reverse=True)
+            # To deal with double legend
+            handles, labels = plt.gca().get_legend_handles_labels()
+            by_label = dict(zip(labels, handles))
+            ax.legend(by_label.values(), by_label.keys(), bbox_to_anchor=(legend[2], legend[3]), loc=legend[1], ncols=legend[4], reverse=True)
         
         # Customizing x-axis
         dict_fw = {True:'bold',False:'normal'}
