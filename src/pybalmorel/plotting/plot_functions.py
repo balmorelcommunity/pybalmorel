@@ -55,7 +55,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             query_parts.append(f'{key} {value}')
     query_str = ' & '.join(query_parts)
     df = df.query(query_str)
-
+    
     if series : 
 
         # Pivot
@@ -63,6 +63,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         columns=categories,
                         values='Value',
                         aggfunc='sum').fillna(0)
+        
+        print(temp)
         
         # Ordering the index
         order_list = []
@@ -90,6 +92,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 for element in all_categories :
                     if element not in order_list :
                         order_list.append(element)
+                # Make sure we don't have the element if they are not there :
+                order_list = [item for item in order_list if item in all_categories]
             elif len(categories_order) >= 1 :
                 # Create a dictionary for fast look-up of index
                 order_index = []

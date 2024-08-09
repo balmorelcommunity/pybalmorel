@@ -347,14 +347,16 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
-                            
+            
             # Categories priority selection 
             nb_categories = len(categories_select_button.value)
             categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
-            if None in categories_order_selection :
+            if categories_order_selection == [] :
+                categories_order_selection = []
+            elif None in categories_order_selection :
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
-                
+            
             else :
                 for name in categories_order_selection :
                     categories_order[name] = []
@@ -406,14 +408,16 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
-                            
+            
             # Categories priority selection 
             nb_categories = len(categories_select_button.value)
             categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
-            if None in categories_order_selection :
+            if categories_order_selection == [] :
+                categories_order_selection = []
+            elif None in categories_order_selection :
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
-                
+            
             else :
                 for name in categories_order_selection :
                     categories_order[name] = []
@@ -444,11 +448,11 @@ def interactive_bar_chart(MainResults_instance):
                     add_title = add_title + ' - ' + value
                 
                 fig = plot_bar_chart(MainResults_instance.df, filter, series_order_selection, categories_order_selection,
-                                    (plot_title_button.value + add_title,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
-                                    (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
-                                    xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
-                                    (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                    series_order, categories_order, True, namefile)
+                                (plot_title_button.value,plot_sizetitle_button.value), (plot_sizex_button.value,plot_sizey_button.value),
+                                (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
+                                 xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
+                                (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
+                                series_order, categories_order, True, namefile)
                     
                 display(fig)
                 
