@@ -64,8 +64,6 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                         values='Value',
                         aggfunc='sum').fillna(0)
         
-        print(temp)
-        
         # Ordering the index
         order_list = []
         for serie, order in series_order.items() :
