@@ -80,43 +80,44 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         temp = temp.sort_values(by=order_list)
         temp = temp.drop(columns=order_list)
 
-        # Ordering the categories
-        order_list = []
-        if len(categories_order) == 1 :
-            for categorie, order in categories_order.items():
-                order_list = order_list + order
-            all_categories = temp.columns.tolist()
-            for element in all_categories :
-                if element not in order_list :
-                    order_list.append(element)
-        elif len(categories_order) >= 1 :
-            # Create a dictionary for fast look-up of index
-            order_index = []
-            all_categories = temp.columns.tolist()
-            i = 0
-            for categorie, order in categories_order.items():
-                ordered_index = {value: index for index, value in enumerate(order)}
-                index_nb = len(ordered_index)
-                for item in all_categories :
-                    if item[i] not in list(ordered_index.keys()) :
-                        ordered_index[item[i]] = index_nb
-                        index_nb += 1 
-                order_index.append(ordered_index)
-                i += 1
-            
-            # Custom key function for sorting
-            def custom_sort_key(item):
-                if len(item) == 2 :
-                    first_value, second_value = item
-                    return (order_index[0][first_value], order_index[1][second_value])
-                if len(item) == 3 :
-                    first_value, second_value, third_value = item
-                    return (order_index[0][first_value], order_index[1][second_value], order_index[2][third_value])
+        if len(categories) >= 1 and len(categories_order) >= 1 :
+            # Ordering the categories
+            order_list = []
+            if len(categories_order) == 1 :
+                for categorie, order in categories_order.items():
+                    order_list = order_list + order
+                all_categories = temp.columns.tolist()
+                for element in all_categories :
+                    if element not in order_list :
+                        order_list.append(element)
+            elif len(categories_order) >= 1 :
+                # Create a dictionary for fast look-up of index
+                order_index = []
+                all_categories = temp.columns.tolist()
+                i = 0
+                for categorie, order in categories_order.items():
+                    ordered_index = {value: index for index, value in enumerate(order)}
+                    index_nb = len(ordered_index)
+                    for item in all_categories :
+                        if item[i] not in list(ordered_index.keys()) :
+                            ordered_index[item[i]] = index_nb
+                            index_nb += 1 
+                    order_index.append(ordered_index)
+                    i += 1
+                
+                # Custom key function for sorting
+                def custom_sort_key(item):
+                    if len(item) == 2 :
+                        first_value, second_value = item
+                        return (order_index[0][first_value], order_index[1][second_value])
+                    if len(item) == 3 :
+                        first_value, second_value, third_value = item
+                        return (order_index[0][first_value], order_index[1][second_value], order_index[2][third_value])
 
-            # Sort the list
-            order_list = sorted(all_categories, key=custom_sort_key)
-            
-        temp = temp[order_list]
+                # Sort the list
+                order_list = sorted(all_categories, key=custom_sort_key)
+                
+            temp = temp[order_list]
         
         #Sometimes one instance of index combination is missing and it's creating plotting issue. For now we'll complete by 0 this instance.
         # if type(temp.index[0]) == list:

@@ -292,11 +292,13 @@ def interactive_bar_chart(MainResults_instance):
                         value = order_buttons[name][i].value
                         if value != None :
                             series_order[name].append(value)
-                            
+            
             # Categories priority selection 
             nb_categories = len(categories_select_button.value)
             categories_order_selection=[categories_order_button1.value, categories_order_button2.value, categories_order_button3.value][:nb_categories]
-            if None in categories_order_selection :
+            if categories_order_selection == [] :
+                categories_order_selection = []
+            elif None in categories_order_selection :
                 categories_order_selection = categories_select_button.value
                 print("If you want another categories order, you must select the entire order")
             
