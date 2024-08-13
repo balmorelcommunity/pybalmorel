@@ -1,8 +1,12 @@
 [project]
 name = "pybalmorel"
-version = "0.3.1"
+version = "0.3.3"
+maintainers = [
+  { name="Mathias Berg Rosendal", email="mathiasros@gmail.com"},
+  { name="Théodore Le Nalinec"},
+]
 authors = [
-  { name="Mathias Berg Rosendal", email="mathiasros@gmail.com" },
+  { name="Mathias Berg Rosendal", email="mathiasros@gmail.com"},
 ]
 description = "A package for convenient python functions when processing Balmorel data or results"
 readme = "README.md"
