@@ -8,6 +8,8 @@ Created on 08.06.2024
 ### ------------------------------- ###
 
 import os
+import sys
+import shutil
 import gams
 import pandas as pd
 import numpy as np
@@ -293,6 +295,7 @@ class Balmorel:
         
         # Check validity of scenario folders and make list of scenarios
         self.scenarios = []
+        self.input_data = {}
         for SC in scenarios:
             if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
                 os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
@@ -344,3 +347,48 @@ class Balmorel:
         # Raise error from before
         if 'exec_error' in locals():
             raise exec_error
+        
+        
+    def load_incfiles(self, 
+                      scenario: str = 'base', 
+                      use_provided_read_files: bool = True,
+                      read_file: str = 'Balmorel_ReadData'):
+        """Will load .inc files from the specific scenario
+
+        Args:
+            scenario (str, optional): The scenario that you . Defaults to 'base'.
+            use_provided_read_files (bool, optional): Use provided Balmorel_ReadData.gms and Balmorelbb4_ReadData.inc. Defaults to True.
+            read_file (str, optional): The name of the read file to be executed. Defaults to Balmorel_ReadData
+            
+        Raises:
+            KeyError: _description_
+        """
+        
+        if not(scenario in self.scenarios):
+            raise KeyError('%s scenario wasnt found.\nRun this Balmorel(...) class again if you just created the %s scenario.'%(scenario, scenario))
+        
+        # Path to the GAMS system directory
+        model_folder = os.path.join(self.path, scenario, 'model')
+
+        # Are you using the provided 'ReadData'-Balmorel files or a custom one?
+        use_provided_read_files = True
+        if use_provided_read_files:
+            pkgdir = sys.modules['pybalmorel'].__path__[0]
+            # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
+            # into the model folder if there isn't one already
+            for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
+                if not(os.path.exists(os.path.join(model_folder, file))):
+                    shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
+                    print(os.path.join(model_folder, file))
+
+        # Initialize GAMS Workspace
+        ws = gams.GamsWorkspace(working_directory=model_folder)
+
+        # Load the GAMS model
+        model_db = ws.add_job_from_file(os.path.join(model_folder, read_file))
+
+        # Run the GAMS file
+        model_db.run()
+
+        # Store the database (will take some minutes)
+        self.input_data[scenario] = model_db.get_out_db()
