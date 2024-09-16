@@ -1,0 +1,9 @@
+name: pybalmorel
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - myst-parser
+  - sphinx
+  - sphinx-rtd-theme
+  - sphinx-autoapi
