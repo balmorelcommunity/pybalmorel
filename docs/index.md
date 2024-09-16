@@ -1,12 +1,19 @@
 # pybalmorel
-Convenient python functions for pre- or post-processing the GAMS framework Balmorel. Install into your virtual python environment with:
+Convenient python functions for pre- or post-processing the GAMS framework Balmorel. 
+Check out the {ref}introduction`
 
-`pip install pybalmorel`
+```{toctree}
+:maxdepth: 2
+:caption: pybalmorel
+:hidden:
 
-For more information on how to manage and install virtual environments check out [this resource](https://docs.python.org/3/library/venv.html), or if you are a conda user, [this resource](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+introduction
+```
 
-## Examples
-The following notebooks provide examples on how to use pybalmorel for pre-processing, post-processing and for executing Balmorel scenarios:
-- [Pre-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PreProcessing.ipynb)
-- [Execution](https://github.com/Mathias157/pybalmorel/blob/master/examples/Execution.ipynb)
-- [Post-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PostProcessing.ipynb)
+```{toctree}
+:maxdepth: 1
+:caption: Reference
+:hidden:
+
+about
+```
