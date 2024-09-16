@@ -1,9 +1,9 @@
 project = "pybalmorel"
-copyright = "2024, Authors"
+copyright = "2024, Mathias Berg Rosendal, Théodore Le Nalinec"
 author = "Mathias Berg Rosendal, Théodore Le Nalinec"
 release = "0.3.4"
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".testenv", ".testenv/**"]
 
 extensions = [
     "myst_parser",  # in order to use markdown
@@ -11,7 +11,7 @@ extensions = [
 ]
 
 # search this directory for Python files
-autoapi_dirs = [".."]
+autoapi_dirs = ["../src/pybalmorel"]
 
 # ignore this file when generating API documentation
 autoapi_ignore = ["*/conf.py"]
