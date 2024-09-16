@@ -2,9 +2,8 @@ name: pybalmorel
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  - python=3.12
   - myst-parser
   - sphinx
-  - stdlib_list
   - sphinx-rtd-theme
   - sphinx-autoapi
