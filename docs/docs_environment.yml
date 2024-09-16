@@ -1,4 +1,4 @@
-name: pybalmorel
+name: docs_building
 channels:
   - conda-forge
 dependencies:
