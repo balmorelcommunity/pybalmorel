@@ -28,7 +28,7 @@ jobs:
 
     - name: Sphinx build
       run: |
-        sphinx-build doc _build
+        sphinx-build docs _build
       shell: bash -el {0}
 
     - name: Deploy to GitHub Pages
