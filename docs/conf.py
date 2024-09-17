@@ -5,6 +5,11 @@ release = "0.3.4"
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".testenv", ".testenv/**"]
 
+conf_py_path = "/docs/"  # with leading and trailing slash
+
+html_static_path = ["css"]
+
+# General configurations
 extensions = [
     "myst_parser",  # in order to use markdown
     "autoapi.extension",  # in order to use markdown
@@ -21,3 +26,6 @@ myst_enable_extensions = [
 ]
 
 html_theme = "sphinx_rtd_theme"
+
+def setup(app):
+    app.add_css_file('css_options.css')  # may also be an URL
