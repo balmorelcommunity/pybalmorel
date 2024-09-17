@@ -1,3 +1,3 @@
 # About this code
 
-Work in progress ...
+This documentation is under construction
