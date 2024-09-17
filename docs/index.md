@@ -1,6 +1,6 @@
 # pybalmorel
 Convenient python functions for pre- or post-processing the GAMS framework Balmorel. 
-Check out the {ref}introduction`
+Check out the [introduction](introduction.md).
 
 ```{toctree}
 :maxdepth: 2
