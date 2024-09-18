@@ -13,6 +13,7 @@ html_static_path = ["css"]
 extensions = [
     "myst_parser",  # in order to use markdown
     "autoapi.extension",  # in order to use markdown
+    "sphinx_copybutton",
 ]
 
 # search this directory for Python files
@@ -22,7 +23,7 @@ autoapi_dirs = ["../src/pybalmorel"]
 autoapi_ignore = ["*/conf.py"]
 
 myst_enable_extensions = [
-    "colon_fence",  # ::: can be used instead of ``` for better rendering
+    "colon_fence",  # ::: can be used instead of ``` for better rendering    
 ]
 
 html_theme = "sphinx_rtd_theme"
