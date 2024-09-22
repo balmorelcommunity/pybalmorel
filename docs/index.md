@@ -10,6 +10,7 @@ Get started [here](get_started.md).
 :hidden:
 
 get_started
+examples
 ```
 
 ```{toctree}

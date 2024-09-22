@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geographical Set Generator</title>
+    <link rel="icon" type="image/x-icon" href="network.svg">
+    <style>
+        .header {
+            display: flex;
+            justify-content: center;
+        }
+        .inputs {
+            display: flex;
+            justify-items: center;
+            justify-content: space-around;
+            margin-top: 10px;
+            margin-left: 200px;
+            margin-right: 200px;
+        }
+        .output {
+            display: flex;
+            justify-items: center;
+            justify-content: space-around;
+            margin-top: 10px;
+            margin-left: 200px;
+            margin-right: 200px;
+        }
+        .output-item {
+            display: flex;
+            vertical-align: auto;
+            margin-top: 10px;
+            padding: 5px;
+            border: none;
+        }
+        .output-item:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Text Inputs -->
+    <div class="header">
+        <h2>Geographical Set Generator</h2>
+    </div>
+    <div class="header">
+        Write comma-separated names of countries, regions and areas in the inputs below. <br>
+        Connect countries to regions, and regions to areas by clicking the respective boxes below <br>
+        <br>
+        Beware not to resize the window after you have started connecting nodes, or the lines may look confusing.. Scrolling is ok however.
+    </div>
+    <div class="inputs">
+        <p>Countries</p>
+        <p>Regions</p>
+        <p>Areas</p>
+    </div>
+    <div class="inputs">
+        <input type="text" id="input1" placeholder="Comma-separated countries" value="Country1, Country2">
+        <input type="text" id="input2" placeholder="Comma-separated regions", value="Region1, Region2">
+        <input type="text" id="input3" placeholder="Comma-separated areas", value="Area1">
+    </div>
+    
+    <!-- Section for Displaying the Text -->
+    <div class="output">
+        <div id="countries"></div>
+        <div id="regions"></div>
+        <div id="areas"></div>
+    </div>
+
+    <!-- Code Snippet Box -->
+    <div class="header", id="consoleOutput", style="color:green;">
+         <br><br> 
+    </div>
+    <div class="header">
+        <br> Press button to generate corresponding .inc files for CCC, RRR, AAA and connections 
+    </div>
+    <form onsubmit="create_incfiles(); return false;" >
+        <br>
+        <div class="inputs", style="justify-content: center; margin: auto;">
+            Save to folder:&nbsp;&nbsp;
+            <textarea id="save_to_path" rows="2" cols="60">
+            </textarea>
+        </div>
+        <div class="inputs">
+            <button type="submit">Create .inc Files</button>
+        </div>
+        <div class="inputs", style="visibility: hidden;">
+            <textarea id="codeSnippet" rows="1" cols="1">
+            </textarea>
+        </div>
+    </form>
+
+    <script src='/eel.js'></script>
+    <script src="java.js"></script>
+</body>
+</html>
