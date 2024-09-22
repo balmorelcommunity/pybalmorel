@@ -19,6 +19,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from .utils import symbol_to_df
 from .interactive.interactive_functions import interactive_bar_chart
+from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
 from .plotting.maps_balmorel import plot_map
 
@@ -392,3 +393,28 @@ class Balmorel:
 
         # Store the database (will take some minutes)
         self.input_data[scenario] = model_db.get_out_db()
+        
+        
+class GUI:
+    def __init__(self) -> None:
+        pass
+    
+    # Interactive bar chart plotting
+    def bar_chart(self, MainResults_instance):
+        """Interactive GUI to plot bar charts from MainResults
+
+        Args:
+            MainResults_instance (class): Loaded MainResults
+
+        Returns:
+            None: An interactive GUI is opened to plot bar charts 
+        """                
+        return  interactive_bar_chart(MainResults_instance)  
+    
+    def geofilemaker():
+        """Opens a GUI to interactively generate necessary .inc files for Balmorel geography
+
+        Returns:
+            None: An interactive GUI to generate geographic .inc files
+        """
+        return interactive_geofilemaker()

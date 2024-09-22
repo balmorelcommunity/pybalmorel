@@ -2,6 +2,7 @@
 import eel
 import ast
 from pybalmorel import IncFile
+import pkg_resources
 import os
 
 # 1.0 Other functions
@@ -74,8 +75,13 @@ SET CCCRRRAAA 'All geographical entities (CCC + RRR + AAA)'
 /"""
     create_setconnection(geo_nodes=geo_nodes['regions'], name='RRRAAA', prefix=prefix, suffix="\n/;", path=path)
 
-if __name__ == '__main__':
-    eel.init('static')
+def interactive_geofilemaker():
+    
+    # Get working directory and package directory
+    static_path = pkg_resources.resource_filename(__name__, 'static')
+    index_path = pkg_resources.resource_filename(__name__, 'static/index.html')
+    
+    eel.init(static_path)
     eel.expose(get_wkdir)
     eel.expose(create_incfiles)
-    eel.start('index.html')
+    eel.start(index_path)
