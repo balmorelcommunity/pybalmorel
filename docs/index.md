@@ -8,6 +8,7 @@ Convenient python functions for pre- or post-processing the GAMS framework Balmo
 :hidden:
 
 get_started
+examples
 ```
 
 ```{toctree}
