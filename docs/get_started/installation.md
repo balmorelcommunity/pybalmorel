@@ -15,7 +15,11 @@ dependencies:
   - python >= 3.9
   - pandas>=2.1.4 
   - matplotlib>=3.9.0 
-  - geopandas>=0.14.4 
-  - gamsapi[transfer]>=45.0.0 
+  - geopandas>=1.0.1
   - ipywidgets>=8.1.3
+  - pip
+  - pip:
+    - gamsapi[transfer]>=45.0.0 
+    - eel>=0.17.0
+    - pybalmorel==0.3.4
 ```
