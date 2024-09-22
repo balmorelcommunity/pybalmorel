@@ -23,7 +23,7 @@ autoapi_dirs = ["../src/pybalmorel"]
 autoapi_ignore = ["*/conf.py"]
 
 myst_enable_extensions = [
-    "colon_fence",  # ::: can be used instead of ``` for better rendering
+    "colon_fence",  # ::: can be used instead of ``` for better rendering    
 ]
 
 html_theme = "sphinx_rtd_theme"

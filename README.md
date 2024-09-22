@@ -1,5 +1,5 @@
 # pybalmorel
-Convenient python functions for pre- or post-processing the GAMS framework Balmorel. Install into your virtual python environment with:
+Convenient python framework for pre-, post-processing or executing the GAMS framework Balmorel. Install into your virtual python environment with:
 
 `pip install pybalmorel`
 

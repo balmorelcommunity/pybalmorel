@@ -1,5 +1,7 @@
 # pybalmorel
-Convenient python functions for pre- or post-processing the GAMS framework Balmorel. Get started [here](get_started.md).
+Convenient python framework for pre-, post-processing or executing the GAMS framework [Balmorel](https://balmorelcommunity.github.io/Balmorel).
+
+Get started [here](get_started.md).
 
 
 ```{toctree}

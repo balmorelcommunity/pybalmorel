@@ -6,7 +6,7 @@ Install into your virtual python environment with:
 For more information on how to manage and install virtual environments check out [this resource](https://docs.python.org/3/library/venv.html), or if you are a conda user, [this resource](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
 
 ## Requirements
-pybalmorel has the following requirements - here illustrated in a environment.yml file that can be used to create the necessary conda environment:
+pybalmorel has the following requirements - here illustrated in a environment.yml file that can be used to create the necessary conda environment (note that it will also install pybalmorel itself):
 ```yaml
 name: pybalmorel
 channels:
