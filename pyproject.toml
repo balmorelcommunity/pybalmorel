@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.3.6"
+version = "0.3.7"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com"},
   { name="Théodore Le Nalinec"},
@@ -24,4 +24,5 @@ Repository = "https://github.com/Mathias157/pybalmorel"
 Issues = "https://github.com/Mathias157/pybalmorel/issues"
 
 [tool.setuptools.package-data]
-"pybalmorel" = ["geofiles/*.*"]
+"pybalmorel" = ["geofiles/*.*",
+                "interactive/dashboard/static/*.*"]

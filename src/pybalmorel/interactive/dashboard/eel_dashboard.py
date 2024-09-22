@@ -1,7 +1,5 @@
-#%%
 import eel
 import ast
-from pybalmorel import IncFile
 import pkg_resources
 import os
 
@@ -20,6 +18,7 @@ def create_incfile(unique_processing):
     **incfile_kwargs: Keyword arguments to pass to IncFile
   """
   def wrapper(**kwargs):
+    from ... import IncFile
     inc_file = IncFile(name=kwargs['name'], prefix=kwargs['prefix'],
                        suffix=kwargs['suffix'], path=kwargs['path'])
     unique_processing(inc_file, kwargs['geo_nodes'])
@@ -28,19 +27,19 @@ def create_incfile(unique_processing):
 
 ## 1.1.1 CCC, RRR or AAA
 @create_incfile
-def create_sets(inc_file: IncFile, geo_nodes_layer2: dict):
+def create_sets(inc_file, geo_nodes_layer2: dict):
   inc_file.body += '\n'.join(list(geo_nodes_layer2.keys())) 
 
 ## 1.1.2 CCCRRRAAA
 @create_incfile
-def create_CCCRRRAAA(inc_file: IncFile, geo_nodes: dict):
+def create_CCCRRRAAA(inc_file, geo_nodes: dict):
   for key in geo_nodes.keys():
     inc_file.body += '\n* %s:\n' % key.capitalize()
     inc_file.body += '\n'.join(geo_nodes[key].keys())
 
 ## 1.1.3 CCCRRR or RRRAAA
 @create_incfile
-def create_setconnection(inc_file: IncFile, geo_nodes_layer1: dict):
+def create_setconnection(inc_file, geo_nodes_layer1: dict):
   for node in geo_nodes_layer1.keys():
     if len(geo_nodes_layer1[node]) != 0:
       inc_file.body += f'\n{node} . '
