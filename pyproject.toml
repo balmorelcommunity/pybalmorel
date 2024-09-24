@@ -24,5 +24,7 @@ Repository = "https://github.com/Mathias157/pybalmorel"
 Issues = "https://github.com/Mathias157/pybalmorel/issues"
 
 [tool.setuptools.package-data]
-"pybalmorel" = ["geofiles/*.*",
+"pybalmorel" = ["Balmorelbb4_ReadData.inc",
+                "Balmorel_ReadData.gms",
+                "geofiles/*.*",
                 "interactive/dashboard/static/*.*"]
