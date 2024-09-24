@@ -385,11 +385,15 @@ class Balmorel:
         # Initialize GAMS Workspace
         ws = gams.GamsWorkspace(working_directory=model_folder)
 
+        # Set options
+        opt = ws.add_options()
+        opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
+        
         # Load the GAMS model
-        model_db = ws.add_job_from_file(os.path.join(model_folder, read_file))
+        model_db = ws.add_job_from_file(os.path.join(model_folder, read_file), job_name=scenario)
 
         # Run the GAMS file
-        model_db.run()
+        model_db.run(opt)
 
         # Store the database (will take some minutes)
         self.input_data[scenario] = model_db.get_out_db()
