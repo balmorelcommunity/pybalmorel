@@ -21,5 +21,5 @@ dependencies:
   - pip:
     - gamsapi[transfer]>=45.0.0 
     - eel>=0.17.0
-    - pybalmorel==0.3.8
+    - pybalmorel==0.3.9
 ```
