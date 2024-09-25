@@ -26,8 +26,7 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
         df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
         df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
     elif parameter_or_set == 'set':
-        df = dict( (tuple(rec.keys) ) for rec in db[symbol] )
-        df = pd.DataFrame(dict( (tuple(rec.keys)) for rec in db[symbol] ), index=['Set']).T.reset_index()
+        df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
     else:
         print('Choose either parameter or set!')
 
