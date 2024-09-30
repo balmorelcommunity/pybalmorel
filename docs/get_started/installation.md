@@ -19,7 +19,7 @@ dependencies:
   - ipywidgets>=8.1.3
   - pip
   - pip:
-    - gamsapi[transfer]>=45.0.0 
+    - gamsapi[transfer]>=45.7.0 
     - eel>=0.17.0
-    - pybalmorel==0.3.10
+    - pybalmorel==0.3.11
 ```
