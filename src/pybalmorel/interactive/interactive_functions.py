@@ -20,9 +20,7 @@ from IPython.display import display, HTML, Javascript
 import ipywidgets as widgets
 from ipywidgets import interact, interactive
 from ..plotting.plot_functions import plot_bar_chart
-
-from ..formatting import optiflow_mainresults_symbol_columns
-from ..formatting import balmorel_mainresults_symbol_columns
+from ..formatting import optiflow_mainresults_symbol_columns, balmorel_mainresults_symbol_columns
 
 #%% ------------------------------- ###
 ###     1. Bar chart interactive    ###
