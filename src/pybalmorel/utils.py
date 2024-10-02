@@ -4,8 +4,7 @@ Functions
 
 import gams
 import pandas as pd
-from .formatting import balmorel_symbol_columns
-from .formatting import optiflow_symbol_columns
+from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 #%% ------------------------------- ###
 ###       1. GAMS Interface         ###
@@ -50,6 +49,9 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
                 df.columns = mainresult_symbol_columns[symbol] + ['Value']
             except KeyError:
                 print('Standard column format not found for this symbol')
+    else:
+        df.columns = cols            
+    
 
     return df 
 
