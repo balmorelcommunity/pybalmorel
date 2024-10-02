@@ -42,9 +42,14 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
     """
     
     # Unit
-    unit = df['Unit'][0]
+    if 'Unit' in df.columns:
+        unit = df['Unit'][0]  # Get the first unit value if the column exists
+    else:
+        unit = None  # Set to an empty list
+
+    # Continue with unit_dict as normal
     unit_dict = {'GW': 'Capacity', 'TWh': 'Energy', 'GWh': 'Energy'}
-    
+
     # Filtering the dataframe 
     query_parts = []
     for key, value in filter.items():
@@ -226,6 +231,8 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         else :
             if unit in unit_dict:
                 ax.set_ylabel(f'{unit_dict[unit]} ({unit})', fontsize=yaxis[1])
+            elif unit==None:
+                ax.set_ylabel(f'Value', fontsize=yaxis[1])
             else :
                 ax.set_ylabel(f'Value ({unit})', fontsize=yaxis[1])
                 
