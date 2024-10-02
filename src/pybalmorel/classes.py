@@ -31,7 +31,8 @@ class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
                  scenario_names: Union[str, list, tuple] = None,
-                 system_directory: str = None):
+                 system_directory: str = None,
+                 result_type: str = 'balmorel'):
         """
         Initialises the MainResults class and loads gdx result file(s)
 
@@ -40,6 +41,7 @@ class MainResults:
             paths (str, list, tuple): Path(s) to the gdx result file(s), assumed in same path if only one path given, defaults to working directory
             scenario_names (str, list, tuple): Name of scenarios corresponding to each gdx file, defaults to ['SC1', 'SC2', ..., 'SCN'] if None given
             system_directory (str, optional): GAMS system directory. Is not used if not specified.
+            result_type (str, optional): Specifies the type of result to extract. Use 'optiflow' for OptiFlow results. If not specified, it defaults to extracting Balmorel GDX results.
         """
 
         ## Loading scenarios
@@ -83,11 +85,12 @@ class MainResults:
         if len(files) != len(scenario_names):    
             # Raise error if not given same amount of scenario_names and files
             raise Exception("%d files, but %d scenario names given!\nProvide none or the same amount of scenario names as files"%(len(files), len(scenario_names)))
-            
+        
         ## Store MainResult databases
         self.files = files
         self.paths = paths
         self.sc = scenario_names
+        self.type = result_type
         self.db = {}
             
         if system_directory != None:
@@ -116,7 +119,7 @@ class MainResults:
         for SC in self.sc:
             # Get results from each scenario
             try :
-                temp = symbol_to_df(self.db[SC], symbol, cols)
+                temp = symbol_to_df(self.db[SC], symbol, cols, result_type=self.type)
                 temp['Scenario'] = SC 
                 # Put scenario in first column
                 temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]

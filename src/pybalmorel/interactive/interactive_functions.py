@@ -20,8 +20,9 @@ from IPython.display import display, HTML, Javascript
 import ipywidgets as widgets
 from ipywidgets import interact, interactive
 from ..plotting.plot_functions import plot_bar_chart
-from ..formatting import  mainresults_symbol_columns
 
+from ..formatting import optiflow_mainresults_symbol_columns
+from ..formatting import balmorel_mainresults_symbol_columns
 
 #%% ------------------------------- ###
 ###     1. Bar chart interactive    ###
@@ -34,6 +35,16 @@ def interactive_bar_chart(MainResults_instance):
     
     MainResults_instance (MainResults): Takes an instance of the MainResults class and opens a GUI for plotting
     """
+
+    """Result type definition"""
+    result_type = MainResults_instance.type.lower()
+    print(f"Result type: {result_type}")
+
+    # Initial selection for plotting
+    if result_type=='optiflow':
+        mainresults_symbol_columns=optiflow_mainresults_symbol_columns
+    elif result_type=='balmorel':
+        mainresults_symbol_columns=balmorel_mainresults_symbol_columns
 
     """ Buttons definition """
     
