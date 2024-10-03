@@ -9,4 +9,4 @@ config
 build
 
 # This one is necessary to do tests
-!tests/output
+!tests/output/.keepoutputfolder
