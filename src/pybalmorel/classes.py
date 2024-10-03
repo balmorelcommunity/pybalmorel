@@ -103,7 +103,7 @@ class MainResults:
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
     # Getting a certain result
-    def get_result(self, symbol: str, cols: str = 'None') -> pd.DataFrame:
+    def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
         """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
         Args:
