@@ -34,7 +34,8 @@ class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
                  scenario_names: Union[str, list, tuple] = None,
-                 system_directory: str = None):
+                 system_directory: str = None,
+                 result_type: str = 'balmorel'):
         """
         Initialises the MainResults class and loads gdx result file(s)
 
@@ -43,6 +44,7 @@ class MainResults:
             paths (str, list, tuple): Path(s) to the gdx result file(s), assumed in same path if only one path given, defaults to working directory
             scenario_names (str, list, tuple): Name of scenarios corresponding to each gdx file, defaults to ['SC1', 'SC2', ..., 'SCN'] if None given
             system_directory (str, optional): GAMS system directory. Is not used if not specified.
+            result_type (str, optional): Specifies the type of result to extract. Use 'optiflow' for OptiFlow results. If not specified, it defaults to extracting Balmorel GDX results.
         """
 
         ## Loading scenarios
@@ -86,11 +88,12 @@ class MainResults:
         if len(files) != len(scenario_names):    
             # Raise error if not given same amount of scenario_names and files
             raise Exception("%d files, but %d scenario names given!\nProvide none or the same amount of scenario names as files"%(len(files), len(scenario_names)))
-            
+        
         ## Store MainResult databases
         self.files = files
         self.paths = paths
         self.sc = scenario_names
+        self.type = result_type
         self.db = {}
             
         if system_directory != None:
@@ -103,7 +106,7 @@ class MainResults:
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
     # Getting a certain result
-    def get_result(self, symbol: str, cols: str = 'None') -> pd.DataFrame:
+    def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
         """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
         Args:
@@ -119,7 +122,7 @@ class MainResults:
         for SC in self.sc:
             # Get results from each scenario
             try :
-                temp = symbol_to_df(self.db[SC], symbol, cols)
+                temp = symbol_to_df(self.db[SC], symbol, cols, result_type=self.type)
                 temp['Scenario'] = SC 
                 # Put scenario in first column
                 temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
@@ -356,13 +359,15 @@ class Balmorel:
     def load_incfiles(self, 
                       scenario: str = 'base', 
                       use_provided_read_files: bool = True,
-                      read_file: str = 'Balmorel_ReadData'):
+                      read_file: str = 'Balmorel_ReadData',
+                      overwrite: bool = False):
         """Will load .inc files from the specific scenario
 
         Args:
             scenario (str, optional): The scenario that you . Defaults to 'base'.
             use_provided_read_files (bool, optional): Use provided Balmorel_ReadData.gms and Balmorelbb4_ReadData.inc. Defaults to True.
             read_file (str, optional): The name of the read file to be executed. Defaults to Balmorel_ReadData
+            overwrite (bool, optional): Will overwrite an existing %scenario%_input_data.gdx file from a previous .load_incfiles execution 
             
         Raises:
             KeyError: _description_
@@ -371,32 +376,43 @@ class Balmorel:
         if not(scenario in self.scenarios):
             raise KeyError('%s scenario wasnt found.\nRun this Balmorel(...) class again if you just created the %s scenario.'%(scenario, scenario))
         
+        
         # Path to the GAMS system directory
         model_folder = os.path.join(self.path, scenario, 'model')
-
-        # Are you using the provided 'ReadData'-Balmorel files or a custom one?
-        use_provided_read_files = True
-        if use_provided_read_files:
-            pkgdir = sys.modules['pybalmorel'].__path__[0]
-            # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
-            # into the model folder if there isn't one already
-            for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
-                if not(os.path.exists(os.path.join(model_folder, file))):
-                    shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
-                    print(os.path.join(model_folder, file))
-
-        # Initialize GAMS Workspace
-        ws = gams.GamsWorkspace(working_directory=model_folder)
-
-        # Load the GAMS model
-        model_db = ws.add_job_from_file(os.path.join(model_folder, read_file))
-
-        # Run the GAMS file
-        model_db.run()
-
-        # Store the database (will take some minutes)
-        self.input_data[scenario] = model_db.get_out_db()
         
+        if os.path.exists(os.path.join(model_folder, '%s_input_data.gdx'%scenario)) and not(overwrite):
+            ws = gams.GamsWorkspace()
+            db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
+            self.input_data[scenario] = db
+            
+        else:
+            # Are you using the provided 'ReadData'-Balmorel files or a custom one?
+            use_provided_read_files = True
+            if use_provided_read_files:
+                pkgdir = sys.modules['pybalmorel'].__path__[0]
+                # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
+                # into the model folder if there isn't one already
+                for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
+                    if not(os.path.exists(os.path.join(model_folder, file))):
+                        shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
+                        print(os.path.join(model_folder, file))
+
+            # Initialize GAMS Workspace
+            ws = gams.GamsWorkspace(working_directory=model_folder)
+
+            # Set options
+            opt = ws.add_options()
+            opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
+            
+            # Load the GAMS model
+            model_db = ws.add_job_from_file(os.path.join(model_folder, read_file), job_name=scenario)
+
+            # Run the GAMS file
+            model_db.run(opt)
+
+            # Store the database (will take some minutes)
+            self.input_data[scenario] = model_db.get_out_db()
+            
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {

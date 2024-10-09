@@ -4,43 +4,87 @@ Functions
 
 import gams
 import pandas as pd
-from .formatting import mainresult_symbol_columns
+from typing import Tuple
+from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
+
+preformatted_columns = {
+    'balmorel' : balmorel_symbol_columns,
+    'optiflow' : optiflow_symbol_columns
+}
 
 #%% ------------------------------- ###
 ###       1. GAMS Interface         ###
 ### ------------------------------- ###
 
+### 1.1 Try to find 
+def create_parameter_columns(df: pd.DataFrame,
+                             db: gams.GamsDatabase,
+                             symbol: str,
+                             mainresult_symbol_columns: list,
+                             cols: Tuple[list, None]):
+    if cols == None:
+        try:
+            df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
+        except (ValueError, KeyError):
+            try:
+                df.columns = mainresult_symbol_columns[symbol] + ['Value']
+            except KeyError:
+                # If no standard format exists, just use columns from GAMS
+                df.columns = db[symbol].domains_as_strings + ['Value']
+    else:
+        df.columns = cols          
+        
+    return df
+
+def create_set_columns(df: pd.DataFrame,
+                       db: gams.GamsDatabase,
+                       symbol: str,
+                       mainresult_symbol_columns: list,
+                       cols: Tuple[list, None]):
+    if cols == None:
+        try:
+            df.columns = mainresult_symbol_columns[symbol]
+        except (ValueError, KeyError):
+            try:
+                df.columns = mainresult_symbol_columns[symbol]
+            except KeyError:
+                # If no standard format exists, just use columns from GAMS
+                df.columns = db[symbol].domains_as_strings
+    else:
+        df.columns = cols  
+        
+    return df
+
 ### 1.0 Converting a GDX file to a pandas dataframe
 def symbol_to_df(db: gams.GamsDatabase, symbol: str, 
-                 cols: str = 'None', parameter_or_set: str = 'parameter'):
+                 cols: Tuple[list, None] = None, 
+                 result_type: str = 'balmorel',
+                 print_explanatory_text: bool = False):
     """
     Loads a symbol from a GDX database into a pandas dataframe
 
     Args:
         db (GamsDatabase): The loaded gdx file
-        symbol (string): The wanted symbol in the gdx file
-        cols (list): The columns
-        parameter_or_set (str): Choose either 'parameter' or 'set'
+        symbol (string): The desired symbol in the gdx file
+        cols (list): Your defined columns, will otherwise first try to find pybalmorel default column formats for the symbol or the raw columns from the gdx  
+        result_type (str): Is it a normal MainResults or a Optiflow Mainresults? Choose either 'balmorel' or 'optiflow'
+        print_explanatory_text (bool): Print the text describing the symbol?
     """   
-    if parameter_or_set == 'parameter':
+    if type(db[symbol]) == gams.GamsParameter:
         df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
         df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
-    elif parameter_or_set == 'set':
-        df = dict( (tuple(rec.keys) ) for rec in db[symbol] )
-        df = pd.DataFrame(dict( (tuple(rec.keys)) for rec in db[symbol] ), index=['Set']).T.reset_index()
+        df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+    elif type(db[symbol]) == gams.GamsSet:
+        df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
+        df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
     else:
-        print('Choose either parameter or set!')
-
-    if cols == 'None':
-        try:
-            df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
-        except KeyError:
-            print('Standard column format not found for this symbol')
-    elif type(cols) == list:
-        df.columns = cols
+        print('Variables or equations not supported yet')
+    
+    if print_explanatory_text:
+        print(db[symbol].text)
+    
     return df 
 
- 
 def read_lines(name, file_path, make_space=True):
    
     if make_space:

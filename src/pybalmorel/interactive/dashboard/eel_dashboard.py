@@ -1,6 +1,7 @@
 import eel
 import ast
 import pkg_resources
+from typing import Tuple
 import os
 
 # 1.0 Other functions
@@ -46,33 +47,36 @@ def create_setconnection(inc_file, geo_nodes_layer1: dict):
       inc_file.body += f'\n{node} . '.join(geo_nodes_layer1[node]) 
 
 
-# 1.2 Create .inc Files
-def create_incfiles(output: str, path: str):
-    geo_nodes = ast.literal_eval(output) # Convert output to dict
+def create_incfiles(output: Tuple[str, dict], 
+                    path: str,
+                    set_prefix: str = ''):
+    if type(output) == str:
+      geo_nodes = ast.literal_eval(output) # Convert output to dict
+
     prefix = """SET CCC(CCCRRRAAA)  'All countries'
 /\n"""
-    create_sets(geo_nodes=geo_nodes['countries'], name='CCC', prefix=prefix, suffix="\n/;", path=path)
+    create_sets(geo_nodes=geo_nodes['countries'], name=set_prefix+'CCC', prefix=prefix, suffix="\n/;", path=path)
     
     prefix = """SET RRR(CCCRRRAAA)  'All regions'
 /\n"""
-    create_sets(geo_nodes=geo_nodes['regions'], name='RRR', prefix=prefix, suffix="\n/;", path=path)
+    create_sets(geo_nodes=geo_nodes['regions'], name=set_prefix+'RRR', prefix=prefix, suffix="\n/;", path=path)
     
     prefix = """SET AAA(CCCRRRAAA)  'All areas'
 /\n"""
-    create_sets(geo_nodes=geo_nodes['areas'], name='AAA', prefix=prefix, suffix="\n/;", path=path)
+    create_sets(geo_nodes=geo_nodes['areas'], name=set_prefix+'AAA', prefix=prefix, suffix="\n/;", path=path)
     
     prefix = """* All sets that are related to Geographical resolution
 SET CCCRRRAAA 'All geographical entities (CCC + RRR + AAA)'
 /"""
-    create_CCCRRRAAA(geo_nodes=geo_nodes, name='CCCRRRAAA', prefix=prefix, suffix="\n/;", path=path)
+    create_CCCRRRAAA(geo_nodes=geo_nodes, name=set_prefix+'CCCRRRAAA', prefix=prefix, suffix="\n/;", path=path)
 
     prefix="""SET CCCRRR(CCC,RRR) "Regions in countries"
 /"""
-    create_setconnection(geo_nodes=geo_nodes['countries'], name='CCCRRR', prefix=prefix, suffix="\n/;", path=path)
+    create_setconnection(geo_nodes=geo_nodes['countries'], name=set_prefix+'CCCRRR', prefix=prefix, suffix="\n/;", path=path)
 
     prefix="""SET RRRAAA(RRR,AAA) "Areas in regions"                                                                  
 /"""
-    create_setconnection(geo_nodes=geo_nodes['regions'], name='RRRAAA', prefix=prefix, suffix="\n/;", path=path)
+    create_setconnection(geo_nodes=geo_nodes['regions'], name=set_prefix+'RRRAAA', prefix=prefix, suffix="\n/;", path=path)
 
 def interactive_geofilemaker():
     
