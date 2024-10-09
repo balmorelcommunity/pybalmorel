@@ -311,14 +311,19 @@ class Balmorel:
         
         files = []
         paths = []
+        scenario_names = []
         for SC in self.scenarios:
             path = os.path.join(self.path, '%s/model'%SC)
             mainresults_files = pd.Series(os.listdir(path))
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
             files += list(mainresults_files)
             paths += [path]*len(mainresults_files)
+            if len(mainresults_files) == 1:
+                scenario_names += [SC]
+            else:
+                scenario_names += list(mainresults_files)
 
-        self.results = MainResults(files=files ,paths=paths, system_directory=self._gams_system_directory)
+        self.results = MainResults(files=files, paths=paths, scenario_names=scenario_names, system_directory=self._gams_system_directory)
             
     def run(self, scenario: str, cmd_line_options: dict = {}):
         
