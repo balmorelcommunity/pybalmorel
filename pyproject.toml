@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.4.1"
+version = "0.4.2"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@gmail.com"},
   { name="Théodore Le Nalinec"},
@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A package for convenient python functions when processing Balmorel data or results"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

@@ -133,11 +133,11 @@ class MainResults:
     
     ## Plotting tools
     # Interactive bar chart plotting
-    def interactive_bar_chart(self):
+    def interactive_bar_chart(self, plot_style: str = 'light'):
         """
         GUI for bar chart plotting
         """
-        return  interactive_bar_chart(self)        
+        return  interactive_bar_chart(self, plot_style)        
     
     # Plotting a production profile
     def plot_profile(self,
