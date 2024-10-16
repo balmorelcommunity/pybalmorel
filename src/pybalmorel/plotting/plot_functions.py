@@ -20,7 +20,7 @@ from ..formatting import balmorel_colours
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
                     title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, series_order: dict, categories_order:dict,
-                    save: bool, namefile: str):
+                    save: bool, namefile: str, plot_style: str = 'light'):
     """
     Plotting function for the bar chart
 
@@ -39,6 +39,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         categories_order (dict): Order of the stacking
         save (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
+        plot_style (str): Style of the plot, light or dark. Defaults to light
     """
     
     # Unit
@@ -243,6 +244,13 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         
         ax.set_title(title[0], fontsize=title[1])
         
+        if plot_style == 'dark':
+            plt.style.use('dark_background')
+            ax.set_facecolor('none')
+            transparent = True
+        else:
+            transparent = False
+        
         if save == True :
             # Ensure the 'output' directory exists
             output_dir = 'output'
@@ -250,7 +258,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 os.makedirs(output_dir)
                 
             output_path = os.path.join(output_dir, f'{namefile}.png')
-            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight')
+            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight', transparent=transparent)
         
         return fig
             

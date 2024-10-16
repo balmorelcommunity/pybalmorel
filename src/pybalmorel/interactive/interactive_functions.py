@@ -27,7 +27,7 @@ from ..formatting import optiflow_mainresults_symbol_columns, balmorel_mainresul
 ### ------------------------------- ###
 
 
-def interactive_bar_chart(MainResults_instance):
+def interactive_bar_chart(MainResults_instance, plot_style: str = 'light'):
     """
     GUI for bar chart plotting
     
@@ -324,7 +324,7 @@ def interactive_bar_chart(MainResults_instance):
                                 (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                  xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                 (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                series_order, categories_order, False, '')
+                                series_order, categories_order, False, '', plot_style)
                 
             display(fig)
             
@@ -385,7 +385,7 @@ def interactive_bar_chart(MainResults_instance):
                                 (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                  xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                 (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                series_order, categories_order, True, namefile)
+                                series_order, categories_order, True, namefile, plot_style)
                 
             display(fig)
             
@@ -461,7 +461,7 @@ def interactive_bar_chart(MainResults_instance):
                                 (xaxis1_button.value,xaxis1_size_button.value,xaxis1_bold_button.value,xaxis2_button.value,xaxis2_position_button.value,xaxis2_size_button.value,
                                  xaxis2_bold_button.value,xaxis2_sep_button.value,xaxis3_button.value,xaxis3_position_button.value,xaxis3_size_button.value,xaxis3_bold_button.value,xaxis3_sep_button.value),
                                 (yaxis_title_button.value, yaxis_size_button.value, yaxis_min_button.value, yaxis_max_button.value),(legend_button.value, legend_location_button.value, legend_xpos_button.value, legend_ypos_button.value, legend_col_button.value),
-                                series_order, categories_order, True, namefile)
+                                series_order, categories_order, True, namefile, plot_style)
                     
                 display(fig)
                 
