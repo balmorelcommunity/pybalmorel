@@ -1,8 +1,8 @@
-name: pybalmorel
+name: pybalmorel2
 channels:
   - conda-forge
 dependencies:
-  - python >= 3.9
+  - python >= 3.10
   - numpy>=2.1.2
   - pandas>=2.1.4 
   - matplotlib>=3.9.0 
@@ -12,6 +12,4 @@ dependencies:
   - pytest=8.3.3
   - pip
   - pip:
-    - gamsapi[transfer]>=45.7.0 
-    - eel>=0.17.0
     - pybalmorel==0.4.1

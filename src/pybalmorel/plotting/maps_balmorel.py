@@ -80,9 +80,9 @@ def plot_map(path_to_result: str,
             found_scenario = True
             print('Found MainResults in %s'%(path_to_result))
             
-    elif path_to_result[-4:] == '\...':
+    elif path_to_result[-4:] == r'\...':
         path_to_result = path_to_result[:-4]
-        for subdir in pd.Series(os.listdir(path_to_result.rstrip('\...'))):  
+        for subdir in pd.Series(os.listdir(path_to_result.rstrip(r'\...'))):  
             subpath = os.path.join(path_to_result, subdir, 'model')
             if os.path.isdir(subpath):
                 if os.path.exists(subpath + '/MainResults_%s_Iter%s.gdx'%(SCENARIO, iter)): 
