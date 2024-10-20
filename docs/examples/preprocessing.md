@@ -1,6 +1,6 @@
 # Pre-Processing
 
-The examples below show how to create single .inc-files, loading all .inc files using the Balmorel class, and defining geography using an interactive GUI.
+The examples below show how to create single .inc-files, loading all .inc files using the Balmorel class, and defining geography using an interactive GUI. A [notebook](https://github.com/Mathias157/pybalmorel/blob/master/examples/PreProcessing.ipynb) can also be downloaded from the GitHub repository.
 
 ## Create an .inc File
 The 'IncFile' class is a handy class for creating .inc files that are the input for Balmorel. 
