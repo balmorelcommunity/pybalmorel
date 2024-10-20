@@ -307,23 +307,46 @@ class Balmorel:
             else:
                 print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
 
-    def collect_results(self):
-        
-        files = []
-        paths = []
-        scenario_names = []
+    def locate_results(self):
+        """
+        Locates results, which is faster than collecting them if you just want an overview
+        """
+                
+        self.files = []
+        self.paths = []
+        self.scenario_names = []
+        self.scfolder_to_scname = {}
+        self.scname_to_scfolder = {}
         for SC in self.scenarios:
             path = os.path.join(self.path, '%s/model'%SC)
             mainresults_files = pd.Series(os.listdir(path))
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
-            files += list(mainresults_files)
-            paths += [path]*len(mainresults_files)
+            self.files += list(mainresults_files)
+            self.paths += [path]*len(mainresults_files)
             if len(mainresults_files) == 1:
-                scenario_names += [SC]
+                self.scenario_names += [SC]
+                self.scfolder_to_scname[SC] = [SC]
+                self.scname_to_scfolder[SC] = SC
             else:
-                scenario_names += list(mainresults_files)
+                mainresults_files = (
+                    mainresults_files
+                    .str.replace('MainResults_', '')
+                    .str.replace('.gdx', '')
+                )
+                self.scenario_names += list(mainresults_files)
+                self.scfolder_to_scname[SC] = list(mainresults_files)
+                
+                for scenario_name in mainresults_files:
+                    self.scname_to_scfolder[scenario_name] = SC 
 
-        self.results = MainResults(files=files, paths=paths, scenario_names=scenario_names, system_directory=self._gams_system_directory)
+    def collect_results(self):
+        """
+        Collects results
+        """
+
+        self.locate_results()
+
+        self.results = MainResults(files=self.files, paths=self.paths, scenario_names=self.scenario_names, system_directory=self._gams_system_directory)
             
     def run(self, scenario: str, cmd_line_options: dict = {}):
         
