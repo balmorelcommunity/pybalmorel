@@ -159,6 +159,7 @@ def plot_map(path_to_result: str,
         font_hub = 12 #Font size of hub labels
         font_region = 10 #Font size of region labels
         line_decimals = 1 #Number of decimals shown for line capacities
+        COMMODITY = COMMODITY.capitalize()
         # For Elec
         if COMMODITY == 'Electricity':
             line_width_constant = .2 #Constant related to thickness of lines: the higher the number, the narrower the lines will be
