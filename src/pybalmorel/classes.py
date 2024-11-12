@@ -406,7 +406,7 @@ class Balmorel:
         model_folder = os.path.join(self.path, scenario, 'model')
         
         if os.path.exists(os.path.join(model_folder, '%s_input_data.gdx'%scenario)) and not(overwrite):
-            ws = gams.GamsWorkspace()
+            ws = gams.GamsWorkspace(system_directory=self._gams_system_directory)
             db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
             self.input_data[scenario] = db
             
@@ -423,7 +423,7 @@ class Balmorel:
                         print(os.path.join(model_folder, file))
 
             # Initialize GAMS Workspace
-            ws = gams.GamsWorkspace(working_directory=model_folder)
+            ws = gams.GamsWorkspace(working_directory=model_folder, system_directory=self._gams_system_directory)
 
             # Set options
             opt = ws.add_options()
