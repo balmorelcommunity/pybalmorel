@@ -21,6 +21,6 @@ dependencies:
   - ipykernel>=6.29.5
   - pip
   - pip:
-    - pybalmorel==0.4.3
+    - pybalmorel==0.4.4
 ```
 

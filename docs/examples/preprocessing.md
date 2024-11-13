@@ -62,3 +62,18 @@ The video below illustrates how it works.
 :align: center
 How to use the 'geofilemaker' GUI.
 :::
+
+## Downloading Technology Catalogues
+
+The technology catalogues from the Danish Energy Agency are useful and streamlined data inputs for energy system modelling. The function below will check if the electricity and district heating technology catalogue exists in the specified path (the working directory in this case) and download it if it does not exist in the path:
+
+```python
+from pybalmorel import TechData
+
+TD = TechData(path='.')
+print('Available technology catalogues: ', list(TD.files.keys()))
+
+TD.download_catalogue('el_and_dh')
+```
+
+Note that [TechData.download_all_catalogues](https://balmorelcommunity.github.io/pybalmorel/autoapi/pybalmorel/classes/index.html#pybalmorel.classes.TechData.download_all_catalogues) will look for or try to download all catalogues.
