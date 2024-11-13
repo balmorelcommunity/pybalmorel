@@ -20,7 +20,7 @@ from ..formatting import balmorel_colours
 
 def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list],
                     title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, series_order: dict, categories_order:dict,
-                    save: bool, namefile: str):
+                    save: bool, namefile: str, plot_style: str = 'light'):
     """
     Plotting function for the bar chart
 
@@ -39,6 +39,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         categories_order (dict): Order of the stacking
         save (bool): Do the plot have to be saved
         namefile (str): Name of the saved file
+        plot_style (str): Style of the plot, light or dark. Defaults to light
     """
     
     # Unit
@@ -167,6 +168,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             ax.set_xticklabels([f'' for i in temp.index])
 
         # Add x-axis labels for double stage
+        if plot_style == 'dark':
+            line_colour = 'white'
+        else:
+            line_colour = 'black'
+            
         if type(temp.index[0]) == tuple and len(temp.index[0]) == 2 :
             categories_second = temp.index.get_level_values(-2).unique()
             category_positions_second = [temp.index.get_level_values(-2).tolist().index(cat) for cat in categories_second]
@@ -182,7 +188,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                     if ind != 0 :
                         x_data_coord = category_positions_second[ind]-0.5
                         x_ax_coord = transform_to_axes.transform((x_data_coord, 0))[0]
-                        line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
+                        line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color=line_colour, linestyle='-', linewidth=1)
                         ax.add_line(line)
                 
         # Add x-axis labels for triple stage
@@ -202,7 +208,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                     if ind3 != 0 :
                         x_data_coord = category_positions_third[ind3]-0.5
                         x_ax_coord = transform_to_axes.transform((x_data_coord, 0))[0]
-                        line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[12]*xaxis[9]*0.01, -0.001], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
+                        line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[12]*xaxis[9]*0.01, -0.001], transform=ax.transAxes, clip_on=False, color=line_colour, linestyle='-', linewidth=1)
                         ax.add_line(line)
                 
                 if xaxis[3]==True :     
@@ -220,7 +226,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                             ind22 += 1
                             if ind21 != 0 and ind21 != next:
                                 x_ax_coord = transform_to_axes.transform((ind21-0.5, 0))[0]
-                                line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color='black', linestyle='-', linewidth=1)
+                                line = plt.Line2D([x_ax_coord, x_ax_coord], [xaxis[7]*xaxis[4]*0.01, 0], transform=ax.transAxes, clip_on=False, color=line_colour, linestyle='-', linewidth=1)
                                 ax.add_line(line)
                         else :
                             ind22 += 1
@@ -243,6 +249,13 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
         
         ax.set_title(title[0], fontsize=title[1])
         
+        if plot_style == 'dark':
+            plt.style.use('dark_background')
+            ax.set_facecolor('none')
+            transparent = True
+        else:
+            transparent = False
+        
         if save == True :
             # Ensure the 'output' directory exists
             output_dir = 'output'
@@ -250,7 +263,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
                 os.makedirs(output_dir)
                 
             output_path = os.path.join(output_dir, f'{namefile}.png')
-            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight')
+            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight', transparent=transparent)
         
         return fig
             

@@ -36,6 +36,25 @@ def create_parameter_columns(df: pd.DataFrame,
         
     return df
 
+def create_variable_columns(df: pd.DataFrame,
+                             db: gams.GamsDatabase,
+                             symbol: str,
+                             mainresult_symbol_columns: list,
+                             cols: Tuple[list, None]):
+    if cols == None:
+        try:
+            df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value', 'Marginal', 'Lower', 'Upper', 'Scale']
+        except (ValueError, KeyError):
+            try:
+                df.columns = mainresult_symbol_columns[symbol] + ['Value', 'Marginal', 'Lower', 'Upper', 'Scale']
+            except KeyError:
+                # If no standard format exists, just use columns from GAMS
+                df.columns = db[symbol].domains_as_strings + ['Value', 'Marginal', 'Lower', 'Upper', 'Scale']
+    else:
+        df.columns = cols          
+        
+    return df
+
 def create_set_columns(df: pd.DataFrame,
                        db: gams.GamsDatabase,
                        symbol: str,
@@ -77,8 +96,12 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
     elif type(db[symbol]) == gams.GamsSet:
         df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
         df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+    elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
+        df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
+        df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
+        df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
     else:
-        print('Variables or equations not supported yet')
+        raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
     
     if print_explanatory_text:
         print(db[symbol].text)

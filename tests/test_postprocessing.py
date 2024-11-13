@@ -54,8 +54,8 @@ def test_MainResults():
     assert 'electricity_profile.png' in os.listdir('tests/output') and 'heat_profile.png' in os.listdir('tests/output') and 'hydrogen_profile.png' in os.listdir('tests/output')
     
     # Test map
-    fig, ax = res.plot_map('SC2', 'Electricity', 2050)
+    fig, ax = res.plot_map('SC2', 'elecTriciTY', 2050)
     fig.savefig('tests/output/electricity_map.png') 
-    fig, ax = res.plot_map('SC2', 'Hydrogen', 2050) 
+    fig, ax = res.plot_map('SC2', 'HYDROGEN', 2050) 
     fig.savefig('tests/output/hydrogen_map.png') 
     assert 'electricity_map.png' in os.listdir('tests/output') and 'hydrogen_map.png' in os.listdir('tests/output')
