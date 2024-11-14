@@ -1,0 +1,26 @@
+pybalmorel.plotting.LoadGDX
+===========================
+
+.. py:module:: pybalmorel.plotting.LoadGDX
+
+.. autoapi-nested-parse::
+
+   Created on 11.11.2023
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.LoadGDX.paths
+
+
+Module Contents
+---------------
+
+.. py:data:: paths
+

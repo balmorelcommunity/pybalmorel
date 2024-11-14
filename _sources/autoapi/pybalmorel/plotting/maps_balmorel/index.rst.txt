@@ -1,0 +1,58 @@
+pybalmorel.plotting.maps_balmorel
+=================================
+
+.. py:module:: pybalmorel.plotting.maps_balmorel
+
+.. autoapi-nested-parse::
+
+   This script has many options for designing maps of 
+   Balmorel results
+
+   It depends on a geofile, that should contain the exact name
+   of the region names in Balmorel - otherwise, results from
+   regions that are NOT in the geofile will not be shown! 
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.maps_balmorel.cartopy_installed
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.maps_balmorel.plot_map
+
+
+Module Contents
+---------------
+
+.. py:data:: cartopy_installed
+   :value: True
+
+
+.. py:function:: plot_map(path_to_result: str, SCENARIO: str, COMMODITY: str, year: int, path_to_geofile: str = None, bypass_path: str = None, geo_file_region_column: str = 'id', style: str = 'light', system_directory: str = None) -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Plots the transmission capacities in a scenario, of a certain commodity
+
+   Args:
+       path_to_result (str): Path to the .gdx file
+       SCENARIO (str): The scenario name
+       COMMODITY (str): Electricity or hydrogen
+       year (int): Model year 
+       path_to_geofile (str, optional): The path to the fitting geofile. Defaults to '../geofiles/2024 BalmorelMap.geojson'.
+       bypass_path (str, optional): Extra coordinates for transmission lines for beauty. Defaults to '../geofiles/bypass_lines'.
+       geo_file_region_column (str, optional): The columns containing the region names of MainResults. Defaults to 'id'.
+       style (str, optional): Plot style. Defaults to 'light'.
+       system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
+
+   Returns:
+       Tuple[Figure, Axes]: The figure and axes objects of the plot
+
+
