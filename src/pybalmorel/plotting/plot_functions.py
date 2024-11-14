@@ -262,8 +262,11 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
                 
-            output_path = os.path.join(output_dir, f'{namefile}.png')
-            plt.savefig(output_path, format='png', dpi=300, bbox_inches='tight', transparent=transparent)
+            if '.' not in namefile:
+                namefile += '.png'
+                
+            output_path = os.path.join(output_dir, namefile)
+            plt.savefig(output_path, dpi=300, bbox_inches='tight', transparent=transparent)
         
         return fig
             
