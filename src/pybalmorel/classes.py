@@ -172,6 +172,7 @@ class MainResults:
                  commodity: str,
                  lines: str = "Capacity",
                  gnr: str = 'Capacity',
+                 bg: str= 'None',
                  legend: bool = True,
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
@@ -236,7 +237,7 @@ class MainResults:
         files = np.array(self.files)[idx][0]
         path = os.path.join(path, files)
         
-        return plot_map(path, scenario, year, commodity, lines, gnr, legend, **kwargs)
+        return plot_map(path, scenario, year, commodity, lines, gnr, bg, legend, **kwargs)
         
     # For wrapping functions, makes it possible to add imported functions in __init__ easily
     def _existing_func_wrapper(self, function, *args, **kwargs):

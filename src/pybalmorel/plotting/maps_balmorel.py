@@ -41,6 +41,7 @@ def plot_map(path_to_result: str,
              commodity: str,
              lines: str = 'Capacity', 
              gnr: str = 'Capacity',
+             bg: str = 'None',
              legend: bool = True,
              system_directory: str = None,
              **kwargs) -> Tuple[Figure, Axes]:
@@ -171,6 +172,13 @@ def plot_map(path_to_result: str,
         gnr_exclude_ElectricStorage = kwargs.get('gnr_exclude_ElectricStorage', True)  #do not plot the production of Electric storag, only works with Show pie production
         gnr_exclude_Geothermal = kwargs.get('gnr_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
         
+        background_dict = {'H2 Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
+                           'Elec Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'}}
+        if bg not in background_dict.keys() : # Check that it's a possible type of background
+            print('bg set to "None"')
+            bg = 'None' 
+        selected_bg = background_dict[bg].copy() if bg != 'None' else None
+        
         # Visual options
         show_country_out = kwargs.get('show_country_out', True) # Showing or not the countries outside the model
         dict_map_coordinates = {'EU': [(-11,36),(33,72)], 'DK': [(7.5,13.5),(54.5,58)], 'Nordic': [(4.8,17),(50.5,70)]} # Dictionary of coordinates for different maps
@@ -185,19 +193,15 @@ def plot_map(path_to_result: str,
             line_width_cat = 'cluster'
         line_show_min = kwargs.get('line_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
         line_width_min = kwargs.get('line_width_min', 0.5) # Minimum width of lines, used if cat is linear or log
-        line_width_max = kwargs.get('line_width_max', 16) # Maximum width of lines, used if cat is linear or log
-        if commodity == 'Electricity' :
-            if lines == 'FlowYear' :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings if cat is 'cluster'
-            else :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings if cat is 'cluster'
-            line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 10, 16]) # The widths for the corresponding capacity group (has to be same size as cluster_groups)  
-        elif commodity == 'Hydrogen':
-            if lines == 'FlowYear' :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings if cat is 'cluster'
-            else :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings if cat is 'cluster'
-            line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 10, 16]) # The widths for the corresponding capacity group (has to be same size as cluster_groups) 
+        line_width_max = kwargs.get('line_width_max', 12) # Maximum width of lines, used if cat is linear or log
+        if lines == "FlowYear" : 
+            line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings used foe legend or if cat is 'cluster'
+        else :
+            if commodity == 'Electricity' :
+                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings used foe legend or if cat is 'cluster'
+            elif commodity == 'Hydrogen':
+                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings used foe legend or if cat is 'cluster'
+        line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 8, 12]) # The widths for the corresponding capacity group used if cat is 'cluster'
         if len(line_cluster_groups) != len(line_cluster_widths): # Raise error if the cluster groups and widths are not of same length
             raise ValueError('line_cluster_groups and line_cluster_widths must be of same length')
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
@@ -557,10 +561,12 @@ def plot_map(path_to_result: str,
                 var_list = var_list + ['XH2_CAP_YCR', 'XH2_FLOW_YCR']
             # if lines == 'FlowTime' : Not flow time for hydrogen ???
             #     var_list = var_list + ['XH2_FLOW_YCRST']
-            # if lines == 'CongestionFlow':
-            #     var_list = var_list + ???
+            # if lines == 'CongestionFlowTime': Not flow time for hydrogen ???
+            #     var_list = var_list + ['XH2_FLOW_YCRST']
             # if hub_display == True: -> Do we keep hubs ?
             #     var_list = var_list + ['PRO_YCRAGFST']
+        if selected_bg != None:
+            var_list = var_list + [selected_bg['var']]
 
 
         ## 1.4.3 - Use function to read inputs
@@ -615,6 +621,10 @@ def plot_map(path_to_result: str,
             df_gnr = df_gnr[df_gnr['COMMODITY'] == 'ELECTRICITY']
         elif gnr_commodity == 'Hydrogen':
             df_gnr = df_gnr[df_gnr['COMMODITY'] == 'HYDROGEN']
+            
+        # Background data
+        if selected_bg != None:
+            df_bg = all_df[selected_bg['var']]
                 
         ## 1.4.4 - Select relevant dataframe and rename columns
         column_dict = {'Val':'Value', 'Y':'Year', 'C':'Country'}
@@ -622,15 +632,13 @@ def plot_map(path_to_result: str,
         df_gnr = df_gnr.rename(columns = column_dict)
         if lines in ['CongestionFlowYear', 'CongestionFlowTime'] :
             df_cap = df_cap.rename(columns = column_dict)
+        if selected_bg != None:
+            df_bg = df_bg.rename(columns = column_dict)
         # if hub_display == True: # Do we keep hubs ?
         #     df_capgen = df_capgen.rename(columns = column_dict)
         #     if lines == 'Flow' or lines == 'CongestionFlow': 
         #             df_hubprod = df_hubprod.rename(columns = column_dict)
-            
         
-        # if lines == 'CongestionFlow': 
-        #     ????
-
 
         ## 1.4.4 - Hub data -> Do we keep hubs ?
         # if filetype_input == 'gdx' and hub_display == True:
@@ -680,6 +688,9 @@ def plot_map(path_to_result: str,
         df_line.Value=pd.to_numeric(df_line.Value)
         df_gnr.Value=df_gnr.Value.replace('Eps', 0)
         df_gnr.Value=pd.to_numeric(df_gnr.Value)
+        if selected_bg != None:
+            df_bg.Value=df_bg.Value.replace('Eps', 0)
+            df_bg.Value=pd.to_numeric(df_bg.Value)
         # if hub_display == True: # Do we keep hubs ?
         #     df_capgen.Value=df_capgen.Value.replace('Eps', 0)
         #     df_capgen.Value=pd.to_numeric(df_capgen.Value)
@@ -698,6 +709,9 @@ def plot_map(path_to_result: str,
         if lines in ['CongestionFlowYear', 'CongestionFlowTime']:
             df_cap['Year'] = df_cap['Year'].astype(int)
             df_cap = df_cap.loc[df_cap['Year'] == year].reset_index(drop = True)
+        if selected_bg != None:
+            df_bg['Year'] = df_bg['Year'].astype(int)
+            df_bg = df_bg.loc[df_bg['Year'] == year].reset_index(drop = True)
         
         # Exogenous and endogenous capacities
         if lines == 'Capacity' :
@@ -715,10 +729,18 @@ def plot_map(path_to_result: str,
             if exo_end == 'Both' :
                 col_keep = list(np.delete(np.array(df_gnr.columns),np.where((df_gnr.columns == 'VARIABLE_CATEGORY') | (df_gnr.columns == 'Value')) )) #Create list with all columns except 'Variable_Category' and 'Value'
                 df_gnr = pd.DataFrame(df_gnr.groupby(col_keep)['Value'].sum().reset_index() )#Sum exogenous and endogenous capacity for each region
-            if exo_end == 'Endogenous' :
+            elif exo_end == 'Endogenous' :
                 df_gnr = df_gnr.loc[df_gnr['VARIABLE_CATEGORY'] == 'ENDOGENOUS']
-            if exo_end == 'Exogenous' :
+            elif exo_end == 'Exogenous' :
                 df_gnr = df_gnr.loc[df_gnr['VARIABLE_CATEGORY'] == 'EXOGENOUS']
+        if selected_bg != None:
+            if exo_end == 'Both' :
+                col_keep = list(np.delete(np.array(df_bg.columns),np.where((df_bg.columns == 'VARIABLE_CATEGORY') | (df_bg.columns == 'Value')) ))
+                df_bg = pd.DataFrame(df_bg.groupby(col_keep)['Value'].sum().reset_index() )
+            elif exo_end == 'Endogenous' :
+                df_bg = df_bg.loc[df_bg['VARIABLE_CATEGORY'] == 'ENDOGENOUS']
+            elif exo_end == 'Exogenous' :
+                df_bg = df_bg.loc[df_bg['VARIABLE_CATEGORY'] == 'EXOGENOUS']
                 
         # Time and season for FlowTime
         if lines == 'FlowTime' or lines == 'CongestionFlowTime':
@@ -762,26 +784,8 @@ def plot_map(path_to_result: str,
                         df_line.loc[i,'LatImp'] = df_unique.loc[j, 'Lat']
                         df_line.loc[i,'LonImp'] = df_unique.loc[j, 'Lon']
                       
-                        
-        ### 2.5 Add bypass coordinates for indirect lines
         
-        if lines in ['Capacity','FlowYear']:
-            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'UNITS', 'Value']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
-        elif lines == 'FlowTime':
-            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Value']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
-        elif lines == 'CongestionFlowTime':
-            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
-        elif lines == 'CongestionFlowTime':
-            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
-        #Replace existing row by 2 bypass rows
-        keys = list(df_bypass.columns.values)[0:2]
-        i1 = df_line.set_index(keys).index
-        i2 = df_bypass.set_index(keys).index
-        df_line = df_line[~i1.isin(i2)] #Delete existing rows that need bypass
-        df_line = df_line._append(df_bypass, ignore_index = True, sort = True) #Append bypass rows
-
-        
-        ### 2.6 One direction capacity  lines
+        ### 2.5 One direction capacity  lines
         
         # When capacity is not the same in both directions, display the max :
         if lines == 'Capacity' :
@@ -825,6 +829,24 @@ def plot_map(path_to_result: str,
             df_line = df_line.drop(indexes)
             # Update the original dataframe
             df_line = pd.concat([df_line, df_line_new], ignore_index=True)
+            
+            
+        ### 2.6 Add bypass coordinates for indirect lines
+        
+        if lines in ['Capacity','FlowYear']:
+            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'UNITS', 'Value']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
+        elif lines == 'FlowTime':
+            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Value']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
+        elif lines == 'CongestionFlowTime':
+            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
+        elif lines == 'CongestionFlowTime':
+            df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
+        #Replace existing row by 2 bypass rows
+        keys = list(df_bypass.columns.values)[0:2]
+        i1 = df_line.set_index(keys).index
+        i2 = df_bypass.set_index(keys).index
+        df_line = df_line[~i1.isin(i2)] #Delete existing rows that need bypass
+        df_line = df_line._append(df_bypass, ignore_index = True, sort = True) #Append bypass rows
 
 
         ### 2.7 Define line centers
@@ -992,7 +1014,23 @@ def plot_map(path_to_result: str,
             gnr_existing_var = df_slack_gnr['TECH_TYPE'].unique() 
         elif gnr_var == 'FFF':
             gnr_existing_var = df_slack_gnr['FFF'].unique()
+            
         
+        ### 2.10 Process the background data
+        
+        if selected_bg != None:
+            # Filter the data
+            filters = selected_bg['filters']
+            for i in range(len(filters)):
+                df_bg = df_bg.loc[df_bg[filters[i][0]] == filters[i][1]].reset_index(drop = True)
+            # Apply the transformation
+            transformation = selected_bg['transformation']
+            for i in range(len(transformation)):
+                df_bg["Value"] = df_bg["Value"]*transformation[i]
+            # Group by region RRR
+            df_bg = pd.DataFrame(df_bg.groupby(['RRR'])['Value'].sum().reset_index())
+            # Find the maximum over the region RRR
+            bg_max = df_bg['Value'].max()
 
         ### 2.3 Group hub data -> Do we really use hub ?
         #Generation Capacities
@@ -1069,9 +1107,18 @@ def plot_map(path_to_result: str,
             fig, ax = plt.subplots(figsize=(fig_width+10, fig_height), subplot_kw={"projection": projection}, dpi=100, facecolor=background_color)
 
             for R in layers_in:
+                # Get the color of the country based on the background choice 
+                if selected_bg != None: 
+                    value = df_bg.loc[df_bg['RRR'] == R, 'Value'].values
+                    if len(value) == 0 :
+                        value = np.append(value, 0)
+                    face_color = selected_bg['colormap'][0](value[0] / bg_max)
+                else : 
+                    face_color = regions_model_color
+                # Get the geo file and plot it
                 geo = gpd.read_file(layers_in[R])
                 geo_artist = ax.add_geometries(geo.geometry, crs = projection,
-                                               facecolor=[regions_model_color], edgecolor='#46585d',
+                                               facecolor=[face_color], edgecolor='#46585d',
                                                linewidth=.2)
                 geo_artist.set_zorder(1)
                 
@@ -1296,49 +1343,53 @@ def plot_map(path_to_result: str,
                 
             if commodity == 'Electricity':
                 subs = 'el'
-                # Create lines for legend
-                lines_legend = []
-                string = []
-                for i in range(len(line_cluster_groups)):
-                    # The patch
-                    lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
-                                        color=line_color))
-                    # The text
-                    if i == 0:
-                        ave = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-                    elif i == len(line_cluster_groups)-1:
-                        ave = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-                    else:
-                        ave0 = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave0, line_unit, subs))
-                if gnr_var == 'TECH_TYPE':
-                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=(0, 0.8))
-                else:
-                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=(0, 0.8))
-                        
-            if commodity == 'Hydrogen':
+                pos = (0, 0.8)
+            elif commodity == 'Hydrogen':
                 subs = 'H2'
-                # Create lines for legend
-                lines_legend = []
-                string = []
-                for i in range(len(line_cluster_groups)):
-                    # The patch
-                    lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
-                                        color=line_color))
-                    # The text
-                    if i == 0:
-                        ave = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-                    elif i == len(line_cluster_groups)-1:
-                        ave = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-                    else:
-                        ave0 = line_cluster_groups[i]
-                        string.append('%0.1f %s$_\mathrm{%s}$'%(ave0, line_unit, subs))
+                pos = (0, 0.85)
+            # Create lines for legend
+            lines_legend = []
+            string = []
+            for i in range(len(line_cluster_groups)):
+                # Modify line_cluster_widths for linear and log scale
+                if line_width_cat == 'linear':
+                    line_cluster_widths[i] = line_cluster_groups[i]/line_width_constant
+                    if line_cluster_widths[i] < line_width_min:
+                                line_cluster_widths[i] = line_width_min
+                elif line_width_cat == 'log':
+                    normalized_cap = (line_cluster_groups[i]-0)/(line_max_value-0)
+                    log_scaled = np.log1p(normalized_cap) / np.log1p(1)
+                    width = line_width_min + log_scaled * (line_width_max - line_width_min)
+                    line_cluster_widths[i] = width
+                # The patch
+                lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
+                                    color=line_color))
+                # The text
+                ave = line_cluster_groups[i]
+                string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
+            ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos)
+                        
+            # if commodity == 'Hydrogen':
+            #     subs = 'H2'
+            #     # Create lines for legend
+            #     lines_legend = []
+            #     string = []
+            #     for i in range(len(line_cluster_groups)):
+            #         # The patch
+            #         lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
+            #                             color=line_color))
+            #         # The text
+            #         if i == 0:
+            #             ave = line_cluster_groups[i]
+            #             string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
+            #         elif i == len(line_cluster_groups)-1:
+            #             ave = line_cluster_groups[i]
+            #             string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
+            #         else:
+            #             ave0 = line_cluster_groups[i]
+            #             string.append('%0.1f %s$_\mathrm{%s}$'%(ave0, line_unit, subs))
                 
-                ax.legend(lines_legend, string,frameon=False, loc='upper left', bbox_to_anchor=(0, 0.85))    
+            #     ax.legend(lines_legend, string,frameon=False, loc='upper left', bbox_to_anchor=(0, 0.85))    
                 
             
             ### 3.5.3 Congestion legend
@@ -1352,7 +1403,6 @@ def plot_map(path_to_result: str,
                     loc="center right",  # Position the color bar on the right
                     borderpad=-3,  # Padding between the axis and color bar
                 )
-
                 # Normalize and create a color bar
                 norm = mcolors.Normalize(vmin=0, vmax=100)
                 cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap="Reds"), cax=cbar_ax)
@@ -1360,6 +1410,28 @@ def plot_map(path_to_result: str,
                     cbar.set_label("Line Utilization [%]") # Add label
                 elif lines == 'CongestionFlowTime':
                     cbar.set_label("Line Congestion [%]")  # Add label
+                    
+            ### 3.5.3 Background legend
+            
+            if selected_bg != None:
+                # Ticks label
+                bg_upper = int(np.ceil(bg_max))  # Round up 
+                ticks = list(range(0,bg_upper,2))
+                # Create the inset for the color bar
+                cbar_ax = inset_axes(
+                    ax,
+                    width="3%",  # Width of the color bar
+                    height="80%",  # Height of the color bar
+                    loc="center left",  # Position the color bar on the right
+                    borderpad=-3,  # Padding between the axis and color bar
+                )
+                # Normalize and create a color bar
+                norm = mcolors.Normalize(vmin=0, vmax=bg_max)
+                cbar = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_bg['colormap'][1]), cax=cbar_ax)
+                cbar.ax.yaxis.set_label_position('left')
+                cbar.ax.yaxis.set_ticks_position('left')
+                cbar.ax.yaxis.set_ticks(ticks)
+                cbar.set_label(f"{bg} [{selected_bg['unit']}]") # Add label
         
         
         ### 3.6 Limits of graph
