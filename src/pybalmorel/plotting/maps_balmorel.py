@@ -190,17 +190,17 @@ def plot_map(path_to_result: str,
         line_width_cat = kwargs.get('line_width_cat', 'log') # 'linear' = Capacities are scaled linearly, 'cluster' = capacities are clustered in groups
         if line_width_cat not in ['linear', 'log', 'cluster']: # Check that it's a possible category of line thickness
             print('line_thick_cat must be either "linear", "log" or "cluster", set to "log"')
-            line_width_cat = 'cluster'
+            line_width_cat = 'log'
         line_show_min = kwargs.get('line_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
         line_width_min = kwargs.get('line_width_min', 0.5) # Minimum width of lines, used if cat is linear or log
         line_width_max = kwargs.get('line_width_max', 12) # Maximum width of lines, used if cat is linear or log
         if lines == "FlowYear" : 
-            line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings used foe legend or if cat is 'cluster'
+            line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings if cat is 'cluster'
         else :
             if commodity == 'Electricity' :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings used foe legend or if cat is 'cluster'
+                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings if cat is 'cluster'
             elif commodity == 'Hydrogen':
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings used foe legend or if cat is 'cluster'
+                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings if cat is 'cluster'
         line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 8, 12]) # The widths for the corresponding capacity group used if cat is 'cluster'
         if len(line_cluster_groups) != len(line_cluster_widths): # Raise error if the cluster groups and widths are not of same length
             raise ValueError('line_cluster_groups and line_cluster_widths must be of same length')
@@ -226,30 +226,24 @@ def plot_map(path_to_result: str,
             print('gnr_var must be either "TECH_TYPE" or "FFF", set to "TECH_TYPE"')
             gnr_var = 'TECH_TYPE'
         if gnr_display_type == 'Pie':
-            pie_cat = kwargs.get('pie_cat', 'cluster') # 'linear' = Capacities are scaled linearly, 'cluster' = capacities are clustered in groups
-            pie_width_constant = kwargs.get('pie_width_constant', 0.03)  # constant factored on sum of generation capacities, if linear cluster choosen
+            pie_radius_cat = kwargs.get('pie_radius_cat', 'log') # 'linear' = Capacities are scaled linearly, 'cluster' = capacities are clustered in groups
+            if pie_radius_cat not in ['linear', 'log', 'cluster']: # Check that it's a possible category of line thickness
+                print('pie_radius_cat must be either "linear", "log" or "cluster", set to "log"')
+                pie_radius_cat = 'log'
+            pie_show_min = kwargs.get('pie_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
+            pie_radius_min = kwargs.get('pie_radius_min', 0.2) # Minimum width of lines, used if cat is linear or log
+            pie_radius_max = kwargs.get('pie_radius_max', 1.4) # Maximum width of lines, used if cat is linear or log
             if gnr == 'Production': # Make clusters for pies
                 if commodity == 'Electricity' :
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10,  15,    20,   30,  40,   50,  75,   100, 125, 150, 175,  200, 225,  250, 300, 350,  400, 450, 500, 550, 600, 650, 700,  750,  800,  850,900,  950]) #TWh
-                    pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4,  0.45, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.20,  1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,  2,  2.1, 2.2,  2.3,  2.4])
-                    pie_legend_cluster_groups = kwargs.get('pie_legend_cluster_groups', [20, 50, 200, 400])
-                    pie_legend_cluster_radius = kwargs.get('pie_legend_cluster_radius', [0.2, 0.35, 0.8, 1.3])
+                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [20, 50, 200, 400])
                 elif commodity == 'Hydrogen':
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10,   20,  50,  75,   100, 150, 175, 200,  250, 300,  400, 500, 650, 800, 950]) #TWh
-                    pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.1, 0.1, 0.2, 0.3,  0.4, 0.5, 0.6, 0.7,  1.0, 1.3,  1.6, 1.9, 2.1, 2.4, 2.7])
-                    pie_legend_cluster_groups = kwargs.get('pie_legend_cluster_groups', [10, 50, 100, 250])
-                    pie_legend_cluster_radius = kwargs.get('pie_legend_cluster_radius', [0.1, 0.2, 0.4, 1.0])
+                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10, 50, 100, 250])
             if gnr == 'Capacity': # Make clusters for pies
                 if commodity == 'Electricity' :
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [2,    5,   10,  20,   30,  40,  50,  80,   100, 200,  300, 400, 450, 500]) #GW
-                    pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.08, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.8,  1.0, 1.3,  1.5, 1.6, 1.8, 2.0])
-                    pie_legend_cluster_groups = kwargs.get('pie_legend_cluster_groups', [10, 50, 200, 400])
-                    pie_legend_cluster_radius = kwargs.get('pie_legend_cluster_radius', [0.2, 0.5, 1.3, 1.6])
+                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10, 50, 200, 400])
                 elif commodity == 'Hydrogen':
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [0.5,  1,   2,   3.5, 4.5,  6,   7.5,  10, 12.5, 15,  17.5,   20, 22.5,  25, 27.5,  30,  35,  40,  45,  50, 55,  60,   65,  70, 80, 90, 100, 110]) #GW
-                    pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.1, 0.15, 0.2, 0.3, 0.35, 0.4, 0.5,  0.6, 0.65, 0.7, 0.75,  0.8, 0.85, 0.9, 0.95, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 2, 2.2, 2.4,2.6])
-                    pie_legend_cluster_groups = kwargs.get('pie_legend_cluster_groups', [1, 10, 30, 60])
-                    pie_legend_cluster_radius = kwargs.get('pie_legend_cluster_radius', [0.15, 0.6, 1, 1.6])
+                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [1, 10, 30, 60])
+            pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.2, 0.6, 1, 1.3])
             if len(pie_cluster_groups) != len(pie_cluster_radius):
                 raise ValueError('pie_cluster_groups and pie_cluster_radius must be of same length')
 
@@ -1189,8 +1183,8 @@ def plot_map(path_to_result: str,
                             width = np.array(line_cluster_widths)[line_cluster_groups == nearest]
                         elif line_width_cat == 'linear':
                             width = cap/line_width_constant
-                            if width < line_cluster_widths[0]:
-                                width = line_cluster_widths[0]
+                            if width < line_width_min:
+                                width = line_width_min
                         elif line_width_cat == 'log':
                             normalized_cap = (cap-0)/(line_max_value-0)
                             log_scaled = np.log1p(normalized_cap) / np.log1p(1)
@@ -1243,6 +1237,12 @@ def plot_map(path_to_result: str,
         
         if gnr_show:
             pies = []
+            
+            # Calculate the sum of the values by region and find the maximum value
+            df_slack_gnr_sum = pd.DataFrame(df_slack_gnr.groupby(['RRR'])['Value'].sum().reset_index())
+            pie_max_value = df_slack_gnr_sum['Value'].max()
+            pie_radius_constant = pie_max_value/pie_radius_max
+            
             for r in RRRs: # Find idx of the region
                 idx = df_slack_gnr['RRR'] == r
                 Lat = df_slack_gnr.loc[idx, 'Lat'].mean()
@@ -1251,15 +1251,20 @@ def plot_map(path_to_result: str,
                 # Condition on coordinates
                 if (xlim[0] <= Lon <= xlim[1]) & (ylim[0] <= Lat <= ylim[1]) :
                     CAPSUM = df_slack_gnr.loc[idx, 'Value'].sum() # Sum of capacities in the region for clustering
-                    if pie_cat == 'cluster':
-                        nearest = find_nearest(pie_cluster_groups, CAPSUM) 
-                        width = np.array(pie_cluster_radius)[pie_cluster_groups == nearest]
-                        radius = width[0]
-                    else:
-                        width = CAPSUM*pie_width_constant
-                        radius = width
-                    
-                    if CAPSUM != 0: # Plot the pie only if there is capacity
+                    if CAPSUM > pie_show_min: # Only plot if big enough
+                        if pie_radius_cat == 'cluster':
+                            nearest = find_nearest(pie_cluster_groups, CAPSUM) 
+                            radius = np.array(pie_cluster_radius)[pie_cluster_groups == nearest]
+                            radius = radius[0]
+                        elif pie_radius_cat == 'linear':
+                            radius = CAPSUM/pie_radius_constant
+                            if radius < pie_radius_min :
+                                radius = pie_radius_min
+                        elif pie_radius_cat == 'log':
+                            normalized_cap = (CAPSUM-0)/(pie_max_value-0)
+                            log_scaled = np.log1p(normalized_cap) / np.log1p(1)
+                            radius = pie_radius_min + log_scaled * (pie_radius_max - pie_radius_min)
+
                         if gnr_var == 'TECH_TYPE':
                             colors_df = [gnr_tech_color.get(tech, 'gray') for tech in df_slack_gnr['TECH_TYPE'][idx]]
                         if gnr_var == 'FFF':
@@ -1289,14 +1294,14 @@ def plot_map(path_to_result: str,
                 # Pie legend
                 scatter_handles = []
                 # It can be tricky to plot radius with scatter because, s is in points, and needs to cover the area 1/72 inc
-                for i in range(len(pie_legend_cluster_groups)):
-                    scatter = ax.scatter([], [], s=1200*((pie_legend_cluster_radius[i]*72/fig.dpi)**2), facecolor='grey', edgecolor='grey')
+                for i in range(len(pie_cluster_groups)):
+                    scatter = ax.scatter([], [], s=1200*((pie_cluster_radius[i]*72/fig.dpi)**2), facecolor='grey', edgecolor='grey')
                     scatter_handles.append(scatter)
 
                 if gnr == 'Capacity':
-                    legend_labels = ['{} GW'.format(pie_legend_cluster_groups[i]) for i in range(len(pie_legend_cluster_groups))]
+                    legend_labels = ['{} GW'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
                 elif gnr == 'Production':
-                    legend_labels = ['{} TWh'.format(pie_legend_cluster_groups[i]) for i in range(len(pie_legend_cluster_groups))]
+                    legend_labels = ['{} TWh'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
                 
                 # Legend with pies
                 first_legend = ax.legend(scatter_handles, legend_labels, 
