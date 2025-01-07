@@ -14,7 +14,7 @@ regions that are NOT in the geofile will not be shown!
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyArrowPatch, ArrowStyle
+from matplotlib.patches import FancyArrowPatch, ArrowStyle, Circle
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -231,19 +231,16 @@ def plot_map(path_to_result: str,
                 print('pie_radius_cat must be either "linear", "log" or "cluster", set to "log"')
                 pie_radius_cat = 'log'
             pie_show_min = kwargs.get('pie_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
-            pie_radius_min = kwargs.get('pie_radius_min', 0.2) # Minimum width of lines, used if cat is linear or log
-            pie_radius_max = kwargs.get('pie_radius_max', 1.4) # Maximum width of lines, used if cat is linear or log
-            if gnr == 'Production': # Make clusters for pies
-                if commodity == 'Electricity' :
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [20, 50, 200, 400])
-                elif commodity == 'Hydrogen':
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10, 50, 100, 250])
-            if gnr == 'Capacity': # Make clusters for pies
-                if commodity == 'Electricity' :
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [10, 50, 200, 400])
-                elif commodity == 'Hydrogen':
-                    pie_cluster_groups = kwargs.get('pie_cluster_groups', [1, 10, 30, 60])
-            pie_cluster_radius = kwargs.get('pie_cluster_radius', [0.2, 0.6, 1, 1.3])
+            pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3], 
+                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]}, 
+                                                              'Capacity' : {'Electricity' : [10,50,200,400], 'Hydrogen' : [1,10,30,60]}}}, 
+                               'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5], 
+                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
+                                                              'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}}
+            pie_radius_min = kwargs.get('pie_radius_min', pie_radius_dict[choosen_map_coordinates]['pie_radius_min']) # Minimum width of lines, used if cat is linear or log
+            pie_radius_max = kwargs.get('pie_radius_max', pie_radius_dict[choosen_map_coordinates]['pie_radius_max']) # Maximum width of lines, used if cat is linear or log
+            pie_cluster_groups = kwargs.get('pie_cluster_groups', pie_radius_dict[choosen_map_coordinates]['pie_cluster_groups'][gnr][commodity]) # The capacity groupings if cat is 'cluster'
+            pie_cluster_radius = kwargs.get('pie_cluster_radius', pie_radius_dict[choosen_map_coordinates]['pie_cluster_radius'])
             if len(pie_cluster_groups) != len(pie_cluster_radius):
                 raise ValueError('pie_cluster_groups and pie_cluster_radius must be of same length')
 
@@ -348,13 +345,6 @@ def plot_map(path_to_result: str,
         hub_color = 'lightblue'
         hub_background_color = 'lightblue'
         hub_text = 'black'
-        
-        # Take care of it later
-        flowline_breaks = [0, 40, 94.999, 100] #Breaks for different congestion categories
-        legend_values = ['Fully congested', '40-95% congested', '< 50% congested'] #Values displayed in legend
-        show_flow_arrows = 'NO' #'YES' or 'NO', net flow arrow, fix the arrows can be quite big
-        capline_color = 'orange' #you can use orange or others green
-        flowline_color = ['#3D9200', '#feb24c','#960028']
         
         # Not implemented but could be nice
         font_region = 10 #Font size of region labels
@@ -553,10 +543,10 @@ def plot_map(path_to_result: str,
                 var_list = var_list + ['XH2_FLOW_YCR']
             elif lines == 'CongestionFlowYear' :
                 var_list = var_list + ['XH2_CAP_YCR', 'XH2_FLOW_YCR']
-            # if lines == 'FlowTime' : Not flow time for hydrogen ???
-            #     var_list = var_list + ['XH2_FLOW_YCRST']
-            # if lines == 'CongestionFlowTime': Not flow time for hydrogen ???
-            #     var_list = var_list + ['XH2_FLOW_YCRST']
+            if lines == 'FlowTime' : 
+                var_list = var_list + ['XH2_FLOW_YCRST']
+            if lines == 'CongestionFlowTime': 
+                var_list = var_list + ['XH2_CAP_YCR', 'XH2_FLOW_YCRST']
             # if hub_display == True: -> Do we keep hubs ?
             #     var_list = var_list + ['PRO_YCRAGFST']
         if selected_bg != None:
@@ -600,9 +590,14 @@ def plot_map(path_to_result: str,
                 df_line = all_df['XH2_CAP_YCR']
             elif lines == 'FlowYear' :
                 df_line = all_df['XH2_FLOW_YCR']
+            elif lines == 'FlowTime' :
+                df_line = all_df['XH2_FLOW_YCRST']
             elif lines == 'CongestionFlowYear' :
                 df_cap = all_df['XH2_CAP_YCR']
                 df_line = all_df['XH2_FLOW_YCR']
+            elif lines == 'CongestionFlowTime':
+                df_cap = all_df['XH2_CAP_YCR']
+                df_line = all_df['XH2_FLOW_YCRST']
             # elif lines == 'FlowTime' : # Not flow time for hydrogen ???
             #     df_line = all_df['XH2_FLOW_YCRST']
                 
@@ -1008,7 +1003,10 @@ def plot_map(path_to_result: str,
             gnr_existing_var = df_slack_gnr['TECH_TYPE'].unique() 
         elif gnr_var == 'FFF':
             gnr_existing_var = df_slack_gnr['FFF'].unique()
-            
+        
+        # Only select Denmark data if coordinates of Denmark are selected
+        if choosen_map_coordinates == 'DK' :
+            df_slack_gnr = df_slack_gnr.loc[df_slack_gnr['RRR'].str.contains('DK')]
         
         ### 2.10 Process the background data
         
@@ -1286,16 +1284,16 @@ def plot_map(path_to_result: str,
         elif lines == 'FlowTime':
             line_unit = 'GWh'
         
-        if legend :         
+        if legend and choosen_map_coordinates == 'EU' :         
             
             ### 3.5.1 Legend with pies
             
             if gnr_show:
                 # Pie legend
                 scatter_handles = []
-                # It can be tricky to plot radius with scatter because, s is in points, and needs to cover the area 1/72 inc
+                # To plot radius with scatter, we need to convert the radius to pixels and then to point
                 for i in range(len(pie_cluster_groups)):
-                    scatter = ax.scatter([], [], s=1200*((pie_cluster_radius[i]*72/fig.dpi)**2), facecolor='grey', edgecolor='grey')
+                    scatter = ax.scatter([], [], s=((pie_cluster_radius[i] * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
                     scatter_handles.append(scatter)
 
                 if gnr == 'Capacity':
@@ -1308,50 +1306,42 @@ def plot_map(path_to_result: str,
                                         scatterpoints=1,
                                         loc='upper left',
                                         ncol=4,
-                                        fontsize=14,
-                                        frameon=False,bbox_to_anchor=(0, 1))
-                ax.add_artist(first_legend)    
+                                        fontsize=12,
+                                        frameon=False, bbox_to_anchor=(0, 0.99))
+                ax.add_artist(first_legend)  
+
+                # Get the bounding box of the first legend
+                bbox_first_legend = first_legend.get_window_extent().transformed(ax.transAxes.inverted())
                 
                 # Tech of fuel legend
                 # The characteristics of legend depend on the commodity and the variable
                 if gnr_var == 'TECH_TYPE':
                     dict_gnr_color = gnr_tech_color
-                    if gnr_commodity == 'Hydrogen':
-                        ncol = 3
-                        pos_tech = (0,0.86)
-                    elif gnr_commodity == 'Electricity':
-                        ncol = 2
-                        if gnr == 'Capacity':
-                            pos_tech = (0,0.78)
-                        else :
-                            pos_tech = (0,0.8)
+                    ncol = 2
                 elif gnr_var == 'FFF':
                     dict_gnr_color = gnr_fuel_color
-                    if gnr_commodity == 'Hydrogen':
-                        ncol = 3
-                        pos_tech = (0,0.86)
-                    elif gnr_commodity == 'Electricity':
-                        ncol = 3
-                        if gnr == 'Capacity':
-                            pos_tech = (0,0.78)
-                        else :
-                            pos_tech = (0,0.8)
+                    ncol = 3
+                            
+                # Calculate the position for the second legend based on the bounding box of the first one
+                pos_tech = (bbox_first_legend.x0, bbox_first_legend.y0 - 0.01)  # Adjust the vertical position as needed
             
                 # Plot the legend for technologies
                 patches = [mpatches.Patch(color=dict_gnr_color[tech], label=tech) for tech in gnr_existing_var]
-                second_legend = ax.legend(handles=patches, loc='lower left', ncol = ncol, frameon=False,
+                second_legend = ax.legend(handles=patches, loc='upper left', ncol = ncol, frameon=False,
                                         mode='expnad', bbox_to_anchor=pos_tech)    
                 ax.add_artist(second_legend)
             
             
             ### 3.5.2 Legend with lines
+            
+            # Get the bounding box of the first legend
+            bbox_second_legend = second_legend.get_window_extent().transformed(ax.transAxes.inverted())
+            pos_line = (bbox_second_legend.x0, bbox_second_legend.y0 - 0.0)  # Adjust the vertical position as needed
                 
             if commodity == 'Electricity':
                 subs = 'el'
-                pos = (0, 0.8)
             elif commodity == 'Hydrogen':
                 subs = 'H2'
-                pos = (0, 0.85)
             # Create lines for legend
             lines_legend = []
             string = []
@@ -1372,7 +1362,7 @@ def plot_map(path_to_result: str,
                 # The text
                 ave = line_cluster_groups[i]
                 string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-            ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos)
+            ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
                         
             # if commodity == 'Hydrogen':
             #     subs = 'H2'
