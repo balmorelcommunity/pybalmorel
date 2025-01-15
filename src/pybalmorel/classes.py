@@ -172,8 +172,10 @@ class MainResults:
                  commodity: str,
                  lines: str = 'Capacity', 
                  generation: str = 'Capacity',
-                 background : str = 'None',
+                 background : str = None,
                  save_fig: bool = False,
+                 path_to_geofile: str = None,
+                 geo_file_region_column: str = 'id',
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
 
@@ -183,8 +185,10 @@ class MainResults:
             commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
             lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
             generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
-            background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
+            background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to None.
             save_fig (bool, optional): Save the figure or not. Defaults to False.
+            path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+            geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
             Structural additional options:
                 **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
                 **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
@@ -245,7 +249,7 @@ class MainResults:
         files = np.array(self.files)[idx][0]
         path = os.path.join(path, files)
         
-        return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, **kwargs)
+        return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, path_to_geofile, geo_file_region_column, **kwargs)
         
     # For wrapping functions, makes it possible to add imported functions in __init__ easily
     def _existing_func_wrapper(self, function, *args, **kwargs):

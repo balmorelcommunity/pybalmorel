@@ -36,8 +36,10 @@ def plot_map(path_to_result: str,
              commodity: str,
              lines: str = 'Capacity', 
              generation: str = 'Capacity',
-             background : str = 'None',
+             background : str = None,
              save_fig: bool = False,
+             path_to_geofile: str = None,
+             geo_file_region_column: str = 'id',
              system_directory: str = None,
              **kwargs) -> Tuple[Figure, Axes]:
     
@@ -53,6 +55,8 @@ def plot_map(path_to_result: str,
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
         save_fig (bool, optional): Save the figure or not. Defaults to False.
         system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
+        path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+        geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
         Structural additional options:
             **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
             **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
@@ -183,9 +187,9 @@ def plot_map(path_to_result: str,
         background_dict = {'H2 Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
                            'Elec Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'}}
         if background not in background_dict.keys() : # Check that it's a possible type of background
-            print('background set to "None"')
-            background = 'None' 
-        selected_background = background_dict[background].copy() if background != 'None' else None
+            print('background set to None')
+            background = None
+        selected_background = background_dict[background].copy() if background != None else None
         
         ### Visual options
         legend_show = kwargs.get('legend_show', True) # Showing or not the legend
@@ -379,38 +383,46 @@ def plot_map(path_to_result: str,
 
         ### 1.3 Read geographic files
         
-        # Path to csv coordinates files
-        coordinates_RRR_path = kwargs.get('coordinates_RRR_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/coordinates_RRR.csv'))) # Coordinates of regions centers
+        # If the user did not input a personalized geofile, use the default one
+        if path_to_geofile == None:
+            # Path to csv coordinates files
+            coordinates_RRR_path = kwargs.get('coordinates_RRR_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/coordinates_RRR.csv'))) # Coordinates of regions centers
+            
+            # Load coordinates csv files
+            df_unique = pd.read_csv(coordinates_RRR_path)
+            df_region = df_unique.loc[df_unique['Type'] == 'region', ]
+
+            # List of regions names in and out of the model
+            r_in = list(df_unique.loc[(df_unique['Display'] == 1) & (df_unique['Type'] == 'region'), 'RRR'])
+            r_out = list(df_unique.loc[(df_unique['Display'] == 0) & (df_unique['Type'] == 'region'), 'RRR'])
+
+            # Define dictionnaries for paths to regions geojson files
+            layers_in = {region: '' for region in r_in}
+            layers_out = {region: '' for region in r_out}
+
+            # Fill dictionnaries with layer paths for each region; if both a shapefile and geojson file are available for one region, the geojson file is used. 
+            for region in r_in:
+                layers_in[region] = glob.glob(os.path.abspath(os.path.join(wk_dir, '../geofiles/geojson_files/'+ region + '.geojson')))
+            for region in r_out:
+                layers_out[region] = glob.glob(os.path.abspath(os.path.join(wk_dir, '../geofiles/geojson_files/'+ region + '.geojson')))
+                    
+            #Remove brackets from file paths
+            for region in layers_in:
+                layers_in[region] = str(layers_in[region])[2:-2] 
+            for region in layers_out:
+                layers_out[region] = str(layers_out[region])[2:-2]
+        else :
+            abspath_to_geofile = os.path.abspath(os.path.join(wk_dir, path_to_geofile))
+            geo_file = gpd.read_file(abspath_to_geofile)
+            r_in = list(geo_file[geo_file_region_column].unique())
+            r_out = []
+            
+        # Load bypass and hydrogen import coordinates files
         bypass_path = kwargs.get('bypass_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/bypass_lines.csv'))) # Coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
         hydrogen_third_nations_path = kwargs.get('hydrogen_third_nations_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/hydrogen_third_nations.csv'))) # Coordinates of h2 import lines from third nations
-        
-        # Load coordinates csv files
-        df_unique = pd.read_csv(coordinates_RRR_path)
-        df_region = df_unique.loc[df_unique['Type'] == 'region', ]
         df_bypass = pd.read_csv(bypass_path) 
         if commodity == 'Hydrogen':
             df_hydrogen_lines_outside = pd.read_csv(hydrogen_third_nations_path) 
-
-        # List of regions names in and out of the model
-        r_in = list(df_unique.loc[(df_unique['Display'] == 1) & (df_unique['Type'] == 'region'), 'RRR'])
-        r_out = list(df_unique.loc[(df_unique['Display'] == 0) & (df_unique['Type'] == 'region'), 'RRR'])
-
-        # Define dictionnaries for paths to regions geojson files
-        layers_in = {region: '' for region in r_in}
-        layers_out = {region: '' for region in r_out}
-
-        # Fill dictionnaries with layer paths for each region; if both a shapefile and geojson file are available for one region, the geojson file is used. 
-        for region in r_in:
-            layers_in[region] = glob.glob(os.path.abspath(os.path.join(wk_dir, '../geofiles/geojson_files/'+ region + '.geojson')))
-        for region in r_out:
-            layers_out[region] = glob.glob(os.path.abspath(os.path.join(wk_dir, '../geofiles/geojson_files/'+ region + '.geojson')))
-                
-        #Remove brackets from file paths
-        for region in layers_in:
-            layers_in[region] = str(layers_in[region])[2:-2] 
-        for region in layers_out:
-            layers_out[region] = str(layers_out[region])[2:-2]
-        
 
         ### 1.4 Read run-specific files
         ## 1.4.1 Function: reading gdx-files -> Don't understand the interest of creating those columns
@@ -625,7 +637,7 @@ def plot_map(path_to_result: str,
                 raise ValueError('No data for the selected season and time step')
             
         
-        ### 2.3 Calculate the congestion of the lines
+        ### 2.3 Calculate the utilization of the lines
         
         if lines == 'UtilizationTime':
             df_line = pd.merge(df_line, df_cap[['Year', 'Country', 'IRRRE', 'IRRRI', 'Value']], on = ['Year', 'Country', 'IRRRE', 'IRRRI'], how = 'left')
@@ -641,15 +653,31 @@ def plot_map(path_to_result: str,
         
         ### 2.4 Add coordinates to line dataframes
         
-        for i,row in df_line.iterrows():
-                for j in range(0,len(df_unique)):
-                    if df_line.loc[i,'IRRRE'] == df_unique.loc[j, 'RRR']:
-                        df_line.loc[i,'LatExp'] = df_unique.loc[j, 'Lat']
-                        df_line.loc[i,'LonExp'] = df_unique.loc[j, 'Lon']
-                    if df_line.loc[i,'IRRRI'] == df_unique.loc[j, 'RRR']:
-                        df_line.loc[i,'LatImp'] = df_unique.loc[j, 'Lat']
-                        df_line.loc[i,'LonImp'] = df_unique.loc[j, 'Lon']
-                      
+        if path_to_geofile == None : # If the user hasn't define a personalized geofile
+            for i,row in df_line.iterrows():
+                    for j in range(0,len(df_unique)):
+                        if df_line.loc[i,'IRRRE'] == df_unique.loc[j, 'RRR']:
+                            df_line.loc[i,'LatExp'] = df_unique.loc[j, 'Lat']
+                            df_line.loc[i,'LonExp'] = df_unique.loc[j, 'Lon']
+                        if df_line.loc[i,'IRRRI'] == df_unique.loc[j, 'RRR']:
+                            df_line.loc[i,'LatImp'] = df_unique.loc[j, 'Lat']
+                            df_line.loc[i,'LonImp'] = df_unique.loc[j, 'Lon']
+        else :
+            for i,row in df_line.iterrows():
+                for j in range(0,len(geo_file)):
+                    if df_line.loc[i,'IRRRE'] == geo_file.loc[j, geo_file_region_column]:  
+                        df_line.loc[i,'LatExp'] = geo_file.loc[j].geometry.centroid.y       
+                        df_line.loc[i,'LonExp'] = geo_file.loc[j].geometry.centroid.x       
+                    if df_line.loc[i,'IRRRI'] == geo_file.loc[j, geo_file_region_column]:  
+                        df_line.loc[i,'LatImp'] = geo_file.loc[j].geometry.centroid.y       
+                        df_line.loc[i,'LonImp'] = geo_file.loc[j].geometry.centroid.x
+            # If a line doesn't have coordinates because the countries are not in the personalized geofile, delete it and add a comment
+            df_line_copy = df_line.copy()
+            for i,row in df_line.iterrows():
+                if pd.isnull(df_line.loc[i,'LatExp']) or pd.isnull(df_line.loc[i,'LatImp']):
+                    df_line_copy = df_line_copy.drop(i)
+                    print('Line between ' + df_line.loc[i,'IRRRE'] + ' and ' + df_line.loc[i,'IRRRI'] + ' has been deleted because of missing coordinates in the geofile')
+            df_line = df_line_copy
         
         ### 2.5 One direction capacity  lines
         
@@ -722,7 +750,7 @@ def plot_map(path_to_result: str,
         df_line['LonMid'] = (df_line['LonImp'] + df_line['LonExp']) /2
         
         
-        ### 2.9 Process the generation data
+        ### 2.8 Process the generation data
         
         # Make the pie charts based on technologies
         if generation_var == 'TECH_TYPE':
@@ -861,7 +889,21 @@ def plot_map(path_to_result: str,
 
         # Merge the data frame to get the coordinates
         df_slack_generation = df_generation
-        df_slack_generation = pd.merge(df_slack_generation, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'right')
+        if path_to_geofile == None : # If the user hasn't define a personalized geofile
+            df_slack_generation = pd.merge(df_slack_generation, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'right')
+        else :
+            for i,row in df_slack_generation.iterrows():
+                for j in range(0,len(geo_file)):
+                    if df_slack_generation.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
+                        df_slack_generation.loc[i,'Lat'] = geo_file.loc[j].geometry.centroid.y       
+                        df_slack_generation.loc[i,'Lon'] = geo_file.loc[j].geometry.centroid.x       
+            # If capacities don't have coordinates because the countries are not in the personalized geofile, delete them and add a comment
+            df_slack_generation_copy = df_slack_generation.copy()
+            for i,row in df_slack_generation.iterrows():
+                if pd.isnull(df_slack_generation.loc[i,'Lat']):
+                    df_slack_generation_copy = df_slack_generation_copy.drop(i)
+                    print('Capacity in ' + df_slack_generation.loc[i,'RRR'] + ' has been deleted because of missing coordinates in the geofile')
+            df_slack_generation = df_slack_generation_copy
 
         # If they are some nan countries with no tech group filter outcome of merge
         df_slack_generation = df_slack_generation.dropna(subset=[display_column])
@@ -885,7 +927,7 @@ def plot_map(path_to_result: str,
         if choosen_map_coordinates == 'DK' :
             df_slack_generation = df_slack_generation.loc[df_slack_generation['RRR'].str.contains('DK')]
         
-        ### 2.10 Process the background data
+        ### 2.9 Process the background data
         
         if selected_background != None:
             # Filter the data
@@ -900,6 +942,31 @@ def plot_map(path_to_result: str,
             df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
             # Find the maximum over the region RRR
             bg_max = df_background['Value'].max()
+            
+            
+        ### 2.10 Verify which country was defined as in but does not have any data
+        # Please note that the user is free to define something as out of the model and still has data for it
+        
+        r_in_copy = r_in.copy()
+        r_out_copy = r_out.copy()
+        if path_to_geofile == None:
+            layers_in_copy = layers_in.copy()
+            layers_out_copy = layers_out.copy()
+            for region in r_in : 
+                if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
+                    r_in_copy.remove(region)
+                    layers_in_copy.pop(region)
+                    r_out_copy.append(region)
+                    layers_out_copy[region] = layers_in[region]
+            layers_in = layers_in_copy
+            layers_out = layers_out_copy
+        else :
+            for region in r_in :
+                if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
+                    r_out_copy.append(region)
+                    r_in_copy.remove(region)
+        r_in = r_in_copy
+        r_out = r_out_copy
 
 
         ### ----------------------------- ###
@@ -921,29 +988,56 @@ def plot_map(path_to_result: str,
 
         fig, ax = plt.subplots(figsize=(fig_width+10, fig_height), subplot_kw={"projection": projection}, dpi=100, facecolor=background_color)
 
-        for R in layers_in:
-            # Get the color of the country based on the background choice 
-            if selected_background != None: 
-                value = df_background.loc[df_background['RRR'] == R, 'Value'].values
-                if len(value) == 0 :
-                    value = np.append(value, 0)
-                face_color = selected_background['colormap'][0](value[0] / bg_max)
-            else : 
-                face_color = regions_model_color
-            # Get the geo file and plot it
-            geo = gpd.read_file(layers_in[R])
-            geo_artist = ax.add_geometries(geo.geometry, crs = projection,
-                                            facecolor=[face_color], edgecolor='#46585d',
-                                            linewidth=.2)
-            geo_artist.set_zorder(1)
-            
-        if show_country_out :
-            for R in layers_out:
-                geo = gpd.read_file(layers_out[R])
+        if path_to_geofile == None : # If the user hasn't define a personalized geofile
+            for R in layers_in:
+                # Get the color of the country based on the background choice 
+                if selected_background != None: 
+                    value = df_background.loc[df_background['RRR'] == R, 'Value'].values
+                    if len(value) == 0 :
+                        value = np.append(value, 0)
+                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                else : 
+                    face_color = regions_model_color
+                # Get the geo file and plot it
+                geo = gpd.read_file(layers_in[R])
                 geo_artist = ax.add_geometries(geo.geometry, crs = projection,
-                                            facecolor=[regions_ext_color], edgecolor='#46585d',
-                                            linewidth=.2)
+                                                facecolor=[face_color], edgecolor='#46585d',
+                                                linewidth=.2)
                 geo_artist.set_zorder(1)
+                
+            if show_country_out :
+                for R in layers_out:
+                    geo = gpd.read_file(layers_out[R])
+                    geo_artist = ax.add_geometries(geo.geometry, crs = projection,
+                                                facecolor=[regions_ext_color], edgecolor='#46585d',
+                                                linewidth=.2)
+                    geo_artist.set_zorder(1)
+        else :
+            if show_country_out :
+                geo_file = geo_file[geo_file.geometry.notnull()]
+                # Print one time all countries as outside countries to make sure to have everything defined plotted
+                geo_artist = ax.add_geometries(geo_file.geometry, crs=projection,
+                                                facecolor=[regions_ext_color], edgecolor='#46585d',
+                                                linewidth=.2)
+                geo_artist.set_zorder(1)
+            # Print this time all countries in the model with right color if needed
+            for R in r_in:
+                if selected_background != None: 
+                    value = df_background.loc[df_background['RRR'] == R, 'Value'].values
+                    if len(value) == 0 :
+                        value = np.append(value, 0)
+                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                else : 
+                    face_color = regions_model_color
+                try :
+                    geo_file = geo_file[geo_file.geometry.notnull()]
+                    geometry = [geo_file[geo_file[geo_file_region_column] == R].geometry.iloc[0]]
+                    geo_artist = ax.add_geometries(geometry, crs=projection,
+                                facecolor=[face_color], edgecolor='#46585d',
+                                linewidth=.2)
+                    geo_artist.set_zorder(1)
+                except :
+                    print("It seems like the region " + R + " id is not defined correctly in the geofile")
 
 
         ### 3.2 Adding transmission lines
