@@ -19,6 +19,7 @@ dependencies:
   - geopandas>=1.0.1
   - ipywidgets>=8.1.3
   - ipykernel>=6.29.5
+  - cartopy>=0.24.1
   - pip
   - pip:
     - pybalmorel==0.4.5
