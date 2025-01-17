@@ -1300,52 +1300,46 @@ def plot_map(path_to_result: str,
                 ave = line_cluster_groups[i]
                 string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
             ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
-                
             
-            ### 3.5.3 Utilization legend
             
-            if lines in ['UtilizationYear','UtilizationTime']:
-                # Create the inset for the color bar
-                cbar_ax1 = inset_axes(
-                    ax,
-                    width="3%",  # Width of the color bar
-                    height="80%",  # Height of the color bar
-                    loc="center right",  # Position the color bar on the right
-                    borderpad=-3,  # Padding between the axis and color bar
-                )
-                # Normalize and create a color bar
-                norm = mcolors.Normalize(vmin=0, vmax=100)
-                cbar1 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap="Reds"), cax=cbar_ax1)
-                cbar1.set_label("Line Utilization [%]") # Add label
-                    
-            ### 3.5.3 Background legend
-            
-            if selected_background != None:
-                # Ticks label
-                bg_upper = int(np.ceil(bg_max))  # Round up 
-                ticks = list(range(0,bg_upper,2))
-                # Create the inset for the color bar
-                cbar_ax2 = inset_axes(
-                    ax,
-                    width="3%",  # Width of the color bar
-                    height="80%",  # Height of the color bar
-                    loc="center left",  # Position the color bar on the left
-                    borderpad=-3,  # Padding between the axis and color bar
-                )
-                # Normalize and create a color bar
-                norm = mcolors.Normalize(vmin=0, vmax=bg_max)
-                cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap'][1]), cax=cbar_ax2)
-                cbar2.ax.yaxis.set_label_position('left')
-                cbar2.ax.yaxis.set_ticks_position('left')
-                cbar2.ax.yaxis.set_ticks(ticks)
-                cbar2.set_label(f"{background} [{selected_background['unit']}]") # Add label
-        
         ### 3.6 Limits of graph
         
         # Set limit always after pies because it brakes the graph
         ax.set_xlim(xlim[0],xlim[1])      
         ax.set_ylim(ylim[0],ylim[1])
-        ax.set_aspect('equal', anchor='E')  # Ensure the aspect ratio is equal
+            
+            
+        ### 3.5.3 Utilization legend
+        
+        if lines in ['UtilizationYear','UtilizationTime']:
+            # Create the inset for the color bar
+            # Create a new axes for the color bar
+            bbox_ax = ax.get_tightbbox()
+            bbox_fig = fig.transFigure.inverted().transform(bbox_ax)
+            cbar_ax1 = fig.add_axes([bbox_fig[1,0]+0.005, bbox_fig[0,1]+0.01, 0.015, bbox_fig[1,1]-bbox_fig[0,1]-0.02])  # [left, bottom, width, height]
+            # Normalize and create a color bar
+            norm = mcolors.Normalize(vmin=0, vmax=100)
+            cbar1 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap="Reds"), cax=cbar_ax1)
+            cbar1.set_label("Line Utilization [%]") # Add label
+              
+                
+        ### 3.5.3 Background legend
+        
+        if selected_background != None:
+            # Ticks label
+            bg_upper = int(np.ceil(bg_max))  # Round up 
+            ticks = list(range(0,bg_upper,2))
+            # Create a new axes for the color bar
+            bbox_ax = ax.get_tightbbox()
+            bbox_fig = fig.transFigure.inverted().transform(bbox_ax)
+            cbar_ax2 = fig.add_axes([bbox_fig[0,0]-0.02, bbox_fig[0,1]+0.01, 0.015, bbox_fig[1,1]-bbox_fig[0,1]-0.02])  # [left, bottom, width, height]
+            # Normalize and create a color bar
+            norm = mcolors.Normalize(vmin=0, vmax=bg_max)
+            cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap'][1]), cax=cbar_ax2)
+            cbar2.ax.yaxis.set_label_position('left')
+            cbar2.ax.yaxis.set_ticks_position('left')
+            cbar2.ax.yaxis.set_ticks(ticks)
+            cbar2.set_label(f"{background} [{selected_background['unit']}]") # Add label
             
         # Black lining around the graph
         ax.plot([xlim[0],xlim[1]], [ylim[0],ylim[0]], color = 'black', linewidth = 2, zorder=1)
@@ -1374,7 +1368,7 @@ def plot_map(path_to_result: str,
         if save_fig:
             output_dir = os.path.join(os.getcwd(), 'output')
             os.makedirs(output_dir, exist_ok=True)
-            fig.savefig(os.path.join(output_dir, f'{commodity}_{lines}_{generation_commodity}_{generation}.pdf'))
+            fig.savefig(os.path.join(output_dir, f'{commodity}_{lines}_{generation_commodity}_{generation}.pdf'), bbox_inches='tight')
         
         return fig, ax
             
