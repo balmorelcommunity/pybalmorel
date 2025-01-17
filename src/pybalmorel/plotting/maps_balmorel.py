@@ -1269,8 +1269,11 @@ def plot_map(path_to_result: str,
             ### 3.5.2 Legend with lines
             
             # Get the bounding box of the first legend
-            bbox_second_legend = second_legend.get_window_extent().transformed(ax.transAxes.inverted())
-            pos_line = (bbox_second_legend.x0, bbox_second_legend.y0 - 0.0)  # Adjust the vertical position as needed
+            try :
+                bbox_second_legend = second_legend.get_window_extent().transformed(ax.transAxes.inverted())
+                pos_line = (bbox_second_legend.x0, bbox_second_legend.y0)  # Adjust the vertical position as needed
+            except :
+                pos_line = (0, 1)
                 
             if commodity == 'Electricity':
                 subs = 'el'
