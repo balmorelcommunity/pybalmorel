@@ -66,6 +66,7 @@ def plot_map(path_to_result: str,
             **generation_exclude_H2Storage (bool, optional): Do not plot the capacities of the H2 storage. Defaults to True.
             **generation_exclude_ElectricStorage (bool, optional): Do not plot the production of Electric storage. Defaults to True.
             **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+            **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
         Visual additional options:
             **legend_show (bool, optional): Show legend_show or not. Defaults to True.
             **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
@@ -74,10 +75,10 @@ def plot_map(path_to_result: str,
             Lines options :
                 **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
                 **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
-                **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5.
-                **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12.
-                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend.
-                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity.
+                **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+                **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
+                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
                 **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                 **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
                 **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
@@ -90,11 +91,11 @@ def plot_map(path_to_result: str,
                 **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
                 **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
                 **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
-                **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
-                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2.
-                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4.
-                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend.
-                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity.
+                **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
+                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
         Colors additional options:
             **background_color (str, optional): Background color of the map. Defaults to 'white'.
             **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -186,20 +187,41 @@ def plot_map(path_to_result: str,
         generation_exclude_Geothermal = kwargs.get('generation_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
         background_dict = {'H2 Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
                            'Elec Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'}}
-        if background not in background_dict.keys() : # Check that it's a possible type of background
+        if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
         selected_background = background_dict[background].copy() if background != None else None
         
+        # Special case of geofile input
+        if path_to_geofile != None:
+            abspath_to_geofile = os.path.abspath(os.path.join(wk_dir, path_to_geofile))
+            geo_file = gpd.read_file(abspath_to_geofile)
+            minx, miny, maxx, maxy = geo_file.total_bounds
+            coordinates_geofile_offset = kwargs.get('coordinates_geofile_offset', 0.5) # Geofile coordinates offset from the min and max of the geofile
+            coordinates_geofile = [(minx-coordinates_geofile_offset, maxx+coordinates_geofile_offset), (miny-coordinates_geofile_offset, maxy+coordinates_geofile_offset)]
+            # Warning message about the coordinates and the size of the object on the map
+            print("WARNING : You have selected a geofile as an input for the map. The coordinates of the map will be set to the coordinates of the geofile with an offset.\n\
+            If you want to modify the size of the offset, please use the option 'coordinates_geofile_offset', the default value is 0.5. \n\
+            The size of the object on the map may be affected because default value have been selected. The most critical being the pie charts size parameters. \n\
+            Please modify them to your convenience with 'pie_radius_min', 'pie_radius_max', 'pie_cluster_groups', and 'pie_cluster_radius' \n\
+            If you wish to modify the line size parameters please use : 'line_width_min', 'line_width_max', 'line_cluster_groups', and 'line_cluster_widths'.")
+        
         ### Visual options
         legend_show = kwargs.get('legend_show', True) # Showing or not the legend
         show_country_out = kwargs.get('show_country_out', True) # Showing or not the countries outside the model
-        dict_map_coordinates = {'EU': [(-11,36),(33,72)], 'DK': [(7.5,13.5),(54.5,58)], 'Nordic': [(4.8,17),(50.5,70)]} # Dictionary of coordinates for different maps
+        dict_map_coordinates = {'EU': [(-11,36),(33,72)], 'DK': [(7.5,13.5),(54.5,58)]} # Dictionary of coordinates for different maps
         choosen_map_coordinates = kwargs.get('choosen_map_coordinates', 'EU') # Choose the map to be shown
         map_coordinates = kwargs.get('map_coordinates', '') # Coordinates of the map
-        if map_coordinates != '' :
+        if path_to_geofile != None and map_coordinates == '':
+            dict_map_coordinates['Geofile'] = coordinates_geofile
+            choosen_map_coordinates = 'Geofile'
+        elif map_coordinates != '' : 
             dict_map_coordinates['Custom'] = map_coordinates
             choosen_map_coordinates = 'Custom'
+            print("WARNING : You have selected custom coordinates for the map. The coordinates of the map will be set to the choosen custom coordinates.\n\
+            The size of the object on the map may be affected because default value have been selected. The most critical being the pie charts size parameters. \n\
+            Please modify them to your convenience with 'pie_radius_min', 'pie_radius_max', 'pie_cluster_groups', and 'pie_cluster_radius' \n\
+            If you wish to modify the line size parameters please use : 'line_width_min', 'line_width_max', 'line_cluster_groups', and 'line_cluster_widths'.")
         # lines options
         line_width_cat = kwargs.get('line_width_cat', 'log') # Choose the way of determining lines width, log, linear or cluster
         if line_width_cat not in ['linear', 'log', 'cluster']: # Check that it's a possible category of line thickness
@@ -247,6 +269,10 @@ def plot_map(path_to_result: str,
                                'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5], 
                                       'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
                                                               'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}}
+            if choosen_map_coordinates not in ["EU", "DK"]:
+                pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5],
+                                                            'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
+                                                                                    'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}
             pie_radius_min = kwargs.get('pie_radius_min', pie_radius_dict[choosen_map_coordinates]['pie_radius_min']) # Minimum width of lines, used if cat is linear or log
             pie_radius_max = kwargs.get('pie_radius_max', pie_radius_dict[choosen_map_coordinates]['pie_radius_max']) # Maximum width of lines, used if cat is linear or log
             pie_cluster_groups = kwargs.get('pie_cluster_groups', pie_radius_dict[choosen_map_coordinates]['pie_cluster_groups'][generation][commodity]) # The capacity groupings if cat is 'cluster'
