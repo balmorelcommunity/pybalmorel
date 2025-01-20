@@ -1,6 +1,7 @@
 name: pybalmorel
 channels:
   - conda-forge
+  - bioconda
 dependencies:
   - python >= 3.10
   - numpy>=2.1.2
