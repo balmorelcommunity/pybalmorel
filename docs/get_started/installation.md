@@ -11,7 +11,6 @@ pybalmorel has the following requirements - here illustrated in a environment.ym
 name: pybalmorel
 channels:
   - conda-forge
-  - bioconda
 dependencies:
   - python >= 3.10
   - numpy>=2.1.2
@@ -24,5 +23,6 @@ dependencies:
   - pip
   - pip:
     - pybalmorel==0.5.0
+    - cartopy>=0.24.1
 ```
 
