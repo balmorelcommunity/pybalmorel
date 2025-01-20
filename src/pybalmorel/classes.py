@@ -98,6 +98,7 @@ class MainResults:
             
         if system_directory != None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
+            self._gams_system_directory = system_directory
         else:
             ws = gams.GamsWorkspace()
             
@@ -251,7 +252,11 @@ class MainResults:
         files = np.array(self.files)[idx][0]
         path = os.path.join(path, files)
         
-        return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, path_to_geofile, geo_file_region_column, **kwargs)
+        if hasattr(self, "_gams_system_directory"):
+            return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, path_to_geofile, geo_file_region_column, 
+                            system_directory=self._gams_system_directory, **kwargs)
+        else:
+            return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, path_to_geofile, geo_file_region_column, **kwargs)
         
     # For wrapping functions, makes it possible to add imported functions in __init__ easily
     def _existing_func_wrapper(self, function, *args, **kwargs):
