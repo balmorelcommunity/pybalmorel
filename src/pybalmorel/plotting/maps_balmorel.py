@@ -108,6 +108,7 @@ def plot_map(path_to_result: str,
             **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
             **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
             **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+            **countries_color_path = Path to the csv file containing the personnalized colors of the countries
 
     Returns:
         Tuple[Figure, Axes]: The figure and axes objects of the plot
@@ -443,12 +444,15 @@ def plot_map(path_to_result: str,
             r_in = list(geo_file[geo_file_region_column].unique())
             r_out = []
             
-        # Load bypass and hydrogen import coordinates files
+        # Load bypass, hydrogen import coordinates and countries colors files
         bypass_path = kwargs.get('bypass_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/bypass_lines.csv'))) # Coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
         hydrogen_third_nations_path = kwargs.get('hydrogen_third_nations_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/hydrogen_third_nations.csv'))) # Coordinates of h2 import lines from third nations
+        countries_colors_path = kwargs.get('countries_colors_path', '') # If the person wants personnalized colors on countries
         df_bypass = pd.read_csv(bypass_path) 
         if commodity == 'Hydrogen':
             df_hydrogen_lines_outside = pd.read_csv(hydrogen_third_nations_path) 
+        if countries_colors_path != '' :
+            df_countries_colors = pd.read_csv(os.path.abspath(os.path.join(wk_dir, countries_colors_path)))
 
         ### 1.4 Read run-specific files
         ## 1.4.1 Function: reading gdx-files -> Don't understand the interest of creating those columns
@@ -1016,7 +1020,7 @@ def plot_map(path_to_result: str,
 
         if path_to_geofile == None : # If the user hasn't define a personalized geofile
             for R in layers_in:
-                # Get the color of the country based on the background choice 
+                # Get the color of the country based on the background choice if it exists
                 if selected_background != None: 
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
                     if len(value) == 0 :
@@ -1024,6 +1028,11 @@ def plot_map(path_to_result: str,
                     face_color = selected_background['colormap'][0](value[0] / bg_max)
                 else : 
                     face_color = regions_model_color
+                # Get the personalized color of the country if defined
+                if countries_colors_path != '':
+                    country_color = df_countries_colors.loc[df_countries_colors['RRR'] == R, 'color'].values
+                    if len(country_color) > 0:
+                        face_color = country_color[0]
                 # Get the geo file and plot it
                 geo = gpd.read_file(layers_in[R])
                 geo_artist = ax.add_geometries(geo.geometry, crs = projection,
@@ -1031,21 +1040,34 @@ def plot_map(path_to_result: str,
                                                 linewidth=.2)
                 geo_artist.set_zorder(1)
                 
-            if show_country_out :
-                for R in layers_out:
+            for R in layers_out:
+                face_color = regions_ext_color
+                # Get the personalized color of the country if defined
+                if countries_colors_path != '':
+                    country_color = df_countries_colors.loc[df_countries_colors['RRR'] == R, 'color'].values
+                    if len(country_color) > 0:
+                        face_color = country_color[0]
+                if show_country_out or face_color != regions_ext_color:
                     geo = gpd.read_file(layers_out[R])
                     geo_artist = ax.add_geometries(geo.geometry, crs = projection,
-                                                facecolor=[regions_ext_color], edgecolor='#46585d',
+                                                facecolor=[face_color], edgecolor='#46585d',
                                                 linewidth=.2)
                     geo_artist.set_zorder(1)
         else :
-            if show_country_out :
-                geo_file = geo_file[geo_file.geometry.notnull()]
-                # Print one time all countries as outside countries to make sure to have everything defined plotted
-                geo_artist = ax.add_geometries(geo_file.geometry, crs=projection,
-                                                facecolor=[regions_ext_color], edgecolor='#46585d',
-                                                linewidth=.2)
-                geo_artist.set_zorder(1)
+            for R in r_out :
+                face_color = regions_ext_color
+                # Get the personalized color of the country if defined
+                if countries_colors_path != '':
+                    country_color = df_countries_colors.loc[df_countries_colors['RRR'] == R, 'color'].values
+                    if len(country_color) > 0:
+                        face_color = country_color[0]
+                if show_country_out or face_color != regions_ext_color:
+                    geo_file = geo_file[geo_file.geometry.notnull()]
+                    # Print one time all countries as outside countries to make sure to have everything defined plotted
+                    geo_artist = ax.add_geometries(geo_file.geometry, crs=projection,
+                                                    facecolor=[regions_ext_color], edgecolor='#46585d',
+                                                    linewidth=.2)
+                    geo_artist.set_zorder(1)
             # Print this time all countries in the model with right color if needed
             for R in r_in:
                 if selected_background != None: 
@@ -1055,6 +1077,11 @@ def plot_map(path_to_result: str,
                     face_color = selected_background['colormap'][0](value[0] / bg_max)
                 else : 
                     face_color = regions_model_color
+                # Get the personalized color of the country if defined
+                if countries_colors_path != '':
+                    country_color = df_countries_colors.loc[df_countries_colors['RRR'] == R, 'color'].values
+                    if len(country_color) > 0:
+                        face_color = country_color[0]
                 try :
                     geo_file = geo_file[geo_file.geometry.notnull()]
                     geometry = [geo_file[geo_file[geo_file_region_column] == R].geometry.iloc[0]]
