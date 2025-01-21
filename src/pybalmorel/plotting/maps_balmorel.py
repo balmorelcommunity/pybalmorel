@@ -51,7 +51,7 @@ def plot_map(path_to_result: str,
         year (int): The year of the results
         commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
         lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
-        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
+        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime']. Defaults to 'Capacity'.
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
         save_fig (bool, optional): Save the figure or not. Defaults to False.
         system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
@@ -67,6 +67,7 @@ def plot_map(path_to_result: str,
             **generation_exclude_ElectricStorage (bool, optional): Do not plot the production of Electric storage. Defaults to True.
             **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
             **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+            **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
         Visual additional options:
             **legend_show (bool, optional): Show legend_show or not. Defaults to True.
             **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
@@ -173,7 +174,7 @@ def plot_map(path_to_result: str,
         if generation_commodity not in ['Electricity', 'Hydrogen']:
             print(f'generation_commodity must be either "Electricity" or "Hydrogen", set to {commodity}')
             generation_commodity = commodity
-        if generation not in ['Capacity', 'Production']: # Check that it's a possible type of generation display
+        if generation not in ['Capacity', 'Production', 'ProductionTime']: # Check that it's a possible type of generation display
             raise ValueError('generation must be either "Capacity" or "Production"')
         if lines in ['FlowTime', 'UtilizationTime']: # Check if there is a specified season and hour for flow maps
             S = kwargs.get('S', '')
@@ -266,13 +267,16 @@ def plot_map(path_to_result: str,
             pie_show_min = kwargs.get('pie_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
             pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3], 
                                       'pie_cluster_groups' : {'Production' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]}, 
+                                                              'ProductionTime' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]},
                                                               'Capacity' : {'Electricity' : [10,50,200,400], 'Hydrogen' : [1,10,30,60]}}}, 
                                'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5], 
                                       'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
+                                                              'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
                                                               'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}}
             if choosen_map_coordinates not in ["EU", "DK"]:
                 pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5],
                                                             'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
+                                                                                    'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
                                                                                     'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}
             pie_radius_min = kwargs.get('pie_radius_min', pie_radius_dict[choosen_map_coordinates]['pie_radius_min']) # Minimum width of lines, used if cat is linear or log
             pie_radius_max = kwargs.get('pie_radius_max', pie_radius_dict[choosen_map_coordinates]['pie_radius_max']) # Maximum width of lines, used if cat is linear or log
@@ -573,6 +577,8 @@ def plot_map(path_to_result: str,
             df_generation = all_df['G_CAP_YCRAF']
         elif generation == 'Production':
             df_generation = all_df['PRO_YCRAGF']
+        elif generation == 'ProductionTime':
+            df_generation = df_creation(gdx_file, 'PRO_YCRAGFST', system_directory).query('SSS == "%s" and TTT == "%s"'%(S, T))
         if generation_commodity == 'Electricity':
             df_generation = df_generation[df_generation['COMMODITY'] == 'ELECTRICITY']
         elif generation_commodity == 'Hydrogen':
@@ -1392,10 +1398,14 @@ def plot_map(path_to_result: str,
         ### 3.8 Save the figure
         
         # Output the figure in pdf
-        if save_fig:
+        if save_fig and kwargs.get('filename') == None:
             output_dir = os.path.join(os.getcwd(), 'output')
             os.makedirs(output_dir, exist_ok=True)
             fig.savefig(os.path.join(output_dir, f'{commodity}_{lines}_{generation_commodity}_{generation}.pdf'), bbox_inches='tight')
+        elif save_fig and kwargs.get('filename') != None:
+            output_dir = os.path.join(os.getcwd(), 'output')
+            os.makedirs(output_dir, exist_ok=True)
+            fig.savefig(os.path.join(output_dir, kwargs.get('filename')), bbox_inches='tight')
         
         return fig, ax
             
