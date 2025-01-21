@@ -1,4 +1,4 @@
-# Post-Processing
+# Overview
 
 There are several functions to plot energy balances, transmission capacity maps and a ipywidget to interactively plot bar charts, check out [this notebook](https://github.com/Mathias157/pybalmorel/blob/master/examples/PostProcessing.ipynb).
 
@@ -30,14 +30,8 @@ model.results.plot_map(model.results.sc[0], 'electricity', 2050)
 model.results.plot_profile('heat', 2050, model.results.sc[1])
 ```
 
-For more information about the map plotting please look here :
+There are many more features, read more about the map plotting tool here [here](map_plotting.md).
 
-```{toctree}
-:maxdepth: 1
-:hidden:
-
-postprocessing_map.md
-```
 
 ## Getting Specific Results
 The `model.results` is actually a `MainResults` class. The example below illustrates how to get specific results using that class.

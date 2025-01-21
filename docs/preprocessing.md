@@ -55,7 +55,7 @@ GUI.geofilemaker()
 ```  
 
 The video below illustrates how it works.
-:::{figure} ../img/geoset_generator_example.gif 
+:::{figure} /img/geoset_generator_example.gif 
 :name: geofilemaker
 :alt: How to use the 'geofilemaker' GUI.
 :width: 100% 
