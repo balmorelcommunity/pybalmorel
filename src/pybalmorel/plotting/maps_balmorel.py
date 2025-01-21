@@ -51,7 +51,7 @@ def plot_map(path_to_result: str,
         year (int): The year of the results
         commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
         lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
-        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime']. Defaults to 'Capacity'.
+        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
         save_fig (bool, optional): Save the figure or not. Defaults to False.
         system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
@@ -63,8 +63,8 @@ def plot_map(path_to_result: str,
             **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
             **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
             **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
-            **generation_exclude_H2Storage (bool, optional): Do not plot the capacities of the H2 storage. Defaults to True.
-            **generation_exclude_ElectricStorage (bool, optional): Do not plot the production of Electric storage. Defaults to True.
+            **generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+            **generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
             **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
             **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
             **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
@@ -500,6 +500,8 @@ def plot_map(path_to_result: str,
         
         var_list = []
         var_list = var_list + ['G_CAP_YCRAF', 'PRO_YCRAGF']
+        if generation.lower() == 'productiontime':
+            var_list += ['PRO_YCRAGFST']
         if commodity == 'Electricity':
             if lines == 'Capacity' : 
                 var_list = var_list + ['X_CAP_YCR']
@@ -578,7 +580,7 @@ def plot_map(path_to_result: str,
         elif generation == 'Production':
             df_generation = all_df['PRO_YCRAGF']
         elif generation == 'ProductionTime':
-            df_generation = df_creation(gdx_file, 'PRO_YCRAGFST', system_directory).query('SSS == "%s" and TTT == "%s"'%(S, T))
+            df_generation = all_df['PRO_YCRAGFST'].query('SSS == "%s" and TTT == "%s"'%(S, T))
         if generation_commodity == 'Electricity':
             df_generation = df_generation[df_generation['COMMODITY'] == 'ELECTRICITY']
         elif generation_commodity == 'Hydrogen':
