@@ -5,7 +5,7 @@ Get started [here](get_started.md), or check out our GitHub repository for jupyt
 - [Pre-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PreProcessing.ipynb)
 - [Execution](https://github.com/Mathias157/pybalmorel/blob/master/examples/Execution.ipynb)
 - [Post-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PostProcessing.ipynb)
-- [Post_Processing Map](https://github.com/Mathias157/pybalmorel/blob/master/examples/PostProcessing_map.ipynb)
+- [Map Plotting](https://github.com/Mathias157/pybalmorel/blob/master/examples/MapPlotting.ipynb)
 
 
 ```{toctree}
