@@ -1,4 +1,4 @@
-# Pybalmorel for map plotting
+# Pybalmorel for Map Plotting
 
 This notebook provide examples on how to use the pybalmorel post processing map plotting tool. 
 
