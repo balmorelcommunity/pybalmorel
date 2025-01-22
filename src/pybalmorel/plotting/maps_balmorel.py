@@ -298,7 +298,8 @@ def plot_map(path_to_result: str,
         generation_tech_color = {
         'HYDRO-RESERVOIRS': '#33b1ff',
         'HYDRO-RUN-OF-RIVER': '#4589ff',
-        'WIND-ON': '#006460',
+        'HYDRO' : '#33b1ff',
+        'WIND-ONSHORE': '#006460',
         'BOILERS': '#8B008B',
         'ELECT-TO-HEAT': '#FFA500',
         'INTERSEASONAL-HEAT-STORAGE': '#FFD700',
@@ -310,16 +311,17 @@ def plot_map(path_to_result: str,
         'SOLAR-HEATING': '#FF69B4',
         'CHP-EXTRACTION': '#ff7eb6',
         'SOLAR-PV': '#d2a106',
-        'WIND-OFF': '#08bdba',
+        'WIND-OFFSHORE': '#08bdba',
         'INTRASEASONAL-ELECT-STORAGE': '#ba4e00',
         'ELECTROLYZER': '#ADD8E6',
         'H2-STORAGE': '#FFC0CB',
-        'FUELCELL': '#d4bbff'
+        'FUELCELL': '#d4bbff',
+        'CHP' : '#E5D8D8'
         }
         generation_fuel_color = {
         'HYDRO': '#08bdba',
-        'WIND-ON': '#5e45ff',
-        'WIND-OFF': '#4589ff',
+        'WIND-ONSHORE': '#5e45ff',
+        'WIND-OFFSHORE': '#4589ff',
         'BIOGAS': '#23932d',
         'COAL': '#595959',
         'ELECTRIC': '#BA000F',
@@ -921,6 +923,14 @@ def plot_map(path_to_result: str,
             
             # if generation_exclude_Geothermal: # Do we have geothermia inside the model ?
             #     df_generation_capacity = df_generation_capacity[df_generation_capacity['FFF'] != 'HEAT']   
+            
+            # Rename values of onshore and offshore wind
+            df_generation[display_column] = df_generation[display_column].replace({'WIND-ON': 'WIND-ONSHORE', 'WIND-OFF': 'WIND-OFFSHORE'})
+            # Rename and merge HYDRO-RESERVOIRS and HYDRO-RUN-OF-RIVER together
+            df_generation[display_column] = df_generation[display_column].replace({'HYDRO-RESERVOIRS': 'HYDRO', 'HYDRO-RUN-OF-RIVER': 'HYDRO'})
+            # Rename and merge CHP-BACK-PRESSURE and CHP-EXTRACTION together
+            df_generation[display_column] = df_generation[display_column].replace({'CHP-BACK-PRESSURE': 'CHP', 'CHP-EXTRACTION': 'CHP'})
+            
 
             # Get the name for the legend
             if generation_var == 'TECH_TYPE':
