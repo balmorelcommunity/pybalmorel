@@ -519,8 +519,8 @@ def plot_map(path_to_result: str,
                 var_list = var_list + ['XH2_FLOW_YCRST']
             if lines == 'UtilizationTime': 
                 var_list = var_list + ['XH2_CAP_YCR', 'XH2_FLOW_YCRST']
+        var_list = var_list + ['G_CAP_YCRAF', 'PRO_YCRAGF']
         if generation != None:
-            var_list = var_list + ['G_CAP_YCRAF', 'PRO_YCRAGF']
             if generation.lower() == 'productiontime':
                 var_list += ['PRO_YCRAGFST']
         if selected_background != None:
@@ -600,6 +600,12 @@ def plot_map(path_to_result: str,
             df_generation = df_generation.rename(columns = column_dict)
         if selected_background != None:
             df_background = df_background.rename(columns = column_dict)
+            
+        # 1.4.5 Check if there is some H2 import
+        if all_df['G_CAP_YCRAF']['FFF'].str.contains('IMPORT_H2').any():
+            H2_import = True
+        else :
+            H2_import = False
             
 
         ### ----------------------------- ###
@@ -905,12 +911,6 @@ def plot_map(path_to_result: str,
 
             if generation_exclude_H2Storage:
                 df_generation = df_generation[df_generation['TECH_TYPE'] != 'H2-STORAGE']
-
-            # Check if there is some H2 import
-            if df_generation['FFF'].str.contains('IMPORT_H2').any():
-                H2_import = True
-            else :
-                H2_import = False
             
             if generation_exclude_Import_Cap_H2:
                 df_generation = df_generation[df_generation['FFF'] != 'IMPORT_H2']
@@ -995,14 +995,19 @@ def plot_map(path_to_result: str,
         ### 2.10 Verify which country was defined as in but does not have any data
         # Please note that the user is free to define something as out of the model and still has data for it
         
-        if lines != None:
+        if lines != None or generation != None:
+            check = []
+            if lines != None:
+                check = check + [df_line['IRRRE'].unique(), df_line['IRRRI'].unique()]
+            if generation != None:
+                check = check + [df_generation['RRR'].unique()]
             r_in_copy = r_in.copy()
             r_out_copy = r_out.copy()
             if path_to_geofile == None:
                 layers_in_copy = layers_in.copy()
                 layers_out_copy = layers_out.copy()
                 for region in r_in : 
-                    if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
+                    if not any(region in sublist for sublist in check):
                         r_in_copy.remove(region)
                         layers_in_copy.pop(region)
                         r_out_copy.append(region)
@@ -1011,7 +1016,7 @@ def plot_map(path_to_result: str,
                 layers_out = layers_out_copy
             else :
                 for region in r_in :
-                    if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
+                    if not any(region in sublist for sublist in check):
                         r_out_copy.append(region)
                         r_in_copy.remove(region)
             r_in = r_in_copy
@@ -1346,7 +1351,7 @@ def plot_map(path_to_result: str,
                                         color=line_color))
                     # The text
                     ave = line_cluster_groups[i]
-                    string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
+                    string.append('%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs))
                 ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
             
             
