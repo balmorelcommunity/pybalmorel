@@ -171,8 +171,8 @@ class MainResults:
                  scenario: str, 
                  year: int,
                  commodity: str,
-                 lines: str = 'Capacity', 
-                 generation: str = 'Capacity',
+                 lines: str = None, 
+                 generation: str = None,
                  background : str = None,
                  save_fig: bool = False,
                  path_to_geofile: str = None,
@@ -185,7 +185,7 @@ class MainResults:
         scenario (str): The scenario name       
         year (int): The year of the results
         commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
-        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
+        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
         generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
         save_fig (bool, optional): Save the figure or not. Defaults to False.
