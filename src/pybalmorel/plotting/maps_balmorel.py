@@ -189,8 +189,10 @@ def plot_map(path_to_result: str,
         generation_exclude_H2Storage = kwargs.get('generation_exclude_H2Storage', True)  #do not plot the capacities of the H2 storage
         generation_exclude_ElectricStorage = kwargs.get('generation_exclude_ElectricStorage', True)  #do not plot the production of Electric storag, only works with Show pie production
         generation_exclude_Geothermal = kwargs.get('generation_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
-        background_dict = {'H2 Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
-                           'Elec Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'}}
+        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
+                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'},
+                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh'},
+                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR'}} # Dictionary of background options
         if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
@@ -994,19 +996,37 @@ def plot_map(path_to_result: str,
         ### 2.9 Process the background data
         
         if selected_background != None:
-            # Filter the data
-            filters = selected_background['filters']
-            for i in range(len(filters)):
-                df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
-            # Apply the transformation
-            transformation = selected_background['transformation']
-            for i in range(len(transformation)):
-                df_background["Value"] = df_background["Value"]*transformation[i]
-            # Group by region RRR
-            df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
+            if selected_background['type'] == 'simpletransfo' :
+                # Filter the data
+                filters = selected_background['filters']
+                for i in range(len(filters)):
+                    df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
+                # Apply the transformation
+                transformation = selected_background['transformation']
+                for i in range(len(transformation)):
+                    df_background["Value"] = df_background["Value"]*transformation[i]
+                # Group by region RRR
+                df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
+            elif selected_background['type'] == 'netexport' :
+                # Create a list with all unique elements in df_background["IRRE"] or df_background["IRRI"]
+                unique_RRR = list(set(df_background["IRRRE"]).union(set(df_background["IRRRI"])))
+                df_background_netexport = pd.DataFrame(columns=['RRR', 'Value'])
+                for rrr in unique_RRR:
+                    export_value = df_background[df_background['IRRRE'] == rrr]['Value'].sum()
+                    import_value = df_background[df_background['IRRRI'] == rrr]['Value'].sum()
+                    net_export = export_value - import_value
+                    df_background_netexport = pd.concat([df_background_netexport, pd.DataFrame([{'RRR': rrr, 'Value': net_export}])], ignore_index=True)
+                df_background = df_background_netexport.copy()
+                
             # Deal with the scale of the background
             if background_scale == [0,0]:
                 background_scale[1] = df_background['Value'].max()
+                if selected_background['type'] == 'netexport' :
+                    if -df_background['Value'].max() < df_background['Value'].min() :
+                        background_scale[0] = -df_background['Value'].max()
+                    else :
+                        background_scale[0] = df_background['Value'].min()
+                        background_scale[1] = -df_background['Value'].min()
             
             
         ### 2.10 Verify which country was defined as in but does not have any data
