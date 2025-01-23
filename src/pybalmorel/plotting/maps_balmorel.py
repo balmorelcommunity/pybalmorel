@@ -192,7 +192,7 @@ def plot_map(path_to_result: str,
         background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
                            'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'},
                            'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh'},
-                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR'}} # Dictionary of background options
+                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh'}} # Dictionary of background options
         if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
