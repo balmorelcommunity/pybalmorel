@@ -180,72 +180,77 @@ class MainResults:
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
 
-    Args:
-        path_to_result (str): Path to the .gdx file
-        scenario (str): The scenario name       
-        year (int): The year of the results
-        commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
-        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
-        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
-        background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
-        save_fig (bool, optional): Save the figure or not. Defaults to False.
-        path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
-        geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
-        Structural additional options:
-            **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
-            **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
-            **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
-            **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
-            **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
-            **generation_exclude_H2Storage (bool, optional): Do not plot the capacities of the H2 storage. Defaults to True.
-            **generation_exclude_ElectricStorage (bool, optional): Do not plot the production of Electric storage. Defaults to True.
-            **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
-            **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
-        Visual additional options:
-            **legend_show (bool, optional): Show legend_show or not. Defaults to True.
-            **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
-            **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
-            **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
-            Lines options :
-                **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
-                **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
-                **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
-                **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
-                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
-                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
-                **line_opacity (float, optional): Opacity of lines. Defaults to 1.
-                **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
-                **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
-                **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
-                **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
-                **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
-            Generation options :
-                **generation_show (bool, optional): Showing or not the generation capacities or production. Defaults to True.
-                **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
-                **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
-                **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
-                **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
-                **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
-                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
-                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
-                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
-                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
-        Colors additional options:
-            **background_color (str, optional): Background color of the map. Defaults to 'white'.
-            **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
-            **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
-            **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
-            **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
-            **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
-            **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
-        Geography additional options:
-            **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
-            **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
-            **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+        Args:
+            path_to_result (str): Path to the .gdx file
+            scenario (str): The scenario name       
+            year (int): The year of the results
+            commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+            lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
+            generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
+            background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
+            save_fig (bool, optional): Save the figure or not. Defaults to False.
+            system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
+            path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+            geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
+            Structural additional options:
+                **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
+                **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
+                **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
+                **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
+                **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
+                **generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+                **generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
+                **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+                **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+                **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
+            Visual additional options:
+                **legend_show (bool, optional): Show legend_show or not. Defaults to True.
+                **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
+                **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
+                **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
+                Lines options :
+                    **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                    **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
+                    **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+                    **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+                    **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
+                    **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
+                    **line_opacity (float, optional): Opacity of lines. Defaults to 1.
+                    **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
+                    **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
+                    **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
+                    **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
+                    **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
+                Generation options :
+                    **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
+                    **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
+                    **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
+                    **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                    **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+                    **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                    **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                    **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
+                    **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
+                Background options :
+                    **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+                    **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+            Colors additional options:
+                **background_color (str, optional): Background color of the map. Defaults to 'white'.
+                **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
+                **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
+                **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
+                **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
+                **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
+                **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+            Geography additional options:
+                **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
+                **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
+                **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+                **countries_color_path = Path to the csv file containing the personnalized colors of the countries
 
-    Returns:
-        Tuple[Figure, Axes]: The figure and axes objects of the plot
-    """
+        Returns:
+            Tuple[Figure, Axes]: The figure and axes objects of the plot
+        """
         # Find path of scenario
         idx = np.array(self.sc) == scenario
         path = np.array(self.paths)[idx][0]

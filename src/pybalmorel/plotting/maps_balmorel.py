@@ -96,6 +96,9 @@ def plot_map(path_to_result: str,
                 **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
                 **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
                 **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
+            Background options :
+                **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+                **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
         Colors additional options:
             **background_color (str, optional): Background color of the map. Defaults to 'white'.
             **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -282,6 +285,9 @@ def plot_map(path_to_result: str,
             pie_cluster_radius = kwargs.get('pie_cluster_radius', pie_radius_dict[choosen_map_coordinates]['pie_cluster_radius'])
             if len(pie_cluster_groups) != len(pie_cluster_radius):
                 raise ValueError('pie_cluster_groups and pie_cluster_radius must be of same length')
+        # generation options
+        background_scale = kwargs.get('background_scale', [0, 0]) # Scale used for the background coloring
+        background_legend_tick = kwargs.get('background_legend_tick', 2) # A tick every x units in the background legend
 
         # Colors options
         # Map colors options 
@@ -998,8 +1004,9 @@ def plot_map(path_to_result: str,
                 df_background["Value"] = df_background["Value"]*transformation[i]
             # Group by region RRR
             df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
-            # Find the maximum over the region RRR
-            bg_max = df_background['Value'].max()
+            # Deal with the scale of the background
+            if background_scale == [0,0]:
+                background_scale[1] = df_background['Value'].max()
             
             
         ### 2.10 Verify which country was defined as in but does not have any data
@@ -1059,7 +1066,7 @@ def plot_map(path_to_result: str,
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
                     if len(value) == 0 :
                         value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1108,7 +1115,7 @@ def plot_map(path_to_result: str,
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
                     if len(value) == 0 :
                         value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1390,14 +1397,15 @@ def plot_map(path_to_result: str,
         
         if selected_background != None:
             # Ticks label
-            bg_upper = int(np.ceil(bg_max))  # Round up 
-            ticks = list(range(0,bg_upper,2))
+            bg_lower = np.ceil(background_scale[0] / background_legend_tick) * background_legend_tick
+            bg_upper = np.floor(background_scale[1] / background_legend_tick) * background_legend_tick 
+            ticks = list(np.arange(bg_lower, bg_upper+background_legend_tick, background_legend_tick))
             # Create a new axes for the color bar
             bbox_ax = ax.get_tightbbox()
             bbox_fig = fig.transFigure.inverted().transform(bbox_ax)
             cbar_ax2 = fig.add_axes([bbox_fig[0,0]-0.02, bbox_fig[0,1]+0.01, 0.015, bbox_fig[1,1]-bbox_fig[0,1]-0.02])  # [left, bottom, width, height]
             # Normalize and create a color bar
-            norm = mcolors.Normalize(vmin=0, vmax=bg_max)
+            norm = mcolors.Normalize(vmin=background_scale[0], vmax=background_scale[1])
             cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap'][1]), cax=cbar_ax2)
             cbar2.ax.yaxis.set_label_position('left')
             cbar2.ax.yaxis.set_ticks_position('left')
