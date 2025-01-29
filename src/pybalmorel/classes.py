@@ -170,7 +170,7 @@ class MainResults:
     def plot_map(self, 
                  scenario: str, 
                  year: int,
-                 commodity: str,
+                 commodity: str = None,
                  lines: str = None, 
                  generation: str = None,
                  background : str = None,
@@ -184,7 +184,7 @@ class MainResults:
             path_to_result (str): Path to the .gdx file
             scenario (str): The scenario name       
             year (int): The year of the results
-            commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+            commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
             lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
             generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
             background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
@@ -204,6 +204,7 @@ class MainResults:
                 **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
                 **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
             Visual additional options:
+                **title_show (bool, optional): Show title or not. Defaults to True.
                 **legend_show (bool, optional): Show legend_show or not. Defaults to True.
                 **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
                 **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
@@ -213,8 +214,9 @@ class MainResults:
                     **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
                     **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
                     **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
-                    **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
-                    **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
+                    **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                    **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                    **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
                     **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                     **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
                     **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
@@ -229,8 +231,9 @@ class MainResults:
                     **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
                     **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
                     **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
-                    **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
-                    **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
+                    **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                    **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+                    **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
                 Background options :
                     **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
                     **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.

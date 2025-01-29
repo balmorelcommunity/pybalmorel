@@ -33,7 +33,7 @@ import cartopy.crs as ccrs
 def plot_map(path_to_result: str, 
              scenario: str, 
              year: int,
-             commodity: str,
+             commodity: str = None,
              lines: str = None, 
              generation: str = None,
              background : str = None,
@@ -49,7 +49,7 @@ def plot_map(path_to_result: str,
         path_to_result (str): Path to the .gdx file
         scenario (str): The scenario name       
         year (int): The year of the results
-        commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+        commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
         lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
         generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
@@ -69,6 +69,7 @@ def plot_map(path_to_result: str,
             **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
             **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
         Visual additional options:
+            **title_show (bool, optional): Show title or not. Defaults to True.
             **legend_show (bool, optional): Show legend_show or not. Defaults to True.
             **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
             **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
@@ -78,8 +79,9 @@ def plot_map(path_to_result: str,
                 **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
                 **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
                 **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
-                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
-                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
+                **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
                 **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                 **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
                 **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
@@ -94,8 +96,9 @@ def plot_map(path_to_result: str,
                 **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
                 **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
                 **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
-                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
-                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
+                **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+                **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
             Background options :
                 **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
                 **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
@@ -168,16 +171,20 @@ def plot_map(path_to_result: str,
         
         ### Structural options
         commodity = commodity.capitalize()
-        if commodity not in ['Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
+        if commodity not in [None, 'Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
             raise ValueError('commodity must be either "Electricity" or "Hydrogen"')
         if lines not in [None, 'Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
             raise ValueError('lines must be either "Capacity", "FlowYear", "FlowTime", "UtilizationYear or "UtilizationTime"')
+        if lines != None and commodity == None :
+            raise ValueError('You must specify a commodity if you want to plot the lines')
         generation_commodity = kwargs.get('generation_commodity', commodity) # Commodity to be shown in the generation map, if not specified, same as line commodity
         if generation_commodity not in ['Electricity', 'Hydrogen']:
             print(f'generation_commodity must be either "Electricity" or "Hydrogen", set to {commodity}')
             generation_commodity = commodity
         if generation not in [None, 'Capacity', 'Production', 'ProductionTime']: # Check that it's a possible type of generation display
             raise ValueError('generation must be either "Capacity", "Production", or ProductionTime')
+        if generation != None and commodity == None :
+            raise ValueError('You must specify a commodity if you want to plot the generation')
         if lines in ['FlowTime', 'UtilizationTime']: # Check if there is a specified season and hour for flow maps
             S = kwargs.get('S', '')
             T = kwargs.get('T', '')
@@ -213,6 +220,7 @@ def plot_map(path_to_result: str,
             If you wish to modify the line size parameters please use : 'line_width_min', 'line_width_max', 'line_cluster_groups', and 'line_cluster_widths'.")
         
         ### Visual options
+        title_show = kwargs.get('title_show', True) # Showing or not the title
         legend_show = kwargs.get('legend_show', True) # Showing or not the legend
         show_country_out = kwargs.get('show_country_out', True) # Showing or not the countries outside the model
         dict_map_coordinates = {'EU': [(-11,36),(33,72)], 'DK': [(7.5,13.5),(54.5,58)]} # Dictionary of coordinates for different maps
@@ -236,16 +244,14 @@ def plot_map(path_to_result: str,
         line_show_min = kwargs.get('line_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
         line_width_min = kwargs.get('line_width_min', 0.5) # Minimum width of lines, used if cat is linear or log
         line_width_max = kwargs.get('line_width_max', 12) # Maximum width of lines, used if cat is linear or log
-        if lines == "FlowYear" : 
-            line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings if cat is 'cluster'
-        else :
-            if commodity == 'Electricity' :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings if cat is 'cluster'
-            elif commodity == 'Hydrogen':
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings if cat is 'cluster'
-        line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 8, 12]) # The widths for the corresponding capacity group used if cat is 'cluster'
-        if len(line_cluster_groups) != len(line_cluster_widths): # Raise error if the cluster groups and widths are not of same length
-            raise ValueError('line_cluster_groups and line_cluster_widths must be of same length')
+        line_cluster_values = kwargs.get('line_cluster_values', []) # Values of the clusters for the clustering category
+        line_cluster_widths = kwargs.get('line_cluster_widths', []) # Widths of the clusters for the clustering category
+        if len(line_cluster_values) != len(line_cluster_widths): # Raise error if the cluster values and widths are not of same length
+            raise ValueError('line_cluster_values and line_cluster_widths must be of same length')
+        if line_width_cat == 'cluster' and line_cluster_values == []: # If the user did not input the cluster values, notify it
+            raise ValueError('You have selected the cluster category for the line width, but you have not specified the cluster values.')
+        line_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]
+        line_legend_clusters_values = kwargs.get('line_legend_clusters_values', []) # Values of the clusters in the legend
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
         line_label_show = kwargs.get('line_label_show', False)  # Showing or not the value of the lines
         line_label_min = kwargs.get('line_label_min', 0) #Minimum transmission capacity (GW) or flow (TWh) shown on map in text
@@ -268,25 +274,20 @@ def plot_map(path_to_result: str,
                 print('pie_radius_cat must be either "linear", "log" or "cluster", set to "log"')
                 pie_radius_cat = 'log'
             pie_show_min = kwargs.get('pie_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
-            pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3], 
-                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]}, 
-                                                              'ProductionTime' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]},
-                                                              'Capacity' : {'Electricity' : [10,50,200,400], 'Hydrogen' : [1,10,30,60]}}}, 
-                               'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5], 
-                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
-                                                              'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
-                                                              'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}}
+            pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3]}, 
+                               'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5]}}
             if choosen_map_coordinates not in ["EU", "DK"]:
-                pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5],
-                                                            'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
-                                                                                    'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
-                                                                                    'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}
+                pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5]}
             pie_radius_min = kwargs.get('pie_radius_min', pie_radius_dict[choosen_map_coordinates]['pie_radius_min']) # Minimum width of lines, used if cat is linear or log
             pie_radius_max = kwargs.get('pie_radius_max', pie_radius_dict[choosen_map_coordinates]['pie_radius_max']) # Maximum width of lines, used if cat is linear or log
-            pie_cluster_groups = kwargs.get('pie_cluster_groups', pie_radius_dict[choosen_map_coordinates]['pie_cluster_groups'][generation][commodity]) # The capacity groupings if cat is 'cluster'
-            pie_cluster_radius = kwargs.get('pie_cluster_radius', pie_radius_dict[choosen_map_coordinates]['pie_cluster_radius'])
-            if len(pie_cluster_groups) != len(pie_cluster_radius):
-                raise ValueError('pie_cluster_groups and pie_cluster_radius must be of same length')
+            pie_cluster_values = kwargs.get('pie_cluster_values', []) # Values of the clusters for the clustering category
+            pie_cluster_radius = kwargs.get('pie_cluster_radius', []) # Radius of the clusters for the clustering category
+            if len(pie_cluster_values) != len(pie_cluster_radius):
+                raise ValueError('pie_cluster_values and pie_cluster_radius must be of same length')
+            if pie_radius_cat == 'cluster' and pie_cluster_values == []: # If the user did not input the cluster values, notify it
+                raise ValueError('You have selected the cluster category for the pie radius, but you have not specified the cluster values.')
+            pie_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000]
+            pie_legend_clusters_values = kwargs.get('pie_legend_clusters_values', []) # Values of the clusters in the legend
         # generation options
         background_scale = kwargs.get('background_scale', [0, 0]) # Scale used for the background coloring
         background_legend_tick = kwargs.get('background_legend_tick', 2) # A tick every x units in the background legend
@@ -1154,15 +1155,30 @@ def plot_map(path_to_result: str,
                     print("It seems like the region " + R + " id is not defined correctly in the geofile")
 
 
-        ### 3.2 Adding transmission lines
+        ### 3.2 Tools for line width and pie radius interpolation
         
-        if lines != None:
-            # A function for finding the nearest value in an array, useful for clustering
-            def find_nearest(array, value):
-                array = np.asarray(array)
-                idx = (np.abs(array - value)).argmin()
-                return array[idx]
+        def linear_interpolation(value, max_value, length_max, length_min):
+            length_constant = max_value/length_max
+            length = value/length_constant
+            if length < length_min:
+                length = length_min
+            return length
+        
+        def log_interpolation(value, max_value, length_max, length_min):
+            normalized_value = (value-0)/(max_value-0)
+            log_scaled = np.log1p(normalized_value) / np.log1p(1)
+            length = length_min + log_scaled * (length_max - length_min)
+            return length
+        
+        # A function for finding the nearest value in an array, useful for clustering
+        def find_nearest(array, value):
+            array = np.asarray(array)
+            idx = (np.abs(array - value)).argmin()
+            return array[idx], idx
 
+        ### 3.3 Adding transmission lines
+        
+        if lines != None :
             # Check if there is some h2 import in the 
             if H2_import:
                 if commodity == 'Hydrogen':
@@ -1184,7 +1200,6 @@ def plot_map(path_to_result: str,
                 line_max_value = df_line['Capacity'].max() # Find maximum value useful for linear and logarithmic scale
             else :
                 line_max_value = df_line['Value'].max() # Find maximum value useful for linear and logarithmic scale
-            line_width_constant = line_max_value/line_width_max
             for i,row in df_line.iterrows(): 
                 y1 = df_line.loc[i,'LatExp']
                 x1 =  df_line.loc[i,'LonExp']
@@ -1200,16 +1215,12 @@ def plot_map(path_to_result: str,
                     if not(np.isnan(cap)) : # Print an error message, if capacity is a NaN value
                         if cap >= line_show_min : # Only plot if big enough
                             if line_width_cat == 'cluster':
-                                nearest = find_nearest(line_cluster_groups, cap) 
-                                width = np.array(line_cluster_widths)[line_cluster_groups == nearest]
+                                nearest, idx = find_nearest(line_cluster_values, cap) 
+                                width = line_cluster_widths[idx]
                             elif line_width_cat == 'linear':
-                                width = cap/line_width_constant
-                                if width < line_width_min:
-                                    width = line_width_min
+                                width = linear_interpolation(cap, line_max_value, line_width_max, line_width_min)
                             elif line_width_cat == 'log':
-                                normalized_cap = (cap-0)/(line_max_value-0)
-                                log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                                width = line_width_min + log_scaled * (line_width_max - line_width_min)
+                                width = log_interpolation(cap, line_max_value, line_width_max, line_width_min)
                                 
                             # Colors if Congestion is plotted
                             if lines in ['UtilizationYear','UtilizationTime']:
@@ -1262,7 +1273,6 @@ def plot_map(path_to_result: str,
             # Calculate the sum of the values by region and find the maximum value
             df_slack_generation_sum = pd.DataFrame(df_slack_generation.groupby(['RRR'])['Value'].sum().reset_index())
             pie_max_value = df_slack_generation_sum['Value'].max()
-            pie_radius_constant = pie_max_value/pie_radius_max
             
             for r in RRRs: # Find idx of the region
                 idx = df_slack_generation['RRR'] == r
@@ -1274,17 +1284,12 @@ def plot_map(path_to_result: str,
                     CAPSUM = df_slack_generation.loc[idx, 'Value'].sum() # Sum of capacities in the region for clustering
                     if CAPSUM > pie_show_min: # Only plot if big enough
                         if pie_radius_cat == 'cluster':
-                            nearest = find_nearest(pie_cluster_groups, CAPSUM) 
-                            radius = np.array(pie_cluster_radius)[pie_cluster_groups == nearest]
-                            radius = radius[0]
+                            nearest, id = find_nearest(pie_cluster_values, CAPSUM) 
+                            radius = pie_cluster_radius[id]
                         elif pie_radius_cat == 'linear':
-                            radius = CAPSUM/pie_radius_constant
-                            if radius < pie_radius_min :
-                                radius = pie_radius_min
+                            radius = linear_interpolation(CAPSUM, pie_max_value, pie_radius_max, pie_radius_min)
                         elif pie_radius_cat == 'log':
-                            normalized_cap = (CAPSUM-0)/(pie_max_value-0)
-                            log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                            radius = pie_radius_min + log_scaled * (pie_radius_max - pie_radius_min)
+                            radius = log_interpolation(CAPSUM, pie_max_value, pie_radius_max, pie_radius_min)
 
                         if generation_var == 'TECH_TYPE':
                             colors_df = [generation_tech_color.get(tech, 'gray') for tech in df_slack_generation['TECH_TYPE'][idx]]
@@ -1306,33 +1311,81 @@ def plot_map(path_to_result: str,
             line_unit = 'TWh'
         elif lines == 'FlowTime':
             line_unit = 'GWh'
+            
+        if generation == 'Capacity':
+            generation_unit = 'GW'
+        elif generation == 'Production' :
+            generation_unit = 'TWh' 
+        elif generation == 'ProductionTime':
+            generation_unit = 'MWh'
         
         if legend_show and choosen_map_coordinates == 'EU' :         
             
             ### 3.5.1 Legend with pies
             
             if generation != None:
-                # Pie legend
-                scatter_handles = []
-                # To plot radius with scatter, we need to convert the radius to pixels and then to point
-                for i in range(len(pie_cluster_groups)):
-                    scatter = ax.scatter([], [], s=((pie_cluster_radius[i] * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
-                    scatter_handles.append(scatter)
-
-                if generation == 'Capacity':
-                    legend_labels = ['{} GW'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
-                elif generation == 'Production':
-                    legend_labels = ['{} TWh'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
+                ### Pie legend
                 
-                # Legend with pies
-                first_legend = ax.legend(scatter_handles, legend_labels, 
-                                        scatterpoints=1,
-                                        loc='upper left',
-                                        ncol=4,
-                                        fontsize=12,
-                                        frameon=False, bbox_to_anchor=(0, 0.99))
-                ax.add_artist(first_legend)  
+                scatter_handles = []
+                legend_labels = []
+                if pie_legend_clusters_values == [] and pie_radius_cat != 'cluster' : # If the user has not input any legend values
+                    # If they do not exist, create the legend clusters
+                    pie_legend_clusters_values = []
+                    pie_legend_clusters_radius = []
+                    # Stop the loop if idx is already at 0
+                    stop_loop = False
+                    for i in range(4):
+                        if i == 0 : # On the first round, find the nearest value to the maximum
+                            pie_legend_value, pie_legend_idx = find_nearest(pie_legend_values, pie_max_value)
+                        else:
+                            if pie_legend_idx != 0 :
+                                pie_legend_value, pie_legend_idx = find_nearest(pie_legend_values, pie_legend_value/2)
+                            else :
+                                stop_loop = True
+                        if stop_loop == False :
+                            # Find the correct width for the line
+                            if pie_radius_cat == 'linear':
+                                pie_legend_radius = linear_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                            elif pie_radius_cat == 'log':
+                                pie_legend_radius = log_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                            # Append the values to the lists
+                            pie_legend_clusters_values = [pie_legend_value] + pie_legend_clusters_values
+                            pie_legend_clusters_radius = [pie_legend_radius] + pie_legend_clusters_radius
+                            # The patch
+                            scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                            scatter_handles = [scatter] + scatter_handles
+                            # The text
+                            legend_labels = ['{} {}'.format(pie_legend_value, generation_unit)] + legend_labels
+                    # Add the legend
+                    if len(pie_legend_clusters_radius) > 1:
+                        first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                        ax.add_artist(first_legend)  
+                elif pie_radius_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
+                    for i in range(len(pie_cluster_values)) :
+                        pie_legend_value = pie_cluster_values[i]
+                        pie_legend_radius = pie_cluster_radius[i]
+                        scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                        scatter_handles.append(scatter)
+                        legend_labels.append('{} {}'.format(pie_legend_value, generation_unit))
+                    first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                    ax.add_artist(first_legend)   
+                else : # If the user has input some legend values
+                    pie_legend_clusters_radius = []
+                    for i in range(len(pie_legend_clusters_values)) :
+                        pie_legend_value = pie_legend_clusters_values[i]
+                        # Find the correct width for the line
+                        if pie_radius_cat == 'linear':
+                            pie_legend_radius = linear_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                        elif pie_radius_cat == 'log':
+                            pie_legend_radius = log_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                        pie_legend_clusters_radius = [pie_legend_radius] + pie_legend_clusters_radius
+                        scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                        scatter_handles.append(scatter)
+                        legend_labels.append('{} {}'.format(pie_legend_value, generation_unit))
+                    first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                    ax.add_artist(first_legend)   
 
+                ### Tech legend
                 # Get the bounding box of the first legend
                 bbox_first_legend = first_legend.get_window_extent().transformed(ax.transAxes.inverted())
                 
@@ -1369,28 +1422,61 @@ def plot_map(path_to_result: str,
                     subs = 'el'
                 elif commodity == 'Hydrogen':
                     subs = 'H2'
+                    
                 # Create lines for legend
                 lines_legend = []
                 string = []
-                for i in range(len(line_cluster_groups)):
-                    # Modify line_cluster_widths for linear and log scale
-                    if line_width_cat == 'linear':
-                        line_cluster_widths[i] = line_cluster_groups[i]/line_width_constant
-                        if line_cluster_widths[i] < line_width_min:
-                                    line_cluster_widths[i] = line_width_min
-                    elif line_width_cat == 'log':
-                        normalized_cap = (line_cluster_groups[i]-0)/(line_max_value-0)
-                        log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                        width = line_width_min + log_scaled * (line_width_max - line_width_min)
-                        line_cluster_widths[i] = width
-                    # The patch
-                    lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
-                                        color=line_color))
-                    # The text
-                    ave = line_cluster_groups[i]
-                    string.append('%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs))
-                ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
-            
+                if line_legend_clusters_values == [] and line_width_cat != 'cluster' : # If the user has not input any legend values
+                    # If they do not exist, create the legend clusters
+                    line_legend_clusters_values = []
+                    line_legend_clusters_width = []
+                    # Stop the loop if idx is already at 0
+                    stop_loop = False
+                    for i in range(4):
+                        if i == 0 : # On the first round, find the nearest value to the maximum
+                            line_legend_value, line_legend_idx = find_nearest(line_legend_values, line_max_value)
+                        else:
+                            if line_legend_idx != 0 :
+                                line_legend_value, line_legend_idx = find_nearest(line_legend_values, line_legend_value/2)
+                            else :
+                                stop_loop = True
+                        if stop_loop == False :
+                            # Find the correct width for the line
+                            if line_width_cat == 'linear':
+                                line_legend_width = linear_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                            elif line_width_cat == 'log':
+                                line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                            # Append the values to the lists
+                            line_legend_clusters_values = [line_legend_value] + line_legend_clusters_values
+                            line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
+                            # The patch
+                            lines_legend = [Line2D([0], [0], linewidth=line_legend_width, color=line_color)] + lines_legend
+                            # The text
+                            ave = line_legend_value
+                            string = ['%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs)] + string
+                    # Add the legend
+                    if len(line_legend_clusters_width) > 1:
+                        ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
+                elif line_width_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
+                    for i in range(len(line_cluster_values)) :
+                        line_legend_value = line_cluster_values[i]
+                        line_legend_width = line_cluster_widths[i]
+                        lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
+                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_value), line_unit, subs))
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
+                else : # If the user has input some legend values
+                    line_legend_clusters_width = []
+                    for i in range(len(line_legend_clusters_values)) :
+                        line_legend_value = line_legend_clusters_values[i]
+                        # Find the correct width for the line
+                        if line_width_cat == 'linear':
+                            line_legend_width = linear_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                        elif line_width_cat == 'log':
+                            line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                        line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
+                        lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
+                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_clusters_values[i]), line_unit, subs))
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
             
         ### 3.6 Limits of graph
         
@@ -1440,17 +1526,43 @@ def plot_map(path_to_result: str,
 
 
         ### 3.7 Graph title
-
-        if lines == 'Capacity':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Transmission Capacity' + f' [{line_unit}]')))
-        elif lines == 'FlowYear':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Transmission Flow' + f' [{line_unit}]')))
-        elif lines == 'FlowTime':
-            ax.set_title(' - '.join((scenario, str(year), S, T, commodity + ' Transmission Flow' + f' [{line_unit}]')))
-        elif lines == 'UtilizationYear':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Line Utilization')))
-        elif lines == 'UtilizationTime':
-            ax.set_title(' - '.join((scenario, str(year), S, T, commodity + ' Line Congestion')))
+        
+        if title_show :
+            title_list = []
+            # Add scenario name
+            title_list.append(scenario)
+            # Add year
+            title_list.append(str(year))
+            # Add season and time step if needed
+            if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime':
+                title_list.append(S)
+                title_list.append(T)
+            # Add lines information
+            if lines != None :
+                lines_title = commodity
+                if lines == 'Capacity':
+                    lines_title += ' Transmission Capacity' + f' [{line_unit}]'
+                elif lines == 'FlowYear':
+                    lines_title += ' Transmission Flow' + f' [{line_unit}]'
+                elif lines == 'FlowTime':
+                    lines_title += ' Transmission Flow' + f' [{line_unit}]'
+                elif lines == 'UtilizationYear':
+                    lines_title += ' Line Utilization'
+                elif lines == 'UtilizationTime':
+                    lines_title += ' Line Utilization'
+                title_list.append(lines_title)
+            
+            if generation != None:
+                generation_title = generation_commodity
+                if generation == 'Capacity':
+                    generation_title += ' Generation Capacity' + f' [{generation_unit}]'
+                elif generation == 'Production':
+                    generation_title += ' Generation Production' + f' [{generation_unit}]'
+                elif generation == 'ProductionTime':
+                    generation_title += ' Generation Production' + f' [{generation_unit}]'
+                title_list.append(generation_title)
+                
+            ax.set_title(' - '.join(title_list))
             
             
         ### 3.8 Save the figure
