@@ -189,7 +189,6 @@ class MainResults:
             generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
             background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
             save_fig (bool, optional): Save the figure or not. Defaults to False.
-            system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
             path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
             geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
             Structural additional options:
@@ -236,7 +235,7 @@ class MainResults:
                     **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
                 Background options :
                     **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
-                    **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                    **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
             Colors additional options:
                 **background_color (str, optional): Background color of the map. Defaults to 'white'.
                 **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.

@@ -101,7 +101,7 @@ def plot_map(path_to_result: str,
                 **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
             Background options :
                 **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
-                **background_legend_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
         Colors additional options:
             **background_color (str, optional): Background color of the map. Defaults to 'white'.
             **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -170,7 +170,8 @@ def plot_map(path_to_result: str,
         ### 1.1 Set Options
         
         ### Structural options
-        commodity = commodity.capitalize()
+        if commodity != None:
+            commodity = commodity.capitalize()
         if commodity not in [None, 'Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
             raise ValueError('commodity must be either "Electricity" or "Hydrogen"')
         if lines not in [None, 'Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
@@ -251,7 +252,7 @@ def plot_map(path_to_result: str,
         if line_width_cat == 'cluster' and line_cluster_values == []: # If the user did not input the cluster values, notify it
             raise ValueError('You have selected the cluster category for the line width, but you have not specified the cluster values.')
         line_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]
-        line_legend_clusters_values = kwargs.get('line_legend_clusters_values', []) # Values of the clusters in the legend
+        line_legend_cluster_values = kwargs.get('line_legend_cluster_values', []) # Values of the clusters in the legend
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
         line_label_show = kwargs.get('line_label_show', False)  # Showing or not the value of the lines
         line_label_min = kwargs.get('line_label_min', 0) #Minimum transmission capacity (GW) or flow (TWh) shown on map in text
@@ -287,10 +288,10 @@ def plot_map(path_to_result: str,
             if pie_radius_cat == 'cluster' and pie_cluster_values == []: # If the user did not input the cluster values, notify it
                 raise ValueError('You have selected the cluster category for the pie radius, but you have not specified the cluster values.')
             pie_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000]
-            pie_legend_clusters_values = kwargs.get('pie_legend_clusters_values', []) # Values of the clusters in the legend
+            pie_legend_cluster_values = kwargs.get('pie_legend_cluster_values', []) # Values of the clusters in the legend
         # generation options
         background_scale = kwargs.get('background_scale', [0, 0]) # Scale used for the background coloring
-        background_legend_tick = kwargs.get('background_legend_tick', 2) # A tick every x units in the background legend
+        background_scale_tick = kwargs.get('background_scale_tick', 2) # A tick every x units in the background legend
 
         # Colors options
         # Map colors options 
@@ -590,7 +591,7 @@ def plot_map(path_to_result: str,
         elif generation == 'Production':
             df_generation = all_df['PRO_YCRAGF']
         elif generation == 'ProductionTime':
-            df_generation = all_df['PRO_YCRAGFST'].query('SSS == "%s" and TTT == "%s"'%(S, T))
+            df_generation = all_df['PRO_YCRAGFST']
         if generation != None:
             if generation_commodity == 'Electricity':
                 df_generation = df_generation[df_generation['COMMODITY'] == 'ELECTRICITY']
@@ -681,7 +682,7 @@ def plot_map(path_to_result: str,
             elif exo_end == 'Exogenous' :
                 df_background = df_background.loc[df_background['VARIABLE_CATEGORY'] == 'EXOGENOUS']
                 
-        # Time and season for FlowTime
+        # Time and season filtering if needed
         if lines == 'FlowTime' or lines == 'UtilizationTime':
             # If season and time step are not specified, take the first one
             if S == '' :
@@ -695,6 +696,20 @@ def plot_map(path_to_result: str,
             df_line["UNITS"] = "GWh"
             df_line = df_line.reset_index(drop = True)
             if len(df_line) == 0:
+                raise ValueError('No data for the selected season and time step')
+        if generation == 'ProductionTime':
+            # If season and time step are not specified, take the first one
+            if S == '' :
+                S = df_generation['SSS'].iloc[0]
+            if T == '' :
+                T = df_generation['TTT'].iloc[0]
+            df_generation = df_generation.loc[df_generation['SSS'] == S]
+            df_generation = df_generation.loc[df_generation['TTT'] == T]
+            #Convert flow from MWh to GWh
+            df_generation['Value'] = df_generation['Value'] / 1000
+            df_generation["UNITS"] = "GWh"
+            df_generation = df_generation.reset_index(drop = True)
+            if len(df_generation) == 0:
                 raise ValueError('No data for the selected season and time step')
             
         
@@ -1317,7 +1332,7 @@ def plot_map(path_to_result: str,
         elif generation == 'Production' :
             generation_unit = 'TWh' 
         elif generation == 'ProductionTime':
-            generation_unit = 'MWh'
+            generation_unit = 'GWh'
         
         if legend_show and choosen_map_coordinates == 'EU' :         
             
@@ -1328,9 +1343,9 @@ def plot_map(path_to_result: str,
                 
                 scatter_handles = []
                 legend_labels = []
-                if pie_legend_clusters_values == [] and pie_radius_cat != 'cluster' : # If the user has not input any legend values
+                if pie_legend_cluster_values == [] and pie_radius_cat != 'cluster' : # If the user has not input any legend values
                     # If they do not exist, create the legend clusters
-                    pie_legend_clusters_values = []
+                    pie_legend_cluster_values = []
                     pie_legend_clusters_radius = []
                     # Stop the loop if idx is already at 0
                     stop_loop = False
@@ -1349,7 +1364,7 @@ def plot_map(path_to_result: str,
                             elif pie_radius_cat == 'log':
                                 pie_legend_radius = log_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
                             # Append the values to the lists
-                            pie_legend_clusters_values = [pie_legend_value] + pie_legend_clusters_values
+                            pie_legend_cluster_values = [pie_legend_value] + pie_legend_cluster_values
                             pie_legend_clusters_radius = [pie_legend_radius] + pie_legend_clusters_radius
                             # The patch
                             scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
@@ -1371,8 +1386,8 @@ def plot_map(path_to_result: str,
                     ax.add_artist(first_legend)   
                 else : # If the user has input some legend values
                     pie_legend_clusters_radius = []
-                    for i in range(len(pie_legend_clusters_values)) :
-                        pie_legend_value = pie_legend_clusters_values[i]
+                    for i in range(len(pie_legend_cluster_values)) :
+                        pie_legend_value = pie_legend_cluster_values[i]
                         # Find the correct width for the line
                         if pie_radius_cat == 'linear':
                             pie_legend_radius = linear_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
@@ -1426,9 +1441,9 @@ def plot_map(path_to_result: str,
                 # Create lines for legend
                 lines_legend = []
                 string = []
-                if line_legend_clusters_values == [] and line_width_cat != 'cluster' : # If the user has not input any legend values
+                if line_legend_cluster_values == [] and line_width_cat != 'cluster' : # If the user has not input any legend values
                     # If they do not exist, create the legend clusters
-                    line_legend_clusters_values = []
+                    line_legend_cluster_values = []
                     line_legend_clusters_width = []
                     # Stop the loop if idx is already at 0
                     stop_loop = False
@@ -1447,7 +1462,7 @@ def plot_map(path_to_result: str,
                             elif line_width_cat == 'log':
                                 line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
                             # Append the values to the lists
-                            line_legend_clusters_values = [line_legend_value] + line_legend_clusters_values
+                            line_legend_cluster_values = [line_legend_value] + line_legend_cluster_values
                             line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
                             # The patch
                             lines_legend = [Line2D([0], [0], linewidth=line_legend_width, color=line_color)] + lines_legend
@@ -1455,8 +1470,7 @@ def plot_map(path_to_result: str,
                             ave = line_legend_value
                             string = ['%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs)] + string
                     # Add the legend
-                    if len(line_legend_clusters_width) > 1:
-                        ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
                 elif line_width_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
                     for i in range(len(line_cluster_values)) :
                         line_legend_value = line_cluster_values[i]
@@ -1466,8 +1480,8 @@ def plot_map(path_to_result: str,
                     ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
                 else : # If the user has input some legend values
                     line_legend_clusters_width = []
-                    for i in range(len(line_legend_clusters_values)) :
-                        line_legend_value = line_legend_clusters_values[i]
+                    for i in range(len(line_legend_cluster_values)) :
+                        line_legend_value = line_legend_cluster_values[i]
                         # Find the correct width for the line
                         if line_width_cat == 'linear':
                             line_legend_width = linear_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
@@ -1475,7 +1489,7 @@ def plot_map(path_to_result: str,
                             line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
                         line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
                         lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
-                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_clusters_values[i]), line_unit, subs))
+                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_cluster_values[i]), line_unit, subs))
                     ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
             
         ### 3.6 Limits of graph
@@ -1503,9 +1517,10 @@ def plot_map(path_to_result: str,
         
         if selected_background != None:
             # Ticks label
-            bg_lower = np.ceil(background_scale[0] / background_legend_tick) * background_legend_tick
-            bg_upper = np.floor(background_scale[1] / background_legend_tick) * background_legend_tick 
-            ticks = list(np.arange(bg_lower, bg_upper+background_legend_tick, background_legend_tick))
+            print(background_scale, background_scale_tick)
+            bg_lower = np.ceil(background_scale[0] / background_scale_tick) * background_scale_tick
+            bg_upper = np.floor(background_scale[1] / background_scale_tick) * background_scale_tick 
+            ticks = list(np.arange(bg_lower, bg_upper+background_scale_tick, background_scale_tick))
             # Create a new axes for the color bar
             bbox_ax = ax.get_tightbbox()
             bbox_fig = fig.transFigure.inverted().transform(bbox_ax)
