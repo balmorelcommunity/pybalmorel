@@ -197,10 +197,11 @@ def plot_map(path_to_result: str,
         generation_exclude_H2Storage = kwargs.get('generation_exclude_H2Storage', True)  #do not plot the capacities of the H2 storage
         generation_exclude_ElectricStorage = kwargs.get('generation_exclude_ElectricStorage', True)  #do not plot the production of Electric storag, only works with Show pie production
         generation_exclude_Geothermal = kwargs.get('generation_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
-        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
-                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'},
-                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh'},
-                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh'}} # Dictionary of background options
+        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Price': {'type': 'simpletransfo', 'var': ['EL_PRICE_YCR', 'EL_PRICE_YCRST'], 'colormap': (plt.cm.RdYlGn_r, 'RdYlGn_r'), 'unit': 'Money/MWh', 'basescale': 'minmax'},
+                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'}} # Dictionary of background options
         if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
@@ -323,7 +324,7 @@ def plot_map(path_to_result: str,
         'SOLAR-PV': '#d2a106',
         'WIND-OFFSHORE': '#08bdba',
         'INTRASEASONAL-ELECT-STORAGE': '#ba4e00',
-        'ELECTROLYZER': '#ADD8E6',
+        'ELECTROLYZER': '#ADD8E6', #7FBF7F
         'H2-STORAGE': '#FFC0CB',
         'FUELCELL': '#d4bbff',
         'CHP' : '#E5D8D8'
@@ -536,7 +537,16 @@ def plot_map(path_to_result: str,
             if generation.lower() == 'productiontime':
                 var_list += ['PRO_YCRAGFST']
         if selected_background != None:
-            var_list = var_list + [selected_background['var']]
+            if type(selected_background['var']) == list :
+                if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
+                    background_var = selected_background['var'][1]
+                    var_list = var_list + [background_var]
+                else :
+                    background_var = selected_background['var'][0]
+                    var_list = var_list + [background_var]
+            else :
+                background_var = selected_background['var']
+                var_list = var_list + [background_var]
 
 
         ## 1.4.3 - Use function to read inputs
@@ -600,7 +610,7 @@ def plot_map(path_to_result: str,
             
         # Background data
         if selected_background != None:
-            df_background = all_df[selected_background['var']]
+            df_background = all_df[background_var]
                 
         ## 1.4.4 - Select relevant dataframe and rename columns
         column_dict = {'Val':'Value', 'Y':'Year', 'C':'Country'}
@@ -711,6 +721,17 @@ def plot_map(path_to_result: str,
             df_generation = df_generation.reset_index(drop = True)
             if len(df_generation) == 0:
                 raise ValueError('No data for the selected season and time step')
+        if selected_background != None:
+            if type(selected_background['var']) == list :
+                if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
+                    if S == '' :
+                        S = df_background['SSS'].iloc[0]
+                    if T == '' :
+                        T = df_background['TTT'].iloc[0]
+                    df_background = df_background.loc[df_background['SSS'] == S]
+                    df_background = df_background.loc[df_background['TTT'] == T]
+                    if len(df_background) == 0:
+                        raise ValueError('No data for the selected season and time step')
             
         
         ### 2.3 Calculate the utilization of the lines
@@ -1013,14 +1034,20 @@ def plot_map(path_to_result: str,
         
         if selected_background != None:
             if selected_background['type'] == 'simpletransfo' :
-                # Filter the data
-                filters = selected_background['filters']
-                for i in range(len(filters)):
-                    df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
-                # Apply the transformation
-                transformation = selected_background['transformation']
-                for i in range(len(transformation)):
-                    df_background["Value"] = df_background["Value"]*transformation[i]
+                try :
+                    # Filter the data
+                    filters = selected_background['filters']
+                    for i in range(len(filters)):
+                        df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
+                except :
+                    pass
+                try :
+                    # Apply the transformation
+                    transformation = selected_background['transformation']
+                    for i in range(len(transformation)):
+                        df_background["Value"] = df_background["Value"]*transformation[i]
+                except :
+                    pass
                 # Group by region RRR
                 df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
             elif selected_background['type'] == 'netexport' :
@@ -1036,7 +1063,10 @@ def plot_map(path_to_result: str,
                 
             # Deal with the scale of the background
             if background_scale == [0,0]:
-                background_scale[1] = df_background['Value'].max()
+                if selected_background['basescale'] in ['0max', 'minmax']:
+                    background_scale[1] = df_background['Value'].max()
+                if selected_background['basescale'] == 'minmax' :
+                    background_scale[0] = df_background['Value'].min()
                 if selected_background['type'] == 'netexport' :
                     if -df_background['Value'].max() < df_background['Value'].min() :
                         background_scale[0] = -df_background['Value'].max()
@@ -1517,7 +1547,6 @@ def plot_map(path_to_result: str,
         
         if selected_background != None:
             # Ticks label
-            print(background_scale, background_scale_tick)
             bg_lower = np.ceil(background_scale[0] / background_scale_tick) * background_scale_tick
             bg_upper = np.floor(background_scale[1] / background_scale_tick) * background_scale_tick 
             ticks = list(np.arange(bg_lower, bg_upper+background_scale_tick, background_scale_tick))

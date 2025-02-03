@@ -66,7 +66,7 @@ fig, ax = res.plot_map(scenario='SC3', year=2050, commodity='Hydrogen', generati
 
 ## Background information
 
-Using the option **background**, it is possible to plot an additional information that colors the countries. For now *H2 Storage*, *Elec Storage*, *Elec Net Export* and *H2 Net Export* have been implemented. \
+Using the option **background**, it is possible to plot an additional information that colors the countries. For now *H2 Storage*, *Elec Storage*, *Elec Net Export*, *H2 Net Export* and *Elec Price* have been implemented. \
 It is possible to personalize the background scale with the option **background_scale** and **background_scale_tick** as in the examples below (both can be used at the same time).
 
 
