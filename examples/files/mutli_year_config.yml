@@ -1,0 +1,79 @@
+corres_results:
+  wind:
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Onshore
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Offshore_floating
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Offshore_bottom_fixed
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Existing_ERA5_GWA2
+  solar:
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Rooftop
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Utility_scale_no_tracking
+    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Utility_scale_tracking
+
+VRE_tech_costs: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/VRE_Tech_Costs_EUR2015.xlsx
+Existing_wind_cap: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/Existing_wind_capacities.xlsx
+Existing_solar_cap: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/Existing_solar_capacities.xlsx
+VRE_potentials: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/VRE_Potentials.xlsx
+demand_model_results: /groups/INP/BalmorelDB_2024_Raw/Demand_model_Bal_ready_csv
+
+###########################################################################################################################    
+
+
+tech_to_keep:
+  - Future_Onshore
+  - Future_Offshore_bottom_fixed
+  - Existing_ERA5_GWA2
+  - PV_Rooftop
+  - PV_Utility_scale_no_tracking
+  - PV_Utility_scale_tracking  
+
+turbine_to_keep:
+  - SP335-HH100
+  - SP277-HH100
+  - SP277-HH150
+  - SP199-HH150
+  - SP316-HH155
+  
+
+PV_to_keep:
+  - PV_Roofop
+  - PV_Utility_scale_no_tracking
+  - PV_Utility_scale_tracking
+
+RGs_to_keep:
+  Future_Onshore:  [ RGA, RGB, RGC,]
+  Future_Offshore_bottom_fixed: [ RGB]
+  Future_Offshore_floating: [ RGB]
+  PV_Rooftop: [ RGA, RGB, RGC]
+  PV_Utility_scale_no_tracking: [ RGA, RGB, RGC]
+  PV_Utility_scale_tracking: [ RGA, RGB, RGC]    
+
+Regions_to_keep:
+
+    #onshore: [IE,PT,ES,UK,FR,BE,NL,NO2,NO5,NO3,DE4-W,CH,LU,DE4-S,IT,DK1,NO1,DE4-N,AT,DE4-E,DK2,SE3,NO4,SE4,SE2,CZ,SI,HR,PL,SE1,BA,HU,SK,ME,RS,AL,GR,MK,RO,LV,FIN,LT,EE,BG,TR,CY,MT]
+    
+    #offshore: [IE_OFF,PT_OFF,ES_OFF2,UK_OFF,ES_OFF1,FR_OFF1,BE_OFF,NL_OFF,FR_OFF2,NO3_OFF,NO5_OFF,NO2_OFF,DE4-W_OFF,DK1_OFF,IT_OFF2,DE4-N_OFF,NO1_OFF,NO4_OFF,DE4-E_OFF,DK2_OFF,SE3_OFF2,SE4_OFF,IT_OFF1,HR_OFF,PL_OFF,DK3_OFF,SE3_OFF1,SE2_OFF,FIN_OFF,GR_OFF,AL_OFF,LT_OFF,LV_OFF,EE_OFF,SE1_OFF,TR_OFF,BG_OFF,RO_OFF]
+
+    #REALISE regions
+    onshore: [DK1,DK2,FIN,DE4-E,DE4-N,DE4-S,DE4-W,NL,NO1,NO2,NO3,NO4,NO5,SE1,SE2,SE3,SE4,UK,EE,LV,LT,PL,BE,FR,IT,CH,AT,CZ,ES,PT]
+    
+    offshore: [DK1_OFF,DK2_OFF,FIN_OFF,DE4-E_OFF,DE4-N_OFF,DE4-W_OFF,NL_OFF,NO1_OFF,NO2_OFF,NO3_OFF,NO4_OFF,NO5_OFF,SE1_OFF,SE2_OFF,SE3_OFF1,SE3_OFF2,SE4_OFF,UK_OFF,EE_OFF,LV_OFF,LT_OFF,PL_OFF,BE_OFF,FR_OFF1,FR_OFF2,IT_OFF1,IT_OFF2,ES_OFF1,ES_OFF2,PT_OFF]
+
+    
+CapDev_timesteps_to_keep:
+    T: [T073,T076,T079,T082,T085,T088,T091,T094,T097,T100,T103,T106,T109,T112,T115,T118,T121,T124,T127,T130,T133,T136,T139,T142]
+    S: :[S02,S08,S15,S21,S28,S34,S41,S47]
+
+
+
+ANNUITYCG_calculation:
+    #"Share of debt for the investment of each generation technology (fraction)"
+    DEBT_SHARE: 0
+    # "Interest rate applied to the loan of each generation technology (fraction)"
+    INTEREST_RATE: 0.04
+    # "Discount rate by country (fraction)"
+    DISCOUNTRATE: 0.04
+
+
+spaceHeat_to_hotWater_ratio: 0.7
+ann_corr_fac_ref_year: 2012
+    

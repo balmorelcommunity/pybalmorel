@@ -2,6 +2,8 @@
 Created on 08.06.2024
 
 @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+@contributor: Polyneikis Kanellas, Development Engineer DTU Wind 
+@contributor: Shubham Nayak, PhD Student at DTU Wind
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###
@@ -25,6 +27,10 @@ from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
 from .plotting.maps_balmorel import plot_map
+from .weatheryear.corres_to_energy_system_model import get_energy_system_xlsx
+from .weatheryear.to_balmorel import timeseries_to_balmorel
+from .weatheryear.additional_inc import create_additional_inc
+from .weatheryear.demand2btc import create_demand_inc
 
 #%% ------------------------------- ###
 ###           1. Outputs            ###
@@ -608,3 +614,33 @@ class GUI:
             None: An interactive GUI to generate geographic .inc files
         """
         return interactive_geofilemaker()
+    
+
+class WEATHERYEAR:
+
+    """A class for processing the CorRES database and creating weather year 
+    data CSV and .inc files for the Balmorel model for a specific year (1980–2021).
+
+    Args:
+        year (int): The year for which weather data is processed.
+        config_fn (str): The configuration file name.
+        output_folder (str): The folder where output files will be stored.
+    """
+
+    def __init__(self, year: int, config_fn: str, output_folder: str):
+        self.year = year
+        self.config_fn = config_fn
+        self.output_folder = output_folder
+
+    def get_vre_data(self):
+
+        get_energy_system_xlsx(self.config_fn,self.year,self.output_folder)
+        dfs,FLH=timeseries_to_balmorel(self.config_fn,self.year,self.output_folder)
+
+    def get_vre_related_files(self):
+
+        AAA_renewable_df,RRRAAA_renewable_df,GKFX,GGG_renewable_df=create_additional_inc(self.config_fn,self.output_folder,self.year)
+    
+    def get_demand_data(self):
+
+        create_demand_inc(self.config_fn,self.year,self.output_folder)
