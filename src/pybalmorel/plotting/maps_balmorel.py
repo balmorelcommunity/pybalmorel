@@ -33,9 +33,9 @@ import cartopy.crs as ccrs
 def plot_map(path_to_result: str, 
              scenario: str, 
              year: int,
-             commodity: str,
-             lines: str = 'Capacity', 
-             generation: str = 'Capacity',
+             commodity: str = None,
+             lines: str = None, 
+             generation: str = None,
              background : str = None,
              save_fig: bool = False,
              path_to_geofile: str = None,
@@ -49,9 +49,9 @@ def plot_map(path_to_result: str,
         path_to_result (str): Path to the .gdx file
         scenario (str): The scenario name       
         year (int): The year of the results
-        commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
-        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
-        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
+        commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
+        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
         background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
         save_fig (bool, optional): Save the figure or not. Defaults to False.
         system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
@@ -69,6 +69,7 @@ def plot_map(path_to_result: str,
             **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
             **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
         Visual additional options:
+            **title_show (bool, optional): Show title or not. Defaults to True.
             **legend_show (bool, optional): Show legend_show or not. Defaults to True.
             **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
             **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
@@ -78,8 +79,9 @@ def plot_map(path_to_result: str,
                 **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
                 **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
                 **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
-                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
-                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
+                **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
                 **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                 **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
                 **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
@@ -87,7 +89,6 @@ def plot_map(path_to_result: str,
                 **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
                 **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
             Generation options :
-                **generation_show (bool, optional): Showing or not the generation capacities or production. Defaults to True.
                 **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
                 **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
                 **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
@@ -95,8 +96,12 @@ def plot_map(path_to_result: str,
                 **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
                 **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
                 **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
-                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
-                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
+                **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+                **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+            Background options :
+                **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+                **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
         Colors additional options:
             **background_color (str, optional): Background color of the map. Defaults to 'white'.
             **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -165,17 +170,22 @@ def plot_map(path_to_result: str,
         ### 1.1 Set Options
         
         ### Structural options
-        commodity = commodity.capitalize()
-        if commodity not in ['Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
+        if commodity != None:
+            commodity = commodity.capitalize()
+        if commodity not in [None, 'Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
             raise ValueError('commodity must be either "Electricity" or "Hydrogen"')
-        if lines not in ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
+        if lines not in [None, 'Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
             raise ValueError('lines must be either "Capacity", "FlowYear", "FlowTime", "UtilizationYear or "UtilizationTime"')
+        if lines != None and commodity == None :
+            raise ValueError('You must specify a commodity if you want to plot the lines')
         generation_commodity = kwargs.get('generation_commodity', commodity) # Commodity to be shown in the generation map, if not specified, same as line commodity
         if generation_commodity not in ['Electricity', 'Hydrogen']:
             print(f'generation_commodity must be either "Electricity" or "Hydrogen", set to {commodity}')
             generation_commodity = commodity
-        if generation not in ['Capacity', 'Production', 'ProductionTime']: # Check that it's a possible type of generation display
-            raise ValueError('generation must be either "Capacity" or "Production"')
+        if generation not in [None, 'Capacity', 'Production', 'ProductionTime']: # Check that it's a possible type of generation display
+            raise ValueError('generation must be either "Capacity", "Production", or ProductionTime')
+        if generation != None and commodity == None :
+            raise ValueError('You must specify a commodity if you want to plot the generation')
         if lines in ['FlowTime', 'UtilizationTime']: # Check if there is a specified season and hour for flow maps
             S = kwargs.get('S', '')
             T = kwargs.get('T', '')
@@ -187,8 +197,11 @@ def plot_map(path_to_result: str,
         generation_exclude_H2Storage = kwargs.get('generation_exclude_H2Storage', True)  #do not plot the capacities of the H2 storage
         generation_exclude_ElectricStorage = kwargs.get('generation_exclude_ElectricStorage', True)  #do not plot the production of Electric storag, only works with Show pie production
         generation_exclude_Geothermal = kwargs.get('generation_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
-        background_dict = {'H2 Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh'},
-                           'Elec Storage': {'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh'}}
+        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Price': {'type': 'simpletransfo', 'var': ['EL_PRICE_YCR', 'EL_PRICE_YCRST'], 'colormap': (plt.cm.RdYlGn_r, 'RdYlGn_r'), 'unit': 'Money/MWh', 'basescale': 'minmax'},
+                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'}} # Dictionary of background options
         if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
@@ -209,6 +222,7 @@ def plot_map(path_to_result: str,
             If you wish to modify the line size parameters please use : 'line_width_min', 'line_width_max', 'line_cluster_groups', and 'line_cluster_widths'.")
         
         ### Visual options
+        title_show = kwargs.get('title_show', True) # Showing or not the title
         legend_show = kwargs.get('legend_show', True) # Showing or not the legend
         show_country_out = kwargs.get('show_country_out', True) # Showing or not the countries outside the model
         dict_map_coordinates = {'EU': [(-11,36),(33,72)], 'DK': [(7.5,13.5),(54.5,58)]} # Dictionary of coordinates for different maps
@@ -232,16 +246,14 @@ def plot_map(path_to_result: str,
         line_show_min = kwargs.get('line_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
         line_width_min = kwargs.get('line_width_min', 0.5) # Minimum width of lines, used if cat is linear or log
         line_width_max = kwargs.get('line_width_max', 12) # Maximum width of lines, used if cat is linear or log
-        if lines == "FlowYear" : 
-            line_cluster_groups = kwargs.get('line_cluster_groups', [10, 30, 60, 100]) # The capacity groupings if cat is 'cluster'
-        else :
-            if commodity == 'Electricity' :
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 15, 30, 60]) # The capacity groupings if cat is 'cluster'
-            elif commodity == 'Hydrogen':
-                line_cluster_groups = kwargs.get('line_cluster_groups', [5, 10, 20, 30]) # The capacity groupings if cat is 'cluster'
-        line_cluster_widths = kwargs.get('line_cluster_widths', [1, 5, 8, 12]) # The widths for the corresponding capacity group used if cat is 'cluster'
-        if len(line_cluster_groups) != len(line_cluster_widths): # Raise error if the cluster groups and widths are not of same length
-            raise ValueError('line_cluster_groups and line_cluster_widths must be of same length')
+        line_cluster_values = kwargs.get('line_cluster_values', []) # Values of the clusters for the clustering category
+        line_cluster_widths = kwargs.get('line_cluster_widths', []) # Widths of the clusters for the clustering category
+        if len(line_cluster_values) != len(line_cluster_widths): # Raise error if the cluster values and widths are not of same length
+            raise ValueError('line_cluster_values and line_cluster_widths must be of same length')
+        if line_width_cat == 'cluster' and line_cluster_values == []: # If the user did not input the cluster values, notify it
+            raise ValueError('You have selected the cluster category for the line width, but you have not specified the cluster values.')
+        line_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]
+        line_legend_cluster_values = kwargs.get('line_legend_cluster_values', []) # Values of the clusters in the legend
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
         line_label_show = kwargs.get('line_label_show', False)  # Showing or not the value of the lines
         line_label_min = kwargs.get('line_label_min', 0) #Minimum transmission capacity (GW) or flow (TWh) shown on map in text
@@ -249,7 +261,6 @@ def plot_map(path_to_result: str,
         line_label_fontsize = kwargs.get('line_font_size', 10) #Font size of transmission line labels
         line_flow_show = kwargs.get('line_flow_show', True) # Showing or not the arrows on the lines
         # generation options
-        generation_show = kwargs.get('generation_show', True) # Showing or not the generation capacities or production
         generation_show_min = kwargs.get('generation_show_min', 0.001) # Minimum generation capacity (GW) or production (TWh) shown on map
         generation_display_type = kwargs.get('generation_display_type', 'Pie') 
         if generation_display_type not in ['Pie']:
@@ -259,31 +270,29 @@ def plot_map(path_to_result: str,
         if generation_var not in ['TECH_TYPE', 'FFF']:
             print('generation_var must be either "TECH_TYPE" or "FFF", set to "TECH_TYPE"')
             generation_var = 'TECH_TYPE'
-        if generation_display_type == 'Pie':
+        if generation_display_type == 'Pie' and generation != None:
             pie_radius_cat = kwargs.get('pie_radius_cat', 'log') # 'linear' = Capacities are scaled linearly, 'cluster' = capacities are clustered in groups
             if pie_radius_cat not in ['linear', 'log', 'cluster']: # Check that it's a possible category of line thickness
                 print('pie_radius_cat must be either "linear", "log" or "cluster", set to "log"')
                 pie_radius_cat = 'log'
             pie_show_min = kwargs.get('pie_show_min', 0) # Minimum transmission capacity (GW) or flow (TWh) shown on map
-            pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3], 
-                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]}, 
-                                                              'ProductionTime' : {'Electricity' : [20,50,200,400], 'Hydrogen' : [10,50,100,250]},
-                                                              'Capacity' : {'Electricity' : [10,50,200,400], 'Hydrogen' : [1,10,30,60]}}}, 
-                               'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5], 
-                                      'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
-                                                              'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
-                                                              'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}}
+            pie_radius_dict = {'EU': {'pie_radius_min' : 0.2, 'pie_radius_max' : 1.4, 'pie_cluster_radius' : [0.2, 0.6, 1, 1.3]}, 
+                               'DK': {'pie_radius_min' : 0.05, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.05, 0.1, 0.25, 0.5]}}
             if choosen_map_coordinates not in ["EU", "DK"]:
-                pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5],
-                                                            'pie_cluster_groups' : {'Production' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]}, 
-                                                                                    'ProductionTime' : {'Electricity' : [10,25,50,100], 'Hydrogen' : [0.5,1,2,50]},
-                                                                                    'Capacity' : {'Electricity' : [5,10,25,50], 'Hydrogen' : [0.1,0.2,0.5,1]}}}
+                pie_radius_dict[choosen_map_coordinates] = {'pie_radius_min' : 0.1, 'pie_radius_max' : 0.5, 'pie_cluster_radius' : [0.1, 0.2, 0.3, 0.5]}
             pie_radius_min = kwargs.get('pie_radius_min', pie_radius_dict[choosen_map_coordinates]['pie_radius_min']) # Minimum width of lines, used if cat is linear or log
             pie_radius_max = kwargs.get('pie_radius_max', pie_radius_dict[choosen_map_coordinates]['pie_radius_max']) # Maximum width of lines, used if cat is linear or log
-            pie_cluster_groups = kwargs.get('pie_cluster_groups', pie_radius_dict[choosen_map_coordinates]['pie_cluster_groups'][generation][commodity]) # The capacity groupings if cat is 'cluster'
-            pie_cluster_radius = kwargs.get('pie_cluster_radius', pie_radius_dict[choosen_map_coordinates]['pie_cluster_radius'])
-            if len(pie_cluster_groups) != len(pie_cluster_radius):
-                raise ValueError('pie_cluster_groups and pie_cluster_radius must be of same length')
+            pie_cluster_values = kwargs.get('pie_cluster_values', []) # Values of the clusters for the clustering category
+            pie_cluster_radius = kwargs.get('pie_cluster_radius', []) # Radius of the clusters for the clustering category
+            if len(pie_cluster_values) != len(pie_cluster_radius):
+                raise ValueError('pie_cluster_values and pie_cluster_radius must be of same length')
+            if pie_radius_cat == 'cluster' and pie_cluster_values == []: # If the user did not input the cluster values, notify it
+                raise ValueError('You have selected the cluster category for the pie radius, but you have not specified the cluster values.')
+            pie_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000]
+            pie_legend_cluster_values = kwargs.get('pie_legend_cluster_values', []) # Values of the clusters in the legend
+        # generation options
+        background_scale = kwargs.get('background_scale', [0, 0]) # Scale used for the background coloring
+        background_scale_tick = kwargs.get('background_scale_tick', 2) # A tick every x units in the background legend
 
         # Colors options
         # Map colors options 
@@ -300,7 +309,8 @@ def plot_map(path_to_result: str,
         generation_tech_color = {
         'HYDRO-RESERVOIRS': '#33b1ff',
         'HYDRO-RUN-OF-RIVER': '#4589ff',
-        'WIND-ON': '#006460',
+        'HYDRO' : '#33b1ff',
+        'WIND-ONSHORE': '#006460',
         'BOILERS': '#8B008B',
         'ELECT-TO-HEAT': '#FFA500',
         'INTERSEASONAL-HEAT-STORAGE': '#FFD700',
@@ -312,16 +322,17 @@ def plot_map(path_to_result: str,
         'SOLAR-HEATING': '#FF69B4',
         'CHP-EXTRACTION': '#ff7eb6',
         'SOLAR-PV': '#d2a106',
-        'WIND-OFF': '#08bdba',
+        'WIND-OFFSHORE': '#08bdba',
         'INTRASEASONAL-ELECT-STORAGE': '#ba4e00',
-        'ELECTROLYZER': '#ADD8E6',
+        'ELECTROLYZER': '#ADD8E6', #7FBF7F
         'H2-STORAGE': '#FFC0CB',
-        'FUELCELL': '#d4bbff'
+        'FUELCELL': '#d4bbff',
+        'CHP' : '#E5D8D8'
         }
         generation_fuel_color = {
         'HYDRO': '#08bdba',
-        'WIND-ON': '#5e45ff',
-        'WIND-OFF': '#4589ff',
+        'WIND-ONSHORE': '#5e45ff',
+        'WIND-OFFSHORE': '#4589ff',
         'BIOGAS': '#23932d',
         'COAL': '#595959',
         'ELECTRIC': '#BA000F',
@@ -499,9 +510,6 @@ def plot_map(path_to_result: str,
         ## 1.4.2 - Define var_list
         
         var_list = []
-        var_list = var_list + ['G_CAP_YCRAF', 'PRO_YCRAGF']
-        if generation.lower() == 'productiontime':
-            var_list += ['PRO_YCRAGFST']
         if commodity == 'Electricity':
             if lines == 'Capacity' : 
                 var_list = var_list + ['X_CAP_YCR']
@@ -524,8 +532,21 @@ def plot_map(path_to_result: str,
                 var_list = var_list + ['XH2_FLOW_YCRST']
             if lines == 'UtilizationTime': 
                 var_list = var_list + ['XH2_CAP_YCR', 'XH2_FLOW_YCRST']
+        var_list = var_list + ['G_CAP_YCRAF', 'PRO_YCRAGF']
+        if generation != None:
+            if generation.lower() == 'productiontime':
+                var_list += ['PRO_YCRAGFST']
         if selected_background != None:
-            var_list = var_list + [selected_background['var']]
+            if type(selected_background['var']) == list :
+                if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
+                    background_var = selected_background['var'][1]
+                    var_list = var_list + [background_var]
+                else :
+                    background_var = selected_background['var'][0]
+                    var_list = var_list + [background_var]
+            else :
+                background_var = selected_background['var']
+                var_list = var_list + [background_var]
 
 
         ## 1.4.3 - Use function to read inputs
@@ -580,24 +601,33 @@ def plot_map(path_to_result: str,
         elif generation == 'Production':
             df_generation = all_df['PRO_YCRAGF']
         elif generation == 'ProductionTime':
-            df_generation = all_df['PRO_YCRAGFST'].query('SSS == "%s" and TTT == "%s"'%(S, T))
-        if generation_commodity == 'Electricity':
-            df_generation = df_generation[df_generation['COMMODITY'] == 'ELECTRICITY']
-        elif generation_commodity == 'Hydrogen':
-            df_generation = df_generation[df_generation['COMMODITY'] == 'HYDROGEN']
+            df_generation = all_df['PRO_YCRAGFST']
+        if generation != None:
+            if generation_commodity == 'Electricity':
+                df_generation = df_generation[df_generation['COMMODITY'] == 'ELECTRICITY']
+            elif generation_commodity == 'Hydrogen':
+                df_generation = df_generation[df_generation['COMMODITY'] == 'HYDROGEN']
             
         # Background data
         if selected_background != None:
-            df_background = all_df[selected_background['var']]
+            df_background = all_df[background_var]
                 
         ## 1.4.4 - Select relevant dataframe and rename columns
         column_dict = {'Val':'Value', 'Y':'Year', 'C':'Country'}
-        df_line = df_line.rename(columns = column_dict)
-        df_generation = df_generation.rename(columns = column_dict)
+        if lines != None:
+            df_line = df_line.rename(columns = column_dict)
         if lines in ['UtilizationYear', 'UtilizationTime'] :
             df_cap = df_cap.rename(columns = column_dict)
+        if generation != None:
+            df_generation = df_generation.rename(columns = column_dict)
         if selected_background != None:
             df_background = df_background.rename(columns = column_dict)
+            
+        # 1.4.5 Check if there is some H2 import
+        if all_df['G_CAP_YCRAF']['FFF'].str.contains('IMPORT_H2').any():
+            H2_import = True
+        else :
+            H2_import = False
             
 
         ### ----------------------------- ###
@@ -606,10 +636,12 @@ def plot_map(path_to_result: str,
 
         ## 2.1 Replace "EPS" with 0
 
-        df_line.Value=df_line.Value.replace('Eps', 0)
-        df_line.Value=pd.to_numeric(df_line.Value)
-        df_generation.Value=df_generation.Value.replace('Eps', 0)
-        df_generation.Value=pd.to_numeric(df_generation.Value)
+        if lines != None:
+            df_line.Value=df_line.Value.replace('Eps', 0)
+            df_line.Value=pd.to_numeric(df_line.Value)
+        if generation != None:
+            df_generation.Value=df_generation.Value.replace('Eps', 0)
+            df_generation.Value=pd.to_numeric(df_generation.Value)
         if selected_background != None:
             df_background.Value=df_background.Value.replace('Eps', 0)
             df_background.Value=pd.to_numeric(df_background.Value)
@@ -618,13 +650,15 @@ def plot_map(path_to_result: str,
         ### 2.2 Filter dataframes for relevant data
         
         # Filter the year
-        df_line['Year'] = df_line['Year'].astype(int)
-        df_line = df_line.loc[df_line['Year'] == year].reset_index(drop = True)
-        df_generation['Year'] = df_generation['Year'].astype(int)
-        df_generation = df_generation.loc[df_generation['Year'] == year].reset_index(drop = True)
+        if lines != None :
+            df_line['Year'] = df_line['Year'].astype(int)
+            df_line = df_line.loc[df_line['Year'] == year].reset_index(drop = True)
         if lines in ['UtilizationYear', 'UtilizationTime']:
             df_cap['Year'] = df_cap['Year'].astype(int)
             df_cap = df_cap.loc[df_cap['Year'] == year].reset_index(drop = True)
+        if generation != None:
+            df_generation['Year'] = df_generation['Year'].astype(int)
+            df_generation = df_generation.loc[df_generation['Year'] == year].reset_index(drop = True)
         if selected_background != None:
             df_background['Year'] = df_background['Year'].astype(int)
             df_background = df_background.loc[df_background['Year'] == year].reset_index(drop = True)
@@ -658,7 +692,7 @@ def plot_map(path_to_result: str,
             elif exo_end == 'Exogenous' :
                 df_background = df_background.loc[df_background['VARIABLE_CATEGORY'] == 'EXOGENOUS']
                 
-        # Time and season for FlowTime
+        # Time and season filtering if needed
         if lines == 'FlowTime' or lines == 'UtilizationTime':
             # If season and time step are not specified, take the first one
             if S == '' :
@@ -673,6 +707,31 @@ def plot_map(path_to_result: str,
             df_line = df_line.reset_index(drop = True)
             if len(df_line) == 0:
                 raise ValueError('No data for the selected season and time step')
+        if generation == 'ProductionTime':
+            # If season and time step are not specified, take the first one
+            if S == '' :
+                S = df_generation['SSS'].iloc[0]
+            if T == '' :
+                T = df_generation['TTT'].iloc[0]
+            df_generation = df_generation.loc[df_generation['SSS'] == S]
+            df_generation = df_generation.loc[df_generation['TTT'] == T]
+            #Convert flow from MWh to GWh
+            df_generation['Value'] = df_generation['Value'] / 1000
+            df_generation["UNITS"] = "GWh"
+            df_generation = df_generation.reset_index(drop = True)
+            if len(df_generation) == 0:
+                raise ValueError('No data for the selected season and time step')
+        if selected_background != None:
+            if type(selected_background['var']) == list :
+                if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
+                    if S == '' :
+                        S = df_background['SSS'].iloc[0]
+                    if T == '' :
+                        T = df_background['TTT'].iloc[0]
+                    df_background = df_background.loc[df_background['SSS'] == S]
+                    df_background = df_background.loc[df_background['TTT'] == T]
+                    if len(df_background) == 0:
+                        raise ValueError('No data for the selected season and time step')
             
         
         ### 2.3 Calculate the utilization of the lines
@@ -691,31 +750,32 @@ def plot_map(path_to_result: str,
         
         ### 2.4 Add coordinates to line dataframes
         
-        if path_to_geofile == None : # If the user hasn't define a personalized geofile
-            for i,row in df_line.iterrows():
-                    for j in range(0,len(df_unique)):
-                        if df_line.loc[i,'IRRRE'] == df_unique.loc[j, 'RRR']:
-                            df_line.loc[i,'LatExp'] = df_unique.loc[j, 'Lat']
-                            df_line.loc[i,'LonExp'] = df_unique.loc[j, 'Lon']
-                        if df_line.loc[i,'IRRRI'] == df_unique.loc[j, 'RRR']:
-                            df_line.loc[i,'LatImp'] = df_unique.loc[j, 'Lat']
-                            df_line.loc[i,'LonImp'] = df_unique.loc[j, 'Lon']
-        else :
-            for i,row in df_line.iterrows():
-                for j in range(0,len(geo_file)):
-                    if df_line.loc[i,'IRRRE'] == geo_file.loc[j, geo_file_region_column]:  
-                        df_line.loc[i,'LatExp'] = geo_file.loc[j].geometry.centroid.y       
-                        df_line.loc[i,'LonExp'] = geo_file.loc[j].geometry.centroid.x       
-                    if df_line.loc[i,'IRRRI'] == geo_file.loc[j, geo_file_region_column]:  
-                        df_line.loc[i,'LatImp'] = geo_file.loc[j].geometry.centroid.y       
-                        df_line.loc[i,'LonImp'] = geo_file.loc[j].geometry.centroid.x
-            # If a line doesn't have coordinates because the countries are not in the personalized geofile, delete it and add a comment
-            df_line_copy = df_line.copy()
-            for i,row in df_line.iterrows():
-                if pd.isnull(df_line.loc[i,'LatExp']) or pd.isnull(df_line.loc[i,'LatImp']):
-                    df_line_copy = df_line_copy.drop(i)
-                    print('Line between ' + df_line.loc[i,'IRRRE'] + ' and ' + df_line.loc[i,'IRRRI'] + ' has been deleted because of missing coordinates in the geofile')
-            df_line = df_line_copy
+        if lines != None :
+            if path_to_geofile == None : # If the user hasn't define a personalized geofile
+                for i,row in df_line.iterrows():
+                        for j in range(0,len(df_unique)):
+                            if df_line.loc[i,'IRRRE'] == df_unique.loc[j, 'RRR']:
+                                df_line.loc[i,'LatExp'] = df_unique.loc[j, 'Lat']
+                                df_line.loc[i,'LonExp'] = df_unique.loc[j, 'Lon']
+                            if df_line.loc[i,'IRRRI'] == df_unique.loc[j, 'RRR']:
+                                df_line.loc[i,'LatImp'] = df_unique.loc[j, 'Lat']
+                                df_line.loc[i,'LonImp'] = df_unique.loc[j, 'Lon']
+            else :
+                for i,row in df_line.iterrows():
+                    for j in range(0,len(geo_file)):
+                        if df_line.loc[i,'IRRRE'] == geo_file.loc[j, geo_file_region_column]:  
+                            df_line.loc[i,'LatExp'] = geo_file.loc[j].geometry.centroid.y       
+                            df_line.loc[i,'LonExp'] = geo_file.loc[j].geometry.centroid.x       
+                        if df_line.loc[i,'IRRRI'] == geo_file.loc[j, geo_file_region_column]:  
+                            df_line.loc[i,'LatImp'] = geo_file.loc[j].geometry.centroid.y       
+                            df_line.loc[i,'LonImp'] = geo_file.loc[j].geometry.centroid.x
+                # If a line doesn't have coordinates because the countries are not in the personalized geofile, delete it and add a comment
+                df_line_copy = df_line.copy()
+                for i,row in df_line.iterrows():
+                    if pd.isnull(df_line.loc[i,'LatExp']) or pd.isnull(df_line.loc[i,'LatImp']):
+                        df_line_copy = df_line_copy.drop(i)
+                        print('Line between ' + df_line.loc[i,'IRRRE'] + ' and ' + df_line.loc[i,'IRRRI'] + ' has been deleted because of missing coordinates in the geofile')
+                df_line = df_line_copy
         
         ### 2.5 One direction capacity  lines
         
@@ -773,238 +833,277 @@ def plot_map(path_to_result: str,
             df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
         elif lines == 'UtilizationTime':
             df_bypass = pd.merge(df_bypass, df_line[['Year', 'Country', 'IRRRE', 'IRRRI', 'SSS', 'TTT', 'UNITS', 'Value', 'Capacity']], on = ['IRRRE', 'IRRRI'], how = 'left').dropna()
-        #Replace existing row by 2 bypass rows
-        keys = list(df_bypass.columns.values)[0:2]
-        i1 = df_line.set_index(keys).index
-        i2 = df_bypass.set_index(keys).index
-        df_line = df_line[~i1.isin(i2)] #Delete existing rows that need bypass
-        df_line = df_line._append(df_bypass, ignore_index = True, sort = True) #Append bypass rows
+        #Replace existing row by 2 bypass 
+        if lines != None:
+            keys = list(df_bypass.columns.values)[0:2]
+            i1 = df_line.set_index(keys).index
+            i2 = df_bypass.set_index(keys).index
+            df_line = df_line[~i1.isin(i2)] #Delete existing rows that need bypass
+            df_line = df_line._append(df_bypass, ignore_index = True, sort = True) #Append bypass rows
 
 
         ### 2.7 Define line centers
         
         #Define centre of each transmission line
-        df_line['LatMid'] = (df_line['LatImp'] + df_line['LatExp']) /2
-        df_line['LonMid'] = (df_line['LonImp'] + df_line['LonExp']) /2
+        if lines != None:
+            df_line['LatMid'] = (df_line['LatImp'] + df_line['LatExp']) /2
+            df_line['LonMid'] = (df_line['LonImp'] + df_line['LonExp']) /2                                      
         
         
         ### 2.8 Process the generation data
         
-        # Make the pie charts based on technologies
-        if generation_var == 'TECH_TYPE':
-        # Create horizontal table with sectors as columns
-            display_column = 'TECH_TYPE'
-            #Distinguish if has CCS or not for hydrogen
-            G_to_tech_type = {
-            'GNR_STEAM-REFORMING_E-70_Y-2020': 'SMR',
-            'GNR_STEAM-REFORMING-CCS_E-70_Y-2020': 'SMR-CCS'
-            }
-            df_generation['TECH_TYPE'] = df_generation['G'].map(G_to_tech_type).fillna(df_generation['TECH_TYPE'])
+        if generation != None:
+            # Make the pie charts based on technologies
+            if generation_var == 'TECH_TYPE':
+            # Create horizontal table with sectors as columns
+                display_column = 'TECH_TYPE'
+                #Distinguish if has CCS or not for hydrogen
+                G_to_tech_type = {
+                'GNR_STEAM-REFORMING_E-70_Y-2020': 'SMR',
+                'GNR_STEAM-REFORMING-CCS_E-70_Y-2020': 'SMR-CCS'
+                }
+                df_generation['TECH_TYPE'] = df_generation['G'].map(G_to_tech_type).fillna(df_generation['TECH_TYPE'])
 
-        # Make pie charts based on Fuels
-        if generation_var == 'FFF':
-            display_column = 'FFF'
-            #If you map fuels to change the fuel type.     
-            # Define the dictionary to map old fuel names to new ones
+            # Make pie charts based on Fuels
+            if generation_var == 'FFF':
+                display_column = 'FFF'
+                #If you map fuels to change the fuel type.     
+                # Define the dictionary to map old fuel names to new ones
+                
+                #First split wind to wind on and wind off based on the tech_type
+                # create a dictionary to map the values of TECH_TYPE to the corresponding FFF names
+                tech_type_to_fff = {"WIND-ON": "WIND-ON", "WIND-OFF": "WIND-OFF"}
+                # use the map function to replace the values of FFF based on the values of TECH_TYPE
+                df_generation['FFF'] = df_generation['TECH_TYPE'].map(tech_type_to_fff).fillna(df_generation['FFF'])
+                # create a dictionary to map the values of FFF to the corresponding fuel types
+                fff_to_fuel = {
+                'BIOOIL': 'OIL', 
+                'LIGHTOIL': 'OIL', 
+                'OIL': 'OIL', 
+                'FUELOIL': 'OIL',
+                'SHALE' : 'OIL',
+                'WOODCHIPS': 'BIOMASS', 
+                'WOODPELLETS': 'BIOMASS', 
+                'WOODWASTE': 'BIOMASS', 
+                'WOOD': 'BIOMASS',
+                'STRAW': 'BIOMASS',
+                'RETORTGAS':'NATGAS',
+                'OTHERGAS': 'NATGAS',
+                'DUMMY': 'NATGAS',
+                'PEAT' : 'NATGAS',
+                'WASTEHEAT' :'HEAT',
+                'LNG' :'NATGAS',
+                'SUN':'SOLAR',
+                'WATER':'HYDRO'
+                
+                }
+                # use the map function to replace the values of FFF based on the values of the dictionary
+                df_generation['FFF'] = df_generation['FFF'].map(fff_to_fuel).fillna(df_generation['FFF'])
+                
+                G_to_FFF = {
+                'GNR_BO_NGASCCS_E-105_MS-5-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_BP_E-51_SS-10-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_BP_E-53_SS-10-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_BP_E-54_SS-10-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_BP_E-55_SS-10-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-51_SS-10-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-53_SS-10-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-54_SS-10-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-55_SS-10-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-59_LS-100-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-61_LS-100-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-62_LS-100-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_CND_E-63_LS-100-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_EXT_E-59_LS-100-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_EXT_E-61_LS-100-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_EXT_E-62_LS-100-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_CC_NGASCCS_EXT_E-63_LS-100-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_BP_E-47_Y-2020':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_BP_E-48_Y-2030':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_BP_E-49_Y-2040':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_BP_E-50_Y-2050':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_CND_E-47_Y-2020':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_CND_E-48_Y-2030':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_CND_E-49_Y-2040':'NATGAS-CCS',                   
+                'GNR_ENG_NGASCCS_CND_E-50_Y-2050':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-37_SS-5-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-39_SS-5-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-40_SS-5-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-40_SS-5-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-42_LS-40-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-43_LS-40-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-44_LS-40-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_BP_E-44_LS-40-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-37_SS-5-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-39_SS-5-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-40_SS-5-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-40_SS-5-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-42_LS-40-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-43_LS-40-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-44_LS-40-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_GT_NGASCCS_CND_E-44_LS-40-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_IND-DF_NGASCCS_E-100_MS-3-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_IND-BO_NGASCCS_E-93_MS-20-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_IND-BO_NGASCCS_E-94_MS-20-MW_Y-2030':'NATGAS-CCS',                   
+                'GNR_IND-BO_NGASCCS_E-95_MS-20-MW_Y-2040':'NATGAS-CCS',                   
+                'GNR_IND-BO_NGASCCS_E-96_MS-20-MW_Y-2050':'NATGAS-CCS',                   
+                'GNR_ST_NGASCCS_CND_E-47_LS-400-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_ST_NGASCCS_EXT_E-47_LS-400-MW_Y-2020':'NATGAS-CCS',                   
+                'GNR_ST_NGASCCS_BP_E-7_MS-15-MW_Y-2020':'NATGAS-CCS' 
+                }
+                df_generation['FFF'] = df_generation['G'].map(G_to_FFF).fillna(df_generation['FFF'])   
+
+            if generation_exclude_H2Storage:
+                df_generation = df_generation[df_generation['TECH_TYPE'] != 'H2-STORAGE']
             
-            #First split wind to wind on and wind off based on the tech_type
-            # create a dictionary to map the values of TECH_TYPE to the corresponding FFF names
-            tech_type_to_fff = {"WIND-ON": "WIND-ON", "WIND-OFF": "WIND-OFF"}
-            # use the map function to replace the values of FFF based on the values of TECH_TYPE
-            df_generation['FFF'] = df_generation['TECH_TYPE'].map(tech_type_to_fff).fillna(df_generation['FFF'])
-            # create a dictionary to map the values of FFF to the corresponding fuel types
-            fff_to_fuel = {
-            'BIOOIL': 'OIL', 
-            'LIGHTOIL': 'OIL', 
-            'OIL': 'OIL', 
-            'FUELOIL': 'OIL',
-            'SHALE' : 'OIL',
-            'WOODCHIPS': 'BIOMASS', 
-            'WOODPELLETS': 'BIOMASS', 
-            'WOODWASTE': 'BIOMASS', 
-            'WOOD': 'BIOMASS',
-            'STRAW': 'BIOMASS',
-            'RETORTGAS':'NATGAS',
-            'OTHERGAS': 'NATGAS',
-            'DUMMY': 'NATGAS',
-            'PEAT' : 'NATGAS',
-            'WASTEHEAT' :'HEAT',
-            'LNG' :'NATGAS',
-            'SUN':'SOLAR',
-            'WATER':'HYDRO'
+            if generation_exclude_Import_Cap_H2:
+                df_generation = df_generation[df_generation['FFF'] != 'IMPORT_H2']
+
+            if generation_exclude_ElectricStorage:
+                df_generation = df_generation[df_generation['TECH_TYPE'] != 'INTRASEASONAL-ELECT-STORAGE']
+                df_generation = df_generation[df_generation['TECH_TYPE'] != 'INTERSEASONAL-ELECT-STORAGE']
             
-            }
-            # use the map function to replace the values of FFF based on the values of the dictionary
-            df_generation['FFF'] = df_generation['FFF'].map(fff_to_fuel).fillna(df_generation['FFF'])
+            # if generation_exclude_Geothermal: # Do we have geothermia inside the model ?
+            #     df_generation_capacity = df_generation_capacity[df_generation_capacity['FFF'] != 'HEAT']   
             
-            G_to_FFF = {
-            'GNR_BO_NGASCCS_E-105_MS-5-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_BO_NGASCCS_E-106_MS-5-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_BP_E-51_SS-10-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_BP_E-53_SS-10-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_BP_E-54_SS-10-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_BP_E-55_SS-10-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-51_SS-10-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-53_SS-10-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-54_SS-10-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-55_SS-10-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-59_LS-100-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-61_LS-100-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-62_LS-100-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_CND_E-63_LS-100-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_EXT_E-59_LS-100-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_EXT_E-61_LS-100-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_EXT_E-62_LS-100-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_CC_NGASCCS_EXT_E-63_LS-100-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_BP_E-47_Y-2020':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_BP_E-48_Y-2030':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_BP_E-49_Y-2040':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_BP_E-50_Y-2050':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_CND_E-47_Y-2020':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_CND_E-48_Y-2030':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_CND_E-49_Y-2040':'NATGAS-CCS',                   
-            'GNR_ENG_NGASCCS_CND_E-50_Y-2050':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-37_SS-5-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-39_SS-5-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-40_SS-5-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-40_SS-5-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-42_LS-40-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-43_LS-40-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-44_LS-40-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_BP_E-44_LS-40-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-37_SS-5-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-39_SS-5-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-40_SS-5-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-40_SS-5-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-42_LS-40-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-43_LS-40-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-44_LS-40-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_GT_NGASCCS_CND_E-44_LS-40-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_IND-DF_NGASCCS_E-100_MS-3-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_IND-BO_NGASCCS_E-93_MS-20-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_IND-BO_NGASCCS_E-94_MS-20-MW_Y-2030':'NATGAS-CCS',                   
-            'GNR_IND-BO_NGASCCS_E-95_MS-20-MW_Y-2040':'NATGAS-CCS',                   
-            'GNR_IND-BO_NGASCCS_E-96_MS-20-MW_Y-2050':'NATGAS-CCS',                   
-            'GNR_ST_NGASCCS_CND_E-47_LS-400-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_ST_NGASCCS_EXT_E-47_LS-400-MW_Y-2020':'NATGAS-CCS',                   
-            'GNR_ST_NGASCCS_BP_E-7_MS-15-MW_Y-2020':'NATGAS-CCS' 
-            }
-            df_generation['FFF'] = df_generation['G'].map(G_to_FFF).fillna(df_generation['FFF'])   
+            # Rename values of onshore and offshore wind
+            df_generation[display_column] = df_generation[display_column].replace({'WIND-ON': 'WIND-ONSHORE', 'WIND-OFF': 'WIND-OFFSHORE'})
+            # Rename and merge HYDRO-RESERVOIRS and HYDRO-RUN-OF-RIVER together
+            df_generation[display_column] = df_generation[display_column].replace({'HYDRO-RESERVOIRS': 'HYDRO', 'HYDRO-RUN-OF-RIVER': 'HYDRO'})
+            # Rename and merge CHP-BACK-PRESSURE and CHP-EXTRACTION together
+            df_generation[display_column] = df_generation[display_column].replace({'CHP-BACK-PRESSURE': 'CHP', 'CHP-EXTRACTION': 'CHP'})
+            
 
-        if generation_exclude_H2Storage:
-            df_generation = df_generation[df_generation['TECH_TYPE'] != 'H2-STORAGE']
+            # Get the name for the legend
+            if generation_var == 'TECH_TYPE':
+                df_tech_names = df_generation['TECH_TYPE'].unique()
+                df_tech_names_sorted = np.sort(df_tech_names)
+                df_tech_names = df_tech_names_sorted
+            if generation_var == 'FFF':   
+                df_tech_names = df_generation['FFF'].unique()
+                df_tech_names_sorted = np.sort(df_tech_names)
+                df_tech_names = df_tech_names_sorted
+            
+            # Sum values per regions and tech/fuel type
+            df_generation = pd.DataFrame(df_generation.groupby(['RRR', display_column])['Value'].sum().reset_index())
 
-        # Check if there is some H2 import
-        if df_generation['FFF'].str.contains('IMPORT_H2').any():
-            H2_import = True
-        else :
-            H2_import = False
-        
-        if generation_exclude_Import_Cap_H2:
-            df_generation = df_generation[df_generation['FFF'] != 'IMPORT_H2']
+            # Merge the data frame to get the coordinates
+            df_slack_generation = df_generation
+            if path_to_geofile == None : # If the user hasn't define a personalized geofile
+                df_slack_generation = pd.merge(df_slack_generation, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'right')
+            else :
+                for i,row in df_slack_generation.iterrows():
+                    for j in range(0,len(geo_file)):
+                        if df_slack_generation.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
+                            df_slack_generation.loc[i,'Lat'] = geo_file.loc[j].geometry.centroid.y       
+                            df_slack_generation.loc[i,'Lon'] = geo_file.loc[j].geometry.centroid.x       
+                # If capacities don't have coordinates because the countries are not in the personalized geofile, delete them and add a comment
+                df_slack_generation_copy = df_slack_generation.copy()
+                for i,row in df_slack_generation.iterrows():
+                    if pd.isnull(df_slack_generation.loc[i,'Lat']):
+                        df_slack_generation_copy = df_slack_generation_copy.drop(i)
+                        print('Capacity in ' + df_slack_generation.loc[i,'RRR'] + ' has been deleted because of missing coordinates in the geofile')
+                df_slack_generation = df_slack_generation_copy
 
-        if generation_exclude_ElectricStorage:
-            df_generation = df_generation[df_generation['TECH_TYPE'] != 'INTRASEASONAL-ELECT-STORAGE']
-            df_generation = df_generation[df_generation['TECH_TYPE'] != 'INTERSEASONAL-ELECT-STORAGE']
-        
-        # if generation_exclude_Geothermal: # Do we have geothermia inside the model ?
-        #     df_generation_capacity = df_generation_capacity[df_generation_capacity['FFF'] != 'HEAT']   
+            # If they are some nan countries with no tech group filter outcome of merge
+            df_slack_generation = df_slack_generation.dropna(subset=[display_column])
 
-        # Get the name for the legend
-        if generation_var == 'TECH_TYPE':
-            df_tech_names = df_generation['TECH_TYPE'].unique()
-            df_tech_names_sorted = np.sort(df_tech_names)
-            df_tech_names = df_tech_names_sorted
-        if generation_var == 'FFF':   
-            df_tech_names = df_generation['FFF'].unique()
-            df_tech_names_sorted = np.sort(df_tech_names)
-            df_tech_names = df_tech_names_sorted
-        
-        # Sum values per regions and tech/fuel type
-        df_generation = pd.DataFrame(df_generation.groupby(['RRR', display_column])['Value'].sum().reset_index())
+            #Keep the names of the regions
+            RRRs = df_slack_generation['RRR'].unique()
 
-        # Merge the data frame to get the coordinates
-        df_slack_generation = df_generation
-        if path_to_geofile == None : # If the user hasn't define a personalized geofile
-            df_slack_generation = pd.merge(df_slack_generation, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'right')
-        else :
-            for i,row in df_slack_generation.iterrows():
-                for j in range(0,len(geo_file)):
-                    if df_slack_generation.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
-                        df_slack_generation.loc[i,'Lat'] = geo_file.loc[j].geometry.centroid.y       
-                        df_slack_generation.loc[i,'Lon'] = geo_file.loc[j].geometry.centroid.x       
-            # If capacities don't have coordinates because the countries are not in the personalized geofile, delete them and add a comment
-            df_slack_generation_copy = df_slack_generation.copy()
-            for i,row in df_slack_generation.iterrows():
-                if pd.isnull(df_slack_generation.loc[i,'Lat']):
-                    df_slack_generation_copy = df_slack_generation_copy.drop(i)
-                    print('Capacity in ' + df_slack_generation.loc[i,'RRR'] + ' has been deleted because of missing coordinates in the geofile')
-            df_slack_generation = df_slack_generation_copy
-
-        # If they are some nan countries with no tech group filter outcome of merge
-        df_slack_generation = df_slack_generation.dropna(subset=[display_column])
-
-        #Keep the names of the regions
-        RRRs = df_slack_generation['RRR'].unique()
-
-        # Some times some capacities are close to zero but with a negative make them o
-        df_slack_generation.loc[(df_slack_generation['Value'] < 0) & (df_slack_generation['Value'] > -0.0001), 'Value'] = 0
-        
-        # We want to get rid of very small values so that legend is not too big
-        df_slack_generation = df_slack_generation.loc[df_slack_generation['Value'] > generation_show_min]
-        
-        # Take out the existing Tech/Fuel types for the legend
-        if generation_var == 'TECH_TYPE':
-            generation_existing_var = df_slack_generation['TECH_TYPE'].unique() 
-        elif generation_var == 'FFF':
-            generation_existing_var = df_slack_generation['FFF'].unique()
-        
-        # Only select Denmark data if coordinates of Denmark are selected
-        if choosen_map_coordinates == 'DK' :
-            df_slack_generation = df_slack_generation.loc[df_slack_generation['RRR'].str.contains('DK')]
+            # Some times some capacities are close to zero but with a negative make them o
+            df_slack_generation.loc[(df_slack_generation['Value'] < 0) & (df_slack_generation['Value'] > -0.0001), 'Value'] = 0
+            
+            # We want to get rid of very small values so that legend is not too big
+            df_slack_generation = df_slack_generation.loc[df_slack_generation['Value'] > generation_show_min]
+            
+            # Take out the existing Tech/Fuel types for the legend
+            if generation_var == 'TECH_TYPE':
+                generation_existing_var = df_slack_generation['TECH_TYPE'].unique() 
+            elif generation_var == 'FFF':
+                generation_existing_var = df_slack_generation['FFF'].unique()
+            
+            # Only select Denmark data if coordinates of Denmark are selected
+            if choosen_map_coordinates == 'DK' :
+                df_slack_generation = df_slack_generation.loc[df_slack_generation['RRR'].str.contains('DK')]
         
         ### 2.9 Process the background data
         
         if selected_background != None:
-            # Filter the data
-            filters = selected_background['filters']
-            for i in range(len(filters)):
-                df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
-            # Apply the transformation
-            transformation = selected_background['transformation']
-            for i in range(len(transformation)):
-                df_background["Value"] = df_background["Value"]*transformation[i]
-            # Group by region RRR
-            df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
-            # Find the maximum over the region RRR
-            bg_max = df_background['Value'].max()
+            if selected_background['type'] == 'simpletransfo' :
+                try :
+                    # Filter the data
+                    filters = selected_background['filters']
+                    for i in range(len(filters)):
+                        df_background = df_background.loc[df_background[filters[i][0]] == filters[i][1]].reset_index(drop = True)
+                except :
+                    pass
+                try :
+                    # Apply the transformation
+                    transformation = selected_background['transformation']
+                    for i in range(len(transformation)):
+                        df_background["Value"] = df_background["Value"]*transformation[i]
+                except :
+                    pass
+                # Group by region RRR
+                df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
+            elif selected_background['type'] == 'netexport' :
+                # Create a list with all unique elements in df_background["IRRE"] or df_background["IRRI"]
+                unique_RRR = list(set(df_background["IRRRE"]).union(set(df_background["IRRRI"])))
+                df_background_netexport = pd.DataFrame(columns=['RRR', 'Value'])
+                for rrr in unique_RRR:
+                    export_value = df_background[df_background['IRRRE'] == rrr]['Value'].sum()
+                    import_value = df_background[df_background['IRRRI'] == rrr]['Value'].sum()
+                    net_export = export_value - import_value
+                    df_background_netexport = pd.concat([df_background_netexport, pd.DataFrame([{'RRR': rrr, 'Value': net_export}])], ignore_index=True)
+                df_background = df_background_netexport.copy()
+                
+            # Deal with the scale of the background
+            if background_scale == [0,0]:
+                if selected_background['basescale'] in ['0max', 'minmax']:
+                    background_scale[1] = df_background['Value'].max()
+                if selected_background['basescale'] == 'minmax' :
+                    background_scale[0] = df_background['Value'].min()
+                if selected_background['type'] == 'netexport' :
+                    if -df_background['Value'].max() < df_background['Value'].min() :
+                        background_scale[0] = -df_background['Value'].max()
+                    else :
+                        background_scale[0] = df_background['Value'].min()
+                        background_scale[1] = -df_background['Value'].min()
             
             
         ### 2.10 Verify which country was defined as in but does not have any data
         # Please note that the user is free to define something as out of the model and still has data for it
         
-        r_in_copy = r_in.copy()
-        r_out_copy = r_out.copy()
-        if path_to_geofile == None:
-            layers_in_copy = layers_in.copy()
-            layers_out_copy = layers_out.copy()
-            for region in r_in : 
-                if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
-                    r_in_copy.remove(region)
-                    layers_in_copy.pop(region)
-                    r_out_copy.append(region)
-                    layers_out_copy[region] = layers_in[region]
-            layers_in = layers_in_copy
-            layers_out = layers_out_copy
-        else :
-            for region in r_in :
-                if region not in df_line['IRRRE'].unique() and region not in df_line['IRRRI'].unique() and region not in df_generation['RRR'].unique() :
-                    r_out_copy.append(region)
-                    r_in_copy.remove(region)
-        r_in = r_in_copy
-        r_out = r_out_copy
+        if lines != None or generation != None:
+            check = []
+            if lines != None:
+                check = check + [df_line['IRRRE'].unique(), df_line['IRRRI'].unique()]
+            if generation != None:
+                check = check + [df_generation['RRR'].unique()]
+            r_in_copy = r_in.copy()
+            r_out_copy = r_out.copy()
+            if path_to_geofile == None:
+                layers_in_copy = layers_in.copy()
+                layers_out_copy = layers_out.copy()
+                for region in r_in : 
+                    if not any(region in sublist for sublist in check):
+                        r_in_copy.remove(region)
+                        layers_in_copy.pop(region)
+                        r_out_copy.append(region)
+                        layers_out_copy[region] = layers_in[region]
+                layers_in = layers_in_copy
+                layers_out = layers_out_copy
+            else :
+                for region in r_in :
+                    if not any(region in sublist for sublist in check):
+                        r_out_copy.append(region)
+                        r_in_copy.remove(region)
+            r_in = r_in_copy
+            r_out = r_out_copy
 
 
         ### ----------------------------- ###
@@ -1033,7 +1132,7 @@ def plot_map(path_to_result: str,
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
                     if len(value) == 0 :
                         value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1082,7 +1181,7 @@ def plot_map(path_to_result: str,
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
                     if len(value) == 0 :
                         value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0](value[0] / bg_max)
+                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1101,114 +1200,124 @@ def plot_map(path_to_result: str,
                     print("It seems like the region " + R + " id is not defined correctly in the geofile")
 
 
-        ### 3.2 Adding transmission lines
+        ### 3.2 Tools for line width and pie radius interpolation
+        
+        def linear_interpolation(value, max_value, length_max, length_min):
+            length_constant = max_value/length_max
+            length = value/length_constant
+            if length < length_min:
+                length = length_min
+            return length
+        
+        def log_interpolation(value, max_value, length_max, length_min):
+            normalized_value = (value-0)/(max_value-0)
+            log_scaled = np.log1p(normalized_value) / np.log1p(1)
+            length = length_min + log_scaled * (length_max - length_min)
+            return length
         
         # A function for finding the nearest value in an array, useful for clustering
         def find_nearest(array, value):
             array = np.asarray(array)
             idx = (np.abs(array - value)).argmin()
-            return array[idx]
+            return array[idx], idx
 
-        # Check if there is some h2 import in the 
-        if H2_import:
-            if commodity == 'Hydrogen':
-                lines_H2_Thirdnations =[]
-                for i, row in df_hydrogen_lines_outside.iterrows():
-                    y1 = df_hydrogen_lines_outside.loc[i,'LatExp']
-                    x1 =  df_hydrogen_lines_outside.loc[i,'LonExp']
-                    y2 = df_hydrogen_lines_outside.loc[i,'LatImp']
-                    x2 = df_hydrogen_lines_outside.loc[i,'LonImp']
-                    
-                    l, = ax.plot([x1,x2], [y1,y2], color = 'orange', linestyle=(0, (1, 1)), solid_capstyle='round', solid_joinstyle='round', 
-                                linewidth = 3, zorder=1)
-                    #save line information
-                    lines_H2_Thirdnations.append(l)
+        ### 3.3 Adding transmission lines
         
-        #Plot tran lines either for H2 or Electricity, options such as linear plot or cluster are available look the begining            
-        save_lines = []
-        if lines in ['UtilizationYear','UtilizationTime']:
-            line_max_value = df_line['Capacity'].max() # Find maximum value useful for linear and logarithmic scale
-        else :
-            line_max_value = df_line['Value'].max() # Find maximum value useful for linear and logarithmic scale
-        line_width_constant = line_max_value/line_width_max
-        for i,row in df_line.iterrows(): 
-            y1 = df_line.loc[i,'LatExp']
-            x1 =  df_line.loc[i,'LonExp']
-            y2 = df_line.loc[i,'LatImp']
-            x2 = df_line.loc[i,'LonImp']
-            if lines in  ['UtilizationYear','UtilizationTime']:
-                cap = df_line.loc[i,'Capacity']
-            else :
-                cap = df_line.loc[i,'Value']
-                
-            # Condition on coordinates
-            if ((xlim[0] <= x1 <= xlim[1]) & (ylim[0] <= y1 <= ylim[1])) or ((xlim[0] <= x2 <= xlim[1]) & (ylim[0] <= y2 <= ylim[1])) :
-                if not(np.isnan(cap)) : # Print an error message, if capacity is a NaN value
-                    if cap >= line_show_min : # Only plot if big enough
-                        if line_width_cat == 'cluster':
-                            nearest = find_nearest(line_cluster_groups, cap) 
-                            width = np.array(line_cluster_widths)[line_cluster_groups == nearest]
-                        elif line_width_cat == 'linear':
-                            width = cap/line_width_constant
-                            if width < line_width_min:
-                                width = line_width_min
-                        elif line_width_cat == 'log':
-                            normalized_cap = (cap-0)/(line_max_value-0)
-                            log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                            width = line_width_min + log_scaled * (line_width_max - line_width_min)
-                            
-                        # Colors if Congestion is plotted
-                        if lines in ['UtilizationYear','UtilizationTime']:
-                            colormap = plt.cm.Reds
-                            line_final_color = colormap(df_line.loc[i,'Value']/100)
-                        else :
-                            line_final_color = line_color
-
-                        # Plot the lines
-                        l, = ax.plot([x1,x2], [y1,y2], color = line_final_color, linewidth = width, solid_capstyle='round', solid_joinstyle='round', zorder=1, alpha=line_opacity)
-                        save_lines.append(l)
+        if lines != None :
+            # Check if there is some h2 import in the 
+            if H2_import:
+                if commodity == 'Hydrogen':
+                    lines_H2_Thirdnations =[]
+                    for i, row in df_hydrogen_lines_outside.iterrows():
+                        y1 = df_hydrogen_lines_outside.loc[i,'LatExp']
+                        x1 =  df_hydrogen_lines_outside.loc[i,'LonExp']
+                        y2 = df_hydrogen_lines_outside.loc[i,'LatImp']
+                        x2 = df_hydrogen_lines_outside.loc[i,'LonImp']
                         
-                        # Plot the arrows on the flow
-                        if line_flow_show :
-                            if lines in ["FlowTime", "FlowYear", "UtilizationYear", "UtilizationTime"]:
-                                if df_line.loc[i,'Value'] >= line_show_min:
-                                    #Choose arrow style
-                                    style = ArrowStyle('Fancy', head_length=4, head_width=4, tail_width=0.1)
-                                    # Draw arrow
-                                    arrow = FancyArrowPatch(posA=(x1+0.5*(x2-x1),y1+0.5*(y2-y1)), posB=(x1+0.501*(x2-x1),y1+0.501*(y2-y1)), arrowstyle=style, color='black')
-                                    ax.add_patch(arrow)
-                
-                else:
-                    pass
-                    # print("There's a NaN value in line\nIRRRE %s\nIRRRI %s"%(df_line.loc[i, 'IRRRE'], df_line.loc[i, 'IRRRI']))
+                        l, = ax.plot([x1,x2], [y1,y2], color = 'orange', linestyle=(0, (1, 1)), solid_capstyle='round', solid_joinstyle='round', 
+                                    linewidth = 3, zorder=1)
+                        #save line information
+                        lines_H2_Thirdnations.append(l)
+            
+            #Plot tran lines either for H2 or Electricity, options such as linear plot or cluster are available look the begining            
+            save_lines = []
+            if lines in ['UtilizationYear','UtilizationTime']:
+                line_max_value = df_line['Capacity'].max() # Find maximum value useful for linear and logarithmic scale
+            else :
+                line_max_value = df_line['Value'].max() # Find maximum value useful for linear and logarithmic scale
+            for i,row in df_line.iterrows(): 
+                y1 = df_line.loc[i,'LatExp']
+                x1 =  df_line.loc[i,'LonExp']
+                y2 = df_line.loc[i,'LatImp']
+                x2 = df_line.loc[i,'LonImp']
+                if lines in  ['UtilizationYear','UtilizationTime']:
+                    cap = df_line.loc[i,'Capacity']
+                else :
+                    cap = df_line.loc[i,'Value']
                     
-                # Add labels to lines   
-                if line_label_show & (xlim[0] <= df_line.loc[i,'LonMid'] <= xlim[1]) & (ylim[0] <= df_line.loc[i,'LatMid'] <= ylim[1]) :
-                    if df_line.loc[i,'Value'] >= line_label_min and df_line.loc[i,'Value'] >= line_show_min:
+                # Condition on coordinates
+                if ((xlim[0] <= x1 <= xlim[1]) & (ylim[0] <= y1 <= ylim[1])) or ((xlim[0] <= x2 <= xlim[1]) & (ylim[0] <= y2 <= ylim[1])) :
+                    if not(np.isnan(cap)) : # Print an error message, if capacity is a NaN value
+                        if cap >= line_show_min : # Only plot if big enough
+                            if line_width_cat == 'cluster':
+                                nearest, idx = find_nearest(line_cluster_values, cap) 
+                                width = line_cluster_widths[idx]
+                            elif line_width_cat == 'linear':
+                                width = linear_interpolation(cap, line_max_value, line_width_max, line_width_min)
+                            elif line_width_cat == 'log':
+                                width = log_interpolation(cap, line_max_value, line_width_max, line_width_min)
+                                
+                            # Colors if Congestion is plotted
                             if lines in ['UtilizationYear','UtilizationTime']:
-                                label = "{:.{}f}%".format(df_line.loc[i,'Value'], 0)
+                                colormap = plt.cm.Reds
+                                line_final_color = colormap(df_line.loc[i,'Value']/100)
                             else :
-                                label = "{:.{}f}".format(df_line.loc[i,'Value'], line_label_decimals)
-                            plt.annotate(label, # this is the value which we want to label (text)
-                            (df_line.loc[i,'LonMid'],df_line.loc[i,'LatMid']), # x and y is the points location where we have to label
-                            textcoords="offset points",
-                            xytext=(0,-4), # this for the distance between the points
-                            # and the text label
-                            ha='center',
-                            fontsize = line_label_fontsize,
-                            color = line_label_color,
-                            )
+                                line_final_color = line_color
+
+                            # Plot the lines
+                            l, = ax.plot([x1,x2], [y1,y2], color = line_final_color, linewidth = width, solid_capstyle='round', solid_joinstyle='round', zorder=1, alpha=line_opacity)
+                            save_lines.append(l)
+                            
+                            # Plot the arrows on the flow
+                            if line_flow_show :
+                                if lines in ["FlowTime", "FlowYear", "UtilizationYear", "UtilizationTime"]:
+                                    if df_line.loc[i,'Value'] >= line_show_min:
+                                        #Choose arrow style
+                                        style = ArrowStyle('Fancy', head_length=4, head_width=4, tail_width=0.1)
+                                        # Draw arrow
+                                        arrow = FancyArrowPatch(posA=(x1+0.5*(x2-x1),y1+0.5*(y2-y1)), posB=(x1+0.501*(x2-x1),y1+0.501*(y2-y1)), arrowstyle=style, color='black')
+                                        ax.add_patch(arrow)
+                    
+                    else:
+                        pass
+                        # print("There's a NaN value in line\nIRRRE %s\nIRRRI %s"%(df_line.loc[i, 'IRRRE'], df_line.loc[i, 'IRRRI']))
+                        
+                    # Add labels to lines   
+                    if line_label_show & (xlim[0] <= df_line.loc[i,'LonMid'] <= xlim[1]) & (ylim[0] <= df_line.loc[i,'LatMid'] <= ylim[1]) :
+                        if df_line.loc[i,'Value'] >= line_label_min and df_line.loc[i,'Value'] >= line_show_min:
+                                if lines in ['UtilizationYear','UtilizationTime']:
+                                    label = "{:.{}f}%".format(df_line.loc[i,'Value'], 0)
+                                else :
+                                    label = "{:.{}f}".format(df_line.loc[i,'Value'], line_label_decimals)
+                                plt.annotate(label, # this is the value which we want to label (text)
+                                (df_line.loc[i,'LonMid'],df_line.loc[i,'LatMid']), # x and y is the points location where we have to label
+                                textcoords="offset points",
+                                xytext=(0,-4), # this for the distance between the points
+                                # and the text label
+                                ha='center',
+                                fontsize = line_label_fontsize,
+                                color = line_label_color,
+                                )
                         
         
         ### 3.4 Adding Generation
         
-        if generation_show:
+        if generation != None:
             pies = []
             
             # Calculate the sum of the values by region and find the maximum value
             df_slack_generation_sum = pd.DataFrame(df_slack_generation.groupby(['RRR'])['Value'].sum().reset_index())
             pie_max_value = df_slack_generation_sum['Value'].max()
-            pie_radius_constant = pie_max_value/pie_radius_max
             
             for r in RRRs: # Find idx of the region
                 idx = df_slack_generation['RRR'] == r
@@ -1220,17 +1329,12 @@ def plot_map(path_to_result: str,
                     CAPSUM = df_slack_generation.loc[idx, 'Value'].sum() # Sum of capacities in the region for clustering
                     if CAPSUM > pie_show_min: # Only plot if big enough
                         if pie_radius_cat == 'cluster':
-                            nearest = find_nearest(pie_cluster_groups, CAPSUM) 
-                            radius = np.array(pie_cluster_radius)[pie_cluster_groups == nearest]
-                            radius = radius[0]
+                            nearest, id = find_nearest(pie_cluster_values, CAPSUM) 
+                            radius = pie_cluster_radius[id]
                         elif pie_radius_cat == 'linear':
-                            radius = CAPSUM/pie_radius_constant
-                            if radius < pie_radius_min :
-                                radius = pie_radius_min
+                            radius = linear_interpolation(CAPSUM, pie_max_value, pie_radius_max, pie_radius_min)
                         elif pie_radius_cat == 'log':
-                            normalized_cap = (CAPSUM-0)/(pie_max_value-0)
-                            log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                            radius = pie_radius_min + log_scaled * (pie_radius_max - pie_radius_min)
+                            radius = log_interpolation(CAPSUM, pie_max_value, pie_radius_max, pie_radius_min)
 
                         if generation_var == 'TECH_TYPE':
                             colors_df = [generation_tech_color.get(tech, 'gray') for tech in df_slack_generation['TECH_TYPE'][idx]]
@@ -1252,33 +1356,81 @@ def plot_map(path_to_result: str,
             line_unit = 'TWh'
         elif lines == 'FlowTime':
             line_unit = 'GWh'
+            
+        if generation == 'Capacity':
+            generation_unit = 'GW'
+        elif generation == 'Production' :
+            generation_unit = 'TWh' 
+        elif generation == 'ProductionTime':
+            generation_unit = 'GWh'
         
         if legend_show and choosen_map_coordinates == 'EU' :         
             
             ### 3.5.1 Legend with pies
             
-            if generation_show:
-                # Pie legend
-                scatter_handles = []
-                # To plot radius with scatter, we need to convert the radius to pixels and then to point
-                for i in range(len(pie_cluster_groups)):
-                    scatter = ax.scatter([], [], s=((pie_cluster_radius[i] * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
-                    scatter_handles.append(scatter)
-
-                if generation == 'Capacity':
-                    legend_labels = ['{} GW'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
-                elif generation == 'Production':
-                    legend_labels = ['{} TWh'.format(pie_cluster_groups[i]) for i in range(len(pie_cluster_groups))]
+            if generation != None:
+                ### Pie legend
                 
-                # Legend with pies
-                first_legend = ax.legend(scatter_handles, legend_labels, 
-                                        scatterpoints=1,
-                                        loc='upper left',
-                                        ncol=4,
-                                        fontsize=12,
-                                        frameon=False, bbox_to_anchor=(0, 0.99))
-                ax.add_artist(first_legend)  
+                scatter_handles = []
+                legend_labels = []
+                if pie_legend_cluster_values == [] and pie_radius_cat != 'cluster' : # If the user has not input any legend values
+                    # If they do not exist, create the legend clusters
+                    pie_legend_cluster_values = []
+                    pie_legend_clusters_radius = []
+                    # Stop the loop if idx is already at 0
+                    stop_loop = False
+                    for i in range(4):
+                        if i == 0 : # On the first round, find the nearest value to the maximum
+                            pie_legend_value, pie_legend_idx = find_nearest(pie_legend_values, pie_max_value)
+                        else:
+                            if pie_legend_idx != 0 :
+                                pie_legend_value, pie_legend_idx = find_nearest(pie_legend_values, pie_legend_value/2)
+                            else :
+                                stop_loop = True
+                        if stop_loop == False :
+                            # Find the correct width for the line
+                            if pie_radius_cat == 'linear':
+                                pie_legend_radius = linear_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                            elif pie_radius_cat == 'log':
+                                pie_legend_radius = log_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                            # Append the values to the lists
+                            pie_legend_cluster_values = [pie_legend_value] + pie_legend_cluster_values
+                            pie_legend_clusters_radius = [pie_legend_radius] + pie_legend_clusters_radius
+                            # The patch
+                            scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                            scatter_handles = [scatter] + scatter_handles
+                            # The text
+                            legend_labels = ['{} {}'.format(pie_legend_value, generation_unit)] + legend_labels
+                    # Add the legend
+                    if len(pie_legend_clusters_radius) > 1:
+                        first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                        ax.add_artist(first_legend)  
+                elif pie_radius_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
+                    for i in range(len(pie_cluster_values)) :
+                        pie_legend_value = pie_cluster_values[i]
+                        pie_legend_radius = pie_cluster_radius[i]
+                        scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                        scatter_handles.append(scatter)
+                        legend_labels.append('{} {}'.format(pie_legend_value, generation_unit))
+                    first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                    ax.add_artist(first_legend)   
+                else : # If the user has input some legend values
+                    pie_legend_clusters_radius = []
+                    for i in range(len(pie_legend_cluster_values)) :
+                        pie_legend_value = pie_legend_cluster_values[i]
+                        # Find the correct width for the line
+                        if pie_radius_cat == 'linear':
+                            pie_legend_radius = linear_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                        elif pie_radius_cat == 'log':
+                            pie_legend_radius = log_interpolation(pie_legend_value, pie_max_value, pie_radius_max, pie_radius_min)
+                        pie_legend_clusters_radius = [pie_legend_radius] + pie_legend_clusters_radius
+                        scatter = ax.scatter([], [], s=((pie_legend_radius * ax.get_window_extent().width / (xlim[1] - xlim[0])) * 72 / fig.dpi) ** 2, facecolor='grey', edgecolor='grey')
+                        scatter_handles.append(scatter)
+                        legend_labels.append('{} {}'.format(pie_legend_value, generation_unit))
+                    first_legend = ax.legend(scatter_handles, legend_labels, scatterpoints=1, loc='upper left', ncol=4, fontsize=12, frameon=False, bbox_to_anchor=(0, 0.99))
+                    ax.add_artist(first_legend)   
 
+                ### Tech legend
                 # Get the bounding box of the first legend
                 bbox_first_legend = first_legend.get_window_extent().transformed(ax.transAxes.inverted())
                 
@@ -1303,39 +1455,72 @@ def plot_map(path_to_result: str,
             
             ### 3.5.2 Legend with lines
             
-            # Get the bounding box of the first legend
-            try :
-                bbox_second_legend = second_legend.get_window_extent().transformed(ax.transAxes.inverted())
-                pos_line = (bbox_second_legend.x0, bbox_second_legend.y0)  # Adjust the vertical position as needed
-            except :
-                pos_line = (0, 1)
-                
-            if commodity == 'Electricity':
-                subs = 'el'
-            elif commodity == 'Hydrogen':
-                subs = 'H2'
-            # Create lines for legend
-            lines_legend = []
-            string = []
-            for i in range(len(line_cluster_groups)):
-                # Modify line_cluster_widths for linear and log scale
-                if line_width_cat == 'linear':
-                    line_cluster_widths[i] = line_cluster_groups[i]/line_width_constant
-                    if line_cluster_widths[i] < line_width_min:
-                                line_cluster_widths[i] = line_width_min
-                elif line_width_cat == 'log':
-                    normalized_cap = (line_cluster_groups[i]-0)/(line_max_value-0)
-                    log_scaled = np.log1p(normalized_cap) / np.log1p(1)
-                    width = line_width_min + log_scaled * (line_width_max - line_width_min)
-                    line_cluster_widths[i] = width
-                # The patch
-                lines_legend.append(Line2D([0], [0], linewidth=line_cluster_widths[i],
-                                    color=line_color))
-                # The text
-                ave = line_cluster_groups[i]
-                string.append('%0.1f %s$_\mathrm{%s}$'%(ave, line_unit, subs))
-            ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
-            
+            if lines != None:
+                # Get the bounding box of the first legend
+                try :
+                    bbox_second_legend = second_legend.get_window_extent().transformed(ax.transAxes.inverted())
+                    pos_line = (bbox_second_legend.x0, bbox_second_legend.y0)  # Adjust the vertical position as needed
+                except :
+                    pos_line = (0, 1)
+                    
+                if commodity == 'Electricity':
+                    subs = 'el'
+                elif commodity == 'Hydrogen':
+                    subs = 'H2'
+                    
+                # Create lines for legend
+                lines_legend = []
+                string = []
+                if line_legend_cluster_values == [] and line_width_cat != 'cluster' : # If the user has not input any legend values
+                    # If they do not exist, create the legend clusters
+                    line_legend_cluster_values = []
+                    line_legend_clusters_width = []
+                    # Stop the loop if idx is already at 0
+                    stop_loop = False
+                    for i in range(4):
+                        if i == 0 : # On the first round, find the nearest value to the maximum
+                            line_legend_value, line_legend_idx = find_nearest(line_legend_values, line_max_value)
+                        else:
+                            if line_legend_idx != 0 :
+                                line_legend_value, line_legend_idx = find_nearest(line_legend_values, line_legend_value/2)
+                            else :
+                                stop_loop = True
+                        if stop_loop == False :
+                            # Find the correct width for the line
+                            if line_width_cat == 'linear':
+                                line_legend_width = linear_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                            elif line_width_cat == 'log':
+                                line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                            # Append the values to the lists
+                            line_legend_cluster_values = [line_legend_value] + line_legend_cluster_values
+                            line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
+                            # The patch
+                            lines_legend = [Line2D([0], [0], linewidth=line_legend_width, color=line_color)] + lines_legend
+                            # The text
+                            ave = line_legend_value
+                            string = ['%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs)] + string
+                    # Add the legend
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
+                elif line_width_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
+                    for i in range(len(line_cluster_values)) :
+                        line_legend_value = line_cluster_values[i]
+                        line_legend_width = line_cluster_widths[i]
+                        lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
+                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_value), line_unit, subs))
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
+                else : # If the user has input some legend values
+                    line_legend_clusters_width = []
+                    for i in range(len(line_legend_cluster_values)) :
+                        line_legend_value = line_legend_cluster_values[i]
+                        # Find the correct width for the line
+                        if line_width_cat == 'linear':
+                            line_legend_width = linear_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                        elif line_width_cat == 'log':
+                            line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
+                        line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
+                        lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
+                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_cluster_values[i]), line_unit, subs))
+                    ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
             
         ### 3.6 Limits of graph
         
@@ -1362,14 +1547,15 @@ def plot_map(path_to_result: str,
         
         if selected_background != None:
             # Ticks label
-            bg_upper = int(np.ceil(bg_max))  # Round up 
-            ticks = list(range(0,bg_upper,2))
+            bg_lower = np.ceil(background_scale[0] / background_scale_tick) * background_scale_tick
+            bg_upper = np.floor(background_scale[1] / background_scale_tick) * background_scale_tick 
+            ticks = list(np.arange(bg_lower, bg_upper+background_scale_tick, background_scale_tick))
             # Create a new axes for the color bar
             bbox_ax = ax.get_tightbbox()
             bbox_fig = fig.transFigure.inverted().transform(bbox_ax)
             cbar_ax2 = fig.add_axes([bbox_fig[0,0]-0.02, bbox_fig[0,1]+0.01, 0.015, bbox_fig[1,1]-bbox_fig[0,1]-0.02])  # [left, bottom, width, height]
             # Normalize and create a color bar
-            norm = mcolors.Normalize(vmin=0, vmax=bg_max)
+            norm = mcolors.Normalize(vmin=background_scale[0], vmax=background_scale[1])
             cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap'][1]), cax=cbar_ax2)
             cbar2.ax.yaxis.set_label_position('left')
             cbar2.ax.yaxis.set_ticks_position('left')
@@ -1384,17 +1570,43 @@ def plot_map(path_to_result: str,
 
 
         ### 3.7 Graph title
-
-        if lines == 'Capacity':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Transmission Capacity' + f' [{line_unit}]')))
-        elif lines == 'FlowYear':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Transmission Flow' + f' [{line_unit}]')))
-        elif lines == 'FlowTime':
-            ax.set_title(' - '.join((scenario, str(year), S, T, commodity + ' Transmission Flow' + f' [{line_unit}]')))
-        elif lines == 'UtilizationYear':
-            ax.set_title(' - '.join((scenario, str(year), commodity + ' Line Utilization')))
-        elif lines == 'UtilizationTime':
-            ax.set_title(' - '.join((scenario, str(year), S, T, commodity + ' Line Congestion')))
+        
+        if title_show :
+            title_list = []
+            # Add scenario name
+            title_list.append(scenario)
+            # Add year
+            title_list.append(str(year))
+            # Add season and time step if needed
+            if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime':
+                title_list.append(S)
+                title_list.append(T)
+            # Add lines information
+            if lines != None :
+                lines_title = commodity
+                if lines == 'Capacity':
+                    lines_title += ' Transmission Capacity' + f' [{line_unit}]'
+                elif lines == 'FlowYear':
+                    lines_title += ' Transmission Flow' + f' [{line_unit}]'
+                elif lines == 'FlowTime':
+                    lines_title += ' Transmission Flow' + f' [{line_unit}]'
+                elif lines == 'UtilizationYear':
+                    lines_title += ' Line Utilization'
+                elif lines == 'UtilizationTime':
+                    lines_title += ' Line Utilization'
+                title_list.append(lines_title)
+            
+            if generation != None:
+                generation_title = generation_commodity
+                if generation == 'Capacity':
+                    generation_title += ' Generation Capacity' + f' [{generation_unit}]'
+                elif generation == 'Production':
+                    generation_title += ' Generation Production' + f' [{generation_unit}]'
+                elif generation == 'ProductionTime':
+                    generation_title += ' Generation Production' + f' [{generation_unit}]'
+                title_list.append(generation_title)
+                
+            ax.set_title(' - '.join(title_list))
             
             
         ### 3.8 Save the figure
