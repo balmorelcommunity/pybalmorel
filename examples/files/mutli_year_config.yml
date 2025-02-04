@@ -1,19 +1,19 @@
 corres_results:
   wind:
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Onshore
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Offshore_floating
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Future_Offshore_bottom_fixed
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/Existing_ERA5_GWA2
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\Future_Onshore
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\Future_Offshore_floating
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\Future_Offshore_bottom_fixed
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\Existing_ERA5_GWA2
   solar:
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Rooftop
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Utility_scale_no_tracking
-    - /groups/INP/BalmorelDB_2024_Raw/Corres_runs/PV_Utility_scale_tracking
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\PV_Rooftop
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\PV_Utility_scale_no_tracking
+    - OneDrivet\Balmorel_new_VRE_data\CorRES_runs\Timeseries_results\PV_Utility_scale_tracking
 
-VRE_tech_costs: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/VRE_Tech_Costs_EUR2015.xlsx
-Existing_wind_cap: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/Existing_wind_capacities.xlsx
-Existing_solar_cap: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/Existing_solar_capacities.xlsx
-VRE_potentials: /groups/INP/BalmorelDB_2024_Raw/multiweather_other_inputs/VRE_Potentials.xlsx
-demand_model_results: /groups/INP/BalmorelDB_2024_Raw/Demand_model_Bal_ready_csv
+VRE_tech_costs: OneDrivet\Balmorel_new_VRE_data\multiweather_other_inputs\VRE_Tech_Costs_EUR2015.xlsx
+Existing_wind_cap: OneDrivet\Balmorel_new_VRE_data\multiweather_other_inputs\Existing_wind_capacities.xlsx
+Existing_solar_cap: OneDrivet\Balmorel_new_VRE_data\multiweather_other_inputs\Existing_solar_capacities.xlsx
+VRE_potentials: OneDrivet\Balmorel_new_VRE_data\multiweather_other_inputs\VRE_Potentials.xlsx
+demand_model_results: OneDrivet\Balmorel_new_VRE_data\multiweather_other_inputs\Demand_model_Bal_ready_csv
 
 ###########################################################################################################################    
 
