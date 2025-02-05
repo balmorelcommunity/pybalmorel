@@ -234,8 +234,12 @@ class MainResults:
                     **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
                     **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
                 Background options :
+                    **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+                    **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
                     **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
                     **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                    **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+                    **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
             Colors additional options:
                 **background_color (str, optional): Background color of the map. Defaults to 'white'.
                 **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -244,11 +248,14 @@ class MainResults:
                 **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
                 **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
                 **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+                **background_colormap (str, optional): Personalized background colormap on the countries.
+                **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
             Geography additional options:
                 **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
                 **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
                 **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
                 **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+                **countries_background_path = Path to the csv file containing the personnalized background of the countries
 
         Returns:
             Tuple[Figure, Axes]: The figure and axes objects of the plot
