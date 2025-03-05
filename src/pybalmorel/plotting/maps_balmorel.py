@@ -216,7 +216,7 @@ def plot_map(path_to_result: str,
         # If the user wants personalized background with csv input
         countries_background_path = kwargs.get('countries_background_path', '')
         if countries_background_path != '' :
-            background_dict['Custom'] = {'type': 'simpletransfo', 'colormap': 'YlOrRd', 'unit': 'Custom', 'basescale': 'minmax'}
+            background_dict['Custom'] = {'type': 'simpletransfo', 'colormap': 'Spectral_r', 'unit': 'Custom', 'basescale': 'minmax'}
             background = 'Custom'
             selected_background = background_dict[background].copy()
             df_background = pd.read_csv(os.path.abspath(os.path.join(wk_dir, countries_background_path)))
