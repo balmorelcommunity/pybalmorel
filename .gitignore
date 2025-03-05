@@ -7,7 +7,6 @@ __pycache__
 output
 config
 build
-examples/files/background_csv/*
 
 # This one is necessary to do tests
 !tests/output/.keepoutputfolder
