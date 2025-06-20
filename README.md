@@ -11,3 +11,11 @@ Check out the [documentation](https://balmorelcommunity.github.io/pybalmorel) fo
 - [Pre-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PreProcessing.ipynb)
 - [Execution](https://github.com/Mathias157/pybalmorel/blob/master/examples/Execution.ipynb)
 - [Post-Processing](https://github.com/Mathias157/pybalmorel/blob/master/examples/PostProcessing.ipynb)
+
+## Developer Notes
+
+This package is distributed to [PyPI](https://pypi.org), and the distribution of a new version requires the following steps:
+1. Update the pybalmorel version in pyproject.toml, environment.yaml, docs/conf.py and docs/get_started/installation.md (a find and replace in VS code will do)
+2. Make sure that you have the most recent `build` and `setuptools` packages in your virtual environment and build the new distribution with `python -m build`
+3. Make a user at PyPI.org and obtain a PyPI token.
+4. Make sure that you have the most recent `twine` and `packaging` packages in your virtual envrionment and upload the newly created package in the dist folder with `python -m twine upload dist/pybalmorel-X.Y.Z.tar.gz`

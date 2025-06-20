@@ -103,8 +103,11 @@ class MainResults:
             ws = gams.GamsWorkspace()
             
         for i in range(len(files)):    
-            print(os.path.join(os.path.abspath(paths[i]), files[i]))
-            self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
+            print('Loading', os.path.join(os.path.abspath(paths[i]), files[i]))
+            try:
+                self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
+            except gams.control.workspace.GamsException as e:
+                raise FileNotFoundError(f'\nCouldnt add file {files[i]}!\nBeware of æ,ø,å,ö,ü,ä or other non-english letters in the folders of your absolute path: {os.path.abspath(paths[i])}.\nThe GAMS API requires an absolute path with no non-english letters.')
      
     # Getting a certain result
     def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
