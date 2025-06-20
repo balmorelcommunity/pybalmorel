@@ -1,0 +1,39 @@
+pybalmorel.plotting.plot_functions
+==================================
+
+.. py:module:: pybalmorel.plotting.plot_functions
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.plot_functions.plot_bar_chart
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_bar_chart(df: pandas.core.frame.DataFrame, filter: dict, series: Union[str, list], categories: Union[str, list], title: tuple, size: tuple, xaxis: tuple, yaxis: tuple, legend: tuple, series_order: dict, categories_order: dict, save: bool, namefile: str, plot_style: str = 'light')
+
+   Plotting function for the bar chart
+
+   Args:
+       df (DataFrame): Dataframe with the result
+       filter (dict): Dictionary with the filters to apply
+       table (str): Table selected in the result file
+       series (Union[str, list]): Columns used as series
+       categories (Union[str, list]): Columns used as categories
+       title (tuple): Plot title and size
+       size (tuple): Size of the plot
+       xaxis (tuple): Options for the x axis
+       yaxis (tuple): Options for the y axis
+       legend (tuple): Options for the legend
+       series_order (dict): Order of the index
+       categories_order (dict): Order of the stacking
+       save (bool): Do the plot have to be saved
+       namefile (str): Name of the saved file
+       plot_style (str): Style of the plot, light or dark. Defaults to light
+
+

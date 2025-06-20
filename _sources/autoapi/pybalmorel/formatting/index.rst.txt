@@ -1,0 +1,47 @@
+pybalmorel.formatting
+=====================
+
+.. py:module:: pybalmorel.formatting
+
+.. autoapi-nested-parse::
+
+   Created on 03.06.2024
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.formatting.tech_colours
+   pybalmorel.formatting.fuel_colours
+   pybalmorel.formatting.balmorel_colours
+   pybalmorel.formatting.mberos_colours
+   pybalmorel.formatting.balmorel_symbol_columns
+   pybalmorel.formatting.balmorel_mainresults_symbol_columns
+   pybalmorel.formatting.optiflow_symbol_columns
+   pybalmorel.formatting.optiflow_mainresults_symbol_columns
+
+
+Module Contents
+---------------
+
+.. py:data:: tech_colours
+
+.. py:data:: fuel_colours
+
+.. py:data:: balmorel_colours
+
+.. py:data:: mberos_colours
+
+.. py:data:: balmorel_symbol_columns
+
+.. py:data:: balmorel_mainresults_symbol_columns
+
+.. py:data:: optiflow_symbol_columns
+
+.. py:data:: optiflow_mainresults_symbol_columns
+
