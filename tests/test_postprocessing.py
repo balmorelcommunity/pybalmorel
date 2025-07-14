@@ -19,21 +19,24 @@ import os
 ### ------------------------------- ###
 
 def test_MainResults():
+    # GAMS system directory - If not in path define here!
+    gams_system_directory = None
+    
     # Loading one scenario
-    res = MainResults(files='MainResults_Example1.gdx', paths='examples/files')
+    res = MainResults(files='MainResults_Example1.gdx', paths='examples/files', system_directory=gams_system_directory)
 
     df = res.get_result('PRO_YCRAGF')
     
     assert list(df.columns) == ['Scenario', 'Year', 'Country', 'Region', 'Area', 'Generation', 'Fuel', 'Commodity', 'Technology', 'Unit', 'Value']
     
     # Loading several scenarios, with automatic naming
-    res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='examples/files')
+    res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='examples/files', system_directory=gams_system_directory)
 
     df = res.get_result('G_CAP_YCRAF')
     assert list(df.Scenario.unique()) == ['Example1', 'Example2']
     
     # Loading several scenarios, and naming them
-    res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='examples/files', scenario_names=['SC1', 'SC2'])
+    res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx'], paths='examples/files', scenario_names=['SC1', 'SC2'], system_directory=gams_system_directory)
 
     df = res.get_result('G_CAP_YCRAF')
     assert list(df.Scenario.unique()) == ['SC1', 'SC2']
@@ -54,8 +57,8 @@ def test_MainResults():
     assert 'electricity_profile.png' in os.listdir('tests/output') and 'heat_profile.png' in os.listdir('tests/output') and 'hydrogen_profile.png' in os.listdir('tests/output')
     
     # Test map
-    fig, ax = res.plot_map('SC2', 'elecTriciTY', 2050)
+    fig, ax = res.plot_map('SC2', 2050, 'elecTriciTY')
     fig.savefig('tests/output/electricity_map.png') 
-    fig, ax = res.plot_map('SC2', 'HYDROGEN', 2050) 
+    fig, ax = res.plot_map('SC2', 2050, 'HYDROGEN') 
     fig.savefig('tests/output/hydrogen_map.png') 
     assert 'electricity_map.png' in os.listdir('tests/output') and 'hydrogen_map.png' in os.listdir('tests/output')

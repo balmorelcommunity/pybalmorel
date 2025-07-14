@@ -20,7 +20,10 @@ import os
 ### ------------------------------- ###
 
 def test_symbol_to_df_mainresults():
-    ws = gams.GamsWorkspace()
+    # GAMS system directory - if not in path define here!
+    gams_system_directory = None
+    
+    ws = gams.GamsWorkspace(system_directory=gams_system_directory)
     db = ws.add_database_from_gdx(os.path.abspath('examples/files/MainResults_Example1.gdx'))
     
     f = symbol_to_df(db, 'EL_PRICE_YCRST')
@@ -30,7 +33,10 @@ def test_symbol_to_df_mainresults():
 # test_symbol_to_df_optiflow()
 
 def test_symbol_to_df_all_endofmodel():
-    ws = gams.GamsWorkspace()
+    # GAMS system directory - if not in path define here!
+    gams_system_directory = None
+    
+    ws = gams.GamsWorkspace(system_directory=gams_system_directory)
     db = ws.add_database_from_gdx(os.path.abspath('examples/files/all_endofmodel.gdx'))
     
     # A parameter

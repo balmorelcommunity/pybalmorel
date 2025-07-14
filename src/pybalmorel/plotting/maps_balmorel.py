@@ -33,15 +33,15 @@ import cartopy.crs as ccrs
 def plot_map(path_to_result: str, 
              scenario: str, 
              year: int,
-             commodity: str = None,
-             lines: str = None, 
-             generation: str = None,
-             background : str = None,
+             commodity: str | None = None,
+             lines: str | None = None, 
+             generation: str | None = None,
+             background : str | None = None,
              save_fig: bool = False,
-             path_to_geofile: str = None,
+             path_to_geofile: str | None = None,
              geo_file_region_column: str = 'id',
-             system_directory: str = None,
-             **kwargs) -> Tuple[Figure, Axes]:
+             system_directory: str | None = None,
+             **kwargs) -> Tuple[Figure, Axes] | None:
     
     """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
 
@@ -81,6 +81,7 @@ def plot_map(path_to_result: str,
                 **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
                 **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
                 **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                **line_value_max (float, optional): Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width.
                 **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
                 **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                 **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
@@ -94,14 +95,19 @@ def plot_map(path_to_result: str,
                 **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
                 **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
                 **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
-                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
-                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                **pie_radius_min (float, optional): Minimum radius of pie, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                **pie_radius_max (float, optional): Maximum radius of pie, used if cat is linear or log. Defaults to 1.4. Value in data unit.
                 **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
                 **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
-                **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+                **pie_value_max (float, optional): Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius.
+                **pie_legend_cluster_values (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
             Background options :
+                **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+                **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
                 **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
                 **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+                **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
         Colors additional options:
             **background_color (str, optional): Background color of the map. Defaults to 'white'.
             **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -110,11 +116,14 @@ def plot_map(path_to_result: str,
             **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
             **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
             **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+            **background_colormap (str, optional): Personalized background colormap on the countries.
+            **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
         Geography additional options:
             **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
             **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
             **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
             **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+            **countries_background_path = Path to the csv file containing the personnalized background of the countries
 
     Returns:
         Tuple[Figure, Axes]: The figure and axes objects of the plot
@@ -171,7 +180,7 @@ def plot_map(path_to_result: str,
         
         ### Structural options
         if commodity != None:
-            commodity = commodity.capitalize()
+            commodity = commodity.lower().capitalize()
         if commodity not in [None, 'Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
             raise ValueError('commodity must be either "Electricity" or "Hydrogen"')
         if lines not in [None, 'Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
@@ -197,15 +206,22 @@ def plot_map(path_to_result: str,
         generation_exclude_H2Storage = kwargs.get('generation_exclude_H2Storage', True)  #do not plot the capacities of the H2 storage
         generation_exclude_ElectricStorage = kwargs.get('generation_exclude_ElectricStorage', True)  #do not plot the production of Electric storag, only works with Show pie production
         generation_exclude_Geothermal = kwargs.get('generation_exclude_Geothermal', True) #do not plot the production of Geothermal, only works with Show pie production -> Do we have ?
-        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': (plt.cm.Blues,'Blues'), 'unit': 'TWh', 'basescale': '0max'},
-                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': (plt.cm.Oranges,'Oranges'), 'unit': 'TWh', 'basescale': '0max'},
-                           'Elec Price': {'type': 'simpletransfo', 'var': ['EL_PRICE_YCR', 'EL_PRICE_YCRST'], 'colormap': (plt.cm.RdYlGn_r, 'RdYlGn_r'), 'unit': 'Money/MWh', 'basescale': 'minmax'},
-                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'},
-                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : (plt.cm.RdYlGn, 'RdYlGn'), 'unit': 'TWh', 'basescale': '0max'}} # Dictionary of background options
+        background_dict = {'H2 Storage': {'type': 'simpletransfo','var': 'G_STO_YCRAF', 'filters': [('COMMODITY','HYDROGEN')], 'transformation': [1/1000], 'colormap': 'Blues', 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Storage': {'type': 'simpletransfo', 'var': 'G_STO_YCRAF', 'filters': [('COMMODITY','ELECTRICITY')], 'transformation': [1/1000], 'colormap': 'Oranges', 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Price': {'type': 'simpletransfo', 'var': ['EL_PRICE_YCR', 'EL_PRICE_YCRST'], 'colormap': 'RdYlGn_r', 'unit': 'Money/MWh', 'basescale': 'minmax'},
+                           'H2 Net Export' : {'type': 'netexport', 'var': 'XH2_FLOW_YCR', 'colormap' : 'RdYlGn', 'unit': 'TWh', 'basescale': '0max'},
+                           'Elec Net Export' : {'type': 'netexport', 'var': 'X_FLOW_YCR',  'colormap' : 'RdYlGn', 'unit': 'TWh', 'basescale': '0max'}} # Dictionary of background options
         if background not in background_dict.keys() and background != None : # Check that it's a possible type of background
             print('background set to None')
             background = None
         selected_background = background_dict[background].copy() if background != None else None
+        # If the user wants personalized background with csv input
+        countries_background_path = kwargs.get('countries_background_path', '')
+        if countries_background_path != '' :
+            background_dict['Custom'] = {'type': 'simpletransfo', 'colormap': 'Spectral_r', 'unit': 'Custom', 'basescale': 'minmax'}
+            background = 'Custom'
+            selected_background = background_dict[background].copy()
+            df_background = pd.read_csv(os.path.abspath(os.path.join(wk_dir, countries_background_path)))
         
         # Special case of geofile input
         if path_to_geofile != None:
@@ -253,6 +269,7 @@ def plot_map(path_to_result: str,
         if line_width_cat == 'cluster' and line_cluster_values == []: # If the user did not input the cluster values, notify it
             raise ValueError('You have selected the cluster category for the line width, but you have not specified the cluster values.')
         line_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]
+        line_value_max = kwargs.get('line_value_max', None) # Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width
         line_legend_cluster_values = kwargs.get('line_legend_cluster_values', []) # Values of the clusters in the legend
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
         line_label_show = kwargs.get('line_label_show', False)  # Showing or not the value of the lines
@@ -289,16 +306,30 @@ def plot_map(path_to_result: str,
             if pie_radius_cat == 'cluster' and pie_cluster_values == []: # If the user did not input the cluster values, notify it
                 raise ValueError('You have selected the cluster category for the pie radius, but you have not specified the cluster values.')
             pie_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000]
+            pie_value_max = kwargs.get('pie_value_max', None) # Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius
             pie_legend_cluster_values = kwargs.get('pie_legend_cluster_values', []) # Values of the clusters in the legend
-        # generation options
+        # background options
+        if background != None:
+            background_name = kwargs.get('background_name', '') # Name of the background (mostly useful for Custom)
+            background = background_name if background_name != '' else background
+            background_unit = kwargs.get('background_unit', '') # Unit of the background (mostly useful for Custom)
+            selected_background['unit'] = background_unit if background_unit != '' else selected_background['unit']
+        else : 
+            background_name = None
         background_scale = kwargs.get('background_scale', [0, 0]) # Scale used for the background coloring
         background_scale_tick = kwargs.get('background_scale_tick', 2) # A tick every x units in the background legend
+        background_label_show = kwargs.get('background_label_show', False) # Showing or not the background label on the countries
+        background_label_fontsize = kwargs.get('background_label_fontsize', 10) # Font size of the background labels
 
         # Colors options
         # Map colors options 
         background_color = kwargs.get('background_color', 'white') #Background color of the map
         regions_ext_color = kwargs.get('regions_ext_color', '#d3d3d3') #Color of regions outside the model
         regions_model_color = kwargs.get('regions_model_color', 'linen') #Color of regions inside the model
+        # If the person wants personnalized colors on countries
+        countries_colors_path = kwargs.get('countries_colors_path', '') 
+        if countries_colors_path != '' :
+            df_countries_colors = pd.read_csv(os.path.abspath(os.path.join(wk_dir, countries_colors_path)))
         # Line colors options
         if commodity == 'Electricity':
             line_color = kwargs.get('line_color', 'green') # Color of electrical network
@@ -348,7 +379,12 @@ def plot_map(path_to_result: str,
         'LIGNITE': '#2b1d1d',
         'HYDROGEN': '#dbdcec',
         }
-        
+        # Background color options
+        if background != None:
+            background_colormap = kwargs.get('background_colormap', '') # Background colormap on the countries
+            selected_background['colormap'] = background_colormap if background_colormap != '' else selected_background['colormap']
+        background_label_color = kwargs.get('background_label_color', 'black') # Color of the background labels
+            
         # Options to modify later
         market = 'Investment' #Choose from ['Balancing', 'DayAhead', 'FullYear', 'Investment'] -> Figure out why different market ?
         YEAR = '' #Add year to read file name (e.g. '2025', '2035', 'full') -> 
@@ -462,12 +498,9 @@ def plot_map(path_to_result: str,
         # Load bypass, hydrogen import coordinates and countries colors files
         bypass_path = kwargs.get('bypass_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/bypass_lines.csv'))) # Coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions
         hydrogen_third_nations_path = kwargs.get('hydrogen_third_nations_path', os.path.abspath(os.path.join(wk_dir, '../geofiles/hydrogen_third_nations.csv'))) # Coordinates of h2 import lines from third nations
-        countries_colors_path = kwargs.get('countries_colors_path', '') # If the person wants personnalized colors on countries
         df_bypass = pd.read_csv(bypass_path) 
         if commodity == 'Hydrogen':
             df_hydrogen_lines_outside = pd.read_csv(hydrogen_third_nations_path) 
-        if countries_colors_path != '' :
-            df_countries_colors = pd.read_csv(os.path.abspath(os.path.join(wk_dir, countries_colors_path)))
 
         ### 1.4 Read run-specific files
         ## 1.4.1 Function: reading gdx-files -> Don't understand the interest of creating those columns
@@ -536,7 +569,7 @@ def plot_map(path_to_result: str,
         if generation != None:
             if generation.lower() == 'productiontime':
                 var_list += ['PRO_YCRAGFST']
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             if type(selected_background['var']) == list :
                 if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
                     background_var = selected_background['var'][1]
@@ -609,7 +642,7 @@ def plot_map(path_to_result: str,
                 df_generation = df_generation[df_generation['COMMODITY'] == 'HYDROGEN']
             
         # Background data
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             df_background = all_df[background_var]
                 
         ## 1.4.4 - Select relevant dataframe and rename columns
@@ -642,7 +675,7 @@ def plot_map(path_to_result: str,
         if generation != None:
             df_generation.Value=df_generation.Value.replace('Eps', 0)
             df_generation.Value=pd.to_numeric(df_generation.Value)
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             df_background.Value=df_background.Value.replace('Eps', 0)
             df_background.Value=pd.to_numeric(df_background.Value)
 
@@ -659,7 +692,7 @@ def plot_map(path_to_result: str,
         if generation != None:
             df_generation['Year'] = df_generation['Year'].astype(int)
             df_generation = df_generation.loc[df_generation['Year'] == year].reset_index(drop = True)
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             df_background['Year'] = df_background['Year'].astype(int)
             df_background = df_background.loc[df_background['Year'] == year].reset_index(drop = True)
         
@@ -683,7 +716,7 @@ def plot_map(path_to_result: str,
                 df_generation = df_generation.loc[df_generation['VARIABLE_CATEGORY'] == 'ENDOGENOUS']
             elif exo_end == 'Exogenous' :
                 df_generation = df_generation.loc[df_generation['VARIABLE_CATEGORY'] == 'EXOGENOUS']
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             if exo_end == 'Both' :
                 col_keep = list(np.delete(np.array(df_background.columns),np.where((df_background.columns == 'VARIABLE_CATEGORY') | (df_background.columns == 'Value')) ))
                 df_background = pd.DataFrame(df_background.groupby(col_keep)['Value'].sum().reset_index() )
@@ -721,7 +754,7 @@ def plot_map(path_to_result: str,
             df_generation = df_generation.reset_index(drop = True)
             if len(df_generation) == 0:
                 raise ValueError('No data for the selected season and time step')
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
             if type(selected_background['var']) == list :
                 if lines in ['FlowTime', 'UtilizationTime'] or generation == 'ProductionTime' :
                     if S == '' :
@@ -1032,7 +1065,8 @@ def plot_map(path_to_result: str,
         
         ### 2.9 Process the background data
         
-        if selected_background != None:
+        if background not in [None, 'Custom', background_name]:
+            # Simple Transfo case
             if selected_background['type'] == 'simpletransfo' :
                 try :
                     # Filter the data
@@ -1050,6 +1084,7 @@ def plot_map(path_to_result: str,
                     pass
                 # Group by region RRR
                 df_background = pd.DataFrame(df_background.groupby(['RRR'])['Value'].sum().reset_index())
+            # Net export case
             elif selected_background['type'] == 'netexport' :
                 # Create a list with all unique elements in df_background["IRRE"] or df_background["IRRI"]
                 unique_RRR = list(set(df_background["IRRRE"]).union(set(df_background["IRRRI"])))
@@ -1060,7 +1095,26 @@ def plot_map(path_to_result: str,
                     net_export = export_value - import_value
                     df_background_netexport = pd.concat([df_background_netexport, pd.DataFrame([{'RRR': rrr, 'Value': net_export}])], ignore_index=True)
                 df_background = df_background_netexport.copy()
-                
+              
+        if background != None :  
+            # Merge the data frame to get the coordinates for each region
+            if path_to_geofile == None : # If the user hasn't define a personalized geofile
+                df_background = pd.merge(df_background, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'inner')
+            else :
+                for i,row in df_background.iterrows():
+                    for j in range(0,len(geo_file)):
+                        if df_background.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
+                            df_background.loc[i,'Lat'] = geo_file.loc[j].geometry.centroid.y       
+                            df_background.loc[i,'Lon'] = geo_file.loc[j].geometry.centroid.x       
+                # If capacities don't have coordinates because the countries are not in the personalized geofile, delete them and add a comment
+                df_background_copy = df_background.copy()
+                for i,row in df_background.iterrows():
+                    if pd.isnull(df_background.loc[i,'Lat']):
+                        df_background_copy = df_background_copy.drop(i)
+                        print('Background in ' + df_background.loc[i,'RRR'] + ' has been deleted because of missing coordinates in the geofile')
+                df_background = df_background_copy
+            # Get the regions having data
+            background_RRR = df_background['RRR'].unique()
             # Deal with the scale of the background
             if background_scale == [0,0]:
                 if selected_background['basescale'] in ['0max', 'minmax']:
@@ -1128,11 +1182,16 @@ def plot_map(path_to_result: str,
         if path_to_geofile == None : # If the user hasn't define a personalized geofile
             for R in layers_in:
                 # Get the color of the country based on the background choice if it exists
-                if selected_background != None: 
+                if background != None: 
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
-                    if len(value) == 0 :
-                        value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                    if len(value) != 0 :
+                        face_color = plt.cm.get_cmap(selected_background['colormap'])((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                    else :
+                        if countries_background_path == '' :
+                            value = np.append(value, 0)
+                            face_color = plt.cm.get_cmap(selected_background['colormap'])((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                        else :
+                            face_color = regions_model_color
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1177,11 +1236,16 @@ def plot_map(path_to_result: str,
                     geo_artist.set_zorder(1)
             # Print this time all countries in the model with right color if needed
             for R in r_in:
-                if selected_background != None: 
+                if background != None: 
                     value = df_background.loc[df_background['RRR'] == R, 'Value'].values
-                    if len(value) == 0 :
-                        value = np.append(value, 0)
-                    face_color = selected_background['colormap'][0]((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                    if len(value) != 0 :
+                        face_color = plt.cm.get_cmap(selected_background['colormap'])((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                    else :
+                        if countries_background_path == '' :
+                            value = np.append(value, 0)
+                            face_color = plt.cm.get_cmap(selected_background['colormap'])((value[0] - background_scale[0]) / (background_scale[1] - background_scale[0]))
+                        else :
+                            face_color = regions_model_color
                 else : 
                     face_color = regions_model_color
                 # Get the personalized color of the country if defined
@@ -1198,6 +1262,23 @@ def plot_map(path_to_result: str,
                     geo_artist.set_zorder(1)
                 except :
                     print("It seems like the region " + R + " id is not defined correctly in the geofile")
+                    
+        # Add labels to countries   
+        if background != None:
+            if background_label_show :
+                for r in background_RRR: # Find idx of the region
+                    Lon = df_background.loc[df_background['RRR']==r, 'Lon'].mean()
+                    Lat = df_background.loc[df_background['RRR']==r, 'Lat'].mean()
+                    if (xlim[0] <= Lon <= xlim[1]) & (ylim[0] <= Lat <= ylim[1]) :
+                        label = "{:.{}f}".format(df_background.loc[df_background['RRR']==r,'Value'].mean(), 0)
+                        plt.annotate(label, # this is the value which we want to label (text)
+                                     (Lon,Lat), # x and y is the points location where we have to label
+                                     textcoords="offset points",
+                                     xytext=(0,-4), # this for the distance between the points and the text label
+                                     ha='center',
+                                     fontsize = background_label_fontsize,
+                                     color = background_label_color,
+                                     zorder=1)
 
 
         ### 3.2 Tools for line width and pie radius interpolation
@@ -1245,6 +1326,8 @@ def plot_map(path_to_result: str,
                 line_max_value = df_line['Capacity'].max() # Find maximum value useful for linear and logarithmic scale
             else :
                 line_max_value = df_line['Value'].max() # Find maximum value useful for linear and logarithmic scale
+            if line_value_max != None:
+                line_max_value = line_value_max
             for i,row in df_line.iterrows(): 
                 y1 = df_line.loc[i,'LatExp']
                 x1 =  df_line.loc[i,'LonExp']
@@ -1318,6 +1401,8 @@ def plot_map(path_to_result: str,
             # Calculate the sum of the values by region and find the maximum value
             df_slack_generation_sum = pd.DataFrame(df_slack_generation.groupby(['RRR'])['Value'].sum().reset_index())
             pie_max_value = df_slack_generation_sum['Value'].max()
+            if pie_value_max != None:
+                pie_max_value = pie_value_max
             
             for r in RRRs: # Find idx of the region
                 idx = df_slack_generation['RRR'] == r
@@ -1543,9 +1628,9 @@ def plot_map(path_to_result: str,
             cbar1.set_label("Line Utilization [%]") # Add label
               
                 
-        ### 3.5.3 Background legend
+        ### 3.5.3 Background label and legend
         
-        if selected_background != None:
+        if background != None:
             # Ticks label
             bg_lower = np.ceil(background_scale[0] / background_scale_tick) * background_scale_tick
             bg_upper = np.floor(background_scale[1] / background_scale_tick) * background_scale_tick 
@@ -1556,7 +1641,7 @@ def plot_map(path_to_result: str,
             cbar_ax2 = fig.add_axes([bbox_fig[0,0]-0.02, bbox_fig[0,1]+0.01, 0.015, bbox_fig[1,1]-bbox_fig[0,1]-0.02])  # [left, bottom, width, height]
             # Normalize and create a color bar
             norm = mcolors.Normalize(vmin=background_scale[0], vmax=background_scale[1])
-            cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap'][1]), cax=cbar_ax2)
+            cbar2 = fig.colorbar(cm.ScalarMappable(norm=norm, cmap=selected_background['colormap']), cax=cbar_ax2)
             cbar2.ax.yaxis.set_label_position('left')
             cbar2.ax.yaxis.set_ticks_position('left')
             cbar2.ax.yaxis.set_ticks(ticks)

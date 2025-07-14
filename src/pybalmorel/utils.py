@@ -20,8 +20,8 @@ preformatted_columns = {
 def create_parameter_columns(df: pd.DataFrame,
                              db: gams.GamsDatabase,
                              symbol: str,
-                             mainresult_symbol_columns: list,
-                             cols: Tuple[list, None]):
+                             mainresult_symbol_columns: dict,
+                             cols: list | None):
     if cols == None:
         try:
             df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
@@ -39,8 +39,8 @@ def create_parameter_columns(df: pd.DataFrame,
 def create_variable_columns(df: pd.DataFrame,
                              db: gams.GamsDatabase,
                              symbol: str,
-                             mainresult_symbol_columns: list,
-                             cols: Tuple[list, None]):
+                             mainresult_symbol_columns: dict,
+                             cols: list | None):
     if cols == None:
         try:
             df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value', 'Marginal', 'Lower', 'Upper', 'Scale']
@@ -58,8 +58,8 @@ def create_variable_columns(df: pd.DataFrame,
 def create_set_columns(df: pd.DataFrame,
                        db: gams.GamsDatabase,
                        symbol: str,
-                       mainresult_symbol_columns: list,
-                       cols: Tuple[list, None]):
+                       mainresult_symbol_columns: dict,
+                       cols: list | None):
     if cols == None:
         try:
             df.columns = mainresult_symbol_columns[symbol]
@@ -76,7 +76,7 @@ def create_set_columns(df: pd.DataFrame,
 
 ### 1.0 Converting a GDX file to a pandas dataframe
 def symbol_to_df(db: gams.GamsDatabase, symbol: str, 
-                 cols: Tuple[list, None] = None, 
+                 cols: list[str] | None = None, 
                  result_type: str = 'balmorel',
                  print_explanatory_text: bool = False):
     """

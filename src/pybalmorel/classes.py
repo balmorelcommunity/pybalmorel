@@ -33,8 +33,8 @@ from .plotting.maps_balmorel import plot_map
 class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
-                 scenario_names: Union[str, list, tuple] = None,
-                 system_directory: str = None,
+                 scenario_names: str | list | tuple | None = None,
+                 system_directory: str | None = None,
                  result_type: str = 'balmorel'):
         """
         Initialises the MainResults class and loads gdx result file(s)
@@ -110,7 +110,7 @@ class MainResults:
                 raise FileNotFoundError(f'\nCouldnt add file {files[i]}!\nBeware of æ,ø,å,ö,ü,ä or other non-english letters in the folders of your absolute path: {os.path.abspath(paths[i])}.\nThe GAMS API requires an absolute path with no non-english letters.')
      
     # Getting a certain result
-    def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
+    def get_result(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
         """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
         Args:
@@ -173,12 +173,12 @@ class MainResults:
     def plot_map(self, 
                  scenario: str, 
                  year: int,
-                 commodity: str = None,
-                 lines: str = None, 
-                 generation: str = None,
-                 background : str = None,
+                 commodity: str | None = None,
+                 lines: str | None = None, 
+                 generation: str | None = None,
+                 background : str | None = None,
                  save_fig: bool = False,
-                 path_to_geofile: str = None,
+                 path_to_geofile: str | None = None,
                  geo_file_region_column: str = 'id',
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
@@ -237,8 +237,12 @@ class MainResults:
                     **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
                     **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
                 Background options :
+                    **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+                    **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
                     **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
                     **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                    **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+                    **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
             Colors additional options:
                 **background_color (str, optional): Background color of the map. Defaults to 'white'.
                 **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
@@ -247,11 +251,14 @@ class MainResults:
                 **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
                 **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
                 **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+                **background_colormap (str, optional): Personalized background colormap on the countries.
+                **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
             Geography additional options:
                 **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
                 **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
                 **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
                 **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+                **countries_background_path = Path to the csv file containing the personnalized background of the countries
 
         Returns:
             Tuple[Figure, Axes]: The figure and axes objects of the plot

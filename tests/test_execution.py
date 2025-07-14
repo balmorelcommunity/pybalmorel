@@ -20,5 +20,7 @@ from pybalmorel import Balmorel
 def test_Balmorel():
     model = Balmorel('examples/Balmorel')
     print(model) # Print recognised scenarios
+    scenarios = model.scenarios
+    scenarios.sort()
     
-    assert model.scenarios == ['base', 'valid_scenario']
+    assert scenarios == ['base', 'valid_scenario']
