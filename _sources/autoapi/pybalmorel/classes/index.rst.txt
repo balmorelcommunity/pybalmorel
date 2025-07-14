@@ -1,0 +1,352 @@
+pybalmorel.classes
+==================
+
+.. py:module:: pybalmorel.classes
+
+.. autoapi-nested-parse::
+
+   Created on 08.06.2024
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.classes.MainResults
+   pybalmorel.classes.IncFile
+   pybalmorel.classes.Balmorel
+   pybalmorel.classes.TechData
+   pybalmorel.classes.GUI
+
+
+Module Contents
+---------------
+
+.. py:class:: MainResults(files: Union[str, list, tuple], paths: Union[str, list, tuple] = '.', scenario_names: str | list | tuple | None = None, system_directory: str | None = None, result_type: str = 'balmorel')
+
+   .. py:attribute:: files
+
+
+   .. py:attribute:: paths
+      :value: '.'
+
+
+
+   .. py:attribute:: sc
+      :value: None
+
+
+
+   .. py:attribute:: type
+      :value: 'balmorel'
+
+
+
+   .. py:attribute:: db
+
+
+   .. py:method:: get_result(symbol: str, cols: list | None = None) -> pandas.DataFrame
+
+      Get a certain result from the loaded gdx file(s) into a pandas DataFrame
+
+      Args:
+          symbol (str): The desired result, e.g. PRO_YCRAGF
+          cols (str, optional): Specify custom columns. Defaults to pre-defined formats.
+
+      Returns:
+          pd.DataFrame: The output DataFrame
+
+
+
+   .. py:method:: interactive_bar_chart(plot_style: str = 'light')
+
+      GUI for bar chart plotting
+
+
+
+   .. py:method:: plot_profile(commodity: str, year: int, scenario: str = 0, columns: str = 'Technology', region: str = 'ALL', style: str = 'light') -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+      Plots the production profile of a commodity, in a year, for a certain scenario
+
+      Args:
+          commodity (str): The commodity (Electricity, Heat or Hydrogen)
+          year (int): The model year to plot
+          scenario (str, optional): Defaults to the first scenario in MainResults.
+          columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+          region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+          style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+      Returns:
+          Figure, Axes: The figure and axes objects for further manipulations 
+
+
+
+   .. py:method:: plot_map(scenario: str, year: int, commodity: str | None = None, lines: str | None = None, generation: str | None = None, background: str | None = None, save_fig: bool = False, path_to_geofile: str | None = None, geo_file_region_column: str = 'id', **kwargs) -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+      Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
+
+      Args:
+          path_to_result (str): Path to the .gdx file
+          scenario (str): The scenario name       
+          year (int): The year of the results
+          commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+          lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
+          generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
+          background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
+          save_fig (bool, optional): Save the figure or not. Defaults to False.
+          path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+          geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
+          Structural additional options:
+              **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
+              **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
+              **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
+              **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
+              **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
+              **generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+              **generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
+              **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+              **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+              **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
+          Visual additional options:
+              **title_show (bool, optional): Show title or not. Defaults to True.
+              **legend_show (bool, optional): Show legend_show or not. Defaults to True.
+              **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
+              **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
+              **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
+              Lines options :
+                  **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                  **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
+                  **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+                  **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+                  **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                  **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                  **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
+                  **line_opacity (float, optional): Opacity of lines. Defaults to 1.
+                  **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
+                  **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
+                  **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
+                  **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
+                  **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
+              Generation options :
+                  **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
+                  **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
+                  **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
+                  **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                  **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+                  **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                  **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                  **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                  **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+                  **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+              Background options :
+                  **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+                  **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
+                  **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+                  **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                  **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+                  **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
+          Colors additional options:
+              **background_color (str, optional): Background color of the map. Defaults to 'white'.
+              **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
+              **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
+              **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
+              **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
+              **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
+              **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+              **background_colormap (str, optional): Personalized background colormap on the countries.
+              **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
+          Geography additional options:
+              **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
+              **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
+              **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+              **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+              **countries_background_path = Path to the csv file containing the personnalized background of the countries
+
+      Returns:
+          Tuple[Figure, Axes]: The figure and axes objects of the plot
+
+
+
+   .. py:method:: _existing_func_wrapper(function, *args, **kwargs)
+
+
+.. py:class:: IncFile(prefix: str = '', body: str = '', suffix: str = '', name: str = 'name', path: str = 'Balmorel/base/data/')
+
+   A useful class for creating .inc-files for GAMS models
+   Args:
+   prefix (str): The first part of the .inc file.
+   body (str): The main part of the .inc file.
+   suffix (str): The last part of the .inc file.
+   name (str): The name of the .inc file.
+   path (str): The path to save the file, defaults to 'Balmorel/base/data'.
+
+
+   .. py:attribute:: prefix
+      :value: ''
+
+
+
+   .. py:attribute:: body
+      :value: ''
+
+
+
+   .. py:attribute:: suffix
+      :value: ''
+
+
+
+   .. py:attribute:: name
+      :value: 'name'
+
+
+
+   .. py:attribute:: path
+      :value: 'Balmorel/base/data/'
+
+
+
+   .. py:method:: body_concat(df: pandas.DataFrame)
+
+      Concatenate a body temporarily being a dataframe to another dataframe
+              
+
+
+
+   .. py:method:: body_prepare(index: list, columns: list, values: str = 'Value', aggfunc: str = 'sum', fill_value: Union[str, int] = '')
+
+
+   .. py:method:: save()
+
+
+.. py:class:: Balmorel(model_folder: str, gams_system_directory: str = None)
+
+   A class that recognises the Balmorel folder structure, can be used to run scenarios or results
+
+   Args:
+       model_folder (str): The top level folder of Balmorel, where base and simex are located
+
+
+   .. py:attribute:: _gams_system_directory
+      :value: None
+
+
+
+   .. py:attribute:: path
+      :value: b'.'
+
+
+
+   .. py:attribute:: scenarios
+      :value: []
+
+
+
+   .. py:attribute:: input_data
+
+
+   .. py:method:: locate_results()
+
+      Locates results, which is faster than collecting them if you just want an overview
+
+
+
+   .. py:method:: collect_results()
+
+      Collects results
+
+
+
+   .. py:method:: run(scenario: str, cmd_line_options: dict = {})
+
+
+   .. py:method:: load_incfiles(scenario: str = 'base', use_provided_read_files: bool = True, read_file: str = 'Balmorel_ReadData', overwrite: bool = False)
+
+      Will load .inc files from the specific scenario
+
+      Args:
+          scenario (str, optional): The scenario that you . Defaults to 'base'.
+          use_provided_read_files (bool, optional): Use provided Balmorel_ReadData.gms and Balmorelbb4_ReadData.inc. Defaults to True.
+          read_file (str, optional): The name of the read file to be executed. Defaults to Balmorel_ReadData
+          overwrite (bool, optional): Will overwrite an existing %scenario%_input_data.gdx file from a previous .load_incfiles execution 
+          
+      Raises:
+          KeyError: _description_
+
+
+
+.. py:class:: TechData
+
+   .. py:attribute:: files
+      :type:  dict
+
+
+   .. py:attribute:: path
+      :type:  str
+      :value: 'C:\\Users\\mathi\\gitRepos\\balmorel-preprocessing\\RawDataProcessing\\Data\\Technology Data'
+
+
+
+   .. py:method:: load(file: str)
+
+
+   .. py:method:: download_file(url, save_folder, filename=None)
+
+      Downloads a file from a given URL and saves it to a specified folder.
+      Args:
+          url (str): The URL of the file to download.
+          save_folder (str): The folder where the file should be saved.
+          filename (str, optional): The name to save the file as. If not provided, the filename is extracted from the URL.
+      Returns:
+          str: The full path to the saved file.
+      Raises:
+          requests.exceptions.RequestException: If the download fails.
+      Notes:
+          - The function ensures that the save folder exists.
+          - The file is downloaded in chunks to handle large files efficiently.
+      chunk_size:
+          The size of each chunk of data to be written to the file. In this case, it is set to 8192 bytes (8 KB).
+
+
+
+   .. py:method:: download_catalogue(file: str, save_to_folder: str = '.', domain: str = 'https://ens.dk/sites/ens.dk/files/Analyser/')
+
+      Downloads technology catalogue from DEA website
+
+      Args:
+          file (str): _description_
+          save_to_folder (str, optional): _description_. Defaults to '.'.
+          domain (_type_, optional): _description_. Defaults to "https://ens.dk/sites/ens.dk/files/Analyser/".
+
+
+
+   .. py:method:: download_all_catalogues(save_to_folder: str = '.')
+
+
+.. py:class:: GUI
+
+   .. py:method:: bar_chart(MainResults_instance)
+
+      Interactive GUI to plot bar charts from MainResults
+
+      Args:
+          MainResults_instance (class): Loaded MainResults
+
+      Returns:
+          None: An interactive GUI is opened to plot bar charts 
+
+
+
+   .. py:method:: geofilemaker()
+
+      Opens a GUI to interactively generate necessary .inc files for Balmorel geography
+
+      Returns:
+          None: An interactive GUI to generate geographic .inc files
+
+
+

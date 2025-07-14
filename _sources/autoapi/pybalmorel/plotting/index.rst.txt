@@ -1,0 +1,19 @@
+pybalmorel.plotting
+===================
+
+.. py:module:: pybalmorel.plotting
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/pybalmorel/plotting/LoadGDX/index
+   /autoapi/pybalmorel/plotting/ProductionMap/index
+   /autoapi/pybalmorel/plotting/maps_balmorel/index
+   /autoapi/pybalmorel/plotting/plot_functions/index
+   /autoapi/pybalmorel/plotting/production_profile/index
+
+

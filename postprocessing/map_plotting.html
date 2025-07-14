@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pybalmorel for Map Plotting &mdash; pybalmorel 0.5.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=45def3bc"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="About this code" href="../about.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../postprocessing.html">Post Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Pybalmorel for Map Plotting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-map-plotting">Basic map plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#selecting-different-transmission-and-generation-information">Selecting different transmission and generation information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#background-information">Background information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#size-of-the-elements-and-legend">Size of the elements and legend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#geofile-input-and-coordinates-issues">Geofile input and coordinates issues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-options">Additional options</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../postprocessing.html">Post Processing</a></li>
+      <li class="breadcrumb-item active">Pybalmorel for Map Plotting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/postprocessing/map_plotting.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pybalmorel-for-map-plotting">
+<h1>Pybalmorel for Map Plotting<a class="headerlink" href="#pybalmorel-for-map-plotting" title="Link to this heading"></a></h1>
+<p>This notebook provide examples on how to use the pybalmorel post processing map plotting tool.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">### Loading scenarios</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">MainResults</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MainResults_Example1.gdx&#39;</span><span class="p">,</span> <span class="s1">&#39;MainResults_Example2.gdx&#39;</span><span class="p">,</span> <span class="s1">&#39;MainResults_Example3.gdx&#39;</span><span class="p">],</span> <span class="n">paths</span><span class="o">=</span><span class="s1">&#39;files&#39;</span><span class="p">,</span> <span class="n">scenario_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SC1&#39;</span><span class="p">,</span> <span class="s1">&#39;SC2&#39;</span><span class="p">,</span> <span class="s1">&#39;SC3&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<section id="basic-map-plotting">
+<h2>Basic map plotting<a class="headerlink" href="#basic-map-plotting" title="Link to this heading"></a></h2>
+<p>The map plotting tool only needs 2 arguments to work. One has to select the <strong>scenario</strong> (see scenarios importation in <a class="reference internal" href="#postprocessing.md"><span class="xref myst">this section</span></a>), and the <strong>year</strong>. <br />
+With those two arguments, the map of Europe is plotted with the countries inside the model in beige and the countries outside of the model in grey. <br />
+To plot the transmission lines and the generation information, one has to set the parameters <strong>lines</strong>, <strong>generation</strong>, and <strong>commodity</strong> (<em>Electricity</em> or <em>Hydrogen</em>). <br />
+Please note that lines and generation can also be plotted alone but that <strong>commodity is always necessary if one of them is used.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_4_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_5_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Hydrogen&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_6_2.png" /></p>
+</section>
+<section id="selecting-different-transmission-and-generation-information">
+<h2>Selecting different transmission and generation information<a class="headerlink" href="#selecting-different-transmission-and-generation-information" title="Link to this heading"></a></h2>
+<p>The option <strong>lines</strong> allows to plot different transmission line information amongst <em>Capacity</em>, <em>FlowYear</em>, <em>FlowTime</em>, <em>UtilizationYear</em>, <em>UtilizationTime</em>. <br />
+The option <strong>generation</strong> allows to plot different generation information amongst <em>Capacity</em>, <em>Production</em>, <em>ProductionTime</em>. <br />
+Please note that for <em>FlowTime</em>, <em>UtilizationTime</em> and <em>ProductionTime</em>, it is possible to select a specific <strong>S</strong> and <strong>T</strong>. <br />
+If one wants the lines commodity and the generation commodity to be different, they can use the <strong>generation_commodity</strong> option.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Production&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_8_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowTime&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;ProductionTime&#39;</span><span class="p">,</span> <span class="n">S</span><span class="o">=</span><span class="s1">&#39;S08&#39;</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="s1">&#39;T076&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_9_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Hydrogen&#39;</span><span class="p">,</span> <span class="n">generation_commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;UtilizationYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Production&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_10_2.png" /></p>
+</section>
+<section id="background-information">
+<h2>Background information<a class="headerlink" href="#background-information" title="Link to this heading"></a></h2>
+<p>Using the option <strong>background</strong>, it is possible to plot an additional information that colors the countries. For now <em>H2 Storage</em>, <em>Elec Storage</em>, <em>Elec Net Export</em>, <em>H2 Net Export</em> and <em>Elec Price</em> have been implemented. <br />
+It is possible to personalize the background scale with the option <strong>background_scale</strong> and <strong>background_scale_tick</strong> as in the examples below (both can be used at the same time).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> 
+                       <span class="n">background</span><span class="o">=</span><span class="s2">&quot;Elec Storage&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_12_3.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Hydrogen&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> 
+                       <span class="n">background</span><span class="o">=</span><span class="s2">&quot;H2 Storage&quot;</span><span class="p">,</span> <span class="n">background_scale</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">25</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_13_3.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Production&#39;</span><span class="p">,</span> 
+                       <span class="n">background</span><span class="o">=</span><span class="s2">&quot;Elec Net Export&quot;</span><span class="p">,</span> <span class="n">background_scale_tick</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_14_3.png" /></p>
+</section>
+<section id="size-of-the-elements-and-legend">
+<h2>Size of the elements and legend<a class="headerlink" href="#size-of-the-elements-and-legend" title="Link to this heading"></a></h2>
+<p>The size of the lines and pie charts is function of the options <strong>line_width_cat</strong> and <strong>pie_radius_cat</strong> and can be selected amongst <em>log</em>, <em>linear</em>, and <em>cluster</em>. (log is the default one) <br />
+While <em>log</em> and <em>linear</em> are computing the sizes based on maximum and minimum values (those values can be changed), <em>cluster</em> needs the input of cluster values and cluster widths/radius to work (see example below). <br />
+The size of the lines and the pie charts in the legend is automatic but one can choose to personalized them with <strong>line_legend_cluster_values</strong> and <strong>pie_legend_cluster_values</strong>. <br />
+Please note that if <em>cluster</em> is choosed as category, then the legend will used those categories. The width of the lines is in point and the radius of the pie chart in data unit. <br />
+It is also possible to change the legend of the pie charts and to select either <em>TECH_TYPE</em> or <em>FFF</em> to be plotted with the option <strong>generation_var</strong>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation_var</span><span class="o">=</span><span class="s1">&#39;TECH_TYPE&#39;</span><span class="p">,</span>
+                       <span class="n">line_width_cat</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">pie_radius_cat</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_16_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation_var</span><span class="o">=</span><span class="s1">&#39;FFF&#39;</span><span class="p">,</span>
+                       <span class="n">line_value_max</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">line_legend_cluster_values</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> 
+                       <span class="n">pie_value_max</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">pie_legend_cluster_values</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_17_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span>
+                       <span class="n">line_width_cat</span> <span class="o">=</span> <span class="s1">&#39;cluster&#39;</span><span class="p">,</span> <span class="n">line_cluster_values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">80</span><span class="p">],</span> <span class="n">line_cluster_widths</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                       <span class="n">pie_radius_cat</span> <span class="o">=</span> <span class="s1">&#39;cluster&#39;</span><span class="p">,</span> <span class="n">pie_cluster_values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="n">pie_cluster_radius</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_18_2.png" /></p>
+</section>
+<section id="geofile-input-and-coordinates-issues">
+<h2>Geofile input and coordinates issues<a class="headerlink" href="#geofile-input-and-coordinates-issues" title="Link to this heading"></a></h2>
+<p>Using the option <strong>path_to_geofile</strong>, it is possible to use a personalized map file with a specific column (option <em>geo_file_region_column</em>) with the name of the regions in your Balmorel file. <br />
+When using this option, the coordinates are set automatically as the border of the map plus an offset that can be modified with the option <strong>coordinates_geofile_offset</strong>. <br />
+It is also possible to choose to plot only Denmark by setting <em>choosen_map_coordinates</em> as “DK” (if you only have data for denmark, please use it) or to select specific coordinates with <em>map_coordinates</em>. <br />
+Please note that when modifying all of this, you will have trouble with the size of the lines and pie charts that are defined in data values. You will need to modify those to have something that you like. <br />
+<strong>For now, the legend is only working for the EU coordinates (in the case of having data for all EU) !!</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">path_to_geofile</span><span class="o">=</span><span class="s2">&quot;../../../examples/files/Geofile_Example.geojson&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_20_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC1&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_21_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC1&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span> <span class="n">choosen_map_coordinates</span><span class="o">=</span><span class="s2">&quot;DK&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_22_2.png" /></p>
+</section>
+<section id="additional-options">
+<h2>Additional options<a class="headerlink" href="#additional-options" title="Link to this heading"></a></h2>
+<p>There is a large number of additional options available and the detailed can be found in the function’s help below :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">help</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s review some examnples :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you want to show the value of the lines and not the arrows</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;UtilizationYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span>
+                       <span class="n">line_label_show</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">line_flow_show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_25_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you want to not plot the smaller lines and pies you can define a minimum value</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span>
+                       <span class="n">line_show_min</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">pie_show_min</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_26_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you want to specified the colors of different things on the graph</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Capacity&#39;</span><span class="p">,</span>
+                       <span class="n">background_color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">regions_model_color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">regions_ext_color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_27_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you want to specify the colors used for the different countries, using a csv file (this coloring has the priority on everything) </span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> <span class="n">commodity</span><span class="o">=</span><span class="s1">&#39;Electricity&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="s1">&#39;FlowYear&#39;</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="s1">&#39;Production&#39;</span><span class="p">,</span>
+                       <span class="n">countries_colors_path</span> <span class="o">=</span> <span class="s2">&quot;../../../examples/files/countries_colors_example.csv&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_28_2.png" /></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you want to display another information on the map, based on a csv file (e.g. with full load hours)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">plot_map</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;SC3&#39;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="mi">2050</span><span class="p">,</span> 
+                       <span class="n">countries_background_path</span> <span class="o">=</span> <span class="s2">&quot;../../../examples/files/countries_background_example.csv&quot;</span><span class="p">,</span>
+                       <span class="n">background_scale_tick</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>  <span class="n">background_scale</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">],</span>
+                       <span class="n">background_name</span> <span class="o">=</span> <span class="s1">&#39;PV Full Load hours&#39;</span><span class="p">,</span> <span class="n">background_unit</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+                       <span class="n">background_label_show</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><img alt="png" src="../_images/MapPlotting_29_2.png" /></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../about.html" class="btn btn-neutral float-right" title="About this code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,56 @@
+pybalmorel.utils
+================
+
+.. py:module:: pybalmorel.utils
+
+.. autoapi-nested-parse::
+
+   Functions
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.utils.preformatted_columns
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.utils.create_parameter_columns
+   pybalmorel.utils.create_variable_columns
+   pybalmorel.utils.create_set_columns
+   pybalmorel.utils.symbol_to_df
+   pybalmorel.utils.read_lines
+
+
+Module Contents
+---------------
+
+.. py:data:: preformatted_columns
+
+.. py:function:: create_parameter_columns(df: pandas.DataFrame, db: gams.GamsDatabase, symbol: str, mainresult_symbol_columns: dict, cols: list | None)
+
+.. py:function:: create_variable_columns(df: pandas.DataFrame, db: gams.GamsDatabase, symbol: str, mainresult_symbol_columns: dict, cols: list | None)
+
+.. py:function:: create_set_columns(df: pandas.DataFrame, db: gams.GamsDatabase, symbol: str, mainresult_symbol_columns: dict, cols: list | None)
+
+.. py:function:: symbol_to_df(db: gams.GamsDatabase, symbol: str, cols: list[str] | None = None, result_type: str = 'balmorel', print_explanatory_text: bool = False)
+
+   Loads a symbol from a GDX database into a pandas dataframe
+
+   Args:
+       db (GamsDatabase): The loaded gdx file
+       symbol (string): The desired symbol in the gdx file
+       cols (list): Your defined columns, will otherwise first try to find pybalmorel default column formats for the symbol or the raw columns from the gdx  
+       result_type (str): Is it a normal MainResults or a Optiflow Mainresults? Choose either 'balmorel' or 'optiflow'
+       print_explanatory_text (bool): Print the text describing the symbol?
+
+
+.. py:function:: read_lines(name, file_path, make_space=True)
+

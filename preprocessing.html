@@ -1,0 +1,203 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pre-Processing &mdash; pybalmorel 0.5.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/css_options.css?v=313b1874" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=45def3bc"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Execution" href="execution.html" />
+    <link rel="prev" title="Installation" href="get_started/installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pre-Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#create-an-inc-file">Create an .inc File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#loading-all-inc-files">Loading all .inc Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#defining-geography">Defining Geography</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#downloading-technology-catalogues">Downloading Technology Catalogues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="postprocessing.html">Post Processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Pre-Processing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/preprocessing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pre-processing">
+<h1>Pre-Processing<a class="headerlink" href="#pre-processing" title="Link to this heading"></a></h1>
+<p>The examples below show how to create single .inc-files, loading all .inc files using the Balmorel class, and defining geography using an interactive GUI. A <a class="reference external" href="https://github.com/Mathias157/pybalmorel/blob/master/examples/PreProcessing.ipynb">notebook</a> can also be downloaded from the GitHub repository.</p>
+<section id="create-an-inc-file">
+<h2>Create an .inc File<a class="headerlink" href="#create-an-inc-file" title="Link to this heading"></a></h2>
+<p>The ‘IncFile’ class is a handy class for creating .inc files that are the input for Balmorel.
+The example below will create annual electricity demand (DE.inc) for electricity nodes DK1 and DK2 in the scenario ‘sc1’ of a Balmorel folder.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncFile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># Initiate .inc file class</span>
+<span class="n">DE</span> <span class="o">=</span> <span class="n">IncFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;DE&#39;</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;TABLE   DE1(RRR,DEUSER,YYY)   &#39;Annual electricity consumption (MWh)&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">;</span><span class="se">\n</span><span class="s2">DE(YYY,RRR,DEUSER) = DE1(RRR,DEUSER,YYY);&quot;</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="s1">&#39;Balmorel/sc1/data&#39;</span><span class="p">)</span>
+
+
+<span class="c1"># Create annual electricity demand </span>
+<span class="n">DE</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;DK1&#39;</span><span class="p">,</span> <span class="s1">&#39;DK2&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="mi">2030</span><span class="p">,</span> <span class="mi">2040</span><span class="p">,</span> <span class="mi">2050</span><span class="p">],</span>
+                       <span class="n">data</span><span class="o">=</span><span class="p">[[</span><span class="mf">17e6</span><span class="p">,</span> <span class="mf">20e6</span><span class="p">,</span> <span class="mf">25e6</span><span class="p">],</span>
+                            <span class="p">[</span><span class="mf">14e6</span><span class="p">,</span> <span class="mf">17e6</span><span class="p">,</span> <span class="mf">20e6</span><span class="p">]])</span>
+
+<span class="c1"># Fix the index format (in this case, append the DEUSER set to RRR)</span>
+<span class="n">DE</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="s1">&#39; . RESE&#39;</span>
+
+<span class="c1"># Save .inc file to path (will save as ./Balmorel/sc1/data/DE.inc)</span>
+<span class="n">DE</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="loading-all-inc-files">
+<h2>Loading all .inc Files<a class="headerlink" href="#loading-all-inc-files" title="Link to this heading"></a></h2>
+<p>The ‘Balmorel’ class can be used to load all .inc files into python. Note that it will also create a .gdx called ‘scenario_input_data.gdx’ in the model folder. The function ‘symbol_to_df’ can then be used to create dataframes from elements in the .gdx file.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Balmorel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">symbol_to_df</span>
+
+<span class="c1"># Initiate Model Class</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Balmorel</span><span class="p">(</span><span class="s1">&#39;path/to/Balmorel&#39;</span><span class="p">)</span>
+
+<span class="c1"># Load base scenario input data</span>
+<span class="n">model</span><span class="o">.</span><span class="n">load_incfiles</span><span class="p">(</span><span class="s1">&#39;base&#39;</span><span class="p">)</span>
+
+<span class="c1"># Print electricity demand dataframe</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">symbol_to_df</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;base&#39;</span><span class="p">],</span> <span class="s1">&#39;DE&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="defining-geography">
+<h2>Defining Geography<a class="headerlink" href="#defining-geography" title="Link to this heading"></a></h2>
+<p>pybalmorel includes a GUI to interactively define nodes in Balmorel’s hierarchical geographic structure comprising countries, regions and areas.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">GUI</span>
+<span class="n">GUI</span><span class="o">.</span><span class="n">geofilemaker</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The video below illustrates how it works.</p>
+<figure class="align-center" id="geofilemaker">
+<a class="reference internal image-reference" href="_images/geoset_generator_example.gif"><img alt="How to use the 'geofilemaker' GUI." src="_images/geoset_generator_example.gif" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">How to use the ‘geofilemaker’ GUI.</span><a class="headerlink" href="#geofilemaker" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="downloading-technology-catalogues">
+<h2>Downloading Technology Catalogues<a class="headerlink" href="#downloading-technology-catalogues" title="Link to this heading"></a></h2>
+<p>The technology catalogues from the Danish Energy Agency are useful and streamlined data inputs for energy system modelling. The function below will check if the electricity and district heating technology catalogue exists in the specified path (the working directory in this case) and download it if it does not exist in the path:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">TechData</span>
+
+<span class="n">TD</span> <span class="o">=</span> <span class="n">TechData</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Available technology catalogues: &#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">TD</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+<span class="n">TD</span><span class="o">.</span><span class="n">download_catalogue</span><span class="p">(</span><span class="s1">&#39;el_and_dh&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that <a class="reference external" href="https://balmorelcommunity.github.io/pybalmorel/autoapi/pybalmorel/classes/index.html#pybalmorel.classes.TechData.download_all_catalogues">TechData.download_all_catalogues</a> will look for or try to download all catalogues.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="get_started/installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="execution.html" class="btn btn-neutral float-right" title="Execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

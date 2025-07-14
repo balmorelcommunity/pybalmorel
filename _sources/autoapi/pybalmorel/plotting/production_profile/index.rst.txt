@@ -1,0 +1,41 @@
+pybalmorel.plotting.production_profile
+======================================
+
+.. py:module:: pybalmorel.plotting.production_profile
+
+.. autoapi-nested-parse::
+
+   Created on 28.05.2022
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.production_profile.plot_profile
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_profile(MainResults, commodity: str, year: int, scenario: str = 0, columns: str = 'Technology', region: str = 'ALL', style: str = 'light') -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Plots the production profile of a commodity, in a year, for a certain scenario
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str, optional): Defaults to the first scenario in MainResults.
+       columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+       region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+       style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+   Returns:
+       Figure, Axes: The figure and axes objects for further manipulations 
+
+

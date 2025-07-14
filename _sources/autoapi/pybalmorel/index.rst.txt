@@ -1,0 +1,19 @@
+pybalmorel
+==========
+
+.. py:module:: pybalmorel
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/pybalmorel/classes/index
+   /autoapi/pybalmorel/formatting/index
+   /autoapi/pybalmorel/interactive/index
+   /autoapi/pybalmorel/plotting/index
+   /autoapi/pybalmorel/utils/index
+
+

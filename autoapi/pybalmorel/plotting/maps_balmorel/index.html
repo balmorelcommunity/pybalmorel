@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.plotting.maps_balmorel &mdash; pybalmorel 0.5.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=45def3bc"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.plotting.plot_functions" href="../plot_functions/index.html" />
+    <link rel="prev" title="pybalmorel.plotting.ProductionMap" href="../ProductionMap/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post Processing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.plotting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.plotting.maps_balmorel</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/plotting/maps_balmorel/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.plotting.maps_balmorel">
+<span id="pybalmorel-plotting-maps-balmorel"></span><h1>pybalmorel.plotting.maps_balmorel<a class="headerlink" href="#module-pybalmorel.plotting.maps_balmorel" title="Link to this heading"></a></h1>
+<p>This script has many options for designing maps of
+Balmorel results</p>
+<p>It depends on a geofile, that should contain the exact name
+of the region names in Balmorel - otherwise, results from
+regions that are NOT in the geofile will not be shown!</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.maps_balmorel.plot_map" title="pybalmorel.plotting.maps_balmorel.plot_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_map</span></code></a>(→ Tuple[matplotlib.figure.Figure, ...)</p></td>
+<td><p>Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.maps_balmorel.plot_map">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.maps_balmorel.</span></span><span class="sig-name descname"><span class="pre">plot_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commodity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to_geofile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geo_file_region_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'id'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">matplotlib.axes.Axes</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.plotting.maps_balmorel.plot_map" title="Link to this definition"></a></dt>
+<dd><p>Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.</p>
+<dl>
+<dt>Args:</dt><dd><p>path_to_result (str): Path to the .gdx file
+scenario (str): The scenario name
+year (int): The year of the results
+commodity (str, optional): Commodity to be shown in the map. Choose from [‘Electricity’, ‘Hydrogen’].
+lines (str, optional): Information plots with the lines. Choose from [‘Capacity’, ‘FlowYear’, ‘FlowTime’, ‘UtilizationYear’, ‘UtilizationTime].
+generation (str, optional): Generation information plots on the countries. Choose from [‘Capacity’, ‘Production’, ‘ProductionTime].
+background (str, optional): Background information to be shown on the map. Choose from [‘H2 Storage’, ‘Elec Storage’]. Defaults to ‘None’.
+save_fig (bool, optional): Save the figure or not. Defaults to False.
+system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it’s not specified if not specified
+path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to ‘id’.
+Structural additional options:</p>
+<blockquote>
+<div><p><a href="#id1"><span class="problematic" id="id2">**</span></a>generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
+<a href="#id3"><span class="problematic" id="id4">**</span></a>S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
+<a href="#id5"><span class="problematic" id="id6">**</span></a>T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
+<a href="#id7"><span class="problematic" id="id8">**</span></a>exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from [‘Both’, ‘Endogenous’, ‘Exogenous’]. Defaults to ‘Both’.
+<a href="#id9"><span class="problematic" id="id10">**</span></a>generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
+<a href="#id11"><span class="problematic" id="id12">**</span></a>generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+<a href="#id13"><span class="problematic" id="id14">**</span></a>generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
+<a href="#id15"><span class="problematic" id="id16">**</span></a>generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+<a href="#id17"><span class="problematic" id="id18">**</span></a>coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+<a href="#id19"><span class="problematic" id="id20">**</span></a>filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.</p>
+</div></blockquote>
+<dl>
+<dt>Visual additional options:</dt><dd><p><a href="#id21"><span class="problematic" id="id22">**</span></a>title_show (bool, optional): Show title or not. Defaults to True.
+<a href="#id23"><span class="problematic" id="id24">**</span></a>legend_show (bool, optional): Show legend_show or not. Defaults to True.
+<a href="#id25"><span class="problematic" id="id26">**</span></a>show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
+<a href="#id27"><span class="problematic" id="id28">**</span></a>choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from [‘EU’, ‘DK’, ‘Nordic’]. Defaults to ‘EU’.
+<a href="#id29"><span class="problematic" id="id30">**</span></a>map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ‘’.
+Lines options :</p>
+<blockquote>
+<div><p><a href="#id31"><span class="problematic" id="id32">**</span></a>line_width_cat (str, optional): Way of determining lines width. Choose from [‘log’, ‘linear’, ‘cluster’]. Defaults to ‘log’.
+<a href="#id33"><span class="problematic" id="id34">**</span></a>line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
+<a href="#id35"><span class="problematic" id="id36">**</span></a>line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+<a href="#id37"><span class="problematic" id="id38">**</span></a>line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+<a href="#id39"><span class="problematic" id="id40">**</span></a>line_cluster_values (list, optional): The capacity grouping necessary if cat is ‘cluster’. Defaults values depends on commodity. Used for the legend if defined.
+<a href="#id41"><span class="problematic" id="id42">**</span></a>line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+<a href="#id43"><span class="problematic" id="id44">**</span></a>line_value_max (float, optional): Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width.
+<a href="#id45"><span class="problematic" id="id46">**</span></a>line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is ‘cluster’.
+<a href="#id47"><span class="problematic" id="id48">**</span></a>line_opacity (float, optional): Opacity of lines. Defaults to 1.
+<a href="#id49"><span class="problematic" id="id50">**</span></a>line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
+<a href="#id51"><span class="problematic" id="id52">**</span></a>line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
+<a href="#id53"><span class="problematic" id="id54">**</span></a>line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
+<a href="#id55"><span class="problematic" id="id56">**</span></a>line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
+<a href="#id57"><span class="problematic" id="id58">**</span></a>line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Generation options :</dt><dd><p><a href="#id59"><span class="problematic" id="id60">**</span></a>generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
+<a href="#id61"><span class="problematic" id="id62">**</span></a>generation_display_type (str, optional): Type of display on regions. Choose from [‘Pie’]. Defaults to ‘Pie’.
+<a href="#id63"><span class="problematic" id="id64">**</span></a>generation_var (str, optional): Variable to be shown in the pie chart. Choose from [‘TECH_TYPE’, ‘FFF’]. Defaults to ‘TECH_TYPE’.
+<a href="#id65"><span class="problematic" id="id66">**</span></a>pie_radius_cat (str, optional): Way of determining pie size. Choose from [‘log’, ‘linear’, ‘cluster’]. Defaults to ‘log’.
+<a href="#id67"><span class="problematic" id="id68">**</span></a>pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+<a href="#id69"><span class="problematic" id="id70">**</span></a>pie_radius_min (float, optional): Minimum radius of pie, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+<a href="#id71"><span class="problematic" id="id72">**</span></a>pie_radius_max (float, optional): Maximum radius of pie, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+<a href="#id73"><span class="problematic" id="id74">**</span></a>pie_cluster_values (list, optional) = The capacity groupings necessary if cat is ‘cluster’. Defaults values depends on commodity. Used for the legend if defined.
+<a href="#id75"><span class="problematic" id="id76">**</span></a>pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+<a href="#id77"><span class="problematic" id="id78">**</span></a>pie_value_max (float, optional): Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius.
+<a href="#id79"><span class="problematic" id="id80">**</span></a>pie_legend_cluster_values (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is ‘cluster’.</p>
+</dd>
+<dt>Background options :</dt><dd><p><a href="#id81"><span class="problematic" id="id82">**</span></a>background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+<a href="#id83"><span class="problematic" id="id84">**</span></a>background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
+<a href="#id85"><span class="problematic" id="id86">**</span></a>background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+<a href="#id87"><span class="problematic" id="id88">**</span></a>background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+<a href="#id89"><span class="problematic" id="id90">**</span></a>background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+<a href="#id91"><span class="problematic" id="id92">**</span></a>background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.</p>
+</dd>
+</dl>
+</dd>
+<dt>Colors additional options:</dt><dd><p><a href="#id93"><span class="problematic" id="id94">**</span></a>background_color (str, optional): Background color of the map. Defaults to ‘white’.
+<a href="#id95"><span class="problematic" id="id96">**</span></a>regions_ext_color (str, optional): Color of regions outside the model. Defaults to ‘#d3d3d3’.
+<a href="#id97"><span class="problematic" id="id98">**</span></a>regions_model_color (str, optional): Color of regions inside the model. Defaults to ‘linen’.
+<a href="#id99"><span class="problematic" id="id100">**</span></a>line_color (str, optional): Color of lines network. Defaults to ‘green’ for electricity and ‘#13EAC9’ for hydrogen.
+<a href="#id101"><span class="problematic" id="id102">**</span></a>line_label_color (str, optional): Color of line labels. Defaults to ‘black’.
+<a href="#id103"><span class="problematic" id="id104">**</span></a>generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
+<a href="#id105"><span class="problematic" id="id106">**</span></a>generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+<a href="#id107"><span class="problematic" id="id108">**</span></a>background_colormap (str, optional): Personalized background colormap on the countries.
+<a href="#id109"><span class="problematic" id="id110">**</span></a>background_label_color (str, optional): Color of the background labels. Defaults to ‘black’.</p>
+</dd>
+<dt>Geography additional options:</dt><dd><p><a href="#id111"><span class="problematic" id="id112">**</span></a>coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
+<a href="#id113"><span class="problematic" id="id114">**</span></a>bypass_path = Path to the csv file containing the coordinates of ‘hooks’ in indirect lines, to avoid going trespassing third regions.
+<a href="#id115"><span class="problematic" id="id116">**</span></a>hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+<a href="#id117"><span class="problematic" id="id118">**</span></a>countries_color_path = Path to the csv file containing the personnalized colors of the countries
+<a href="#id119"><span class="problematic" id="id120">**</span></a>countries_background_path = Path to the csv file containing the personnalized background of the countries</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple[Figure, Axes]: The figure and axes objects of the plot</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../ProductionMap/index.html" class="btn btn-neutral float-left" title="pybalmorel.plotting.ProductionMap" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../plot_functions/index.html" class="btn btn-neutral float-right" title="pybalmorel.plotting.plot_functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
