@@ -111,7 +111,8 @@ fig, ax = res.plot_map(scenario='SC3', year=2050, commodity='Electricity', lines
 
 ```python
 fig, ax = res.plot_map(scenario='SC3', year=2050, commodity='Electricity', lines='Capacity', generation='Capacity', generation_var='FFF',
-                       line_legend_cluster_values=[10, 20, 50, 75], pie_legend_cluster_values=[10, 100, 300, 500])
+                       line_value_max = 100, line_legend_cluster_values=[10, 20, 50, 100], 
+                       pie_value_max = 1000, pie_legend_cluster_values=[50, 200, 500, 1000])
 ```
 
 ![png](../img/PostProcessing_map_files/MapPlotting_17_2.png)
@@ -196,3 +197,13 @@ fig, ax = res.plot_map(scenario='SC3', year=2050, commodity='Electricity', lines
                        countries_colors_path = "../../../examples/files/countries_colors_example.csv")
 ```
 ![png](../img/PostProcessing_map_files/MapPlotting_28_2.png)
+
+```python
+# If you want to display another information on the map, based on a csv file (e.g. with full load hours)
+fig, ax = res.plot_map(scenario='SC3', year=2050, 
+                       countries_background_path = "../../../examples/files/countries_background_example.csv",
+                       background_scale_tick = 100,  background_scale=[1000, 2000],
+                       background_name = 'PV Full Load hours', background_unit = 'h',
+                       background_label_show = True)
+```
+![png](../img/PostProcessing_map_files/MapPlotting_29_2.png)

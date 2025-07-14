@@ -81,6 +81,7 @@ def plot_map(path_to_result: str,
                 **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
                 **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
                 **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                **line_value_max (float, optional): Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width.
                 **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
                 **line_opacity (float, optional): Opacity of lines. Defaults to 1.
                 **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
@@ -94,11 +95,12 @@ def plot_map(path_to_result: str,
                 **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
                 **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
                 **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
-                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
-                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                **pie_radius_min (float, optional): Minimum radius of pie, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                **pie_radius_max (float, optional): Maximum radius of pie, used if cat is linear or log. Defaults to 1.4. Value in data unit.
                 **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
                 **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
-                **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+                **pie_value_max (float, optional): Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius.
+                **pie_legend_cluster_values (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
             Background options :
                 **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
                 **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
@@ -267,6 +269,7 @@ def plot_map(path_to_result: str,
         if line_width_cat == 'cluster' and line_cluster_values == []: # If the user did not input the cluster values, notify it
             raise ValueError('You have selected the cluster category for the line width, but you have not specified the cluster values.')
         line_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200]
+        line_value_max = kwargs.get('line_value_max', None) # Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width
         line_legend_cluster_values = kwargs.get('line_legend_cluster_values', []) # Values of the clusters in the legend
         line_opacity = kwargs.get('line_opacity', 1) # Opacity of lines
         line_label_show = kwargs.get('line_label_show', False)  # Showing or not the value of the lines
@@ -303,6 +306,7 @@ def plot_map(path_to_result: str,
             if pie_radius_cat == 'cluster' and pie_cluster_values == []: # If the user did not input the cluster values, notify it
                 raise ValueError('You have selected the cluster category for the pie radius, but you have not specified the cluster values.')
             pie_legend_values = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000]
+            pie_value_max = kwargs.get('pie_value_max', None) # Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius
             pie_legend_cluster_values = kwargs.get('pie_legend_cluster_values', []) # Values of the clusters in the legend
         # background options
         if background != None:
@@ -1322,6 +1326,8 @@ def plot_map(path_to_result: str,
                 line_max_value = df_line['Capacity'].max() # Find maximum value useful for linear and logarithmic scale
             else :
                 line_max_value = df_line['Value'].max() # Find maximum value useful for linear and logarithmic scale
+            if line_value_max != None:
+                line_max_value = line_value_max
             for i,row in df_line.iterrows(): 
                 y1 = df_line.loc[i,'LatExp']
                 x1 =  df_line.loc[i,'LonExp']
@@ -1395,6 +1401,8 @@ def plot_map(path_to_result: str,
             # Calculate the sum of the values by region and find the maximum value
             df_slack_generation_sum = pd.DataFrame(df_slack_generation.groupby(['RRR'])['Value'].sum().reset_index())
             pie_max_value = df_slack_generation_sum['Value'].max()
+            if pie_value_max != None:
+                pie_max_value = pie_value_max
             
             for r in RRRs: # Find idx of the region
                 idx = df_slack_generation['RRR'] == r
