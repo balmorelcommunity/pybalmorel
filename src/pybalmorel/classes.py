@@ -33,8 +33,8 @@ from .plotting.maps_balmorel import plot_map
 class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
-                 scenario_names: Union[str, list, tuple] = None,
-                 system_directory: str = None,
+                 scenario_names: str | list | tuple | None = None,
+                 system_directory: str | None = None,
                  result_type: str = 'balmorel'):
         """
         Initialises the MainResults class and loads gdx result file(s)
@@ -107,7 +107,7 @@ class MainResults:
             self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
      
     # Getting a certain result
-    def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
+    def get_result(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
         """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
         Args:
@@ -170,12 +170,12 @@ class MainResults:
     def plot_map(self, 
                  scenario: str, 
                  year: int,
-                 commodity: str = None,
-                 lines: str = None, 
-                 generation: str = None,
-                 background : str = None,
+                 commodity: str | None = None,
+                 lines: str | None = None, 
+                 generation: str | None = None,
+                 background : str | None = None,
                  save_fig: bool = False,
-                 path_to_geofile: str = None,
+                 path_to_geofile: str | None = None,
                  geo_file_region_column: str = 'id',
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.

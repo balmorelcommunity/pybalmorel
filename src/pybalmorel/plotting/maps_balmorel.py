@@ -33,15 +33,15 @@ import cartopy.crs as ccrs
 def plot_map(path_to_result: str, 
              scenario: str, 
              year: int,
-             commodity: str = None,
-             lines: str = None, 
-             generation: str = None,
-             background : str = None,
+             commodity: str | None = None,
+             lines: str | None = None, 
+             generation: str | None = None,
+             background : str | None = None,
              save_fig: bool = False,
-             path_to_geofile: str = None,
+             path_to_geofile: str | None = None,
              geo_file_region_column: str = 'id',
-             system_directory: str = None,
-             **kwargs) -> Tuple[Figure, Axes]:
+             system_directory: str | None = None,
+             **kwargs) -> Tuple[Figure, Axes] | None:
     
     """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
 
@@ -180,7 +180,7 @@ def plot_map(path_to_result: str,
         
         ### Structural options
         if commodity != None:
-            commodity = commodity.capitalize()
+            commodity = commodity.lower().capitalize()
         if commodity not in [None, 'Electricity', 'Hydrogen']: # Check that it's a possible type of commodity
             raise ValueError('commodity must be either "Electricity" or "Hydrogen"')
         if lines not in [None, 'Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime']: # Check that it's a possible type of lines display
