@@ -14,5 +14,5 @@ dependencies:
   - requests
   - pip
   - pip:
-    - pybalmorel==0.5.6
+    - pybalmorel==0.5.7
     - cartopy>=0.24.1
