@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.5.6"
+version = "0.5.7"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@proton.me"},
   { name="Théodore Le Nalinec"},
@@ -33,4 +33,5 @@ build-backend = "setuptools.build_meta"
 "pybalmorel" = ["Balmorelbb4_ReadData.inc",
                 "Balmorel_ReadData.gms",
                 "geofiles/*.*",
+                "geofiles/**/.*",
                 "interactive/dashboard/static/*.*"]
