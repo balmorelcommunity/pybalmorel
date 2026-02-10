@@ -70,23 +70,19 @@ def scale_data_to_same_mean_with_full_time_series(df,df_cut):
         """ Compute the inverse ECDF (quantile function) for given quantiles. """
         x, y = ecdf(data)
         return np.interp(quantiles, y, x)
-    
-    
 
-    df_scaled=pd.DataFrame()
-    #df_scaled.index=df_cut.index
+    df_scaled=pd.DataFrame(0.0, index=df_cut.index, columns=df_cut.columns)
     for iter1 in df.keys():
+        mask_zero_df = df[iter1] == 0
+        mask_zero_df_cut = df_cut[iter1] == 0
         # Compute ECDF and the corresponding values
-        _, u_f = ecdf(df[iter1])
-        u_f = np.interp(df[iter1], _, u_f)
+        _, u_f = ecdf(df[iter1].loc[~mask_zero_df])
+        u_f = np.interp(df[iter1].loc[~mask_zero_df], _, u_f)
         
-        _, u_sel_orig = ecdf(df_cut[iter1])
-        u_sel_orig = np.interp(df_cut[iter1], _, u_sel_orig)
+        _, u_sel_orig = ecdf(df_cut[iter1].loc[~mask_zero_df_cut])
+        u_sel_orig = np.interp(df_cut[iter1].loc[~mask_zero_df_cut], _, u_sel_orig)
         
         # Compute the inverse ECDF for the scaled selection
-        #df_scaled[iter1] = inverse_ecdf(df[iter1], u_sel_orig)
-        new_data = pd.DataFrame(inverse_ecdf(df[iter1], u_sel_orig), columns=[iter1])
-        df_scaled = pd.concat([df_scaled, new_data], axis=1)
-    df_scaled.index=df_cut.index
+        df_scaled.loc[~mask_zero_df_cut,iter1] = inverse_ecdf(df[iter1].loc[~mask_zero_df], u_sel_orig)
     
     return df_scaled
