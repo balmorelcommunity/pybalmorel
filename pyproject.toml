@@ -33,5 +33,5 @@ build-backend = "setuptools.build_meta"
 "pybalmorel" = ["Balmorelbb4_ReadData.inc",
                 "Balmorel_ReadData.gms",
                 "geofiles/*.*",
-                "geofiles/**/.*",
+                "geofiles/**/*.*",
                 "interactive/dashboard/static/*.*"]
