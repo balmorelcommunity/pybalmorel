@@ -1,6 +1,7 @@
 import eel
+import sys
 import ast
-import pkg_resources
+import importlib.resources as ilr
 from typing import Tuple
 import os
 
@@ -81,10 +82,9 @@ SET CCCRRRAAA 'All geographical entities (CCC + RRR + AAA)'
 def interactive_geofilemaker():
     
     # Get working directory and package directory
-    static_path = pkg_resources.resource_filename(__name__, 'static')
-    index_path = pkg_resources.resource_filename(__name__, 'static/index.html')
+    static_path = str(ilr.files('pybalmorel') / 'interactive/dashboard/static')
     
     eel.init(static_path)
     eel.expose(get_wkdir)
     eel.expose(create_incfiles)
-    eel.start(index_path)
+    eel.start('index.html', close_callback=lambda page, sockets: sys.exit())
