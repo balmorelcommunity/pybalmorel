@@ -7,6 +7,10 @@ __pycache__
 output
 config
 build
+_build
 
 # This one is necessary to do tests
 !tests/output/.keepoutputfolder
+# pixi environments
+.pixi/*
+!.pixi/config.toml
