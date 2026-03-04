@@ -97,17 +97,17 @@ class MainResults:
         self.type = result_type
         self.db = {}
             
-        if system_directory != None:
+        if system_directory is not None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
             self._gams_system_directory = system_directory
         else:
             ws = gams.GamsWorkspace()
             
         for i in range(len(files)):    
-            print('Loading', os.path.join(os.path.abspath(paths[i]), files[i]))
+            print('Loading', str(Path(paths[i]) / files[i]))
             try:
-                self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
-            except gams.control.workspace.GamsException as e:
+                self.db[scenario_names[i]] = ws.add_database_from_gdx(str((Path(paths[i]) / files[i]).absolute()))
+            except gams.GamsException:
                 raise FileNotFoundError(f'\nCouldnt add file {files[i]}!\nBeware of æ,ø,å,ö,ü,ä or other non-english letters in the folders of your absolute path: {os.path.abspath(paths[i])}.\nThe GAMS API requires an absolute path with no non-english letters.')
      
     # Getting a certain result
@@ -369,9 +369,10 @@ class Balmorel:
         self._gams_system_directory = gams_system_directory
         
         # Get full path
-        self.path = os.path.abspath(model_folder)
+        self.path = Path(model_folder)
+        directories = [file.name for file in self.path.iterdir() if file.is_dir()]
         
-        if not('base' in os.listdir(self.path)) or not('simex' in os.listdir(self.path)):
+        if 'base' not in directories:
             raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
         
         # Get scenario folders
@@ -483,14 +484,14 @@ class Balmorel:
         
         
         # Path to the GAMS system directory
-        model_folder = os.path.join(self.path, scenario, 'model')
+        model_folder = self.path / scenario / 'model'
 
         # Path to input .gdx file of scenario
-        input_gdx = Path(model_folder) / ('%s_input_data.gdx'%scenario)
+        input_gdx = model_folder / ('%s_input_data.gdx'%scenario)
         
         if input_gdx.exists() and not(overwrite):
             ws = gams.GamsWorkspace(system_directory=self._gams_system_directory)
-            db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
+            db = ws.add_database_from_gdx(str((model_folder / ('%s_input_data.gdx'%scenario)).absolute()))
             self.input_data[scenario] = db
             print(
                 '-'*20,
@@ -506,11 +507,12 @@ class Balmorel:
             use_provided_read_files = True
             if use_provided_read_files:
                 pkgdir = sys.modules['pybalmorel'].__path__[0]
+                print('-'*150, '\npkgdir\n', pkgdir, '\n', '-'*150)
                 # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
                 # into the model folder if there isn't one already
                 for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
-                    if not(os.path.exists(os.path.join(model_folder, file))):
-                        shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
+                    if not (model_folder / file).exists():
+                        shutil.copyfile(Path(pkgdir) / file, model_folder / file)
                         print(Path(model_folder) / file)
 
             # Initialize GAMS Workspace
@@ -522,7 +524,7 @@ class Balmorel:
             opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
             
             # Load the GAMS model
-            model_db = ws.add_job_from_file(os.path.join(model_folder, read_file), job_name=scenario)
+            model_db = ws.add_job_from_file(str((model_folder / read_file).absolute()), job_name=scenario)
 
             # Run the GAMS file
             model_db.run(opt)

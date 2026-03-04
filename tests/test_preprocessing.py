@@ -29,8 +29,8 @@ assert gams_system_directory is not None, (
 local_balmorel_dir = os.environ.get("LOCAL_BALMOREL_DIR", None)
 assert local_balmorel_dir is not None, (
     "Local Balmorel model not found. "
-    "Set LOCAL_BALMOREL_PATH in the pyproject.toml file to point the Balmorel model you want to use for testing, e.g. the following if the model is one directory above this repository:\n"
-    "  LOCAL_BALMOREL_PATH=../Balmorel"
+    "Set LOCAL_BALMOREL_DIR in the pyproject.toml file to point the Balmorel model you want to use for testing, e.g. the following if the model is one directory above this repository:\n"
+    "  LOCAL_BALMOREL_DIR=../Balmorel"
 )
 
 
