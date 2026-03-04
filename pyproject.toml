@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.5.8"
+version = "0.6.0"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@proton.me"},
   { name="Théodore Le Nalinec"},
@@ -72,6 +72,8 @@ GAMS_SYSTEM_DIR = "/opt/gams/53"
 
 [tool.pixi.feature.dev.tasks]
 test = { cmd = "pytest tests", description = "Run the test suite" }
+_build = { cmd = "python -m build", description = "Build source and wheel distributions into dist/" }
+publish = { depends-on = ["_build"], cmd = "python -m twine upload dist/*", description = "Build and upload the package to PyPI" }
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }

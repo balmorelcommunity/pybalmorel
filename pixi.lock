@@ -9278,7 +9278,7 @@ packages:
 - pypi: ./
   name: pybalmorel
   version: 0.5.8
-  sha256: 3b664324039110416fa98d48ae744587706a05261a6080c26126eff5856e866c
+  sha256: b9a25b37e9fb71cea2c73528af2d91084b378ff350ac49cb9ab9425e2099f3d1
   requires_dist:
   - pandas>=2.1.4
   - matplotlib>=3.9.0
