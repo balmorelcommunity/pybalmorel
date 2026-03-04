@@ -398,8 +398,8 @@ class Balmorel:
         self.scfolder_to_scname = {}
         self.scname_to_scfolder = {}
         for SC in self.scenarios:
-            path = os.path.join(self.path, '%s/model'%SC)
-            mainresults_files = pd.Series(os.listdir(path))
+            path = self.path / f'{SC}/model'
+            mainresults_files = pd.Series([file.name for file in path.iterdir()])
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
             self.files += list(mainresults_files)
             self.paths += [path]*len(mainresults_files)
