@@ -68,6 +68,7 @@ pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
 
 [tool.pixi.feature.dev.tasks]
+test = { cmd = "pytest tests", description = "Run the test suite" }
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }

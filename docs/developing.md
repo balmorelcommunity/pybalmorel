@@ -17,6 +17,7 @@ curl -fsSL https://pixi.sh/install.sh | sh
 :maxdepth: 1
 
 developing/environments.md
+developing/testing.md
 developing/publishing.md
 developing/building_docs.md
 ```
