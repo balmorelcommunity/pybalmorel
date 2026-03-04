@@ -19,7 +19,6 @@ dependencies:
   - geopandas>=1.0.1
   - ipywidgets>=8.1.3
   - ipykernel>=6.29.5
-  - setuptools<=81
   - requests
   - pip
   - pip:
