@@ -8,6 +8,7 @@ Created on 08.06.2024
 ### ------------------------------- ###
 
 import os
+from pathlib import Path
 import sys
 import shutil
 import gams
@@ -362,7 +363,7 @@ class Balmorel:
         model_folder (str): The top level folder of Balmorel, where base and simex are located
     """
 
-    def __init__(self, model_folder: str, gams_system_directory: str = None):
+    def __init__(self, model_folder: str, gams_system_directory: str | None  = None):
         
         # Get GAMS system directory (the default none will make GAMS find it by itself)
         self._gams_system_directory = gams_system_directory
@@ -477,17 +478,28 @@ class Balmorel:
             KeyError: _description_
         """
         
-        if not(scenario in self.scenarios):
+        if scenario not in self.scenarios:
             raise KeyError('%s scenario wasnt found.\nRun this Balmorel(...) class again if you just created the %s scenario.'%(scenario, scenario))
         
         
         # Path to the GAMS system directory
         model_folder = os.path.join(self.path, scenario, 'model')
+
+        # Path to input .gdx file of scenario
+        input_gdx = Path(model_folder) / ('%s_input_data.gdx'%scenario)
         
-        if os.path.exists(os.path.join(model_folder, '%s_input_data.gdx'%scenario)) and not(overwrite):
+        if input_gdx.exists() and not(overwrite):
             ws = gams.GamsWorkspace(system_directory=self._gams_system_directory)
             db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
             self.input_data[scenario] = db
+            print(
+                '-'*20,
+                '\nLoaded existing input data - pass "overwrite = True" if you changed data since last incfile loading\n',
+                'Loaded .gdx file:\n', 
+                input_gdx,
+                '\n',
+                '-'*20,
+            )
             
         else:
             # Are you using the provided 'ReadData'-Balmorel files or a custom one?
@@ -499,10 +511,11 @@ class Balmorel:
                 for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
                     if not(os.path.exists(os.path.join(model_folder, file))):
                         shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
-                        print(os.path.join(model_folder, file))
+                        print(Path(model_folder) / file)
 
             # Initialize GAMS Workspace
-            ws = gams.GamsWorkspace(working_directory=model_folder, system_directory=self._gams_system_directory)
+            ws = gams.GamsWorkspace(working_directory=model_folder, 
+                                    system_directory=self._gams_system_directory)
 
             # Set options
             opt = ws.add_options()
@@ -516,6 +529,37 @@ class Balmorel:
 
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
+
+    def find_timeseries_input(self, scenario: str = 'base'):
+        assert scenario in self.input_data, (
+            f"Input data not loaded for {scenario}!"
+            f"Run 'Balmorel.load_incfiles({scenario})' before this command"
+        )
+
+        # Get a list of all symbols in this scenario
+        db = self.input_data[scenario]
+        symbol_list = [symbol.name for symbol in db]
+        ST_symbols = []
+        S_symbols = []
+        T_symbols = []
+        
+        for symbol in symbol_list:
+            # Only look at symbols with domains (e.g.: not CCCRRRAAA)
+            domains = [domain.name for domain in db[symbol].domains if domain != '*']            
+            if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
+                ST_symbols.append(symbol)
+            elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
+                S_symbols.append(symbol)
+            elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
+                T_symbols.append(symbol)
+
+        print('\nST list:\n', ST_symbols)
+        print('\nS list:\n', S_symbols)
+        print('\nT list:\n', T_symbols)
+
+        return ST_symbols, S_symbols, T_symbols
+
+
             
 @dataclass
 class TechData:

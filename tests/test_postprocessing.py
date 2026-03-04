@@ -73,7 +73,9 @@ def test_MainResults():
     assert list(df.Scenario.unique()) == ["SC1", "SC2"]
 
     # GUI
+    print('A lot of text below illustrates that the interactive bar plotting tool worked:\n','-'*90, '\n')
     res.interactive_bar_chart()
+    print('-'*90, '\n', 'A lot of text above illustrates that the interactive bar plotting tool worked\n')
 
     # Test profiles
     fig, ax = res.plot_profile(

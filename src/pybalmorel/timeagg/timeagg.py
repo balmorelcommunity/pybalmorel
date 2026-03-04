@@ -12,12 +12,11 @@ Docs: https://tsam.readthedocs.io/en/latest/gettingStartedDoc.html
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-import click
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from pybalmorel import Balmorel, IncFile
 from pybalmorel.utils import symbol_to_df
-from GeneralHelperFunctions import doLDC
 from pathlib import Path
 import os
 
@@ -25,10 +24,52 @@ try:
     import tsam.timeseriesaggregation as tsam
 except ModuleNotFoundError:
     raise ModuleNotFoundError(
-        "You need to install tsam to run this script:\npip install tsam"
+        "You need to install the python package 'tsam' to do timeseries aggregation:\npip install tsam"
     )
 
 
+### 3.1 LDC Curve and Plot Function
+def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
+    """Make load duration curve from timeseries
+
+    Args:
+        array (array): A timeseries of load, wind-, solar profiles or other.
+        n-bins (int): Amount of bins in histogram
+
+    Returns:
+        duration (array): ordered hours
+        curve (array): frequency
+    """
+    # Extract profile
+    data = np.histogram(array, bins=n_bins)
+    duration = data[0][::-1]
+    curve = data[1][:-1][::-1]
+
+    if plot:
+        # Normalisation
+        n_hours = len(array)
+        max_val = array.max()
+
+        if ax == None:
+            fig, ax = plt.subplots()
+            ax.plot(
+                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
+            )
+            return duration, curve, fig, ax
+        else:
+            ax.plot(
+                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
+            )
+            return duration, curve
+
+    else:
+        return duration, curve
+
+
+# TODO: Make a function that automatically lists symbols, checks for S or T in domains, and collects those
+# TODO: Func for automatically list symbols
+# TODO: Func for checking for SSS, TTT, S or T in domains
+# TODO: Func for collecting
 def collect_timeseries(
     scenario: str,
     balmorel_model_folder: str,
@@ -130,6 +171,9 @@ def collect_timeseries(
         df.loc[(slice(None), T0), "Reservoir"] = df.loc[
             (slice(None), "T001"), "Reservoir"
         ].values
+
+    ## HYPROFILS
+    # HYPROFILS =
 
     ## Fuel Potential (at the moment irrelevant, as they are constant for all S)
     if include_GMAXFS:
@@ -241,6 +285,7 @@ def format_and_save_profiles(
     balmseries = typPeriods.copy()
     balmseries.index = pd.MultiIndex.from_product((S, T), names=["S", "T"])
 
+    # TODO: Change this to any symbol with only s domain
     reservoir_series = balmseries.loc[(slice(None), "T001"), "Reservoir"]
     reservoir_series.index = reservoir_series.index.get_level_values(0)
     reservoir_series.index.name = ""
@@ -376,26 +421,16 @@ def format_and_save_profiles(
 ### ------------------------------- ###
 
 
-@click.command()
-@click.argument("scenario", default="base", type=str)
-@click.argument("typical_periods", default=5, type=int)
-@click.argument("hours_per_period", default=24, type=int)
-@click.option("--weather-year", default=2000, type=int)
-@click.option("--method", default="dist", type=str)
-@click.option("--balmorel-model-folder", default="Balmorel", type=str)
-@click.option("--include-GMAXFS", default=False, type=bool)
-@click.option("--gams-system-directory", default="/appl/gams/47.6.0", type=str)
-@click.option("--overwrite-input-data", default=False, type=bool)
 def temporal_aggregation(
-    scenario: str,
-    typical_periods: int,
-    hours_per_period: int,
-    method: str,
-    weather_year: int,
-    balmorel_model_folder: str,
-    include_gmaxfs: bool,
-    gams_system_directory: str | None,
-    overwrite_input_data: bool,
+    scenario: str = "base",
+    typical_periods: int = 6,
+    hours_per_period: int = 24,
+    method: str = "dist",
+    weather_year: int = 2000,
+    balmorel_model_folder: str = ".",
+    include_gmaxfs: bool = False,
+    gams_system_directory: str | None = "/opt/gams/50.4",
+    overwrite_input_data: bool = False,
 ):
     """_summary_
 

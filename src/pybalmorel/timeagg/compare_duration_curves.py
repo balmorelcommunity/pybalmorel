@@ -25,7 +25,6 @@ import click
 
 
 def get_resolution(db):
-
     S = symbol_to_df(db, "S").SSS.to_list()
     T = symbol_to_df(db, "T").TTT.to_list()
 

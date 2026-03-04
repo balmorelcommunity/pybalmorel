@@ -324,8 +324,13 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/dd/65/b9a4526d4a4edce26fe4b3b993914ec9dc64baabad625a3101e51adb17f3/gevent-25.9.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/84/2dc373eb6493e00c884cc11e6c059ec97abae2678d42f06bf780570b0193/gevent_websocket-0.10.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/d8/09bfa816572a4d83bccd6750df1926f79158b1c36c5f73786e26dbe4ee38/greenlet-3.3.2-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/75/68/8d197789a73714ae81fc0923f0bdc415eae9dff1fa2d65a999a329a5de72/highspy-1.13.1-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/67/ef/023b74b8f161f15a51febdd160354f1e3fd7e1475abbe5ccfb3d7588cf1f/pyomo-6.9.5-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/02/cc/b321c51d6936ede296a1b8860cf173bee2928357fe1fff7f97234899173f/zope_interface-8.2-cp314-cp314-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl
       - pypi: ./
@@ -580,8 +585,13 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/15/1a/948f8167b2cdce573cf01cec07afc64d0456dc134b07900b26ac7018b37e/gevent-25.9.1-cp314-cp314-macosx_11_0_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/7b/84/2dc373eb6493e00c884cc11e6c059ec97abae2678d42f06bf780570b0193/gevent_websocket-0.10.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3f/ae/8bffcbd373b57a5992cd077cbe8858fff39110480a9d50697091faea6f39/greenlet-3.3.2-cp314-cp314-macosx_11_0_universal2.whl
+      - pypi: https://files.pythonhosted.org/packages/92/70/22dc5ae52b9a4a13658a3a9c3b9909ae9aecaee4f579c1996096f8f19a75/highspy-1.13.1-cp314-cp314-macosx_10_15_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/3c/27/3eb3db8e9ed6a01dee63219389aec761d5cc29b6dc5015b32f826f2a9225/pyomo-6.9.5-cp314-cp314-macosx_10_15_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1a/da/3c89de3917751446728b8898b4d53318bc2f8f6bf8196e150a063c59905e/zope_interface-8.2-cp314-cp314-macosx_10_9_x86_64.whl
       - pypi: ./
@@ -836,8 +846,13 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/15/1a/948f8167b2cdce573cf01cec07afc64d0456dc134b07900b26ac7018b37e/gevent-25.9.1-cp314-cp314-macosx_11_0_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/7b/84/2dc373eb6493e00c884cc11e6c059ec97abae2678d42f06bf780570b0193/gevent_websocket-0.10.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3f/ae/8bffcbd373b57a5992cd077cbe8858fff39110480a9d50697091faea6f39/greenlet-3.3.2-cp314-cp314-macosx_11_0_universal2.whl
+      - pypi: https://files.pythonhosted.org/packages/b3/1a/426dddf9a838a54d09d6658b97bd843e41e1db4e21c5d6839b17578d672f/highspy-1.13.1-cp314-cp314-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9a/31/7f4750fc9bb0ec18a9534549e4c80ea63f1267aa828d495a48bbf0018f49/pyomo-6.9.5-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/00/7f/62d00ec53f0a6e5df0c984781e6f3999ed265129c4c3413df8128d1e0207/zope_interface-8.2-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: ./
@@ -1109,8 +1124,13 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c2/69/a7c4ba2ffbc7c7dbf6d8b4f5d0f0a421f7815d229f4909854266c445a3d4/gevent-25.9.1-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/7b/84/2dc373eb6493e00c884cc11e6c059ec97abae2678d42f06bf780570b0193/gevent_websocket-0.10.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f3/ca/2101ca3d9223a1dc125140dbc063644dca76df6ff356531eb27bc267b446/greenlet-3.3.2-cp314-cp314-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/30/6c/7abf63f02302d64934d9decd04939334db1938917f552059570ea27b41b3/highspy-1.13.1-cp314-cp314-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/68/29/394967f7df51788cbdf1b4aedfb7c5a3a62e11b85b4c9d806b86cc576be4/pyomo-6.9.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f9/82/3f2bc594370bc3abd58e5f9085d263bf682a222f059ed46275cde0570810/zope_interface-8.2-cp314-cp314-win_amd64.whl
       - pypi: ./
@@ -3657,6 +3677,42 @@ packages:
   purls: []
   size: 1127522
   timestamp: 1769445644521
+- pypi: https://files.pythonhosted.org/packages/30/6c/7abf63f02302d64934d9decd04939334db1938917f552059570ea27b41b3/highspy-1.13.1-cp314-cp314-win_amd64.whl
+  name: highspy
+  version: 1.13.1
+  sha256: 242d00f46b09c9d6f077881739d7487030a9ed2c56bcd28f3e8d5942da407df4
+  requires_dist:
+  - numpy
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/75/68/8d197789a73714ae81fc0923f0bdc415eae9dff1fa2d65a999a329a5de72/highspy-1.13.1-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+  name: highspy
+  version: 1.13.1
+  sha256: 56cb459c01696c83d2d65057e03df2cb809fb9cc9357f91d30b1af192765d809
+  requires_dist:
+  - numpy
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/92/70/22dc5ae52b9a4a13658a3a9c3b9909ae9aecaee4f579c1996096f8f19a75/highspy-1.13.1-cp314-cp314-macosx_10_15_x86_64.whl
+  name: highspy
+  version: 1.13.1
+  sha256: 0868538ce474be93219013fa242fe3ddf0859562e3b354b50786da03c96b941a
+  requires_dist:
+  - numpy
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/b3/1a/426dddf9a838a54d09d6658b97bd843e41e1db4e21c5d6839b17578d672f/highspy-1.13.1-cp314-cp314-macosx_11_0_arm64.whl
+  name: highspy
+  version: 1.13.1
+  sha256: d3f38a68783d690a4fe14521fbad18cbeae6121e1785f1dbdf5c045bcb35a926
+  requires_dist:
+  - numpy
+  - pytest ; extra == 'test'
+  - numpy ; extra == 'test'
+  requires_python: '>=3.8'
 - conda: https://conda.anaconda.org/conda-forge/noarch/hpack-4.1.0-pyhd8ed1ab_0.conda
   sha256: 6ad78a180576c706aabeb5b4c8ceb97c0cb25f1e112d76495bff23e3779948ba
   md5: 0a802cb9888dd14eeefc611f05c40b6e
@@ -9281,6 +9337,10 @@ packages:
   - pkg:pypi/pluggy?source=compressed-mapping
   size: 25877
   timestamp: 1764896838868
+- pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
+  name: ply
+  version: '3.11'
+  sha256: 096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce
 - conda: https://conda.anaconda.org/conda-forge/linux-64/proj-9.7.1-he0df7b0_3.conda
   sha256: c94d3d8ef40d1ea018860d66c416003bc03adede7d212efc9218bb64041fe2f7
   md5: 031e33ae075b336c0ce92b14efa886c5
@@ -9513,7 +9573,7 @@ packages:
 - pypi: ./
   name: pybalmorel
   version: 0.6.0
-  sha256: b2629b489ce44c6a857804de689128064342edec03adb639e58e33f8659988b7
+  sha256: c8e09418bc3155e200d0987c90ff3caec5bbe1d1c43ac7773240c2081507ba64
   requires_dist:
   - pandas>=2.1.4
   - matplotlib>=3.9.0
@@ -9755,6 +9815,178 @@ packages:
   - pkg:pypi/pyogrio?source=hash-mapping
   size: 899343
   timestamp: 1764402737921
+- pypi: https://files.pythonhosted.org/packages/3c/27/3eb3db8e9ed6a01dee63219389aec761d5cc29b6dc5015b32f826f2a9225/pyomo-6.9.5-cp314-cp314-macosx_10_15_x86_64.whl
+  name: pyomo
+  version: 6.9.5
+  sha256: 058eddde05b4354307975f1ecd25cfda9f8a282ad2e3b4f168ff8fee3c3623a1
+  requires_dist:
+  - ply
+  - coverage ; extra == 'tests'
+  - parameterized ; extra == 'tests'
+  - pybind11 ; extra == 'tests'
+  - pytest ; extra == 'tests'
+  - pytest-parallel ; extra == 'tests'
+  - sphinx>4,!=8.2.0 ; extra == 'docs'
+  - sphinx-copybutton ; extra == 'docs'
+  - sphinx-rtd-theme>0.5 ; extra == 'docs'
+  - sphinxcontrib-jsmath ; extra == 'docs'
+  - sphinxcontrib-napoleon ; extra == 'docs'
+  - numpy ; extra == 'docs'
+  - scipy ; extra == 'docs'
+  - dill ; extra == 'optional'
+  - ipython ; extra == 'optional'
+  - linear-tree ; python_full_version < '3.14' and extra == 'optional'
+  - scikit-learn<1.7.0 ; python_full_version < '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - scikit-learn ; python_full_version >= '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - matplotlib>=3.6.0,!=3.6.1 ; extra == 'optional'
+  - networkx ; extra == 'optional'
+  - numpy ; extra == 'optional'
+  - openpyxl ; extra == 'optional'
+  - packaging ; extra == 'optional'
+  - pint ; implementation_name != 'pypy' and extra == 'optional'
+  - plotly ; extra == 'optional'
+  - python-louvain ; extra == 'optional'
+  - pyyaml ; extra == 'optional'
+  - qtconsole ; extra == 'optional'
+  - scipy ; extra == 'optional'
+  - sympy ; extra == 'optional'
+  - xlrd ; extra == 'optional'
+  - z3-solver ; extra == 'optional'
+  - pywin32 ; sys_platform == 'win32' and extra == 'optional'
+  - casadi ; implementation_name != 'pypy' and extra == 'optional'
+  - numdifftools ; implementation_name != 'pypy' and extra == 'optional'
+  - pandas ; implementation_name != 'pypy' and extra == 'optional'
+  - seaborn ; implementation_name != 'pypy' and extra == 'optional'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/67/ef/023b74b8f161f15a51febdd160354f1e3fd7e1475abbe5ccfb3d7588cf1f/pyomo-6.9.5-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+  name: pyomo
+  version: 6.9.5
+  sha256: e02813b4021eeed7214a1ca5d7daecbdc78d3db7059962553a57fd138d747c22
+  requires_dist:
+  - ply
+  - coverage ; extra == 'tests'
+  - parameterized ; extra == 'tests'
+  - pybind11 ; extra == 'tests'
+  - pytest ; extra == 'tests'
+  - pytest-parallel ; extra == 'tests'
+  - sphinx>4,!=8.2.0 ; extra == 'docs'
+  - sphinx-copybutton ; extra == 'docs'
+  - sphinx-rtd-theme>0.5 ; extra == 'docs'
+  - sphinxcontrib-jsmath ; extra == 'docs'
+  - sphinxcontrib-napoleon ; extra == 'docs'
+  - numpy ; extra == 'docs'
+  - scipy ; extra == 'docs'
+  - dill ; extra == 'optional'
+  - ipython ; extra == 'optional'
+  - linear-tree ; python_full_version < '3.14' and extra == 'optional'
+  - scikit-learn<1.7.0 ; python_full_version < '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - scikit-learn ; python_full_version >= '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - matplotlib>=3.6.0,!=3.6.1 ; extra == 'optional'
+  - networkx ; extra == 'optional'
+  - numpy ; extra == 'optional'
+  - openpyxl ; extra == 'optional'
+  - packaging ; extra == 'optional'
+  - pint ; implementation_name != 'pypy' and extra == 'optional'
+  - plotly ; extra == 'optional'
+  - python-louvain ; extra == 'optional'
+  - pyyaml ; extra == 'optional'
+  - qtconsole ; extra == 'optional'
+  - scipy ; extra == 'optional'
+  - sympy ; extra == 'optional'
+  - xlrd ; extra == 'optional'
+  - z3-solver ; extra == 'optional'
+  - pywin32 ; sys_platform == 'win32' and extra == 'optional'
+  - casadi ; implementation_name != 'pypy' and extra == 'optional'
+  - numdifftools ; implementation_name != 'pypy' and extra == 'optional'
+  - pandas ; implementation_name != 'pypy' and extra == 'optional'
+  - seaborn ; implementation_name != 'pypy' and extra == 'optional'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/68/29/394967f7df51788cbdf1b4aedfb7c5a3a62e11b85b4c9d806b86cc576be4/pyomo-6.9.5-py3-none-any.whl
+  name: pyomo
+  version: 6.9.5
+  sha256: 60326f7d3143ee7d0f5c5c4a3cbf871b53e08cc6c2b0c9e6d25568880233472f
+  requires_dist:
+  - ply
+  - coverage ; extra == 'tests'
+  - parameterized ; extra == 'tests'
+  - pybind11 ; extra == 'tests'
+  - pytest ; extra == 'tests'
+  - pytest-parallel ; extra == 'tests'
+  - sphinx>4,!=8.2.0 ; extra == 'docs'
+  - sphinx-copybutton ; extra == 'docs'
+  - sphinx-rtd-theme>0.5 ; extra == 'docs'
+  - sphinxcontrib-jsmath ; extra == 'docs'
+  - sphinxcontrib-napoleon ; extra == 'docs'
+  - numpy ; extra == 'docs'
+  - scipy ; extra == 'docs'
+  - dill ; extra == 'optional'
+  - ipython ; extra == 'optional'
+  - linear-tree ; python_full_version < '3.14' and extra == 'optional'
+  - scikit-learn<1.7.0 ; python_full_version < '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - scikit-learn ; python_full_version >= '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - matplotlib>=3.6.0,!=3.6.1 ; extra == 'optional'
+  - networkx ; extra == 'optional'
+  - numpy ; extra == 'optional'
+  - openpyxl ; extra == 'optional'
+  - packaging ; extra == 'optional'
+  - pint ; implementation_name != 'pypy' and extra == 'optional'
+  - plotly ; extra == 'optional'
+  - python-louvain ; extra == 'optional'
+  - pyyaml ; extra == 'optional'
+  - qtconsole ; extra == 'optional'
+  - scipy ; extra == 'optional'
+  - sympy ; extra == 'optional'
+  - xlrd ; extra == 'optional'
+  - z3-solver ; extra == 'optional'
+  - pywin32 ; sys_platform == 'win32' and extra == 'optional'
+  - casadi ; implementation_name != 'pypy' and extra == 'optional'
+  - numdifftools ; implementation_name != 'pypy' and extra == 'optional'
+  - pandas ; implementation_name != 'pypy' and extra == 'optional'
+  - seaborn ; implementation_name != 'pypy' and extra == 'optional'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/9a/31/7f4750fc9bb0ec18a9534549e4c80ea63f1267aa828d495a48bbf0018f49/pyomo-6.9.5-cp314-cp314-macosx_11_0_arm64.whl
+  name: pyomo
+  version: 6.9.5
+  sha256: 105a073c47a2d2d6e74e48ed6fc82c6f6d19027488d5003aabb7ed5d10271483
+  requires_dist:
+  - ply
+  - coverage ; extra == 'tests'
+  - parameterized ; extra == 'tests'
+  - pybind11 ; extra == 'tests'
+  - pytest ; extra == 'tests'
+  - pytest-parallel ; extra == 'tests'
+  - sphinx>4,!=8.2.0 ; extra == 'docs'
+  - sphinx-copybutton ; extra == 'docs'
+  - sphinx-rtd-theme>0.5 ; extra == 'docs'
+  - sphinxcontrib-jsmath ; extra == 'docs'
+  - sphinxcontrib-napoleon ; extra == 'docs'
+  - numpy ; extra == 'docs'
+  - scipy ; extra == 'docs'
+  - dill ; extra == 'optional'
+  - ipython ; extra == 'optional'
+  - linear-tree ; python_full_version < '3.14' and extra == 'optional'
+  - scikit-learn<1.7.0 ; python_full_version < '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - scikit-learn ; python_full_version >= '3.14' and implementation_name != 'pypy' and extra == 'optional'
+  - matplotlib>=3.6.0,!=3.6.1 ; extra == 'optional'
+  - networkx ; extra == 'optional'
+  - numpy ; extra == 'optional'
+  - openpyxl ; extra == 'optional'
+  - packaging ; extra == 'optional'
+  - pint ; implementation_name != 'pypy' and extra == 'optional'
+  - plotly ; extra == 'optional'
+  - python-louvain ; extra == 'optional'
+  - pyyaml ; extra == 'optional'
+  - qtconsole ; extra == 'optional'
+  - scipy ; extra == 'optional'
+  - sympy ; extra == 'optional'
+  - xlrd ; extra == 'optional'
+  - z3-solver ; extra == 'optional'
+  - pywin32 ; sys_platform == 'win32' and extra == 'optional'
+  - casadi ; implementation_name != 'pypy' and extra == 'optional'
+  - numdifftools ; implementation_name != 'pypy' and extra == 'optional'
+  - pandas ; implementation_name != 'pypy' and extra == 'optional'
+  - seaborn ; implementation_name != 'pypy' and extra == 'optional'
+  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl
   name: pyparsing
   version: 3.3.2
@@ -11645,6 +11877,23 @@ packages:
   - pkg:pypi/tornado?source=hash-mapping
   size: 908399
   timestamp: 1765836848636
+- pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
+  name: tqdm
+  version: 4.67.3
+  sha256: ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf
+  requires_dist:
+  - colorama ; sys_platform == 'win32'
+  - importlib-metadata ; python_full_version < '3.8'
+  - pytest>=6 ; extra == 'dev'
+  - pytest-cov ; extra == 'dev'
+  - pytest-timeout ; extra == 'dev'
+  - pytest-asyncio>=0.24 ; extra == 'dev'
+  - nbval ; extra == 'dev'
+  - requests ; extra == 'discord'
+  - slack-sdk ; extra == 'slack'
+  - requests ; extra == 'telegram'
+  - ipywidgets>=6 ; extra == 'notebook'
+  requires_python: '>=3.7'
 - pypi: https://files.pythonhosted.org/packages/00/c0/8f5d070730d7836adc9c9b6408dec68c6ced86b304a9b26a14df072a6e8c/traitlets-5.14.3-py3-none-any.whl
   name: traitlets
   version: 5.14.3
@@ -11671,6 +11920,39 @@ packages:
   - pkg:pypi/traitlets?source=hash-mapping
   size: 110051
   timestamp: 1733367480074
+- pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
+  name: tsam
+  version: 3.1.1
+  sha256: ddca9e5da9c48de298939e3fd8aa342fa4c9bfaaa584c7c05e6cf26267fb0820
+  requires_dist:
+  - scikit-learn>=1.3.0,<=1.8.0
+  - pandas>=2.2.0,<=3.0.1
+  - numpy>=1.22.4,<=2.4.2
+  - pyomo>=6.4.8,<=6.9.5
+  - networkx>=2.5,<=3.6.1
+  - tqdm>=4.21.0,<=4.67.3
+  - highspy>=1.7.2,<=1.13.1
+  - pytest ; extra == 'develop'
+  - pytest-cov ; extra == 'develop'
+  - pytest-xdist ; extra == 'develop'
+  - pytest-benchmark ; extra == 'develop'
+  - codecov ; extra == 'develop'
+  - sphinx ; extra == 'develop'
+  - sphinx-autobuild ; extra == 'develop'
+  - sphinx-book-theme ; extra == 'develop'
+  - nbsphinx ; extra == 'develop'
+  - twine ; extra == 'develop'
+  - nbval ; extra == 'develop'
+  - ruff ; extra == 'develop'
+  - mypy ; extra == 'develop'
+  - pandas-stubs ; extra == 'develop'
+  - pre-commit ; extra == 'develop'
+  - plotly>=5.0.0 ; extra == 'develop'
+  - notebook>=7.5.0 ; extra == 'develop'
+  - plotly>=5.0.0 ; extra == 'plot'
+  - notebook>=7.5.0 ; extra == 'notebooks'
+  - plotly>=5.0.0 ; extra == 'notebooks'
+  requires_python: '>=3.10,<3.15'
 - conda: https://conda.anaconda.org/conda-forge/noarch/twine-6.2.0-pyhcf101f3_0.conda
   sha256: 0370098cab22773e33755026bf78539c2f05645fce7dcc9713d01e21950756bb
   md5: 901a86453fa6183e914b937643619a03

@@ -154,44 +154,6 @@ def store_capcred(CC, i, year, BalmArea, tech, tech_cap, val):
 ### ------------------------------- ###
 
 
-### 3.1 LDC Curve and Plot Function
-def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
-    """Make load duration curve from timeseries
-
-    Args:
-        array (array): A timeseries of load, wind-, solar profiles or other.
-        n-bins (int): Amount of bins in histogram
-
-    Returns:
-        duration (array): ordered hours
-        curve (array): frequency
-    """
-    # Extract profile
-    data = np.histogram(array, bins=n_bins)
-    duration = data[0][::-1]
-    curve = data[1][:-1][::-1]
-
-    if plot:
-        # Normalisation
-        n_hours = len(array)
-        max_val = array.max()
-
-        if ax == None:
-            fig, ax = plt.subplots()
-            ax.plot(
-                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
-            )
-            return duration, curve, fig, ax
-        else:
-            ax.plot(
-                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
-            )
-            return duration, curve
-
-    else:
-        return duration, curve
-
-
 def get_combined_obj_value(
     results: MainResults,
     capital_scenario_string: str = "capacity",
