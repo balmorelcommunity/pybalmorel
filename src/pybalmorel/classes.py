@@ -345,7 +345,7 @@ class IncFile:
         if self.name[-4:] != '.inc':
             self.name += '.inc'  
        
-        with open(os.path.join(self.path, self.name), 'w') as f:
+        with open(Path(self.path) / self.name, 'w') as f:
             f.write(self.prefix)
             if type(self.body) == str:
                 f.write(self.body)
@@ -376,17 +376,16 @@ class Balmorel:
             raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
         
         # Get scenario folders
-        scenarios = [SC for SC in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, SC)) and SC != 'simex' and SC != '.git']
+        scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name != 'simex' and SC.name[0] != '.']
         
         # Check validity of scenario folders and make list of scenarios
         self.scenarios = []
         self.input_data = {}
         for SC in scenarios:
-            if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
-                os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
-                    self.scenarios.append(SC)
+            if (SC / 'model/Balmorel.gms').exists() and (SC / 'model/cplex.op4').exists():
+                self.scenarios.append(SC.name)
             else:
-                print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
+                print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 did not exist')
 
     def locate_results(self):
         """
