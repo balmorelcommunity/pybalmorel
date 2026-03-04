@@ -67,8 +67,7 @@ def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
 
 
 # TODO: Make a function that automatically lists symbols, checks for S or T in domains, and collects those
-# TODO: Func for automatically list symbols
-# TODO: Func for checking for SSS, TTT, S or T in domains
+# TODO: Func for sorting internal parameters away (just check if there's an incfile with the name of the symbol?)
 # TODO: Func for collecting
 def collect_timeseries(
     scenario: str,
