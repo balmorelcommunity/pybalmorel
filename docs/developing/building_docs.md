@@ -2,15 +2,39 @@
 
 The documentation is built with [Sphinx](https://www.sphinx-doc.org/) and hosted on GitHub Pages. The `dev` environment (`pixi shell`) includes all necessary tools so no extra installation is needed.
 
-## Build
+## With pixi (recommended)
 
-From the repository root, run:
+The easiest way to build and preview the documentation is with the `docs` pixi task. It builds the documentation and immediately starts a local HTTP server so you can view the result in your browser:
+
+```bash
+pixi run docs
+```
+
+Then open `http://127.0.0.1:8000` in your browser. The task runs two steps in sequence:
+
+1. `sphinx-build docs docs/_build/html` — compiles the documentation
+2. `python -m http.server 8000` (from `docs/_build/html`) — serves it locally
+
+Press `Ctrl+C` to stop the server.
+
+If you want to run the two steps individually you can also use the underlying tasks directly:
+
+```bash
+pixi run _docs-build   # build only
+pixi run _docs-serve   # serve only (requires a prior build)
+```
+
+## Raw commands
+
+If you prefer running the commands directly without pixi tasks (e.g. inside an active `pixi shell`), the equivalent steps are:
 
 ```bash
 sphinx-build docs docs/_build/html
+cd docs/_build/html
+python -m http.server 8000
 ```
 
-Then, change directory into docs/_build_html and open the documentation files by running `python -m http.server 8000` (or another port than 8000 if your computer already uses this). You can then view the documentation from your browser by opening `http://127.0.0.1:8000`.
+Then open `http://127.0.0.1:8000` in your browser. Use a different port number if 8000 is already in use on your machine.
 
 ## Live Preview
 

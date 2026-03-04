@@ -36,10 +36,3 @@ Activate it with:
 pixi shell -e user
 ```
 
-## Installing pixi
-
-If you do not have pixi installed yet, follow the [official installation instructions](https://pixi.prefix.dev/latest/#installation) or run:
-
-```bash
-curl -fsSL https://pixi.sh/install.sh | sh
-```
