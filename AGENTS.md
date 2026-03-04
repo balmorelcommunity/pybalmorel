@@ -42,6 +42,50 @@ Two environments are available:
 
 ---
 
+## GAMS path configuration
+
+GAMS-dependent tests (`test_utils.py`, `test_postprocessing.py`) need to locate
+the GAMS shared libraries at runtime. The mechanism works as follows:
+
+1. The user sets `GAMS_SYSTEM_DIR` in a local `.env` file (gitignored):
+
+   ```
+   GAMS_SYSTEM_DIR=/opt/gams/53
+   ```
+
+2. `pyproject.toml` maps this into `LD_LIBRARY_PATH` via pixi's
+   `[tool.pixi.feature.dev.activation.env]`:
+
+   ```toml
+   [tool.pixi.feature.dev.activation.env]
+   LD_LIBRARY_PATH = "$GAMS_SYSTEM_DIR"
+   ```
+
+   Pixi expands `$GAMS_SYSTEM_DIR` at activation time, **after** reading `.env`
+   but **before** conda dependency activation scripts run — so the value is not
+   overwritten by conda.
+
+3. Test files read `LD_LIBRARY_PATH` and pass it to GAMS as the system directory:
+
+   ```python
+   gams_system_directory = os.environ.get("LD_LIBRARY_PATH", None)
+   assert gams_system_directory is not None, (
+       "GAMS system directory not found. "
+       "Set GAMS_SYSTEM_DIR in your .env file to point at your GAMS installation, e.g.:\n"
+       "  GAMS_SYSTEM_DIR=/opt/gams/53"
+   )
+   ```
+
+**Important:** Do not set `LD_LIBRARY_PATH` directly in `.env` — pixi treats `.env`
+values as the lowest-priority outside environment variables, and conda activation
+scripts overwrite them. Always set `GAMS_SYSTEM_DIR` in `.env` and let
+`activation.env` in `pyproject.toml` propagate it into `LD_LIBRARY_PATH`.
+
+**Important:** Do not use quotes or inline comments around values in `.env` — pixi
+does not strip them and the value will be corrupted.
+
+---
+
 ## Build / test / lint commands
 
 ### Running tests

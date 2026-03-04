@@ -18,10 +18,15 @@ import os
 ###             1. Utils            ###
 ### ------------------------------- ###
 
+gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
+assert gams_system_directory is not None, (
+    "GAMS system directory not found. "
+    "Set GAMS_SYSTEM_DIR in the pyproject.toml file to point at your GAMS installation, e.g.:\n"
+    "  GAMS_SYSTEM_DIR=/opt/gams/53"
+)
+
 
 def test_MainResults():
-    # GAMS system directory - If not in path define here!
-    gams_system_directory = None
 
     # Loading one scenario
     res = MainResults(

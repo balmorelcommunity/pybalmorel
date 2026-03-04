@@ -67,6 +67,9 @@ sphinx-copybutton = "*"
 pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
 
+[tool.pixi.feature.dev.activation.env]
+GAMS_SYSTEM_DIR = "/opt/gams/53"
+
 [tool.pixi.feature.dev.tasks]
 test = { cmd = "pytest tests", description = "Run the test suite" }
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
