@@ -531,7 +531,24 @@ class Balmorel:
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
 
-    def find_timeseries_input(self, scenario: str = 'base'):
+    def find_timeseries_input(self, scenario: str = 'base',
+                              excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
+                                                        'CHRONOHOUR', 'SSIZE',
+                                                        'TWORKDAY', 'TWEEKEND',
+                                                        'S', 'T']):
+        """
+        Locates the timeseries inputs by searching for symbols with SSS or TTT 
+        domains, relate them to actual input data by looking at base/data and 
+        scenario/data incfiles, and excluding symbols in excluded_symbols.
+
+        Args:
+           scenario (str): scenario timeseries data input to find.
+           excluded_symbols (list): symbols to exclude.
+
+        Returns:
+           str: description.
+        """
+        
         assert scenario in self.input_data, (
             f"Input data not loaded for {scenario}!"
             f"Run 'Balmorel.load_incfiles({scenario})' before this command"
@@ -540,25 +557,27 @@ class Balmorel:
         # Get a list of all symbols in this scenario
         db = self.input_data[scenario]
         symbol_list = [symbol.name for symbol in db]
-        ST_symbols = []
-        S_symbols = []
-        T_symbols = []
+        sc_incfiles = set(file.name[:-4] for file in (self.path / scenario / 'data').iterdir() if file.name[-4:] == '.inc')
+        base_incfiles = set(file.name[:-4] for file in (self.path / 'base/data').iterdir() if file.name[-4:] == '.inc')
+        all_incfiles = (sc_incfiles | base_incfiles) - set(excluded_symbols)
+        timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
         
         for symbol in symbol_list:
             # Only look at symbols with domains (e.g.: not CCCRRRAAA)
             domains = [domain.name for domain in db[symbol].domains if domain != '*']            
-            if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
-                ST_symbols.append(symbol)
-            elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
-                S_symbols.append(symbol)
-            elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
-                T_symbols.append(symbol)
+            if symbol in all_incfiles:
+                if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
+                    timeseries_symbols['ST'].append(symbol)
+                elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
+                    timeseries_symbols['S'].append(symbol)
+                elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
+                    timeseries_symbols['T'].append(symbol)
 
-        print('\nST list:\n', ST_symbols)
-        print('\nS list:\n', S_symbols)
-        print('\nT list:\n', T_symbols)
+        print('\nST list:\n', timeseries_symbols['ST'])
+        print('\nS list:\n',  timeseries_symbols['S'])
+        print('\nT list:\n',  timeseries_symbols['T'])
 
-        return ST_symbols, S_symbols, T_symbols
+        return timeseries_symbols
 
 
             
