@@ -8,7 +8,7 @@ Created on 08.06.2024
 ### ------------------------------- ###
 
 import os
-from pathlib import Path
+import json
 import sys
 import shutil
 import gams
@@ -16,12 +16,12 @@ import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
-import requests
+from pathlib import Path
 from typing import Union, Tuple
 from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from .utils import symbol_to_df
+from .utils import symbol_to_df, read_all_incfiles
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
@@ -535,15 +535,22 @@ class Balmorel:
                               excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
                                                         'CHRONOHOUR', 'SSIZE',
                                                         'TWORKDAY', 'TWEEKEND',
-                                                        'S', 'T']):
+                                                        'S', 'T'],
+                              overwrite: bool = False):
         """
-        Locates the timeseries inputs by searching for symbols with SSS or TTT 
-        domains, relate them to actual input data by looking at base/data and 
-        scenario/data incfiles, and excluding symbols in excluded_symbols.
+        Can be RAM intensive!
+
+        Locates the timeseries inputs of Balmorel by loading symbols from .inc
+        files, filtering symbols with SSS or TTT domains, and filtering raw
+        data input from processed by matching symbol names to the text of ALL
+        .inc files in base/data and scenario/data. excluded_symbols can be used
+        to exclude temporal resolution input meta data, such as CHRONOHOUR, S
+        or T. 
 
         Args:
            scenario (str): scenario timeseries data input to find.
            excluded_symbols (list): symbols to exclude.
+           overwrite (bool): Overwrite last find in scenario/data/timeseries_symbols.json
 
         Returns:
            str: description.
@@ -554,28 +561,41 @@ class Balmorel:
             f"Run 'Balmorel.load_incfiles({scenario})' before this command"
         )
 
-        # Get a list of all symbols in this scenario
-        db = self.input_data[scenario]
-        symbol_list = [symbol.name for symbol in db]
-        sc_incfiles = set(file.name[:-4] for file in (self.path / scenario / 'data').iterdir() if file.name[-4:] == '.inc')
-        base_incfiles = set(file.name[:-4] for file in (self.path / 'base/data').iterdir() if file.name[-4:] == '.inc')
-        all_incfiles = (sc_incfiles | base_incfiles) - set(excluded_symbols)
-        timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
-        
-        for symbol in symbol_list:
-            # Only look at symbols with domains (e.g.: not CCCRRRAAA)
-            domains = [domain.name for domain in db[symbol].domains if domain != '*']            
-            if symbol in all_incfiles:
-                if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
-                    timeseries_symbols['ST'].append(symbol)
-                elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
-                    timeseries_symbols['S'].append(symbol)
-                elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
-                    timeseries_symbols['T'].append(symbol)
+        # Filename of search json
+        json_file = self.path / scenario / 'data/timeseries_symbols.json'
 
-        print('\nST list:\n', timeseries_symbols['ST'])
-        print('\nS list:\n',  timeseries_symbols['S'])
-        print('\nT list:\n',  timeseries_symbols['T'])
+        # Do search if overwrite, or if json file doesn't exist
+        if overwrite or not json_file.exists():
+            # Get a list of all symbols in this scenario
+            db = self.input_data[scenario]
+            symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
+
+            # Read all incfiles (potentially RAM intensive step)
+            all_incfiles_string = read_all_incfiles(scenario, self.path)
+
+            # Categorise symbols
+            timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
+            for symbol in symbol_list:
+                # Only look at symbols with domains (e.g.: not CCCRRRAAA)
+                domains = [domain.name for domain in db[symbol].domains if domain != '*']            
+
+                # Only collect if symbol exists in an .inc file
+                if symbol in all_incfiles_string:
+                    if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['ST'].append(symbol)
+                    elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['S'].append(symbol)
+                    elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
+                        timeseries_symbols['T'].append(symbol)
+
+            # Dumps a json file that can be read next time
+            with open(json_file, 'w') as f:
+                json.dump(timeseries_symbols, f)
+
+        # Just load json file if not overwrite and it exists
+        else:
+            with open(json_file, 'r') as f:
+                timeseries_symbols = json.load(f)
 
         return timeseries_symbols
 

@@ -5,6 +5,7 @@ Functions
 import gams
 import pandas as pd
 from typing import Tuple
+from pathlib import Path
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 preformatted_columns = {
@@ -116,4 +117,36 @@ def read_lines(name, file_path, make_space=True):
         string = ''.join(open(file_path + '/%s'%name).readlines())
    
     return string
+
+def read_all_incfiles(scenario: str = 'base',
+                      balmorel_path: str | Path = '.'):
+    """
+    Will read all inc files into a string from the specified scenario. 
+    Can be RAM intensive!
+
+    Args:
+       scenario (str): Balmorel scenario to read.
+       balmorel_path (str): Path to Balmorel folder
+
+
+    Returns:
+       all_incfiles_string (str): A string of all inc file text.
+    """
+    
+    balmorel_path = Path(balmorel_path)
+    sc_incfiles = set(file.name for file in (balmorel_path / scenario / 'data').iterdir() if '.inc' in file.name)
+    base_incfiles = set(file.name for file in (balmorel_path / 'base/data').iterdir() if '.inc' in file.name)
+    all_incfiles = pd.Series(list(sc_incfiles | base_incfiles))
+
+    # Get text from all incfiles 
+    all_incfiles_string = ''
+    for incfile in all_incfiles:
+        try:
+            with open(balmorel_path / scenario / 'data' / incfile, 'r', errors='ignore') as f:
+                all_incfiles_string += f.read()
+        except FileNotFoundError:
+            with open(balmorel_path / 'base/data' / incfile, 'r', errors='ignore') as f:
+                all_incfiles_string += f.read()
+
+    return all_incfiles_string
 
