@@ -1583,7 +1583,7 @@ def plot_map(path_to_result: str,
                             lines_legend = [Line2D([0], [0], linewidth=line_legend_width, color=line_color)] + lines_legend
                             # The text
                             ave = line_legend_value
-                            string = ['%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs)] + string
+                            string = [r'%d %s$_\mathrm{%s}$'%(int(ave), line_unit, subs)] + string
                     # Add the legend
                     ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
                 elif line_width_cat == 'cluster' : # If the user has choosen the clustering, we are using that for the legend
