@@ -1591,7 +1591,7 @@ def plot_map(path_to_result: str,
                         line_legend_value = line_cluster_values[i]
                         line_legend_width = line_cluster_widths[i]
                         lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
-                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_value), line_unit, subs))
+                        string.append(r'%d %s$_\mathrm{%s}$'%(int(line_legend_value), line_unit, subs))
                     ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
                 else : # If the user has input some legend values
                     line_legend_clusters_width = []
@@ -1604,7 +1604,7 @@ def plot_map(path_to_result: str,
                             line_legend_width = log_interpolation(line_legend_value, line_max_value, line_width_max, line_width_min)
                         line_legend_clusters_width = [line_legend_width] + line_legend_clusters_width
                         lines_legend.append(Line2D([0], [0], linewidth=line_legend_width, color=line_color))
-                        string.append('%d %s$_\mathrm{%s}$'%(int(line_legend_cluster_values[i]), line_unit, subs))
+                        string.append(r'%d %s$_\mathrm{%s}$'%(int(line_legend_cluster_values[i]), line_unit, subs))
                     ax.legend(lines_legend, string, frameon=False, loc='upper left', bbox_to_anchor=pos_line)
             
         ### 3.6 Limits of graph
@@ -1710,4 +1710,4 @@ def plot_map(path_to_result: str,
             
     else:
         print("\nDidn't find a scenario in the paths given")
-      
+      
