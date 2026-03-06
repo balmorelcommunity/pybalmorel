@@ -74,4 +74,4 @@ def test_find_timeseries():
         )
 
     m.load_incfiles()
-    timeseries_symbols = m.find_timeseries_input()
+    timeseries_symbols, symbols_incfiles = m.find_timeseries_input()

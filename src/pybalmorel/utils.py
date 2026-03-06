@@ -4,8 +4,8 @@ Functions
 
 import gams
 import pandas as pd
-from typing import Tuple
 from pathlib import Path
+from ripgrepy import Ripgrepy
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 preformatted_columns = {
@@ -118,4 +118,16 @@ def read_lines(name, file_path, make_space=True):
    
     return string
 
+def search_in_incfiles(pattern: str, path: str | Path):
+    rg=Ripgrepy(pattern, str(path))
+    incfiles_containing_pattern=(
+        rg
+        .glob('*.inc')
+        .files_with_matches()
+        .run()
+        .as_string
+        .split('\n')
+        [:-1]
+    )
 
+    return incfiles_containing_pattern

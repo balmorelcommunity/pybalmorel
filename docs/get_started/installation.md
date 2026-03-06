@@ -26,3 +26,4 @@ dependencies:
     - cartopy>=0.24.1
 ```
 
+Note: If you want to use the [time series aggregation tools](../preprocessing/timeseriesagg.md), you will also need to pip install the python packages tsam and ripgrepy.

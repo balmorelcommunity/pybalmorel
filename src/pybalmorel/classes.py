@@ -13,7 +13,6 @@ import shutil
 import gams
 import pandas as pd
 import numpy as np
-from ripgrepy import Ripgrepy
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
@@ -21,7 +20,7 @@ from typing import Union, Tuple
 from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from .utils import symbol_to_df
+from .utils import symbol_to_df, search_in_incfiles
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
@@ -572,34 +571,31 @@ class Balmorel:
 
         # Categorise symbols
         timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
+        symbols_incfiles = {}
         for symbol in symbol_list:
             # Only look at symbols with domains (e.g.: not CCCRRRAAA)
             domains = [domain.name for domain in db[symbol].domains if domain != '*']            
 
             # Use ripgrep to search for symbol in .inc files 
-            rg=Ripgrepy(symbol, self.path / scenario / 'data')
-            incfiles_containing_symbol=(
-                rg
-                .glob('*.inc')
-                .files_with_matches()
-                .run()
-                .as_string
-                .split('\n')
-                [:-1]
-            )
+            incfiles_containing_symbol = search_in_incfiles(symbol, self.path / scenario / 'data')
+
+            # Try again in base/data, if symbol wasnt found in scenario/data
+            if len(incfiles_containing_symbol) == 0:
+                incfiles_containing_symbol = search_in_incfiles(symbol, self.path / 'base/data')
 
             # Only collect if symbol exists in an .inc file
             if len(incfiles_containing_symbol) > 0:
                 if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
                     timeseries_symbols['ST'].append(symbol)
+                    symbols_incfiles[symbol] = incfiles_containing_symbol
                 elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
                     timeseries_symbols['S'].append(symbol)
+                    symbols_incfiles[symbol] = incfiles_containing_symbol
                 elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
                     timeseries_symbols['T'].append(symbol)
+                    symbols_incfiles[symbol] = incfiles_containing_symbol
 
-        print(timeseries_symbols)
-
-        return timeseries_symbols
+        return timeseries_symbols, symbols_incfiles
 
 
             
