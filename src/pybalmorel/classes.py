@@ -548,8 +548,10 @@ class Balmorel:
            terms (int): amount of terms to aggregate to
            method (str): tsam clustering algorithm, defaults to distribution
             preserving algorithm. Choices: distribution, kmedoids, kmeans
-           symbols_to_aggregate (list | str): a list of symbols to aggregate or
-            'auto' for automatically finding the data 
+           symbols_to_aggregate (dict | str): 'auto' for automatically finding 
+            the data. Otherwise, a dictionary with keys 'ST', 'S'
+            and 'T' that each point to a list of symbols to aggregate for manual 
+            choice of aggregation.
            incfile_symbol_relation (dict): if manually defining symbols to 
             aggregate, this dict must be passed too. Keys should be symbols, 
             and the values should be a list of .inc file paths, where the first one 
@@ -562,13 +564,10 @@ class Balmorel:
         # Create temporal aggregation class
         self.ts = self.TempAgg(parent=self)
 
-        if symbols_to_aggregate.lower() == 'auto':
-            # Automatically find time series symbols
-            self.ts.find_timeseries_input(self, scenario)
-        elif symbols_to_aggregate is list and incfile_symbol_relation == {}:
+        if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
             # Make sure input is correct for manual entry
             raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
-        elif symbols_to_aggregate is list:
+        elif type(symbols_to_aggregate) is dict:
             # Check that incfiles were defined for each symbol
             for timeseries_type in ['ST', 'S', 'T']:
                 for symbol in symbols_to_aggregate[timeseries_type]:
@@ -578,8 +577,11 @@ class Balmorel:
                         raise ValueError(f"Missing incfile for {symbol}!")
 
             # Correct input
-            self.ts.ts_symbols = {}
-            self.ts.ts_incfiles = {}
+            self.ts.ts_symbols = symbols_to_aggregate
+            self.ts.ts_incfiles = incfile_symbol_relation
+        elif symbols_to_aggregate.lower() == 'auto':
+            # Automatically find time series symbols
+            self.ts.find_timeseries_input(self, scenario)
         elif symbols_to_aggregate.lower() != 'auto':
             # Check that some other string was not passed
             raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
