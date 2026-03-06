@@ -329,6 +329,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/67/ef/023b74b8f161f15a51febdd160354f1e3fd7e1475abbe5ccfb3d7588cf1f/pyomo-6.9.5-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
@@ -590,6 +591,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/3c/27/3eb3db8e9ed6a01dee63219389aec761d5cc29b6dc5015b32f826f2a9225/pyomo-6.9.5-cp314-cp314-macosx_10_15_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
@@ -851,6 +853,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/9a/31/7f4750fc9bb0ec18a9534549e4c80ea63f1267aa828d495a48bbf0018f49/pyomo-6.9.5-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
@@ -1129,6 +1132,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/68/29/394967f7df51788cbdf1b4aedfb7c5a3a62e11b85b4c9d806b86cc576be4/pyomo-6.9.5-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2b/76/bd1ac03b7659916496b8f5ae0289710bb7fce050cd0c791253fd560dd6ff/tsam-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c2/b0/956902e5e1302f8c5d124e219c6bf214e2649f92ad5fce85b05c039a04c9/zope_event-6.1-py3-none-any.whl
@@ -9573,7 +9577,7 @@ packages:
 - pypi: ./
   name: pybalmorel
   version: 0.6.0
-  sha256: 061bef7fbb3950b400fb643159e22a5fa413b78c6cc1bfa524c272894556563e
+  sha256: 88b3b611c1b778f260b93c823dcfc9d72cdac1688bb8f04791c621aca27839ec
   requires_dist:
   - pandas>=2.1.4
   - matplotlib>=3.9.0
@@ -10863,6 +10867,10 @@ packages:
   - pkg:pypi/rich?source=compressed-mapping
   size: 208472
   timestamp: 1771572730357
+- pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
+  name: ripgrepy
+  version: 2.2.0
+  sha256: 4c43c61384f257660007acd271a5d8e4abe9be0b069c418d091f7299e080ca9d
 - conda: https://conda.anaconda.org/conda-forge/noarch/roman-numerals-4.1.0-pyhd8ed1ab_0.conda
   sha256: 30f3c04fcfb64c44d821d392a4a0b8915650dbd900c8befc20ade8fde8ec6aa2
   md5: 0dc48b4b570931adc8641e55c6c17fe4

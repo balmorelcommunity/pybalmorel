@@ -67,6 +67,7 @@ python-lsp-server = "*"
 [tool.pixi.feature.dev.pypi-dependencies]
 pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
+ripgrepy = ">=2.2.0,<3"
 tsam = "*"
 
 [tool.pixi.feature.dev.activation.env]
