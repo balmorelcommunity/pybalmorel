@@ -535,7 +535,7 @@ class Balmorel:
                              seasons: int, 
                              terms: int, 
                              method: str = 'distribution', 
-                             symbols_to_aggregate: list | str = 'auto',
+                             symbols_to_aggregate: dict | str = 'auto',
                              incfile_symbol_relation: dict = {}):
         """
         Do temporal aggregation of scenario, using tsam.
@@ -562,11 +562,31 @@ class Balmorel:
         # Create temporal aggregation class
         self.ts = self.TempAgg(parent=self)
 
-        # Make sure input is correct
-        if symbols_to_aggregate is list and incfile_symbol_relation == {}:
+        if symbols_to_aggregate.lower() == 'auto':
+            # Automatically find time series symbols
+            self.ts.find_timeseries_input(self, scenario)
+        elif symbols_to_aggregate is list and incfile_symbol_relation == {}:
+            # Make sure input is correct for manual entry
             raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
+        elif symbols_to_aggregate is list:
+            # Check that incfiles were defined for each symbol
+            for timeseries_type in ['ST', 'S', 'T']:
+                for symbol in symbols_to_aggregate[timeseries_type]:
+                    try: 
+                        incfile_symbol_relation[symbol]
+                    except KeyError:
+                        raise ValueError(f"Missing incfile for {symbol}!")
 
-        self.ts.find_timeseries_input(self, scenario)
+            # Correct input
+            self.ts.ts_symbols = {}
+            self.ts.ts_incfiles = {}
+        elif symbols_to_aggregate.lower() != 'auto':
+            # Check that some other string was not passed
+            raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
+        else:
+            raise ValueError("Incorrect input!")
+
+
 
     class TempAgg:
         def __init__(self, parent):
