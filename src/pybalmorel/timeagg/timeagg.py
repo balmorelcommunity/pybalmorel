@@ -66,14 +66,11 @@ def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
         return duration, curve
 
 
-# TODO: Make a function that automatically lists symbols, checks for S or T in domains, and collects those
-# TODO: Func for sorting internal parameters away (just check if there's an incfile with the name of the symbol?)
-# TODO: Func for collecting
+# TODO: Func for collecting data into one dataframe
 def collect_timeseries(
     scenario: str,
     balmorel_model_folder: str,
     gams_system_directory: str | None = None,
-    weather_year: int = 2012,
     include_GMAXFS: bool = False,
     overwrite_input_data: bool = False,
 ):
@@ -81,11 +78,6 @@ def collect_timeseries(
 
     ### 1.1 Read Profiles GDX
     m = Balmorel(balmorel_model_folder, gams_system_directory=gams_system_directory)
-    if overwrite_input_data:
-        print(
-            f"Overwriting input data for scenario {scenario} in {balmorel_model_folder}"
-        )
-    m.load_incfiles(scenario, overwrite=overwrite_input_data)
 
     ### Get spatial resolution
     IA = list(symbol_to_df(m.input_data[scenario], "IA").AAA.unique())
@@ -228,21 +220,11 @@ def collect_timeseries(
     except:
         print("No HYRSMAXVOL defined or unlimited (zero)")
 
-    # Create index
-    try:
-        df.index = pd.date_range(
-            "%d-01-01 00:00" % weather_year, "%d-12-30 23:00" % weather_year, freq="h"
-        )  # 8760 h
-    except ValueError:
-        df.index = pd.date_range(
-            "%d-01-01 00:00" % weather_year, "%d-12-29 23:00" % weather_year, freq="h"
-        )  # 8736 h
-
     return m, df
 
 
 def format_and_save_profiles(
-    typPeriods, method, weather_year, Nperiods, db, balmorel_model_folder
+    typPeriods, method, Nperiods, db, balmorel_model_folder
 ):
     ### Create All S and T index
     S = np.array(
@@ -264,14 +246,12 @@ def format_and_save_profiles(
             Nperiods[0],
             Nperiods[1],
             "dist",
-            weather_year,
         )
     else:
         aggregation_scenario = "W%dT%d_%s_WY%d" % (
             Nperiods[0],
             Nperiods[1],
             method[:4],
-            weather_year,
         )
 
     try:
@@ -425,7 +405,6 @@ def temporal_aggregation(
     typical_periods: int = 6,
     hours_per_period: int = 24,
     method: str = "dist",
-    weather_year: int = 2000,
     balmorel_model_folder: str = ".",
     include_gmaxfs: bool = False,
     gams_system_directory: str | None = "/opt/gams/50.4",
@@ -438,7 +417,6 @@ def temporal_aggregation(
         typical_periods (int): Amount of periods / seasons
         hours_per_period (int): Amount of hours / terms
         method (str, optional): Aggregation method. Defaults to 'distribution', options are: K-means, K-medoids, Distribution preserving (default) and random choice
-        weather_year (int): The weather year the data belong to
         balmorel_model_folder (str, optional): The path to the Balmorel folder. Defaults to '.', i.e. in the working directory.
         include_gmaxfs (bool, optional): Include seasonal fuel availability variations. Defaults to False.
         gams_system_directory (str | None, optional): The GAMS system directory. Defaults to None, which should make the gams API find it itself if in path.
@@ -448,7 +426,6 @@ def temporal_aggregation(
         scenario,
         balmorel_model_folder,
         gams_system_directory,
-        weather_year,
         include_gmaxfs,
         overwrite_input_data,
     )
@@ -470,7 +447,6 @@ def temporal_aggregation(
         format_and_save_profiles(
             df.iloc[agg_steps],
             "random",
-            weather_year,
             (typical_periods, hours_per_period),
             model.input_data[scenario],
             balmorel_model_folder,
@@ -480,8 +456,8 @@ def temporal_aggregation(
         with open(
             "Balmorel/%s/picked_times.txt"
             % (
-                "W%dT%d_rand_weather_year%d"
-                % (typical_periods, hours_per_period, weather_year)
+                "W%dT%d_rand"
+                % (typical_periods, hours_per_period)
             ),
             "w",
         ) as f:
@@ -523,7 +499,6 @@ def temporal_aggregation(
         format_and_save_profiles(
             typPeriods,
             method,
-            weather_year,
             (typical_periods, hours_per_period),
             model.input_data[scenario],
             balmorel_model_folder,

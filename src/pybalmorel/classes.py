@@ -581,21 +581,25 @@ class Balmorel:
             self.ts.ts_incfiles = incfile_symbol_relation
         elif symbols_to_aggregate.lower() == 'auto':
             # Automatically find time series symbols
-            self.ts.find_timeseries_input(self, scenario)
+            self.ts.find_timeseries_input(scenario)
         elif symbols_to_aggregate.lower() != 'auto':
             # Check that some other string was not passed
             raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
         else:
             raise ValueError("Incorrect input!")
 
+        # Collect input 
+        for symbol in self.ts.ts_symbols:
+            self.ts.standardise_timeseries(scenario, symbol)
 
 
     class TempAgg:
         def __init__(self, parent):
+            self.parent = parent
             self.ts_symbols = {}
             self.ts_incfiles = {}
 
-        def find_timeseries_input(self, parent, scenario: str,
+        def find_timeseries_input(self, scenario: str,
                                 excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
                                                             'CHRONOHOUR', 'SSIZE',
                                                             'TWORKDAY', 'TWEEKEND',
@@ -623,13 +627,13 @@ class Balmorel:
             """
             
             # Make sure scenario data has been loaded
-            assert scenario in parent.input_data, (
+            assert scenario in self.parent.input_data, (
                 f"Input data not loaded for {scenario}!"
                 f"Run 'Balmorel.load_incfiles({scenario})' before this command"
             )
 
             # Get a list of all symbols in this scenario
-            db = parent.input_data[scenario]
+            db = self.parent.input_data[scenario]
             symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
 
             # Categorise symbols
@@ -640,11 +644,11 @@ class Balmorel:
                 domains = [domain.name for domain in db[symbol].domains if domain != '*']            
 
                 # Use ripgrep to search for symbol in .inc files 
-                incfiles_containing_symbol = search_in_incfiles(symbol, parent.path / scenario / 'data')
+                incfiles_containing_symbol = search_in_incfiles(symbol, self.parent.path / scenario / 'data')
 
                 # Try again in base/data, if symbol wasnt found in scenario/data
                 if len(incfiles_containing_symbol) == 0:
-                    incfiles_containing_symbol = search_in_incfiles(symbol, parent.path / 'base/data')
+                    incfiles_containing_symbol = search_in_incfiles(symbol, self.parent.path / 'base/data')
 
                 # Only collect if symbol exists in an .inc file
                 if len(incfiles_containing_symbol) > 0:
@@ -661,6 +665,34 @@ class Balmorel:
             self.ts_symbols[scenario] = timeseries_symbols
             self.ts_incfiles[scenario] = symbols_incfiles
             
+        def standardise_timeseries(self, scenario: str, symbol: str):
+            """
+            Collect and standardise timeseries
+            """
+
+            # Get domains of symbol 
+            db = self.parent.input_data[scenario]
+            domains = [domain.name for domain in db[symbol].domains if domain.name not in ['SSS', 'S', 'TTT', 'T']]            
+            print(symbol)
+            print(domains)
+
+            # df2 = symbol_to_df(
+            #     self.parent.input_data[scenario], symbol, ["A", "Type", "S", "T", "Heat"]
+            # ).query(f"A in {IA}")
+            # # df2 = df2['Load'].pivot_table(index=['S', 'T'], columns=['R'], values=['RESE'], fill_value=0)
+            # users = df2.Type.unique()
+            # for user in users:
+            #     temp = (
+            #         df2.query("Type == @user")
+            #         .rename(columns={"Heat": "Heat - %s" % user})
+            #         .pivot_table(
+            #             index=["S", "T"],
+            #             columns=["A"],
+            #             values=["Heat - %s" % user],
+            #             fill_value=0,
+            #         )
+            #     )
+            #     df = df.join(temp, how="outer").fillna(0)
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {
