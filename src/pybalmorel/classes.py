@@ -372,7 +372,7 @@ class Balmorel:
         directories = [file.name for file in self.path.iterdir() if file.is_dir()]
         
         if 'base' not in directories:
-            raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
+            raise Exception(f"Incorrect Balmorel folder, couldn't find base in {self.path}")
         
         # Get scenario folders
         scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name != 'simex' and SC.name[0] != '.']
@@ -530,74 +530,114 @@ class Balmorel:
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
 
-    def find_timeseries_input(self, scenario: str = 'base',
-                              excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
-                                                        'CHRONOHOUR', 'SSIZE',
-                                                        'TWORKDAY', 'TWEEKEND',
-                                                        'S', 'T', 'DE_VAR_T1',
-                                                        'DE_VAR_T1_INDIVHEATING',
-                                                        'DH_VAR_T1', 'DH_VAR_T_IND',
-                                                        'DH_VAR_T_INDIVHEATING', 
-                                                        'WND_VAR_T1', 'SOLE_VAR_T1',
-                                                        'SOLH_VAR_T1', 'X3FX_VAR_T1',
-                                                        ]):
+    def temporal_aggregation(self, 
+                             scenario: str, 
+                             seasons: int, 
+                             terms: int, 
+                             method: str = 'distribution', 
+                             symbols_to_aggregate: list | str = 'auto',
+                             incfile_symbol_relation: dict = {}):
         """
-        Can be RAM intensive!
-
-        Locates the timeseries inputs of Balmorel by loading symbols from .inc
-        files, filtering symbols with SSS or TTT domains, and filtering raw
-        data input from processed by matching symbol names to the text of ALL
-        .inc files in base/data and scenario/data. excluded_symbols can be used
-        to exclude temporal resolution input meta data, such as CHRONOHOUR, S
-        or T, or temporary profiles such as DE_VAR_T1. 
+        Do temporal aggregation of scenario, using tsam.
+        If symbols_to_aggregate is 'auto' (default setting), the 
+        script will try to automatically find the timeseries data.
 
         Args:
-           scenario (str): scenario timeseries data input to find.
-           excluded_symbols (list): symbols to exclude.
-
-        Returns:
-           str: description.
+           scenario (str): scenario to aggregate.
+           seasons (int): amount of seasons to aggregate to 
+           terms (int): amount of terms to aggregate to
+           method (str): tsam clustering algorithm, defaults to distribution
+            preserving algorithm. Choices: distribution, kmedoids, kmeans
+           symbols_to_aggregate (list | str): a list of symbols to aggregate or
+            'auto' for automatically finding the data 
+           incfile_symbol_relation (dict): if manually defining symbols to 
+            aggregate, this dict must be passed too. Keys should be symbols, 
+            and the values should be a list of .inc file paths, where the first one 
+            will be the new .inc file with aggregated data, and the others will be 
+            empty. E.g.: {'DE_VAR_T' : ['base/data/DE_VAR_T.inc',
+                                        'base/data/INDIVUSERS_DE_VAR_T.inc', 
+                                        '/base/data/TRANSPORT_DE_VAR_T.inc']}
         """
-        
-        assert scenario in self.input_data, (
-            f"Input data not loaded for {scenario}!"
-            f"Run 'Balmorel.load_incfiles({scenario})' before this command"
-        )
 
+        # Create temporal aggregation class
+        self.ts = self.TempAgg(parent=self)
 
-        # Get a list of all symbols in this scenario
-        db = self.input_data[scenario]
-        symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
+        # Make sure input is correct
+        if symbols_to_aggregate is list and incfile_symbol_relation == {}:
+            raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
 
-        # Categorise symbols
-        timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
-        symbols_incfiles = {}
-        for symbol in symbol_list:
-            # Only look at symbols with domains (e.g.: not CCCRRRAAA)
-            domains = [domain.name for domain in db[symbol].domains if domain != '*']            
+        self.ts.find_timeseries_input(self, scenario)
 
-            # Use ripgrep to search for symbol in .inc files 
-            incfiles_containing_symbol = search_in_incfiles(symbol, self.path / scenario / 'data')
+    class TempAgg:
+        def __init__(self, parent):
+            self.ts_symbols = {}
+            self.ts_incfiles = {}
 
-            # Try again in base/data, if symbol wasnt found in scenario/data
-            if len(incfiles_containing_symbol) == 0:
-                incfiles_containing_symbol = search_in_incfiles(symbol, self.path / 'base/data')
+        def find_timeseries_input(self, parent, scenario: str,
+                                excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
+                                                            'CHRONOHOUR', 'SSIZE',
+                                                            'TWORKDAY', 'TWEEKEND',
+                                                            'S', 'T', 'DE_VAR_T1',
+                                                            'DE_VAR_T1_INDIVHEATING',
+                                                            'DH_VAR_T1', 'DH_VAR_T_IND',
+                                                            'DH_VAR_T_INDIVHEATING', 
+                                                            'WND_VAR_T1', 'SOLE_VAR_T1',
+                                                            'SOLH_VAR_T1', 'X3FX_VAR_T1',
+                                                            ]):
+            """
+            Locates the timeseries inputs of Balmorel by loading symbols from .inc
+            files, filtering symbols with SSS or TTT domains, and filtering raw
+            data input from processed by matching symbol names to the text of ALL
+            .inc files in base/data and scenario/data. excluded_symbols can be used
+            to exclude temporal resolution input meta data, such as CHRONOHOUR, S
+            or T, or temporary profiles such as DE_VAR_T1. 
 
-            # Only collect if symbol exists in an .inc file
-            if len(incfiles_containing_symbol) > 0:
-                if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
-                    timeseries_symbols['ST'].append(symbol)
-                    symbols_incfiles[symbol] = incfiles_containing_symbol
-                elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
-                    timeseries_symbols['S'].append(symbol)
-                    symbols_incfiles[symbol] = incfiles_containing_symbol
-                elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
-                    timeseries_symbols['T'].append(symbol)
-                    symbols_incfiles[symbol] = incfiles_containing_symbol
+            Args:
+            scenario (str): scenario timeseries data input to find.
+            excluded_symbols (list): symbols to exclude.
 
-        return timeseries_symbols, symbols_incfiles
+            Returns:
+            str: description.
+            """
+            
+            # Make sure scenario data has been loaded
+            assert scenario in parent.input_data, (
+                f"Input data not loaded for {scenario}!"
+                f"Run 'Balmorel.load_incfiles({scenario})' before this command"
+            )
 
+            # Get a list of all symbols in this scenario
+            db = parent.input_data[scenario]
+            symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
 
+            # Categorise symbols
+            timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
+            symbols_incfiles = {}
+            for symbol in symbol_list:
+                # Only look at symbols with domains (e.g.: not CCCRRRAAA)
+                domains = [domain.name for domain in db[symbol].domains if domain != '*']            
+
+                # Use ripgrep to search for symbol in .inc files 
+                incfiles_containing_symbol = search_in_incfiles(symbol, parent.path / scenario / 'data')
+
+                # Try again in base/data, if symbol wasnt found in scenario/data
+                if len(incfiles_containing_symbol) == 0:
+                    incfiles_containing_symbol = search_in_incfiles(symbol, parent.path / 'base/data')
+
+                # Only collect if symbol exists in an .inc file
+                if len(incfiles_containing_symbol) > 0:
+                    if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['ST'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+                    elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['S'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+                    elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
+                        timeseries_symbols['T'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+
+            self.ts_symbols[scenario] = timeseries_symbols
+            self.ts_incfiles[scenario] = symbols_incfiles
             
 @dataclass
 class TechData:

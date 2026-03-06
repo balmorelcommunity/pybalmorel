@@ -119,6 +119,19 @@ def read_lines(name, file_path, make_space=True):
     return string
 
 def search_in_incfiles(pattern: str, path: str | Path):
+    """
+    Use ripgrep to find a pattern (a string of text) in an .inc file
+
+    Args:
+       pattern (str): the string to find.
+       path (str): the path to the .inc files, e.g. Balmorel/base/data.
+
+
+    Returns:
+       list: a list of .inc files that contain the pattern.
+
+    """
+    
     rg=Ripgrepy(pattern, str(path))
     incfiles_containing_pattern=(
         rg

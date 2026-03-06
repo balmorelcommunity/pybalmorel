@@ -60,11 +60,11 @@ def test_IncFile():
     assert "DE.inc" in os.listdir("tests/output")
 
 
-def test_find_timeseries():
+def test_temporal_aggregation():
     m = Balmorel(local_balmorel_dir, gams_system_directory)
 
     try:
-        m.find_timeseries_input()
+        m.temporal_aggregation('base', 5, 5)
         raise Error(
             "An error should be returned, because .load_incfiles must be run first!"
         )
@@ -73,5 +73,5 @@ def test_find_timeseries():
             "find_timeseries returned an error if .load_incfiles hadnt been run as it is supposed to"
         )
 
-    m.load_incfiles()
-    timeseries_symbols, symbols_incfiles = m.find_timeseries_input()
+    m.load_incfiles('base')
+    m.temporal_aggregation('base', 5, 5)
