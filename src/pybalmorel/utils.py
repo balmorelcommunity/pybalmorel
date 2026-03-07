@@ -23,14 +23,17 @@ def create_parameter_columns(df: pd.DataFrame,
                              symbol: str,
                              mainresult_symbol_columns: dict,
                              cols: list | None):
-    if cols == None:
+    if cols is None:
         try:
             df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
+            print('Failed to set columns for this df 1 time\n', df)
         except (ValueError, KeyError):
             try:
                 df.columns = mainresult_symbol_columns[symbol] + ['Value']
+                print('Failed to set columns for this df 2 times\n', df)
             except KeyError:
                 # If no standard format exists, just use columns from GAMS
+                print('Setting domains as columns')
                 df.columns = db[symbol].domains_as_strings + ['Value']
     else:
         df.columns = cols          
@@ -90,20 +93,24 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
         result_type (str): Is it a normal MainResults or a Optiflow Mainresults? Choose either 'balmorel' or 'optiflow'
         print_explanatory_text (bool): Print the text describing the symbol?
     """   
-    if type(db[symbol]) == gams.GamsParameter:
-        df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
-        df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
-        df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
-    elif type(db[symbol]) == gams.GamsSet:
-        df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
-        df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
-    elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
-        df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
-        df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
-        df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+    if not db[symbol].get_number_records() == 0:
+        if type(db[symbol]) == gams.GamsParameter:
+            df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
+            df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
+            df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        elif type(db[symbol]) == gams.GamsSet:
+            df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
+            df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
+            df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
+            df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
+            df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        else:
+            raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
     else:
-        raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
-    
+        print('Symbol contents are empty')
+        df = pd.DataFrame()
+        
     if print_explanatory_text:
         print(db[symbol].text)
     
