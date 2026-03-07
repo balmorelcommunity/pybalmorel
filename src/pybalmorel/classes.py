@@ -21,6 +21,7 @@ from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from .utils import symbol_to_df, search_in_incfiles
+from .formatting import SSS_TTT_index, S_T_index
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
@@ -607,10 +608,10 @@ class Balmorel:
             # Correct input
             self.ts.ts_symbols = symbols_to_aggregate
             self.ts.ts_incfiles = incfile_symbol_relation
-        elif symbols_to_aggregate.lower() == 'auto':
+        elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() == 'auto':
             # Automatically find time series symbols
             self.ts.find_timeseries_input(scenario)
-        elif symbols_to_aggregate.lower() != 'auto':
+        elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() != 'auto':
             # Check that some other string was not passed
             raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
         else:
@@ -709,11 +710,14 @@ class Balmorel:
             df = symbol_to_df(db, symbol)
 
             # Make sure it is not empty
-            if df.shape != (0, 0):
+            if df.shape == (0, 0):
+                ### TODO: If it's empty, remove symbol and return 
+                pass
 
+            else:
                 # Separate time domains from other domains
                 domains = [domain for domain in df.columns if domain not in ['SSS', 'S', 'TTT', 'T', 'Value']]            
-                time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T', 'Value']]            
+                time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T']]            
 
                 # Standardise
                 df = (
@@ -723,24 +727,31 @@ class Balmorel:
                                 values='Value',
                                 fill_value=0)
                 )
-                ## Flatten column to one string name
-                cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
+
+                # Remove columns with constant values
+                df = df.loc[:, df.nunique() > 1]
+
+                ### TODO: If it's empty, remove symbol and return 
+
+                # Flatten column to one string name
+                if type(df.columns) is pd.MultiIndex:
+                    cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
+                else:
+                    cols = [f"{symbol}|{col}" for col in df.columns]
                 df.columns = cols
-                print(df)
-            # df = df.pivot_table(index=['S', 'T'], columns=['R'], values=['RESE'], fill_value=0)
-            # users = df2.Type.unique()
-            # for user in users:
-            #     temp = (
-            #         df2.query("Type == @user")
-            #         .rename(columns={"Heat": "Heat - %s" % user})
-            #         .pivot_table(
-            #             index=["S", "T"],
-            #             columns=["A"],
-            #             values=["Heat - %s" % user],
-            #             fill_value=0,
-            #         )
-            #     )
-            #     df = df.join(temp, how="outer").fillna(0)
+                
+                # Re-index to get full ST set for all 
+                if 'TTT' in time_domains and ('SSS' not in time_domains or 'S' not in time_domains):
+                    df = df.reindex(SSS_TTT_index, level='TTT')
+                if 'T' in time_domains and ('SSS' not in time_domains or 'S' not in time_domains):
+                    df = df.reindex(S_T_index, level='T')
+                elif 'SSS' in time_domains and ('TTT' not in time_domains or 'T' not in time_domains):
+                    df = df.reindex(SSS_TTT_index, level='SSS')
+                elif 'S' in time_domains and ('TTT' not in time_domains or 'T' not in time_domains):
+                    df = df.reindex(S_T_index, level='S')
+
+                ### TODO: Store data and relate to symbol
+
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {
