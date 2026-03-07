@@ -530,6 +530,34 @@ class Balmorel:
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
 
+    def get_input(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
+        """Get a certain input from the loaded input file(s) into a pandas DataFrame
+
+        Args:
+            symbol (str): The desired input, e.g. DE_VAR_T
+            cols (str, optional): Specify custom columns. Defaults to pre-defined formats or domain names.
+
+        Returns:
+            pd.DataFrame: The output DataFrame
+        """
+        # Placeholder
+        df = pd.DataFrame()
+        
+        for SC in self.input_data.keys():
+            # Get results from each scenario
+            try :
+                temp = symbol_to_df(self.input_data[SC], symbol, cols)
+                temp['Scenario'] = SC 
+                # Put scenario in first column
+                temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
+                # Save
+                df = pd.concat((df, temp), ignore_index=True)
+            
+            except ValueError :
+                print(f'{SC} doesn\'t have any value in the table {symbol}')
+            
+        return df  
+
     def temporal_aggregation(self, 
                              scenario: str, 
                              seasons: int, 
