@@ -26,14 +26,11 @@ def create_parameter_columns(df: pd.DataFrame,
     if cols is None:
         try:
             df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
-            print('Failed to set columns for this df 1 time\n', df)
         except (ValueError, KeyError):
             try:
                 df.columns = mainresult_symbol_columns[symbol] + ['Value']
-                print('Failed to set columns for this df 2 times\n', df)
             except KeyError:
                 # If no standard format exists, just use columns from GAMS
-                print('Setting domains as columns')
                 df.columns = db[symbol].domains_as_strings + ['Value']
     else:
         df.columns = cols          

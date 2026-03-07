@@ -617,8 +617,9 @@ class Balmorel:
             raise ValueError("Incorrect input!")
 
         # Collect input 
-        for symbol in self.ts.ts_symbols:
-            self.ts.standardise_timeseries(scenario, symbol)
+        for symbol_type in ['ST', 'S', 'T']:
+            for symbol in self.ts.ts_symbols[scenario][symbol_type]:
+                self.ts.standardise_timeseries(scenario, symbol)
 
 
     class TempAgg:
@@ -696,18 +697,37 @@ class Balmorel:
         def standardise_timeseries(self, scenario: str, symbol: str):
             """
             Collect and standardise timeseries
+
+            NOTE: This depends on the balmorel_symbol_columns in pybalmorel/formatting.py!
+                  Otherwise, the following symbols will get KeyErrors in .pivot_table 
+                  because of duplicate columns: 
+                    XKRATE: Duplicate RRR's instead of IRRRE and IRRRI
             """
 
-            # Get domains of symbol 
+            # Get symbol 
             db = self.parent.input_data[scenario]
-            domains = [domain.name for domain in db[symbol].domains if domain.name not in ['SSS', 'S', 'TTT', 'T']]            
-            print(symbol)
-            print(domains)
+            df = symbol_to_df(db, symbol)
 
-            # df2 = symbol_to_df(
-            #     self.parent.input_data[scenario], symbol, ["A", "Type", "S", "T", "Heat"]
-            # ).query(f"A in {IA}")
-            # # df2 = df2['Load'].pivot_table(index=['S', 'T'], columns=['R'], values=['RESE'], fill_value=0)
+            # Make sure it is not empty
+            if df.shape != (0, 0):
+
+                # Separate time domains from other domains
+                domains = [domain for domain in df.columns if domain not in ['SSS', 'S', 'TTT', 'T', 'Value']]            
+                time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T', 'Value']]            
+
+                # Standardise
+                df = (
+                    df
+                    .pivot_table(index=time_domains, 
+                                columns=domains, 
+                                values='Value',
+                                fill_value=0)
+                )
+                ## Flatten column to one string name
+                cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
+                df.columns = cols
+                print(df)
+            # df = df.pivot_table(index=['S', 'T'], columns=['R'], values=['RESE'], fill_value=0)
             # users = df2.Type.unique()
             # for user in users:
             #     temp = (

@@ -146,7 +146,8 @@ balmorel_symbol_columns = {'F_CONS_YCRA':     ['Year','Country','Region','Area',
                            'XH2_FLOW_YCRST':  ['Year','Country','From','To','Season','Time'],
                            'XH_CAP_YCA':      ['Year','Country','From','To','Category'],
                            'XH_FLOW_YCA':     ['Year','Country','From','To'],
-                           'XH_FLOW_YCAST':   ['Year','Country','From','To','Season','Time']
+                           'XH_FLOW_YCAST':   ['Year','Country','From','To','Season','Time'],
+                           'XKRATE' : ['IRRRE', 'IRRRI', 'SSS']
 }
 
 
