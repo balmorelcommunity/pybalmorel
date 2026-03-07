@@ -620,7 +620,7 @@ class Balmorel:
         # Collect input 
         for symbol_type in ['ST', 'S', 'T']:
             for symbol in self.ts.ts_symbols[scenario][symbol_type]:
-                self.ts.standardise_timeseries(scenario, symbol)
+                self.ts.standardise_timeseries(scenario, symbol, symbol_type)
 
 
     class TempAgg:
@@ -695,7 +695,7 @@ class Balmorel:
             self.ts_symbols[scenario] = timeseries_symbols
             self.ts_incfiles[scenario] = symbols_incfiles
             
-        def standardise_timeseries(self, scenario: str, symbol: str):
+        def standardise_timeseries(self, scenario: str, symbol: str, symbol_type: str):
             """
             Collect and standardise timeseries
 
@@ -708,11 +708,14 @@ class Balmorel:
             # Get symbol 
             db = self.parent.input_data[scenario]
             df = symbol_to_df(db, symbol)
+            symbol_index=self.ts_symbols[scenario][symbol_type].index(symbol)
 
             # Make sure it is not empty
             if df.shape == (0, 0):
-                ### TODO: If it's empty, remove symbol and return 
-                pass
+                self.ts_symbols[scenario][symbol_type].pop(symbol_index)
+                print(self.ts_symbols[scenario][symbol_type])
+                print(f'Removed {symbol} from time aggregation since it was empty')
+                return
 
             else:
                 # Separate time domains from other domains
@@ -731,7 +734,11 @@ class Balmorel:
                 # Remove columns with constant values
                 df = df.loc[:, df.nunique() > 1]
 
-                ### TODO: If it's empty, remove symbol and return 
+                if len(df.columns) == 0:
+                    self.ts_symbols[scenario][symbol_type].pop(symbol_index)
+                    print(self.ts_symbols[scenario][symbol_type])
+                    print(f'Removed {symbol} from time aggregation since time series was constant')
+                    return
 
                 # Flatten column to one string name
                 if type(df.columns) is pd.MultiIndex:
