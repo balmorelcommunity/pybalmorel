@@ -598,8 +598,8 @@ class Balmorel:
         # Collect and standardise time series input 
         self.ts.collect_and_standardise(scenario, symbols_to_aggregate, incfile_symbol_relation)
 
-        # Clustering 
-        self.ts.cluster(scenario, seasons, terms, method)
+        # Cluster collected time series input
+        self.ts.cluster(seasons, terms, method)
 
     class TimeAgg:
         def __init__(self, parent):
@@ -631,6 +631,7 @@ class Balmorel:
             if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
                 # Make sure input is correct for manual entry
                 raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
+
             elif type(symbols_to_aggregate) is dict:
                 # Check that incfiles were defined for each symbol
                 for timeseries_type in ['ST', 'S', 'T']:
@@ -643,12 +644,15 @@ class Balmorel:
                 # Correct input
                 self.symbols = symbols_to_aggregate
                 self.incfiles = incfile_symbol_relation
+
             elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() == 'auto':
                 # Automatically find time series symbols
                 self.find_timeseries_input(scenario)
+                
             elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() != 'auto':
                 # Check that some other string was not passed
                 raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
+
             else:
                 raise ValueError("Incorrect input!")
 
@@ -802,7 +806,6 @@ class Balmorel:
 
         def cluster(
                 self,
-                scenario,
                 typical_periods: int = 6,
                 hours_per_period: int = 24,
                 method: str = "dist",
@@ -859,9 +862,12 @@ class Balmorel:
                 ### Normalise (be careful here, if you actually need absolute numbers in the end)
                 # self.data = self.data.clip(1e-3) / self.data.max()
 
+                df = self.data
+                df.index = pd.date_range(start="1/1/2018 00:00", end="12/30/2018 23:00", freq='h')
+
                 ### 3.1 Create Aggregation Object
                 aggregation = tsam.TimeSeriesAggregation(
-                    self.data,
+                    df,
                     noTypicalPeriods=typical_periods,
                     hoursPerPeriod=hours_per_period,
                     segmentation=True,
