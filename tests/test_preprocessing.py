@@ -68,7 +68,7 @@ def test_temporal_aggregation():
         raise Error(
             "An error should be returned, because .load_incfiles must be run first!"
         )
-    except AssertionError:
+    except Error:
         print(
             "find_timeseries returned an error if .load_incfiles hadnt been run as it is supposed to"
         )

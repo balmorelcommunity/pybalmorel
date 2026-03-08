@@ -13,6 +13,8 @@ import shutil
 import gams
 import pandas as pd
 import numpy as np
+import pickle as pkl
+import tsam
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
@@ -593,42 +595,75 @@ class Balmorel:
         # Create temporal aggregation class
         self.ts = self.TimeAgg(parent=self)
 
-        if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
-            # Make sure input is correct for manual entry
-            raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
-        elif type(symbols_to_aggregate) is dict:
-            # Check that incfiles were defined for each symbol
-            for timeseries_type in ['ST', 'S', 'T']:
-                for symbol in symbols_to_aggregate[timeseries_type]:
-                    try: 
-                        incfile_symbol_relation[symbol]
-                    except KeyError:
-                        raise ValueError(f"Missing incfile for {symbol}!")
+        # Collect and standardise time series input 
+        self.ts.collect_and_standardise(scenario, symbols_to_aggregate, incfile_symbol_relation)
 
-            # Correct input
-            self.ts.ts_symbols = symbols_to_aggregate
-            self.ts.ts_incfiles = incfile_symbol_relation
-        elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() == 'auto':
-            # Automatically find time series symbols
-            self.ts.find_timeseries_input(scenario)
-        elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() != 'auto':
-            # Check that some other string was not passed
-            raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
-        else:
-            raise ValueError("Incorrect input!")
-
-        # Collect input 
-        for symbol_type in ['ST', 'S', 'T']:
-            for symbol in self.ts.ts_symbols[scenario][symbol_type]:
-                self.ts.standardise_timeseries(scenario, symbol, symbol_type)
-
+        # Clustering 
+        self.ts.cluster(scenario, seasons, terms, method)
 
     class TimeAgg:
         def __init__(self, parent):
             self.parent = parent
-            self.ts_symbols = {}
-            self.ts_incfiles = {}
+            self.symbols = {}
+            self.incfiles = {}
             self.data = pd.DataFrame(index=SSS_TTT_index)
+
+        def collect_and_standardise(self, 
+                                    scenario: str, 
+                                    symbols_to_aggregate: dict | str = 'auto',
+                                    incfile_symbol_relation: dict = {},
+                                    overwrite: bool = False):
+            
+            # Check if this has already been collected, return if so and overwrite = False
+            std_data_file = self.parent.path / scenario / 'std_ts_data.pkl'
+            symbols_file = self.parent.path / scenario / 'symbols_to_agg.pkl'
+            incfiles_file = self.parent.path / scenario / 'incfile_symbol_relation.pkl'
+            if not overwrite and std_data_file.exists() and symbols_file.exists() and incfiles_file.exists():
+                with open(std_data_file, 'rb') as f:
+                    self.data = pkl.load(f)
+                with open(symbols_file, 'rb') as f:
+                    self.symbols = pkl.load(f)
+                with open(incfiles_file, 'rb') as f:
+                    self.incfiles = pkl.load(f)
+                return
+
+            # Collect input - start checking if input is correct
+            if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
+                # Make sure input is correct for manual entry
+                raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
+            elif type(symbols_to_aggregate) is dict:
+                # Check that incfiles were defined for each symbol
+                for timeseries_type in ['ST', 'S', 'T']:
+                    for symbol in symbols_to_aggregate[timeseries_type]:
+                        try: 
+                            incfile_symbol_relation[symbol]
+                        except KeyError:
+                            raise ValueError(f"Missing incfile for {symbol}!")
+
+                # Correct input
+                self.symbols = symbols_to_aggregate
+                self.incfiles = incfile_symbol_relation
+            elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() == 'auto':
+                # Automatically find time series symbols
+                self.find_timeseries_input(scenario)
+            elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() != 'auto':
+                # Check that some other string was not passed
+                raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
+            else:
+                raise ValueError("Incorrect input!")
+
+            # Collect and standardise input 
+            for symbol_type in ['ST', 'S', 'T']:
+                for symbol in self.symbols[scenario][symbol_type]:
+                    self.standardise_timeseries(scenario, symbol, symbol_type)
+
+            # Save standardised input to a .pkl file
+            with open(std_data_file, 'wb') as f:
+                pkl.dump(self.data, f)
+            with open(symbols_file, 'wb') as f:
+                pkl.dump(self.symbols, f)
+            with open(incfiles_file, 'wb') as f:
+                pkl.dump(self.incfiles, f)
 
         def find_timeseries_input(self, scenario: str,
                                 excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
@@ -693,8 +728,8 @@ class Balmorel:
                         timeseries_symbols['T'].append(symbol)
                         symbols_incfiles[symbol] = incfiles_containing_symbol
 
-            self.ts_symbols[scenario] = timeseries_symbols
-            self.ts_incfiles[scenario] = symbols_incfiles
+            self.symbols[scenario] = timeseries_symbols
+            self.incfiles[scenario] = symbols_incfiles
             
         def standardise_timeseries(self, scenario: str, symbol: str, symbol_type: str):
             """
@@ -709,12 +744,12 @@ class Balmorel:
             # Get symbol 
             db = self.parent.input_data[scenario]
             df = symbol_to_df(db, symbol)
-            symbol_index=self.ts_symbols[scenario][symbol_type].index(symbol)
+            symbol_index=self.symbols[scenario][symbol_type].index(symbol)
 
             # Make sure it is not empty, remove if so
             if df.shape == (0, 0):
-                self.ts_symbols[scenario][symbol_type].pop(symbol_index)
-                print(self.ts_symbols[scenario][symbol_type])
+                self.symbols[scenario][symbol_type].pop(symbol_index)
+                print(self.symbols[scenario][symbol_type])
                 print(f'Removed {symbol} from time aggregation since it was empty')
                 return
 
@@ -735,8 +770,8 @@ class Balmorel:
             without_constants = df.loc[:, df.nunique() > 1]
             
             if len(without_constants.columns) == 0:
-                self.ts_symbols[scenario][symbol_type].pop(symbol_index)
-                print(self.ts_symbols[scenario][symbol_type])
+                self.symbols[scenario][symbol_type].pop(symbol_index)
+                print(self.symbols[scenario][symbol_type])
                 print(f'Removed {symbol} from time aggregation since all time series were constant')
                 return
 
@@ -764,6 +799,91 @@ class Balmorel:
 
             # Store time series data
             self.data = self.data.join(df, how="outer").fillna(0) 
+
+        def cluster(
+                self,
+                scenario,
+                typical_periods: int = 6,
+                hours_per_period: int = 24,
+                method: str = "dist",
+        ):
+            """Cluster collect input data
+
+            Args:
+                scenario (str): The scenario folder to aggregate.
+                typical_periods (int): Amount of periods / seasons
+                hours_per_period (int): Amount of hours / terms
+                method (str, optional): Aggregation method. Defaults to 'distribution', options are: K-means, K-medoids, Distribution preserving (default) and random choice
+            """
+
+            # Using a Random Choice
+            if method == "random":
+                # Make random time aggregation
+                N_timeslices = typical_periods * hours_per_period
+                N_hours = len(self.data)
+
+                # Make choices
+                agg_steps = []
+                for i in range(N_timeslices):
+                    agg_steps.append(np.random.randint(N_hours))
+
+                # Sort chronologically
+                agg_steps.sort()
+
+
+                # Also save a small note with the chosen timesteps
+                with open(
+                    "Balmorel/%s/picked_times.txt"
+                    % (
+                        "W%dT%d_rand"
+                        % (typical_periods, hours_per_period)
+                    ),
+                    "w",
+                ) as f:
+                    f.write(pd.Series(self.data.iloc[agg_steps].index).to_string())
+
+            # Using tsam
+            elif method != "random":
+                # Method
+                if "medoid" in method:
+                    method = "medoidRepresentation"
+                elif "mean" in method:
+                    method = "meanRepresentation"
+                elif "distribution" in method:
+                    method = "distributionAndMinMaxRepresentation"
+                else:
+                    raise ValueError(
+                        "Didnt recognise choice of method!"
+                    )
+
+                ### Normalise (be careful here, if you actually need absolute numbers in the end)
+                # self.data = self.data.clip(1e-3) / self.data.max()
+
+                ### 3.1 Create Aggregation Object
+                aggregation = tsam.TimeSeriesAggregation(
+                    self.data,
+                    noTypicalPeriods=typical_periods,
+                    hoursPerPeriod=hours_per_period,
+                    segmentation=True,
+                    noSegments=hours_per_period,
+                    representationMethod=method,
+                    distributionPeriodWise=False,
+                    clusterMethod="hierarchical",
+                    # numericalTolerance=1e-13
+                )
+
+                typPeriods = aggregation.createTypicalPeriods()
+                print(typPeriods)
+
+            # TODO: Save .inc files after clustering
+            # format_and_save_profiles(
+            #     self.data.iloc[agg_steps],
+            #     "random",
+            #     (typical_periods, hours_per_period),
+            #     model.input_data[scenario],
+            #     balmorel_model_folder,
+            # )
+
 
 @dataclass
 class TechData:
