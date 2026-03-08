@@ -628,7 +628,7 @@ class Balmorel:
             self.parent = parent
             self.ts_symbols = {}
             self.ts_incfiles = {}
-            self.data = pd.DataFrame(index=S_T_index)
+            self.data = pd.DataFrame(index=SSS_TTT_index)
 
         def find_timeseries_input(self, scenario: str,
                                 excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
@@ -748,17 +748,23 @@ class Balmorel:
                     cols = [f"{symbol}|{col}" for col in df.columns]
                 df.columns = cols
                 
-                # Re-index to get full ST set for all 
-                if 'TTT' in time_domains and ('SSS' not in time_domains or 'S' not in time_domains):
-                    df = df.reindex(SSS_TTT_index, level='TTT')
-                if 'T' in time_domains and ('SSS' not in time_domains or 'S' not in time_domains):
-                    df = df.reindex(S_T_index, level='T')
-                elif 'SSS' in time_domains and ('TTT' not in time_domains or 'T' not in time_domains):
-                    df = df.reindex(SSS_TTT_index, level='SSS')
-                elif 'S' in time_domains and ('TTT' not in time_domains or 'T' not in time_domains):
-                    df = df.reindex(S_T_index, level='S')
+                # Re-index to get full ST set for all (will duplicate S or T values to all T or S indices, respectively)
+                if 'TTT' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                    df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+                elif 'T' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                    df.index.name = 'TTT'
+                    df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+                elif 'SSS' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                    df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+                elif 'S' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                    df.index.name = 'SSS'
+                    df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+                else:
+                    df.index.names = ['S', 'T']
+                    df = df.reindex(SSS_TTT_index).fillna(0)
 
-                ### TODO: Store data and relate to symbol
+                # Store time series data
+                self.data = self.data.join(df, how="outer").fillna(0) 
 
 @dataclass
 class TechData:
