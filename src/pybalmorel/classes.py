@@ -591,7 +591,7 @@ class Balmorel:
         """
 
         # Create temporal aggregation class
-        self.ts = self.TempAgg(parent=self)
+        self.ts = self.TimeAgg(parent=self)
 
         if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
             # Make sure input is correct for manual entry
@@ -623,11 +623,12 @@ class Balmorel:
                 self.ts.standardise_timeseries(scenario, symbol, symbol_type)
 
 
-    class TempAgg:
+    class TimeAgg:
         def __init__(self, parent):
             self.parent = parent
             self.ts_symbols = {}
             self.ts_incfiles = {}
+            self.data = pd.DataFrame(index=S_T_index)
 
         def find_timeseries_input(self, scenario: str,
                                 excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
@@ -731,13 +732,13 @@ class Balmorel:
                                 fill_value=0)
                 )
 
-                # Remove columns with constant values
-                df = df.loc[:, df.nunique() > 1]
-
-                if len(df.columns) == 0:
+                # Check if symbol has only constant values
+                without_constants = df.loc[:, df.nunique() > 1]
+                
+                if len(without_constants.columns) == 0:
                     self.ts_symbols[scenario][symbol_type].pop(symbol_index)
                     print(self.ts_symbols[scenario][symbol_type])
-                    print(f'Removed {symbol} from time aggregation since time series was constant')
+                    print(f'Removed {symbol} from time aggregation since all time series were constant')
                     return
 
                 # Flatten column to one string name
