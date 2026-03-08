@@ -711,60 +711,59 @@ class Balmorel:
             df = symbol_to_df(db, symbol)
             symbol_index=self.ts_symbols[scenario][symbol_type].index(symbol)
 
-            # Make sure it is not empty
+            # Make sure it is not empty, remove if so
             if df.shape == (0, 0):
                 self.ts_symbols[scenario][symbol_type].pop(symbol_index)
                 print(self.ts_symbols[scenario][symbol_type])
                 print(f'Removed {symbol} from time aggregation since it was empty')
                 return
 
+            # Separate time domains from other domains
+            domains = [domain for domain in df.columns if domain not in ['SSS', 'S', 'TTT', 'T', 'Value']]            
+            time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T']]            
+
+            # Standardise
+            df = (
+                df
+                .pivot_table(index=time_domains, 
+                            columns=domains, 
+                            values='Value',
+                            fill_value=0)
+            )
+
+            # Check if symbol has only constant values
+            without_constants = df.loc[:, df.nunique() > 1]
+            
+            if len(without_constants.columns) == 0:
+                self.ts_symbols[scenario][symbol_type].pop(symbol_index)
+                print(self.ts_symbols[scenario][symbol_type])
+                print(f'Removed {symbol} from time aggregation since all time series were constant')
+                return
+
+            # Flatten column to one string name
+            if type(df.columns) is pd.MultiIndex:
+                cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
             else:
-                # Separate time domains from other domains
-                domains = [domain for domain in df.columns if domain not in ['SSS', 'S', 'TTT', 'T', 'Value']]            
-                time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T']]            
+                cols = [f"{symbol}|{col}" for col in df.columns]
+            df.columns = cols
+            
+            # Re-index to get full ST set for all (will duplicate S or T values to all T or S indices, respectively)
+            if 'TTT' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+            elif 'T' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                df.index.name = 'TTT'
+                df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+            elif 'SSS' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+            elif 'S' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                df.index.name = 'SSS'
+                df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+            else:
+                df.index.names = ['S', 'T']
+                df = df.reindex(SSS_TTT_index).fillna(0)
 
-                # Standardise
-                df = (
-                    df
-                    .pivot_table(index=time_domains, 
-                                columns=domains, 
-                                values='Value',
-                                fill_value=0)
-                )
-
-                # Check if symbol has only constant values
-                without_constants = df.loc[:, df.nunique() > 1]
-                
-                if len(without_constants.columns) == 0:
-                    self.ts_symbols[scenario][symbol_type].pop(symbol_index)
-                    print(self.ts_symbols[scenario][symbol_type])
-                    print(f'Removed {symbol} from time aggregation since all time series were constant')
-                    return
-
-                # Flatten column to one string name
-                if type(df.columns) is pd.MultiIndex:
-                    cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
-                else:
-                    cols = [f"{symbol}|{col}" for col in df.columns]
-                df.columns = cols
-                
-                # Re-index to get full ST set for all (will duplicate S or T values to all T or S indices, respectively)
-                if 'TTT' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
-                    df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
-                elif 'T' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
-                    df.index.name = 'TTT'
-                    df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
-                elif 'SSS' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
-                    df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
-                elif 'S' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
-                    df.index.name = 'SSS'
-                    df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
-                else:
-                    df.index.names = ['S', 'T']
-                    df = df.reindex(SSS_TTT_index).fillna(0)
-
-                # Store time series data
-                self.data = self.data.join(df, how="outer").fillna(0) 
+            # Store time series data
+            self.data = self.data.join(df, how="outer").fillna(0) 
 
 @dataclass
 class TechData:
