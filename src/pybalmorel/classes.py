@@ -16,6 +16,7 @@ import numpy as np
 import pickle as pkl
 import tsam
 import requests
+from datetime import datetime
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
@@ -901,10 +902,10 @@ class Balmorel:
             incfile_relations = self.incfiles
             db = self.parent.input_data[scenario]
 
-            # Prepare new, aggregated scenario
-            new_scenario = Path(self.parent.path / f'{scenario}_W{self.seasons}T{self.terms}/data')
-            new_scenario.mkdir(parents=True, exist_ok=True)
-            with open(new_scenario / '../temporal_aggregation.md', 'w') as f:
+            # Prepare new, aggregated scenario and document
+            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.seasons}T{self.terms}/data')
+            new_scenario_path.mkdir(parents=True, exist_ok=True)
+            with open(new_scenario_path / '../temporal_aggregation.md', 'w') as f:
                 f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
                 f.write(f"Method: {self.method}\n")
                 f.write(f"Representation: {self.representation}\n")
@@ -945,41 +946,36 @@ class Balmorel:
                 for incfile in iterable:
                     if incfile not in incfiles:
                         # Prepare filename, path, prefix and figure out if symbol == filename
-                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, db)
+                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
                         incfiles[incfile] = IncFile(
                             name=filename,
-                            path=path,
+                            path=str(new_scenario_path),
+                            body=symbol_data.to_string(),
                             prefix=prefix, 
                             suffix=suffix
                         )
-
-                        # Convert body into proper format
-                        # if len(domains) == 1:
-                        #     incfiles[incfile].body_prepare(index=domains[0], values='Value')
-                        # else:
-                        #     incfiles[incfile].body_prepare(index=domains[0], columns=domains[1:], values='Value')
-                        print(incfiles[incfile])
 
                         # Store new attribute, relating to whether or not .inc filename equals symbol name 
                         incfiles[incfile].sn_eq_ifn = filename_eq_symbol
                 
                     else:
-                        # TODO: Append body here?
-                        pass
-                        # incfiles = {
-                        #     symbol: IncFile(
-                        #         name=self.parent.incfile_symbol_relation[symbol],
-                        #         path="Balmorel/%s/data/" % aggregation_scenario,
-                        #         prefix="SET S(SSS)  'Seasons in the simulation'\n/\n",
-                        #         body=", ".join(S),
-                        #         suffix="\n/;",
-                        #     ),
-                        # }
-                    print(incfiles[incfile].body)
+                        # Append to existing .inc file
+                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
+                        incfiles[symbol].body += '\n'
+                        incfiles[symbol].body += prefix
+                        incfiles[symbol].body += symbol_data.to_string
+                        incfiles[symbol].body += f'\n{suffix}'
 
             # TODO: Save .inc files, also T and S
             # If no .inc file had a filename that was equal to the symbol name, make the first .inc file the one to save
             # incfile[iterable[0]]
+            for incfile in incfiles:
+                if incfiles[incfile].sn_eq_ifn:
+                    incfiles[incfile].save()
+                else:
+                    # Empty file (addon files already included in previously written .inc file)
+                    with open(incfiles[incfile].path + '/' + incfiles[incfile].name, 'w') as f:
+                        f.write('')
 
 @dataclass
 class TechData:
