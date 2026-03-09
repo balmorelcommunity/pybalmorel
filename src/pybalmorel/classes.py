@@ -315,7 +315,7 @@ class IncFile:
 
         self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function.. 
 
-    def body_prepare(self, index: list, columns: list,
+    def body_prepare(self, index: list, columns: list | None = None,
                     values: str = 'Value',
                     aggfunc: str ='sum',
                     fill_value: Union[str, int] = ''):
@@ -587,8 +587,8 @@ class Balmorel:
            method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
            representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
            symbols_to_aggregate (dict | str): 'auto' for automatically finding 
-            the data. Otherwise, a dictionary with keys 'ST', 'S'
-            and 'T' that each point to a list of symbols to aggregate for manual 
+            the data. Otherwise, a dictionary with keys 'SSS,TTT', 'SSS'
+            and 'TTT' that each point to a list of symbols to aggregate for manual 
             choice of aggregation.
            incfile_symbol_relation (dict): if manually defining symbols to 
             aggregate, this dict must be passed too. Keys should be symbols, 
@@ -610,7 +610,7 @@ class Balmorel:
         self.ts.cluster(seasons, terms, method, representation)
 
         # Save .inc files 
-        for symbol_type in ['ST', 'S', 'T']:
+        for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
             self.ts.save_clustered_data(scenario, symbol_type)
 
     class TimeAgg:
@@ -649,7 +649,7 @@ class Balmorel:
 
             elif type(symbols_to_aggregate) is dict:
                 # Check that incfiles were defined for each symbol
-                for timeseries_type in ['ST', 'S', 'T']:
+                for timeseries_type in ['SSS,TTT', 'SSS', 'TTT']:
                     for symbol in symbols_to_aggregate[timeseries_type]:
                         try: 
                             incfile_symbol_relation[symbol]
@@ -672,7 +672,7 @@ class Balmorel:
                 raise ValueError("Incorrect input!")
 
             # Collect and standardise input 
-            for symbol_type in ['ST', 'S', 'T']:
+            for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
                 for symbol in self.symbols[symbol_type]:
                     self.standardise_timeseries(scenario, symbol, symbol_type)
 
@@ -722,7 +722,7 @@ class Balmorel:
             symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
 
             # Categorise symbols
-            timeseries_symbols = {'ST' : [], 'S' : [], 'T' : []}
+            timeseries_symbols = {'SSS,TTT' : [], 'SSS' : [], 'TTT' : []}
             symbols_incfiles = {}
             for symbol in symbol_list:
                 # Only look at symbols with domains (e.g.: not CCCRRRAAA)
@@ -738,13 +738,13 @@ class Balmorel:
                 # Only collect if symbol exists in an .inc file
                 if len(incfiles_containing_symbol) > 0:
                     if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
-                        timeseries_symbols['ST'].append(symbol)
+                        timeseries_symbols['SSS,TTT'].append(symbol)
                         symbols_incfiles[symbol] = incfiles_containing_symbol
                     elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
-                        timeseries_symbols['S'].append(symbol)
+                        timeseries_symbols['SSS'].append(symbol)
                         symbols_incfiles[symbol] = incfiles_containing_symbol
                     elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
-                        timeseries_symbols['T'].append(symbol)
+                        timeseries_symbols['TTT'].append(symbol)
                         symbols_incfiles[symbol] = incfiles_containing_symbol
 
             self.symbols = timeseries_symbols
@@ -769,7 +769,7 @@ class Balmorel:
             if df.shape == (0, 0):
                 self.symbols[symbol_type].pop(symbol_index)
                 print(f'Removed {symbol} from time aggregation since it was empty')
-                print(f'Remaining {symbol_type} ST symbols to aggregate:')
+                print(f'Remaining {symbol_type} symbols to aggregate:')
                 print(self.symbols[symbol_type])
                 return
 
@@ -792,7 +792,7 @@ class Balmorel:
             if len(without_constants.columns) == 0:
                 self.symbols[symbol_type].pop(symbol_index)
                 print(f'Removed {symbol} from time aggregation since all time series were constant')
-                print(f'Remaining {symbol_type} ST symbols to aggregate:')
+                print(f'Remaining {symbol_type} symbols to aggregate:')
                 print(self.symbols[symbol_type])
                 return
 
@@ -823,8 +823,8 @@ class Balmorel:
 
         def cluster(
                 self,
-                typical_periods: int = 6,
-                hours_per_period: int = 24,
+                seasons: int = 6,
+                terms: int = 24,
                 method: str = "contiguous",
                 representation: str = "distribution_minmax"
         ):
@@ -832,8 +832,8 @@ class Balmorel:
 
             Args:
                 scenario (str): The scenario folder to aggregate.
-                typical_periods (int): Amount of periods / seasons
-                hours_per_period (int): Amount of hours / terms
+                seasons (int): Amount of periods / seasons
+                terms (int): Amount of hours / terms
                 method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
                 representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
             """
@@ -841,7 +841,7 @@ class Balmorel:
             # Using a Random Choice
             if method == "random":
                 # # Make random time aggregation
-                # N_timeslices = typical_periods * hours_per_period
+                # N_timeslices = seasons * terms
                 # N_hours = len(self.data)
                 #
                 # # Make choices
@@ -857,7 +857,7 @@ class Balmorel:
                 #     "Balmorel/%s/picked_times.txt"
                 #     % (
                 #         "W%dT%d_rand"
-                #         % (typical_periods, hours_per_period)
+                #         % (seasons, terms)
                 #     ),
                 #     "w",
                 # ) as f:
@@ -912,14 +912,20 @@ class Balmorel:
                 for incfile in iterable:
                     if incfile not in incfiles:
                         # Prepare filename, path, prefix and figure out if symbol == filename
-                        filename, path, prefix, suffix, filename_eq_symbol = prepare_incfile(incfile, symbol, db)
+                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, db)
                         incfiles[incfile] = IncFile(
                             name=filename,
                             path=path,
-                            body=self.agg_data,
                             prefix=prefix, 
                             suffix=suffix
                         )
+
+                        # Convert body into proper format
+                        # if len(domains) == 1:
+                        #     incfiles[incfile].body_prepare(index=domains[0], values='Value')
+                        # else:
+                        #     incfiles[incfile].body_prepare(index=domains[0], columns=domains[1:], values='Value')
+                        print(incfiles[incfile])
 
                         # Store new attribute, relating to whether or not .inc filename equals symbol name 
                         incfiles[incfile].sn_eq_ifn = filename_eq_symbol
@@ -936,8 +942,9 @@ class Balmorel:
                         #         suffix="\n/;",
                         #     ),
                         # }
+                    print(incfiles[incfile].body)
 
-            # TODO: Save .inc files
+            # TODO: Save .inc files, also T and S
             # If no .inc file had a filename that was equal to the symbol name, make the first .inc file the one to save
             # incfile[iterable[0]]
 

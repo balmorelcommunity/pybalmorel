@@ -69,14 +69,16 @@ def test_temporal_aggregation():
 
     m.temporal_aggregation('base', 8, 24, 
         symbols_to_aggregate={
-            'ST' : [],
-            'S' : ['DR_RATE_S'],
-            'T' : []
+            'SSS,TTT' : ['DE_VAR_T'],
+            'SSS' : ['DR_RATE_S'],
+            'TTT' : []
         }, 
         incfile_symbol_relation={
+            'DE_VAR_T' : ['../Balmorel/base/data/DE_VAR_T.inc','../Balmorel/base/data/INDIVUSERS_DE_VAR_T.inc'],
             'DR_RATE_S' : '../Balmorel/base/data/DR_DATAINPUT.inc'
         },
-        overwrite=True
+        method='contiguous',
+        overwrite=False
     )
 
-    m.temporal_aggregation("base", 8, 24, overwrite=True)
+    # m.temporal_aggregation("base", 8, 24, overwrite=True)
