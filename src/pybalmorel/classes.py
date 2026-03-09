@@ -610,15 +610,16 @@ class Balmorel:
         # Cluster collected time series input
         self.ts.cluster(seasons, terms, method, representation)
 
-        # Save .inc files 
-        for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
-            self.ts.save_clustered_data(scenario, symbol_type)
+        # Prepare and save incfiles
+        self.ts.save_incfiles(scenario)
+
 
     class TimeAgg:
         def __init__(self, parent):
             self.parent = parent
             self.symbols = {}
             self.incfiles = {}
+            self.incfiles_to_save = {}
             self.data = pd.DataFrame(index=SSS_TTT_index)
 
         def collect_and_standardise(self, 
@@ -637,10 +638,23 @@ class Balmorel:
             if not overwrite and std_data_file.exists() and symbols_file.exists() and incfiles_file.exists():
                 with open(std_data_file, 'rb') as f:
                     self.data = pkl.load(f)
-                with open(symbols_file, 'rb') as f:
-                    self.symbols = pkl.load(f)
-                with open(incfiles_file, 'rb') as f:
-                    self.incfiles = pkl.load(f)
+
+                # Load old standardised input
+                if symbols_to_aggregate == 'auto':
+                    with open(symbols_file, 'rb') as f:
+                        self.symbols = pkl.load(f)
+                # Manually defined, following a previous standardisation
+                elif type(symbols_to_aggregate) is not str:
+                    self.symbols = symbols_to_aggregate
+
+                # Load old relations
+                if incfile_symbol_relation == {}:
+                    with open(incfiles_file, 'rb') as f:
+                        self.incfiles = pkl.load(f)
+                # Manually defined, following a previous standardisation
+                else:
+                    self.incfiles = incfile_symbol_relation
+
                 return
 
             # Collect input - start checking if input is correct
@@ -674,8 +688,11 @@ class Balmorel:
 
             # Collect and standardise input 
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
+                self.symbols_to_ignore = []
                 for symbol in self.symbols[symbol_type]:
-                    self.standardise_timeseries(scenario, symbol, symbol_type)
+                    self.standardise_timeseries(scenario, symbol)
+
+                self.symbols[symbol_type] = [symbol for symbol in self.symbols[symbol_type] if symbol not in self.symbols_to_ignore]
 
             # Save standardised input to a .pkl file
             with open(std_data_file, 'wb') as f:
@@ -751,7 +768,7 @@ class Balmorel:
             self.symbols = timeseries_symbols
             self.incfiles = symbols_incfiles
             
-        def standardise_timeseries(self, scenario: str, symbol: str, symbol_type: str):
+        def standardise_timeseries(self, scenario: str, symbol: str):
             """
             Collect and standardise timeseries
 
@@ -764,14 +781,11 @@ class Balmorel:
             # Get symbol 
             db = self.parent.input_data[scenario]
             df = symbol_to_df(db, symbol)
-            symbol_index=self.symbols[symbol_type].index(symbol)
 
             # Make sure it is not empty, remove if so
             if df.shape == (0, 0):
-                self.symbols[symbol_type].pop(symbol_index)
-                print(f'Removed {symbol} from time aggregation since it was empty')
-                print(f'Remaining {symbol_type} symbols to aggregate:')
-                print(self.symbols[symbol_type])
+                self.symbols_to_ignore.append(symbol)
+                print(f'Ignoring {symbol} in time aggregation since it was empty')
                 return
 
             # Separate time domains from other domains
@@ -790,12 +804,9 @@ class Balmorel:
             # Check if symbol has only constant values
             without_constants = df.loc[:, df.nunique() > 1]
             
-            # TODO: This didn't capture that GKRATE was empty - or did it? What happened?
             if len(without_constants.columns) == 0:
-                self.symbols[symbol_type].pop(symbol_index)
-                print(f'Removed {symbol} from time aggregation since all time series were constant')
-                print(f'Remaining {symbol_type} symbols to aggregate:')
-                print(self.symbols[symbol_type])
+                self.symbols_to_ignore.append(symbol)
+                print(f'Ignoring {symbol} in time aggregation since all time series were constant')
                 return
 
             # Flatten column to one string name
@@ -894,18 +905,17 @@ class Balmorel:
                 self.method = method
                 self.representation = representation
 
-        def save_clustered_data(self, scenario: str, symbol_type: str):
+        def prepare_clustered_data(self, scenario: str, symbol_type: str):
 
             # Prepare placeholders
-            incfiles = {}
+            incfiles = self.incfiles_to_save
             symbols = self.symbols
             incfile_relations = self.incfiles
             db = self.parent.input_data[scenario]
 
             # Prepare new, aggregated scenario and document
-            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
-            new_scenario_path.mkdir(parents=True, exist_ok=True)
-            with open(new_scenario_path / '../temporal_aggregation.md', 'w') as f:
+            self.new_scenario_path.mkdir(parents=True, exist_ok=True)
+            with open(self.new_scenario_path / '../temporal_aggregation.md', 'w') as f:
                 f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
                 f.write(f"Method: {self.method}\n")
                 f.write(f"Representation: {self.representation}\n")
@@ -937,7 +947,7 @@ class Balmorel:
                     symbol_data.index.name = ''
 
                 # Transpose - SSS and TTT's are always the last domains
-                # TODO: This is not true for DR_RATE_*! Make a check where domains are and move around? Or maybe it is easier adding GAMS statements?
+                # TODO: This is not true for DR_RATE_* or leave_profiles in EV addon! Make a check where domains are and move around? Or maybe it is easier adding GAMS statements?
                 symbol_data = symbol_data.T
 
                 # Loop through related .inc files
@@ -950,12 +960,12 @@ class Balmorel:
 
                 for incfile in iterable:
                     # Prepare a new .inc file if it doesn't already exist
-                    if incfile not in incfiles:
+                    if incfile not in incfiles.keys():
                         # Prepare filename, path, prefix and figure out if symbol == filename
                         filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
                         incfiles[incfile] = IncFile(
                             name=filename,
-                            path=str(new_scenario_path),
+                            path=str(self.new_scenario_path),
                             body=symbol_data.to_string(),
                             prefix=prefix, 
                             suffix=suffix
@@ -965,13 +975,11 @@ class Balmorel:
                         incfiles[incfile].sn_eq_ifn = filename_eq_symbol
                 
                     # Append to existing .inc file
-                    # TODO: This is not appending
                     else:
                         filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
                         incfiles[incfile].body += '\n'
-                        incfiles[incfile].body += prefix
+                        incfiles[incfile].body += '\n;\n' + prefix
                         incfiles[incfile].body += symbol_data.to_string()
-                        incfiles[incfile].body += f'\n{suffix}'
 
                 # Make first related .inc file the one to save data to, if no .inc file had a name equal to symbol name
                 incfiles_to_save = [incfiles[prepared_incfile].sn_eq_ifn for prepared_incfile in iterable]
@@ -981,7 +989,15 @@ class Balmorel:
                 elif sum(incfiles_to_save) > 1:
                     raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
 
+
+        def save_incfiles(self, scenario: str):
+            self.new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
+            # Save .inc files 
+            for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
+                self.prepare_clustered_data(scenario, symbol_type)
+
             # Save aggregated files
+            incfiles = self.incfiles_to_save
             for incfile in incfiles:
                 if incfiles[incfile].sn_eq_ifn:
                     incfiles[incfile].save()
@@ -998,11 +1014,12 @@ class Balmorel:
             for incfile in ['S', 'T']:
                 f = IncFile(
                     name=incfile,
-                    path=str(new_scenario_path),
-                    prefix=f"SET {incfile}({incfile*3}) '{db[incfile].text}'\n/\n",
+                    path=str(self.new_scenario_path),
+                    prefix=f"SET {incfile}({incfile*3}) '{self.parent.input_data[scenario][incfile].text}'\n/\n",
                     body=bodies[incfile],
                     suffix='\n/;'
                 ).save()
+
 
 @dataclass
 class TechData:
