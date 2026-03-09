@@ -900,6 +900,17 @@ class Balmorel:
             incfile_relations = self.incfiles
             db = self.parent.input_data[scenario]
             for symbol in symbols[symbol_type]:
+                # Collect metadata
+                domains = db[symbol].domains_as_strings
+                explanatory_text = db[symbol].text
+
+                # Collect aggregated data
+                symbol_data_idx = self.agg_data.columns.str.contains(symbol)
+                symbol_data = self.agg_data.loc[:, symbol_data_idx]
+
+                # Un-standardise (prepare for Balmorel input)
+                new_columns=symbol_data.columns.str.replace(f'{symbol}|','').str.replace('|', ' . ')
+                symbol_data.columns = new_columns
 
                 print(symbol)
                 if type(incfile_relations[symbol]) is str:
