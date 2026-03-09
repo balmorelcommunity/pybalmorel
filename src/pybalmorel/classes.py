@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Union, Tuple
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from .utils import symbol_to_df, search_in_incfiles
+from .utils import symbol_to_df, search_in_incfiles, prepare_incfile
 from .formatting import SSS_TTT_index
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
@@ -298,7 +298,7 @@ class IncFile:
     name (str): The name of the .inc file.
     path (str): The path to save the file, defaults to 'Balmorel/base/data'.
     """
-    def __init__(self, prefix: str = '', body: str = '', 
+    def __init__(self, prefix: str = '', body: str | pd.DataFrame = '', 
                  suffix: str = '', name: str = 'name', 
                  path: str = 'Balmorel/base/data/'):
         self.prefix = prefix
@@ -310,6 +310,9 @@ class IncFile:
     def body_concat(self, df: pd.DataFrame):
         """Concatenate a body temporarily being a dataframe to another dataframe
         """
+        if type(self.body) is not pd.DataFrame:
+            raise TypeError("Body must be a pandas DataFrame for this to work!")
+
         self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function.. 
 
     def body_prepare(self, index: list, columns: list,
@@ -351,9 +354,9 @@ class IncFile:
        
         with open(Path(self.path) / self.name, 'w') as f:
             f.write(self.prefix)
-            if type(self.body) == str:
+            if type(self.body) is str:
                 f.write(self.body)
-            elif type(self.body) == pd.DataFrame:
+            elif type(self.body) is pd.DataFrame:
                 f.write(self.body.to_string())
             else:
                 print('Wrong format of %s.body!'%self.name)
@@ -606,6 +609,10 @@ class Balmorel:
         # Cluster collected time series input
         self.ts.cluster(seasons, terms, method, representation)
 
+        # Save .inc files 
+        for symbol_type in ['ST', 'S', 'T']:
+            self.ts.save_clustered_data(scenario, symbol_type)
+
     class TimeAgg:
         def __init__(self, parent):
             self.parent = parent
@@ -619,7 +626,10 @@ class Balmorel:
                                     incfile_symbol_relation: dict = {},
                                     overwrite: bool = False):
             
-            # Check if this has already been collected, return if so and overwrite = False
+            # Collect .inc files
+            self.parent.load_incfiles(scenario, overwrite=overwrite)
+
+            # Check standardised time series data have already been collected, return if so and overwrite = False
             std_data_file = self.parent.path / scenario / 'std_ts_data.pkl'
             symbols_file = self.parent.path / scenario / 'symbols_to_agg.pkl'
             incfiles_file = self.parent.path / scenario / 'incfile_symbol_relation.pkl'
@@ -631,9 +641,6 @@ class Balmorel:
                 with open(incfiles_file, 'rb') as f:
                     self.incfiles = pkl.load(f)
                 return
-
-            # Collect .inc files
-            self.parent.load_incfiles(scenario, overwrite=overwrite)
 
             # Collect input - start checking if input is correct
             if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
@@ -833,59 +840,106 @@ class Balmorel:
 
             # Using a Random Choice
             if method == "random":
-                # Make random time aggregation
-                N_timeslices = typical_periods * hours_per_period
-                N_hours = len(self.data)
-
-                # Make choices
-                agg_steps = []
-                for i in range(N_timeslices):
-                    agg_steps.append(np.random.randint(N_hours))
-
-                # Sort chronologically
-                agg_steps.sort()
-
-
-                # Also save a small note with the chosen timesteps
-                with open(
-                    "Balmorel/%s/picked_times.txt"
-                    % (
-                        "W%dT%d_rand"
-                        % (typical_periods, hours_per_period)
-                    ),
-                    "w",
-                ) as f:
-                    f.write(pd.Series(self.data.iloc[agg_steps].index).to_string())
+                # # Make random time aggregation
+                # N_timeslices = typical_periods * hours_per_period
+                # N_hours = len(self.data)
+                #
+                # # Make choices
+                # agg_steps = []
+                # for i in range(N_timeslices):
+                #     agg_steps.append(np.random.randint(N_hours))
+                #
+                # # Sort chronologically
+                # agg_steps.sort()
+                #
+                # # Also save a small note with the chosen timesteps
+                # with open(
+                #     "Balmorel/%s/picked_times.txt"
+                #     % (
+                #         "W%dT%d_rand"
+                #         % (typical_periods, hours_per_period)
+                #     ),
+                #     "w",
+                # ) as f:
+                #     f.write(pd.Series(self.data.iloc[agg_steps].index).to_string())
+                raise NotImplementedError("To be developed. The outcommented code in this function can be used to index the collected data and create new .inc files")
 
             # Using tsam
             else:
 
-                df = self.data
-
-                ### 3.1 Create Aggregation Object
+                # Aggregate collected data
                 cluster_config = tsam.ClusterConfig(method, representation)
                 aggregation = tsam.aggregate(
-                    df,
-                    n_clusters=typical_periods,
-                    period_duration=hours_per_period,
+                    self.data,
+                    n_clusters=seasons,
+                    period_duration=terms,
                     temporal_resolution=1,
                     cluster=cluster_config,
-                    # segments=True,
-                    # numericalTolerance=1e-13
                 )
 
-                print(aggregation)
-                print(aggregation.cluster_representatives)
+                # Make new Balmorel index
+                data = aggregation.cluster_representatives
+                data.index = pd.MultiIndex.from_product(
+                    [[f'S{i:02.0f}' for i in range(1, seasons+1)],
+                    [f'T{i:03.0f}' for i in range(1, terms+1)]],
+                    names=['SSS', 'TTT']
+                )
 
-            # TODO: Save .inc files after clustering
-            # format_and_save_profiles(
-            #     self.data.iloc[agg_steps],
-            #     "random",
-            #     (typical_periods, hours_per_period),
-            #     model.input_data[scenario],
-            #     balmorel_model_folder,
-            # )
+                # Store to self
+                self.cluster_stats = aggregation
+                self.agg_data = aggregation.cluster_representatives
+                self.seasons = seasons
+                self.terms = terms
+                self.method = method
+                self.representation = representation
 
+        def save_clustered_data(self, scenario: str, symbol_type: str):
+
+            incfiles = {}
+            symbols = self.symbols
+            incfile_relations = self.incfiles
+            db = self.parent.input_data[scenario]
+            for symbol in symbols[symbol_type]:
+
+                print(symbol)
+                if type(incfile_relations[symbol]) is str:
+                    iterable = [incfile_relations[symbol]]
+                elif type(incfile_relations[symbol]) is list:
+                    iterable = incfile_relations[symbol]
+                else:
+                    raise TypeError(f"Wrong format of .inc-file-symbol relation dictionary entry for {symbol}!")
+
+                for incfile in iterable:
+                    if incfile not in incfiles:
+                        # Prepare filename, path, prefix and figure out if symbol == filename
+                        filename, path, prefix, suffix, filename_eq_symbol = prepare_incfile(incfile, symbol, db)
+                        incfiles[incfile] = IncFile(
+                            name=filename,
+                            path=path,
+                            body=self.agg_data,
+                            prefix=prefix, 
+                            suffix=suffix
+                        )
+
+                        # Store new attribute, relating to whether or not .inc filename equals symbol name 
+                        incfiles[incfile].sn_eq_ifn = filename_eq_symbol
+                
+                    else:
+                        # TODO: Append body here?
+                        pass
+                        # incfiles = {
+                        #     symbol: IncFile(
+                        #         name=self.parent.incfile_symbol_relation[symbol],
+                        #         path="Balmorel/%s/data/" % aggregation_scenario,
+                        #         prefix="SET S(SSS)  'Seasons in the simulation'\n/\n",
+                        #         body=", ".join(S),
+                        #         suffix="\n/;",
+                        #     ),
+                        # }
+
+            # TODO: Save .inc files
+            # If no .inc file had a filename that was equal to the symbol name, make the first .inc file the one to save
+            # incfile[iterable[0]]
 
 @dataclass
 class TechData:

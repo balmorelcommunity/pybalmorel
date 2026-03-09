@@ -148,3 +148,29 @@ def search_in_incfiles(pattern: str, path: str | Path):
     )
 
     return incfiles_containing_pattern
+
+def prepare_incfile(filepath: str, symbol_name: str, gams_db: gams.GamsDatabase):
+    """Uses gams database information to prepare meta-data for an .inc file"""
+    
+    # Find filename and path
+    filename = filepath.split('/')[-1] 
+    path = filepath.rstrip(filename)
+
+    # Check nr. of domains
+    if len(gams_db[symbol_name]) > 1:
+        gams_variable_type = 'TABLE'
+    else:
+        gams_variable_type = 'PARAMETER'
+
+    domains = gams_db[symbol_name].domains_as_strings
+    prefix=f"{gams_variable_type} {symbol_name}({', '.join(domains)}) '{gams_db[symbol_name].text}'\n"
+    suffix="\n;"
+
+    # Check if filename is equal to symbol name
+    if filename[-4:] == '.inc':
+        filename_eq_symbol = filename[:-4] == symbol_name
+    else:
+        filename_eq_symbol = filename == symbol_name
+
+    return filename, path, prefix, suffix, domains, filename_eq_symbol
+
