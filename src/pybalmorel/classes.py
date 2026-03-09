@@ -19,11 +19,10 @@ from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
 from typing import Union, Tuple
-from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from .utils import symbol_to_df, search_in_incfiles
-from .formatting import SSS_TTT_index, S_T_index
+from .formatting import SSS_TTT_index
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
@@ -365,7 +364,7 @@ class Balmorel:
         model_folder (str): The top level folder of Balmorel, where base and simex are located
     """
 
-    def __init__(self, model_folder: str, gams_system_directory: str | None  = None):
+    def __init__(self, model_folder: str | Path, gams_system_directory: str | None  = None):
         
         # Get GAMS system directory (the default none will make GAMS find it by itself)
         self._gams_system_directory = gams_system_directory
@@ -567,7 +566,8 @@ class Balmorel:
                              terms: int, 
                              method: str = 'distribution', 
                              symbols_to_aggregate: dict | str = 'auto',
-                             incfile_symbol_relation: dict = {}):
+                             incfile_symbol_relation: dict = {},
+                             overwrite: bool = False):
         """
         Do temporal aggregation of scenario, using tsam.
         If symbols_to_aggregate is 'auto' (default setting), the 
@@ -595,8 +595,12 @@ class Balmorel:
         # Create temporal aggregation class
         self.ts = self.TimeAgg(parent=self)
 
+        # Load input data
+        self.load_incfiles(scenario, overwrite=overwrite)
+
         # Collect and standardise time series input 
-        self.ts.collect_and_standardise(scenario, symbols_to_aggregate, incfile_symbol_relation)
+        self.ts.collect_and_standardise(scenario, symbols_to_aggregate, 
+                                        incfile_symbol_relation, overwrite)
 
         # Cluster collected time series input
         self.ts.cluster(seasons, terms, method)
@@ -753,8 +757,9 @@ class Balmorel:
             # Make sure it is not empty, remove if so
             if df.shape == (0, 0):
                 self.symbols[scenario][symbol_type].pop(symbol_index)
-                print(self.symbols[scenario][symbol_type])
                 print(f'Removed {symbol} from time aggregation since it was empty')
+                print(f'Remaining {symbol_type} ST symbols to aggregate:')
+                print(self.symbols[scenario][symbol_type])
                 return
 
             # Separate time domains from other domains
@@ -775,8 +780,9 @@ class Balmorel:
             
             if len(without_constants.columns) == 0:
                 self.symbols[scenario][symbol_type].pop(symbol_index)
-                print(self.symbols[scenario][symbol_type])
                 print(f'Removed {symbol} from time aggregation since all time series were constant')
+                print(f'Remaining {symbol_type} ST symbols to aggregate:')
+                print(self.symbols[scenario][symbol_type])
                 return
 
             # Flatten column to one string name

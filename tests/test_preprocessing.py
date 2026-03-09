@@ -10,7 +10,6 @@ Created on 03.10.2024
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-from copy import Error
 from pybalmorel.classes import IncFile, Balmorel
 import pandas as pd
 import os
@@ -61,17 +60,7 @@ def test_IncFile():
 
 
 def test_temporal_aggregation():
-    m = Balmorel(local_balmorel_dir, gams_system_directory)
+    m = Balmorel(local_balmorel_dir, 
+                 gams_system_directory)
 
-    try:
-        m.temporal_aggregation('base', 5, 5)
-        raise Error(
-            "An error should be returned, because .load_incfiles must be run first!"
-        )
-    except Error:
-        print(
-            "find_timeseries returned an error if .load_incfiles hadnt been run as it is supposed to"
-        )
-
-    m.load_incfiles('base')
-    m.temporal_aggregation('base', 5, 5)
+    m.temporal_aggregation("base", 8, 24, overwrite=True)
