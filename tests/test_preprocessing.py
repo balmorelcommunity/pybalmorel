@@ -60,6 +60,10 @@ def test_IncFile():
 
 
 def test_temporal_aggregation():
+
+    if local_balmorel_dir is None:
+        raise FileNotFoundError("No path to local Balmorel folder provided")
+
     m = Balmorel(local_balmorel_dir, 
                  gams_system_directory)
 
