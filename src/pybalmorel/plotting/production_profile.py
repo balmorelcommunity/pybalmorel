@@ -22,7 +22,7 @@ from ..formatting import balmorel_colours
 def plot_profile(MainResults,
                  commodity: str,  
                  year: int, 
-                 scenario: str = 0,
+                 scenario: str | int = 0,
                  columns: str = 'Technology',
                  region: str = 'ALL',
                  style: str = 'light') -> Tuple[Figure, Axes]:

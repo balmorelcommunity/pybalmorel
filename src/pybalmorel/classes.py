@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import pickle as pkl
 import tsam
+import requests
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
@@ -50,16 +51,16 @@ class MainResults:
         """
 
         ## Loading scenarios
-        if type(files) == str:
+        if type(files) is str:
             # Change filenames to list if just one string
             files = [files]
             
         ## File paths
-        if type(paths) == str:
+        if type(paths) is str:
             # Create identical paths if only one given
             paths = [paths]*len(files)
             
-        elif ((type(paths) == list) or (type(paths) == tuple)) and (len(paths) == 1):
+        elif ((type(paths) is list) or (type(paths) is tuple)) and (len(paths) == 1):
             paths = paths*len(files)
             
         elif len(files) != len(paths):
@@ -67,9 +68,11 @@ class MainResults:
             raise Exception("%d files, but %d paths given!\nProvide only one path or the same amount of paths as files"%(len(files), len(paths)))
         
         ## Scenario Names
-        if scenario_names == None:
+        if scenario_names is None:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
+
+            assert scenario_names is not None, "Couldn't find any results"
             
             # Rename MainResults with no suffix
             if np.any(scenario_names == ''):
@@ -84,7 +87,7 @@ class MainResults:
 
             scenario_names = list(scenario_names)
 
-        elif type(scenario_names) == str:
+        elif type(scenario_names) is str:
             scenario_names = [scenario_names]
             
         if len(files) != len(scenario_names):    
@@ -152,7 +155,7 @@ class MainResults:
     def plot_profile(self,
                      commodity: str,  
                      year: int, 
-                     scenario: str = 0,
+                     scenario: str | int = 0,
                      columns: str = 'Technology',
                      region: str = 'ALL',
                      style: str = 'light') -> Tuple[Figure, Axes]:
@@ -595,9 +598,6 @@ class Balmorel:
         # Create temporal aggregation class
         self.ts = self.TimeAgg(parent=self)
 
-        # Load input data
-        self.load_incfiles(scenario, overwrite=overwrite)
-
         # Collect and standardise time series input 
         self.ts.collect_and_standardise(scenario, symbols_to_aggregate, 
                                         incfile_symbol_relation, overwrite)
@@ -630,6 +630,9 @@ class Balmorel:
                 with open(incfiles_file, 'rb') as f:
                     self.incfiles = pkl.load(f)
                 return
+
+            # Collect .inc files
+            self.parent.load_incfiles(scenario, overwrite=overwrite)
 
             # Collect input - start checking if input is correct
             if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
