@@ -895,10 +895,21 @@ class Balmorel:
 
         def save_clustered_data(self, scenario: str, symbol_type: str):
 
+            # Prepare placeholders
             incfiles = {}
             symbols = self.symbols
             incfile_relations = self.incfiles
             db = self.parent.input_data[scenario]
+
+            # Prepare new, aggregated scenario
+            new_scenario = Path(self.parent.path / f'{scenario}_W{self.seasons}T{self.terms}/data')
+            new_scenario.mkdir(parents=True, exist_ok=True)
+            with open(new_scenario / '../temporal_aggregation.md', 'w') as f:
+                f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
+                f.write(f"Method: {self.method}\n")
+                f.write(f"Representation: {self.representation}\n")
+                f.write(f"Aggregated resolution: {self.seasons} seasons and {self.terms} terms\n")
+
             for symbol in symbols[symbol_type]:
                 # Collect metadata
                 domains = db[symbol].domains_as_strings
@@ -924,7 +935,6 @@ class Balmorel:
                     symbol_data.index = [f'{S} . {T}' for S, T in symbol_data.index]
                     symbol_data.index.name = ''
 
-                print(symbol)
                 if type(incfile_relations[symbol]) is str:
                     iterable = [incfile_relations[symbol]]
                 elif type(incfile_relations[symbol]) is list:
