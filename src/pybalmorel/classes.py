@@ -790,6 +790,7 @@ class Balmorel:
             # Check if symbol has only constant values
             without_constants = df.loc[:, df.nunique() > 1]
             
+            # TODO: This didn't capture that GKRATE was empty - or did it? What happened?
             if len(without_constants.columns) == 0:
                 self.symbols[symbol_type].pop(symbol_index)
                 print(f'Removed {symbol} from time aggregation since all time series were constant')
@@ -936,6 +937,7 @@ class Balmorel:
                     symbol_data.index.name = ''
 
                 # Transpose - SSS and TTT's are always the last domains
+                # TODO: This is not true for DR_RATE_*! Make a check where domains are and move around? Or maybe it is easier adding GAMS statements?
                 symbol_data = symbol_data.T
 
                 # Loop through related .inc files
@@ -963,11 +965,12 @@ class Balmorel:
                         incfiles[incfile].sn_eq_ifn = filename_eq_symbol
                 
                     # Append to existing .inc file
+                    # TODO: This is not appending
                     else:
                         filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
                         incfiles[incfile].body += '\n'
                         incfiles[incfile].body += prefix
-                        incfiles[incfile].body += symbol_data.to_string
+                        incfiles[incfile].body += symbol_data.to_string()
                         incfiles[incfile].body += f'\n{suffix}'
 
                 # Make first related .inc file the one to save data to, if no .inc file had a name equal to symbol name
