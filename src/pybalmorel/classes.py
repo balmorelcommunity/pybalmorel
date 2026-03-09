@@ -902,7 +902,7 @@ class Balmorel:
             db = self.parent.input_data[scenario]
 
             # Prepare new, aggregated scenario and document
-            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["S"]}/data')
+            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
             new_scenario_path.mkdir(parents=True, exist_ok=True)
             with open(new_scenario_path / '../temporal_aggregation.md', 'w') as f:
                 f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
