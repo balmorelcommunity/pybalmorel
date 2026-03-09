@@ -889,8 +889,7 @@ class Balmorel:
                 # Store to self
                 self.cluster_stats = aggregation
                 self.agg_data = aggregation.cluster_representatives
-                self.seasons = seasons
-                self.terms = terms
+                self.agg_resolution = {'S' : seasons, 'T' : terms}
                 self.method = method
                 self.representation = representation
 
@@ -903,13 +902,13 @@ class Balmorel:
             db = self.parent.input_data[scenario]
 
             # Prepare new, aggregated scenario and document
-            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.seasons}T{self.terms}/data')
+            new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["S"]}/data')
             new_scenario_path.mkdir(parents=True, exist_ok=True)
             with open(new_scenario_path / '../temporal_aggregation.md', 'w') as f:
                 f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
                 f.write(f"Method: {self.method}\n")
                 f.write(f"Representation: {self.representation}\n")
-                f.write(f"Aggregated resolution: {self.seasons} seasons and {self.terms} terms\n")
+                f.write(f'Aggregated resolution: {self.agg_resolution["S"]} seasons and {self.agg_resolution["T"]} terms\n')
 
             # Loop through symbols
             for symbol in symbols[symbol_type]:
@@ -979,7 +978,7 @@ class Balmorel:
                 elif sum(incfiles_to_save) > 1:
                     raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
 
-            # TODO: Save T and S
+            # Save aggregated files
             for incfile in incfiles:
                 if incfiles[incfile].sn_eq_ifn:
                     incfiles[incfile].save()
@@ -987,6 +986,20 @@ class Balmorel:
                     # Empty file (addon files already included in previously written .inc file)
                     with open(incfiles[incfile].path + '/' + incfiles[incfile].name, 'w') as f:
                         f.write('')
+
+            # Finally save S and T 
+            bodies = {
+                'S' : ", ".join([f"S{i:02.0f}" for i in range(1, self.agg_resolution['S'])]),
+                'T' : ", ".join([f"T{i:03.0f}" for i in range(1, self.agg_resolution['T'])]),
+            }
+            for incfile in ['S', 'T']:
+                f = IncFile(
+                    name=incfile,
+                    path=str(new_scenario_path),
+                    prefix=f"SET {incfile}({incfile*3}) '{db[incfile].text}'\n/\n",
+                    body=bodies[incfile],
+                    suffix='\n/;'
+                ).save()
 
 @dataclass
 class TechData:
