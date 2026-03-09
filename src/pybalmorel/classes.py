@@ -665,7 +665,7 @@ class Balmorel:
 
             # Collect and standardise input 
             for symbol_type in ['ST', 'S', 'T']:
-                for symbol in self.symbols[scenario][symbol_type]:
+                for symbol in self.symbols[symbol_type]:
                     self.standardise_timeseries(scenario, symbol, symbol_type)
 
             # Save standardised input to a .pkl file
@@ -739,8 +739,8 @@ class Balmorel:
                         timeseries_symbols['T'].append(symbol)
                         symbols_incfiles[symbol] = incfiles_containing_symbol
 
-            self.symbols[scenario] = timeseries_symbols
-            self.incfiles[scenario] = symbols_incfiles
+            self.symbols = timeseries_symbols
+            self.incfiles = symbols_incfiles
             
         def standardise_timeseries(self, scenario: str, symbol: str, symbol_type: str):
             """
@@ -755,14 +755,14 @@ class Balmorel:
             # Get symbol 
             db = self.parent.input_data[scenario]
             df = symbol_to_df(db, symbol)
-            symbol_index=self.symbols[scenario][symbol_type].index(symbol)
+            symbol_index=self.symbols[symbol_type].index(symbol)
 
             # Make sure it is not empty, remove if so
             if df.shape == (0, 0):
-                self.symbols[scenario][symbol_type].pop(symbol_index)
+                self.symbols[symbol_type].pop(symbol_index)
                 print(f'Removed {symbol} from time aggregation since it was empty')
                 print(f'Remaining {symbol_type} ST symbols to aggregate:')
-                print(self.symbols[scenario][symbol_type])
+                print(self.symbols[symbol_type])
                 return
 
             # Separate time domains from other domains
@@ -782,10 +782,10 @@ class Balmorel:
             without_constants = df.loc[:, df.nunique() > 1]
             
             if len(without_constants.columns) == 0:
-                self.symbols[scenario][symbol_type].pop(symbol_index)
+                self.symbols[symbol_type].pop(symbol_index)
                 print(f'Removed {symbol} from time aggregation since all time series were constant')
                 print(f'Remaining {symbol_type} ST symbols to aggregate:')
-                print(self.symbols[scenario][symbol_type])
+                print(self.symbols[symbol_type])
                 return
 
             # Flatten column to one string name
@@ -810,6 +810,9 @@ class Balmorel:
                 df.index.names = ['S', 'T']
                 df = df.reindex(SSS_TTT_index).fillna(0)
 
+            # Make sure timeseries input are not below 1-e5
+            df = df.clip(1e-5) #/ df.max()
+
             # Store time series data
             self.data = self.data.join(df, how="outer").fillna(0) 
 
@@ -827,6 +830,12 @@ class Balmorel:
                 hours_per_period (int): Amount of hours / terms
                 method (str, optional): Aggregation method. Defaults to 'distribution', options are: K-means, K-medoids, Distribution preserving (default) and random choice
             """
+
+            print('before clipping:')
+            print(self.data)
+            self.data = self.data.clip(1e-5) #/ df.max()
+            print('after clipping:')
+            print(self.data)
 
             # Using a Random Choice
             if method == "random":
@@ -871,7 +880,7 @@ class Balmorel:
                 ### Normalise (be careful here, if you actually need absolute numbers in the end)
                 # self.data = self.data.clip(1e-3) / self.data.max()
 
-                df = self.data
+                df = self.data.clip(1e-5)
                 df.index = pd.date_range(start="1/1/2018 00:00", end="12/30/2018 23:00", freq='h')
 
                 ### 3.1 Create Aggregation Object

@@ -67,4 +67,16 @@ def test_temporal_aggregation():
     m = Balmorel(local_balmorel_dir, 
                  gams_system_directory)
 
+    m.temporal_aggregation('base', 8, 24, 
+        symbols_to_aggregate={
+            'ST' : [],
+            'S' : ['DR_RATE_S'],
+            'T' : []
+        }, 
+        incfile_symbol_relation={
+            'DR_RATE_S' : '../Balmorel/base/data/DR_DATAINPUT.inc'
+        },
+        overwrite=True
+    )
+
     m.temporal_aggregation("base", 8, 24, overwrite=True)
