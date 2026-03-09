@@ -912,6 +912,18 @@ class Balmorel:
                 new_columns=symbol_data.columns.str.replace(f'{symbol}|','').str.replace('|', ' . ')
                 symbol_data.columns = new_columns
 
+                if symbol_type == 'TTT':
+                    # Take average over seasons
+                    symbol_data = symbol_data.pivot_table(index='TTT', aggfunc='mean')
+                    symbol_data.index.name = ''
+                elif symbol_type == 'SSS':
+                    # Take average over seasons
+                    symbol_data = symbol_data.pivot_table(index='SSS', aggfunc='mean')
+                    symbol_data.index.name = ''
+                else:
+                    symbol_data.index = [f'{S} . {T}' for S, T in symbol_data.index]
+                    symbol_data.index.name = ''
+
                 print(symbol)
                 if type(incfile_relations[symbol]) is str:
                     iterable = [incfile_relations[symbol]]
