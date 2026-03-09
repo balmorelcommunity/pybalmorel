@@ -567,7 +567,8 @@ class Balmorel:
                              scenario: str, 
                              seasons: int, 
                              terms: int, 
-                             method: str = 'distribution', 
+                             method: str = 'contiguous', 
+                             representation: str = 'distribution_minmax',
                              symbols_to_aggregate: dict | str = 'auto',
                              incfile_symbol_relation: dict = {},
                              overwrite: bool = False):
@@ -580,8 +581,8 @@ class Balmorel:
            scenario (str): scenario to aggregate.
            seasons (int): amount of seasons to aggregate to 
            terms (int): amount of terms to aggregate to
-           method (str): tsam clustering algorithm, defaults to distribution
-            preserving algorithm. Choices: distribution, kmedoids, kmeans
+           method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+           representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
            symbols_to_aggregate (dict | str): 'auto' for automatically finding 
             the data. Otherwise, a dictionary with keys 'ST', 'S'
             and 'T' that each point to a list of symbols to aggregate for manual 
@@ -603,7 +604,7 @@ class Balmorel:
                                         incfile_symbol_relation, overwrite)
 
         # Cluster collected time series input
-        self.ts.cluster(seasons, terms, method)
+        self.ts.cluster(seasons, terms, method, representation)
 
     class TimeAgg:
         def __init__(self, parent):
@@ -810,9 +811,6 @@ class Balmorel:
                 df.index.names = ['S', 'T']
                 df = df.reindex(SSS_TTT_index).fillna(0)
 
-            # Make sure timeseries input are not below 1-e5
-            df = df.clip(1e-5) #/ df.max()
-
             # Store time series data
             self.data = self.data.join(df, how="outer").fillna(0) 
 
@@ -820,7 +818,8 @@ class Balmorel:
                 self,
                 typical_periods: int = 6,
                 hours_per_period: int = 24,
-                method: str = "dist",
+                method: str = "contiguous",
+                representation: str = "distribution_minmax"
         ):
             """Cluster collect input data
 
@@ -828,14 +827,9 @@ class Balmorel:
                 scenario (str): The scenario folder to aggregate.
                 typical_periods (int): Amount of periods / seasons
                 hours_per_period (int): Amount of hours / terms
-                method (str, optional): Aggregation method. Defaults to 'distribution', options are: K-means, K-medoids, Distribution preserving (default) and random choice
+                method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+                representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
             """
-
-            print('before clipping:')
-            print(self.data)
-            self.data = self.data.clip(1e-5) #/ df.max()
-            print('after clipping:')
-            print(self.data)
 
             # Using a Random Choice
             if method == "random":
@@ -864,40 +858,24 @@ class Balmorel:
                     f.write(pd.Series(self.data.iloc[agg_steps].index).to_string())
 
             # Using tsam
-            elif method != "random":
-                # Method
-                if "medoid" in method:
-                    method = "medoidRepresentation"
-                elif "mean" in method:
-                    method = "meanRepresentation"
-                elif "distribution" in method:
-                    method = "distributionAndMinMaxRepresentation"
-                else:
-                    raise ValueError(
-                        "Didnt recognise choice of method!"
-                    )
+            else:
 
-                ### Normalise (be careful here, if you actually need absolute numbers in the end)
-                # self.data = self.data.clip(1e-3) / self.data.max()
-
-                df = self.data.clip(1e-5)
-                df.index = pd.date_range(start="1/1/2018 00:00", end="12/30/2018 23:00", freq='h')
+                df = self.data
 
                 ### 3.1 Create Aggregation Object
-                aggregation = tsam.TimeSeriesAggregation(
+                cluster_config = tsam.ClusterConfig(method, representation)
+                aggregation = tsam.aggregate(
                     df,
-                    noTypicalPeriods=typical_periods,
-                    hoursPerPeriod=hours_per_period,
-                    segmentation=True,
-                    noSegments=hours_per_period,
-                    representationMethod=method,
-                    distributionPeriodWise=False,
-                    clusterMethod="hierarchical",
+                    n_clusters=typical_periods,
+                    period_duration=hours_per_period,
+                    temporal_resolution=1,
+                    cluster=cluster_config,
+                    # segments=True,
                     # numericalTolerance=1e-13
                 )
 
-                typPeriods = aggregation.createTypicalPeriods()
-                print(typPeriods)
+                print(aggregation)
+                print(aggregation.cluster_representatives)
 
             # TODO: Save .inc files after clustering
             # format_and_save_profiles(
