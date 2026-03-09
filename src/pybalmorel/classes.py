@@ -911,6 +911,7 @@ class Balmorel:
                 f.write(f"Representation: {self.representation}\n")
                 f.write(f"Aggregated resolution: {self.seasons} seasons and {self.terms} terms\n")
 
+            # Loop through symbols
             for symbol in symbols[symbol_type]:
                 # Collect metadata
                 domains = db[symbol].domains_as_strings
@@ -924,18 +925,21 @@ class Balmorel:
                 new_columns=symbol_data.columns.str.replace(f'{symbol}|','').str.replace('|', ' . ')
                 symbol_data.columns = new_columns
 
+                # Take median of aggregated values if only T or S based symbol
                 if symbol_type == 'TTT':
-                    # Take average over seasons
-                    symbol_data = symbol_data.pivot_table(index='TTT', aggfunc='mean')
+                    symbol_data = symbol_data.pivot_table(index='TTT', aggfunc='median')
                     symbol_data.index.name = ''
                 elif symbol_type == 'SSS':
-                    # Take average over seasons
-                    symbol_data = symbol_data.pivot_table(index='SSS', aggfunc='mean')
+                    symbol_data = symbol_data.pivot_table(index='SSS', aggfunc='median')
                     symbol_data.index.name = ''
                 else:
                     symbol_data.index = [f'{S} . {T}' for S, T in symbol_data.index]
                     symbol_data.index.name = ''
 
+                # Transpose - SSS and TTT's are always the last domains
+                symbol_data = symbol_data.T
+
+                # Loop through related .inc files
                 if type(incfile_relations[symbol]) is str:
                     iterable = [incfile_relations[symbol]]
                 elif type(incfile_relations[symbol]) is list:
@@ -944,6 +948,7 @@ class Balmorel:
                     raise TypeError(f"Wrong format of .inc-file-symbol relation dictionary entry for {symbol}!")
 
                 for incfile in iterable:
+                    # Prepare a new .inc file if it doesn't already exist
                     if incfile not in incfiles:
                         # Prepare filename, path, prefix and figure out if symbol == filename
                         filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
@@ -958,17 +963,23 @@ class Balmorel:
                         # Store new attribute, relating to whether or not .inc filename equals symbol name 
                         incfiles[incfile].sn_eq_ifn = filename_eq_symbol
                 
+                    # Append to existing .inc file
                     else:
-                        # Append to existing .inc file
                         filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
-                        incfiles[symbol].body += '\n'
-                        incfiles[symbol].body += prefix
-                        incfiles[symbol].body += symbol_data.to_string
-                        incfiles[symbol].body += f'\n{suffix}'
+                        incfiles[incfile].body += '\n'
+                        incfiles[incfile].body += prefix
+                        incfiles[incfile].body += symbol_data.to_string
+                        incfiles[incfile].body += f'\n{suffix}'
 
-            # TODO: Save .inc files, also T and S
-            # If no .inc file had a filename that was equal to the symbol name, make the first .inc file the one to save
-            # incfile[iterable[0]]
+                # Make first related .inc file the one to save data to, if no .inc file had a name equal to symbol name
+                incfiles_to_save = [incfiles[prepared_incfile].sn_eq_ifn for prepared_incfile in iterable]
+                if sum(incfiles_to_save) == 0:
+                    incfiles[iterable[0]].sn_eq_ifn = True
+                # Make sure that only one .inc file will be saved with the data
+                elif sum(incfiles_to_save) > 1:
+                    raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
+
+            # TODO: Save T and S
             for incfile in incfiles:
                 if incfiles[incfile].sn_eq_ifn:
                     incfiles[incfile].save()
