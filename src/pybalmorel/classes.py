@@ -393,7 +393,7 @@ class Balmorel:
             if (SC / 'model/Balmorel.gms').exists() and ((SC / 'model/cplex.op4').exists() or (SC / 'model/cplex.op2').exists()):
                 self.scenarios.append(SC.name)
             else:
-                print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 did not exist')
+                print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 or {SC}/model/cplex.op2 did not exist')
 
     def locate_results(self):
         """
