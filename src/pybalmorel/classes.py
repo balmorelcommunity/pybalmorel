@@ -581,6 +581,13 @@ class Balmorel:
         If symbols_to_aggregate is 'auto' (default setting), the 
         script will try to automatically find the timeseries data.
 
+        NOTE:   If .inc files of the scenario you want to aggregate define both
+        time-related symbols AND symbols without S or T sets, this script will
+        produce new .inc files that does NOT include the non-S/T dependant
+        symbols. Hence, remember to copy paste those parts into the newly
+        generated .inc files afterwards.
+                
+
         Args:
            scenario (str): scenario to aggregate.
            seasons (int): amount of seasons to aggregate to 
