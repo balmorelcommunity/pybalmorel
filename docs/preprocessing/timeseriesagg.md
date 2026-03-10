@@ -9,7 +9,7 @@ pip install riprepy
 
 ## Overview
 
-`Balmorel.temporal_aggregation` aggregates the time series input data of a Balmorel scenario from a full hourly resolution down to a user-defined number of representative seasons (periods) and terms (hours per period). It uses [tsam](https://tsam.readthedocs.io/en/latest/) under the hood to cluster the time series data, and then writes new `.inc` files for the aggregated scenario into a new scenario folder named `{scenario}_W{seasons}T{terms}`.
+`Balmorel.temporal_aggregation` aggregates the time series input data of a Balmorel scenario from a full hourly resolution down to a user-defined number of representative seasons (periods) and terms (hours per period). It uses [tsam](https://tsam.readthedocs.io/en/latest/) under the hood to cluster the time series data, and then writes new `.inc` files for the aggregated scenario into a new scenario folder named `{scenario}_S{seasons}T{terms}`.
 
 The method works in three steps:
 

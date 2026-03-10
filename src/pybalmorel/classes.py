@@ -1010,7 +1010,7 @@ class Balmorel:
 
 
         def save_incfiles(self, scenario: str, excluded_incfiles: list = []):
-            self.new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
+            self.new_scenario_path = Path(self.parent.path / f'{scenario}_S{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
             # Save .inc files 
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
                 self.prepare_clustered_data(scenario, symbol_type)
