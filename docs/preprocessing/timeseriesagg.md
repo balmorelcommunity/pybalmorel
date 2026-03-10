@@ -5,11 +5,11 @@ This functionality is currently under development and being tested!
 Do not trust it blindly.
 :::
 
-The time series aggregation function uses dependencies that are not automatically installed with pybalmorel: riprepy (a Python wrapper for [ripgrep](https://github.com/BurntSushi/ripgrep)) and the time series aggregation package [tsam](https://tsam.readthedocs.io/en/latest/). Install them into your virtual environment with pip:
+The time series aggregation function uses dependencies that are not automatically installed with pybalmorel: ripgrepy (a Python wrapper for [ripgrep](https://github.com/BurntSushi/ripgrep)) and the time series aggregation package [tsam](https://tsam.readthedocs.io/en/latest/). Install them into your virtual environment with pip:
 
 ```bash
 pip install tsam
-pip install riprepy
+pip install ripgrepy
 ```
 
 ## Overview

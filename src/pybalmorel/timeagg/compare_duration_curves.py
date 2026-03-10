@@ -28,7 +28,7 @@ def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
 
     Args:
         array (array): A timeseries of load, wind-, solar profiles or other.
-        n-bins (int): Amount of bins in histogram
+        n_bins (int): Amount of bins in histogram
 
     Returns:
         duration (array): ordered hours
@@ -44,7 +44,7 @@ def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
         n_hours = len(array)
         max_val = array.max()
 
-        if ax == None:
+        if ax is None:
             fig, ax = plt.subplots()
             ax.plot(
                 np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs

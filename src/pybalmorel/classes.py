@@ -14,7 +14,6 @@ import gams
 import pandas as pd
 import numpy as np
 import pickle as pkl
-import tsam
 import requests
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -73,8 +72,6 @@ class MainResults:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
 
-            assert scenario_names is not None, "Couldn't find any results"
-            
             # Rename MainResults with no suffix
             if np.any(scenario_names == ''):
                 idx = list(scenario_names[scenario_names == ''].index)
@@ -511,10 +508,8 @@ class Balmorel:
             
         else:
             # Are you using the provided 'ReadData'-Balmorel files or a custom one?
-            use_provided_read_files = True
             if use_provided_read_files:
                 pkgdir = sys.modules['pybalmorel'].__path__[0]
-                print('-'*150, '\npkgdir\n', pkgdir, '\n', '-'*150)
                 # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
                 # into the model folder if there isn't one already
                 for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
@@ -523,7 +518,7 @@ class Balmorel:
                         print(Path(model_folder) / file)
 
             # Initialize GAMS Workspace
-            ws = gams.GamsWorkspace(working_directory=model_folder, 
+            ws = gams.GamsWorkspace(working_directory=str(model_folder), 
                                     system_directory=self._gams_system_directory)
 
             # Set options
@@ -574,7 +569,7 @@ class Balmorel:
                              method: str = 'contiguous', 
                              representation: str = 'distribution_minmax',
                              symbols_to_aggregate: dict | str = 'auto',
-                             incfile_symbol_relation: dict = {},
+                             incfile_symbol_relation: dict | None = None,
                              overwrite: bool = False):
         """
         Do temporal aggregation of scenario, using tsam.
@@ -598,7 +593,7 @@ class Balmorel:
             the data. Otherwise, a dictionary with keys 'SSS,TTT', 'SSS'
             and 'TTT' that each point to a list of symbols to aggregate for manual 
             choice of aggregation.
-           incfile_symbol_relation (dict): if manually defining symbols to 
+           incfile_symbol_relation (dict | None): if manually defining symbols to 
             aggregate, this dict must be passed too. Keys should be symbols, 
             and the values should be a list of .inc file paths, where the first one 
             will be the new .inc file with aggregated data, and the others will be 
@@ -606,6 +601,9 @@ class Balmorel:
                                         'base/data/INDIVUSERS_DE_VAR_T.inc', 
                                         '/base/data/TRANSPORT_DE_VAR_T.inc']}
         """
+
+        if incfile_symbol_relation is None:
+            incfile_symbol_relation = {}
 
         # Create temporal aggregation class
         self.ts = self.TimeAgg(parent=self)
@@ -632,9 +630,12 @@ class Balmorel:
         def collect_and_standardise(self, 
                                     scenario: str, 
                                     symbols_to_aggregate: dict | str = 'auto',
-                                    incfile_symbol_relation: dict = {},
+                                    incfile_symbol_relation: dict | None = None,
                                     overwrite: bool = False):
             
+            if incfile_symbol_relation is None:
+                incfile_symbol_relation = {}
+
             # Collect .inc files
             self.parent.load_incfiles(scenario, overwrite=overwrite)
 
@@ -694,8 +695,8 @@ class Balmorel:
                 raise ValueError("Incorrect input!")
 
             # Collect and standardise input 
+            self.symbols_to_ignore = []
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
-                self.symbols_to_ignore = []
                 for symbol in self.symbols[symbol_type]:
                     self.standardise_timeseries(scenario, symbol)
 
@@ -710,16 +711,7 @@ class Balmorel:
                 pkl.dump(self.incfiles, f)
 
         def find_timeseries_input(self, scenario: str,
-                                excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
-                                                            'CHRONOHOUR', 'SSIZE',
-                                                            'TWORKDAY', 'TWEEKEND',
-                                                            'S', 'T', 'DE_VAR_T1',
-                                                            'DE_VAR_T1_INDIVHEATING',
-                                                            'DH_VAR_T1', 'DH_VAR_T_IND',
-                                                            'DH_VAR_T_INDIVHEATING', 
-                                                            'WND_VAR_T1', 'SOLE_VAR_T1',
-                                                            'SOLH_VAR_T1', 'X3FX_VAR_T1',
-                                                            ]):
+                                excluded_symbols: list | None = None):
             """
             Locates the timeseries inputs of Balmorel by loading symbols from .inc
             files, filtering symbols with SSS or TTT domains, and filtering raw
@@ -730,11 +722,24 @@ class Balmorel:
 
             Args:
             scenario (str): scenario timeseries data input to find.
-            excluded_symbols (list): symbols to exclude.
+            excluded_symbols (list | None): symbols to exclude. Defaults to a standard list of meta-data symbols.
 
             Returns:
-            str: description.
+            None
             """
+            
+            if excluded_symbols is None:
+                excluded_symbols = [
+                    'WEIGHT_S', 'WEIGHT_T', 
+                    'CHRONOHOUR', 'SSIZE',
+                    'TWORKDAY', 'TWEEKEND',
+                    'S', 'T', 'DE_VAR_T1',
+                    'DE_VAR_T1_INDIVHEATING',
+                    'DH_VAR_T1', 'DH_VAR_T_IND',
+                    'DH_VAR_T_INDIVHEATING', 
+                    'WND_VAR_T1', 'SOLE_VAR_T1',
+                    'SOLH_VAR_T1', 'X3FX_VAR_T1',
+                ]
             
             # Make sure scenario data has been loaded
             assert scenario in self.parent.input_data, (
@@ -886,9 +891,10 @@ class Balmorel:
 
             # Using tsam
             else:
+                import tsam
 
-                # Clip very small values (doesn't seem to be working?)
-                df = self.data.clip(1e-5)
+                # Clip negative floating-point noise
+                df = self.data.clip(lower=0)
 
                 # Aggregate collected data
                 cluster_config = tsam.ClusterConfig(method, representation)
@@ -901,7 +907,7 @@ class Balmorel:
                 )
 
                 # Make new Balmorel index
-                data = aggregation.cluster_representatives
+                data = aggregation.cluster_representatives.copy()
                 data.index = pd.MultiIndex.from_product(
                     [[f'S{i:02.0f}' for i in range(1, seasons+1)],
                     [f'T{i:03.0f}' for i in range(1, terms+1)]],
@@ -910,7 +916,7 @@ class Balmorel:
 
                 # Store to self
                 self.cluster_stats = aggregation
-                self.agg_data = aggregation.cluster_representatives
+                self.agg_data = data
                 self.agg_resolution = {'S' : seasons, 'T' : terms}
                 self.method = method
                 self.representation = representation
@@ -923,19 +929,11 @@ class Balmorel:
             incfile_relations = self.incfiles
             db = self.parent.input_data[scenario]
 
-            # Prepare new, aggregated scenario and document
-            self.new_scenario_path.mkdir(parents=True, exist_ok=True)
-            with open(self.new_scenario_path / '../temporal_aggregation.md', 'w') as f:
-                f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
-                f.write(f"Method: {self.method}\n")
-                f.write(f"Representation: {self.representation}\n")
-                f.write(f'Aggregated resolution: {self.agg_resolution["S"]} seasons and {self.agg_resolution["T"]} terms\n')
-
             # Loop through symbols
             for symbol in symbols[symbol_type]:
-                # Collect metadata
-                domains = db[symbol].domains_as_strings
-                non_time_domains = [domain for domain in domains if domain not in ['SSS', 'TTT', 'Value']]
+                # Collect metadata (keep original domains separate to avoid overwrite by prepare_incfile)
+                original_domains = db[symbol].domains_as_strings
+                non_time_domains = [domain for domain in original_domains if domain not in ['SSS', 'TTT', 'Value']]
                 explanatory_text = db[symbol].text
 
                 # Collect aggregated data
@@ -958,9 +956,9 @@ class Balmorel:
                     symbol_data = symbol_data.stack()
                 symbol_data = symbol_data.reset_index()
 
-                domain_len=len(domains)
-                symbol_data = symbol_data.pivot_table(index=domains[:domain_len-1], 
-                                                      columns=domains[domain_len-1], 
+                domain_len=len(original_domains)
+                symbol_data = symbol_data.pivot_table(index=original_domains[:domain_len-1], 
+                                                      columns=original_domains[domain_len-1], 
                                                       values=symbol)
 
                 symbol_data.columns.name = ''
@@ -981,7 +979,7 @@ class Balmorel:
                     # Prepare a new .inc file if it doesn't already exist
                     if incfile not in incfiles.keys():
                         # Prepare filename, path, prefix and figure out if symbol == filename
-                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
+                        filename, path, prefix, suffix, _, filename_eq_symbol = prepare_incfile(incfile, symbol, original_domains, explanatory_text)
                         incfiles[incfile] = IncFile(
                             name=filename,
                             path=str(self.new_scenario_path),
@@ -995,22 +993,33 @@ class Balmorel:
                 
                     # Append to existing .inc file
                     else:
-                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
+                        filename, path, prefix, suffix, _, filename_eq_symbol = prepare_incfile(incfile, symbol, original_domains, explanatory_text)
                         incfiles[incfile].body += '\n'
                         incfiles[incfile].body += '\n;\n' + prefix
                         incfiles[incfile].body += symbol_data.to_string()
 
                 # Make first related .inc file the one to save data to, if no .inc file had a name equal to symbol name
-                incfiles_to_save = [incfiles[prepared_incfile].sn_eq_ifn for prepared_incfile in iterable]
-                if sum(incfiles_to_save) == 0:
+                save_flags = [incfiles[prepared_incfile].sn_eq_ifn for prepared_incfile in iterable]
+                if sum(save_flags) == 0:
                     incfiles[iterable[0]].sn_eq_ifn = True
                 # Make sure that only one .inc file will be saved with the data
-                elif sum(incfiles_to_save) > 1:
+                elif sum(save_flags) > 1:
                     raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
 
 
-        def save_incfiles(self, scenario: str, excluded_incfiles: list = []):
+        def save_incfiles(self, scenario: str, excluded_incfiles: list | None = None):
+            if excluded_incfiles is None:
+                excluded_incfiles = []
             self.new_scenario_path = Path(self.parent.path / f'{scenario}_S{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
+
+            # Prepare new, aggregated scenario folder and document
+            self.new_scenario_path.mkdir(parents=True, exist_ok=True)
+            with open(self.new_scenario_path.parent / 'temporal_aggregation.md', 'w') as f:
+                f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
+                f.write(f"Method: {self.method}\n")
+                f.write(f"Representation: {self.representation}\n")
+                f.write(f'Aggregated resolution: {self.agg_resolution["S"]} seasons and {self.agg_resolution["T"]} terms\n')
+
             # Save .inc files 
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
                 self.prepare_clustered_data(scenario, symbol_type)

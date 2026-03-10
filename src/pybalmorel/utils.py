@@ -5,7 +5,6 @@ Functions
 import gams
 import pandas as pd
 from pathlib import Path
-from ripgrepy import Ripgrepy
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 preformatted_columns = {
@@ -136,6 +135,7 @@ def search_in_incfiles(pattern: str, path: str | Path):
 
     """
     
+    from ripgrepy import Ripgrepy
     rg=Ripgrepy(pattern, str(path))
     incfiles_containing_pattern=(
         rg
@@ -154,7 +154,7 @@ def prepare_incfile(filepath: str, symbol_name: str, domains: list | str, explan
     
     # Find filename and path
     filename = filepath.split('/')[-1] 
-    path = filepath.rstrip(filename)
+    path = str(Path(filepath).parent) + '/'
 
     # Check nr. of domains
     if type(domains) is not str and len(domains) > 1:
