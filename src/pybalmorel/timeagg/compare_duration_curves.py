@@ -14,7 +14,6 @@ Created on 05.09.2025
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from GeneralHelperFunctions import doLDC
 from pybalmorel import Balmorel
 from pybalmorel.utils import symbol_to_df
 import click
@@ -23,6 +22,42 @@ import click
 #          1. Functions           #
 # ------------------------------- #
 
+
+def doLDC(array, n_bins, plot=False, ax=None, **kwargs):
+    """Make load duration curve from timeseries
+
+    Args:
+        array (array): A timeseries of load, wind-, solar profiles or other.
+        n-bins (int): Amount of bins in histogram
+
+    Returns:
+        duration (array): ordered hours
+        curve (array): frequency
+    """
+    # Extract profile
+    data = np.histogram(array, bins=n_bins)
+    duration = data[0][::-1]
+    curve = data[1][:-1][::-1]
+
+    if plot:
+        # Normalisation
+        n_hours = len(array)
+        max_val = array.max()
+
+        if ax == None:
+            fig, ax = plt.subplots()
+            ax.plot(
+                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
+            )
+            return duration, curve, fig, ax
+        else:
+            ax.plot(
+                np.cumsum(duration) / n_hours * 8736, curve / max_val * 100, **kwargs
+            )
+            return duration, curve
+
+    else:
+        return duration, curve
 
 def get_resolution(db):
     S = symbol_to_df(db, "S").SSS.to_list()
