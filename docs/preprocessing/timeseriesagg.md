@@ -31,6 +31,8 @@ into a new scenario folder.
 dependency will result in new .inc files that does NOT include the non-SSS/TTT dependant
 symbols. Hence, remember to copy paste those parts into the newly
 generated .inc files after aggregation, or re-organise before.
+- This is also true for GAMS statements unrelated to the SSS/TTT symbols, such as [this one](https://github.com/balmorelcommunity/Balmorel_data/blob/4daf7f961893c05a973e059e11aaa14a52d85c9c/HYRSDATA.inc#L97) in HYRSDATA.inc. Such lines 
+would simply not be included in the new aggregated files.
 - If you have several .inc files in the scenario/data folder that define the same symbol 
 through some option in balopt.opt (like EV_profile, selecting only one of the profiles), 
 only one of these files will contain data after aggregation. Remember to rename the one 
