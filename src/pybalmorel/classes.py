@@ -618,7 +618,7 @@ class Balmorel:
         self.ts.cluster(seasons, terms, method, representation)
 
         # Prepare and save incfiles
-        self.ts.save_incfiles(scenario)
+        self.ts.save_incfiles(scenario, excluded_incfiles=['HYRSDATASET.inc'])
 
 
     class TimeAgg:
@@ -1009,14 +1009,17 @@ class Balmorel:
                     raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
 
 
-        def save_incfiles(self, scenario: str, excluded_incfiles: list = ['HYRSDATASET.inc']):
+        def save_incfiles(self, scenario: str, excluded_incfiles: list = []):
             self.new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
             # Save .inc files 
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
                 self.prepare_clustered_data(scenario, symbol_type)
 
-            # TODO: Fix the fact that you are randomly saving EV leave profiles to one of the .inc files, but balopt chooses a specific one, which might be empty
-            # TODO: Split DR_DATAINPUT.inc into a time-dependant one and the static input. Then excluded_incfiles can be an empty list as well
+            # TODO: Fix the fact that you are randomly saving EV leave profiles
+            # to one of the .inc files, but balopt chooses a specific one,
+            # which then might be empty in aggregated files
+            # TODO: Split DR_DATAINPUT.inc into a time-dependant one and the
+            # static input. Then excluded_incfiles can be an empty list as well
 
             # Save aggregated files
             incfiles = self.incfiles_to_save
