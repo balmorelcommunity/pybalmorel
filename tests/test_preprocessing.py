@@ -64,21 +64,27 @@ def test_temporal_aggregation():
     if local_balmorel_dir is None:
         raise FileNotFoundError("No path to local Balmorel folder provided")
 
-    m = Balmorel(local_balmorel_dir, 
-                 gams_system_directory)
+    m = Balmorel(local_balmorel_dir, gams_system_directory)
 
-    m.temporal_aggregation('base', 8, 24, 
+    m.temporal_aggregation(
+        "base",
+        8,
+        24,
         symbols_to_aggregate={
-            'SSS,TTT' : ['DE_VAR_T'],
-            'SSS' : ['DR_RATE_S'],
-            'TTT' : []
-        }, 
-        incfile_symbol_relation={
-            'DE_VAR_T' : ['../Balmorel/base/data/DE_VAR_T.inc','../Balmorel/base/data/INDIVUSERS_DE_VAR_T.inc'],
-            'DR_RATE_S' : '../Balmorel/base/data/DR_DATAINPUT.inc'
+            # 'SSS,TTT' : ['DE_VAR_T'],
+            "SSS,TTT": [],
+            "SSS": ["DR_RATE_S"],
+            # 'SSS' : ['GKRATE'],
+            "TTT": ["DR_RATE_T"],
         },
-        method='contiguous',
-        overwrite=False
+        incfile_symbol_relation={
+            # 'DE_VAR_T' : ['../Balmorel/base/data/DE_VAR_T.inc','../Balmorel/base/data/INDIVUSERS_DE_VAR_T.inc'],
+            "DR_RATE_S": "../Balmorel/base/data/DR_DATAINPUT.inc",
+            "DR_RATE_T": "../Balmorel/base/data/DR_DATAINPUT.inc",
+            "GKRATE": "../Balmorel/base/GKRATE.inc",
+        },
+        method="contiguous",
+        overwrite=True,
     )
 
-    # m.temporal_aggregation("base", 8, 24, overwrite=True)
+    m.temporal_aggregation("base", 8, 24, overwrite=True)
