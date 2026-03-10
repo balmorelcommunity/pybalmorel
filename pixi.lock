@@ -9574,10 +9574,10 @@ packages:
   - pkg:pypi/pure-eval?source=hash-mapping
   size: 16668
   timestamp: 1733569518868
-- pypi: ./
+- pypi: https://files.pythonhosted.org/packages/55/2b/0435c8b0b7f1ae71109742bedf6e3f06c516465453ff3bd6715341e1db50/pybalmorel-0.6.0-py3-none-any.whl
   name: pybalmorel
   version: 0.6.0
-  sha256: 88b3b611c1b778f260b93c823dcfc9d72cdac1688bb8f04791c621aca27839ec
+  sha256: cdc063b43dd560f773f421e8e2248402ca74891f7318423ad1d99559c39ae2e5
   requires_dist:
   - pandas>=2.1.4
   - matplotlib>=3.9.0
@@ -9588,10 +9588,10 @@ packages:
   - eel>=0.17.0
   - requests
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/55/2b/0435c8b0b7f1ae71109742bedf6e3f06c516465453ff3bd6715341e1db50/pybalmorel-0.6.0-py3-none-any.whl
+- pypi: ./
   name: pybalmorel
-  version: 0.6.0
-  sha256: cdc063b43dd560f773f421e8e2248402ca74891f7318423ad1d99559c39ae2e5
+  version: 1.0.0
+  sha256: c29f8754d3b254a1c87fd7281694800f3016b8ddb362b9163de91050aa85cdf2
   requires_dist:
   - pandas>=2.1.4
   - matplotlib>=3.9.0
