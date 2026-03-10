@@ -880,10 +880,13 @@ class Balmorel:
             # Using tsam
             else:
 
+                # Clip very small values (doesn't seem to be working?)
+                df = self.data.clip(1e-5)
+
                 # Aggregate collected data
                 cluster_config = tsam.ClusterConfig(method, representation)
                 aggregation = tsam.aggregate(
-                    self.data,
+                    df,
                     n_clusters=seasons,
                     period_duration=terms,
                     temporal_resolution=1,
@@ -925,6 +928,7 @@ class Balmorel:
             for symbol in symbols[symbol_type]:
                 # Collect metadata
                 domains = db[symbol].domains_as_strings
+                non_time_domains = [domain for domain in domains if domain not in ['SSS', 'TTT', 'Value']]
                 explanatory_text = db[symbol].text
 
                 # Collect aggregated data
@@ -932,23 +936,31 @@ class Balmorel:
                 symbol_data = self.agg_data.loc[:, symbol_data_idx]
 
                 # Un-standardise (prepare for Balmorel input)
-                new_columns=symbol_data.columns.str.replace(f'{symbol}|','').str.replace('|', ' . ')
+                new_columns=symbol_data.columns.str.split('|', expand=True)
                 symbol_data.columns = new_columns
+                symbol_data.columns.names = ['symbol'] + non_time_domains
 
                 # Take median of aggregated values if only T or S based symbol
                 if symbol_type == 'TTT':
                     symbol_data = symbol_data.pivot_table(index='TTT', aggfunc='median')
-                    symbol_data.index.name = ''
                 elif symbol_type == 'SSS':
                     symbol_data = symbol_data.pivot_table(index='SSS', aggfunc='median')
-                    symbol_data.index.name = ''
-                else:
-                    symbol_data.index = [f'{S} . {T}' for S, T in symbol_data.index]
-                    symbol_data.index.name = ''
 
-                # Transpose - SSS and TTT's are always the last domains
-                # TODO: This is not true for DR_RATE_* or leave_profiles in EV addon! Make a check where domains are and move around? Or maybe it is easier adding GAMS statements?
-                symbol_data = symbol_data.T
+                # Get domain order correct
+                for _ in range(len(non_time_domains)):
+                    symbol_data = symbol_data.stack()
+                symbol_data = symbol_data.reset_index()
+
+                domain_len=len(domains)
+                symbol_data = symbol_data.pivot_table(index=domains[:domain_len-1], 
+                                                      columns=domains[domain_len-1], 
+                                                      values=symbol)
+
+                symbol_data.columns.name = ''
+                symbol_data.index.name = ''
+                symbol_data.index.names = ['']*symbol_data.index.nlevels
+                if symbol_data.index.nlevels >= 2:
+                    symbol_data.index = [' . '.join(ind) for ind in symbol_data.index]
 
                 # Loop through related .inc files
                 if type(incfile_relations[symbol]) is str:
@@ -990,17 +1002,26 @@ class Balmorel:
                     raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
 
 
-        def save_incfiles(self, scenario: str):
+        def save_incfiles(self, scenario: str, excluded_incfiles: list = ['HYRSDATASET.inc']):
             self.new_scenario_path = Path(self.parent.path / f'{scenario}_W{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
             # Save .inc files 
             for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
                 self.prepare_clustered_data(scenario, symbol_type)
 
+            # TODO: Fix the fact that you are randomly saving EV leave profiles to one of the .inc files, but balopt chooses a specific one, which might be empty
+            # TODO: Split DR_DATAINPUT.inc into a time-dependant one and the static input. Then excluded_incfiles can be an empty list as well
+
             # Save aggregated files
             incfiles = self.incfiles_to_save
             for incfile in incfiles:
+                # Don't save excluded .inc files
+                if incfiles[incfile].name in excluded_incfiles:
+                    continue
+
+                # Only write data to one of the .inc files that symbols relate to
                 if incfiles[incfile].sn_eq_ifn:
                     incfiles[incfile].save()
+                # Write the rest as empty files (typically addon files)
                 else:
                     # Empty file (addon files already included in previously written .inc file)
                     with open(incfiles[incfile].path + '/' + incfiles[incfile].name, 'w') as f:
@@ -1008,8 +1029,8 @@ class Balmorel:
 
             # Finally save S and T 
             bodies = {
-                'S' : ", ".join([f"S{i:02.0f}" for i in range(1, self.agg_resolution['S'])]),
-                'T' : ", ".join([f"T{i:03.0f}" for i in range(1, self.agg_resolution['T'])]),
+                'S' : ", ".join([f"S{i:02.0f}" for i in range(1, self.agg_resolution['S'] + 1)]),
+                'T' : ", ".join([f"T{i:03.0f}" for i in range(1, self.agg_resolution['T'] + 1)]),
             }
             for incfile in ['S', 'T']:
                 f = IncFile(
