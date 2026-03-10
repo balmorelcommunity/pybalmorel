@@ -390,7 +390,7 @@ class Balmorel:
         self.scenarios = []
         self.input_data = {}
         for SC in scenarios:
-            if (SC / 'model/Balmorel.gms').exists() and (SC / 'model/cplex.op4').exists():
+            if (SC / 'model/Balmorel.gms').exists() and ((SC / 'model/cplex.op4').exists() or (SC / 'model/cplex.op2').exists()):
                 self.scenarios.append(SC.name)
             else:
                 print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 did not exist')
