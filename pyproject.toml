@@ -78,7 +78,7 @@ LOCAL_BALMOREL_DIR = "../Balmorel"
 test = { cmd = "pytest tests -s", description = "Run the test suite with print outputted to console" }
 _build = { cmd = "python -m build", description = "Build source and wheel distributions into dist/" }
 publish = { depends-on = ["_build"], cmd = "python -m twine upload dist/*", description = "Build and upload the package to PyPI" }
-publish-test = { cmd = "python -m twine upload --repository testpypi dist/*", description = "Build and upload the package to test PyPI" }
+publish-test = { depends-on = ["_build"], cmd = "python -m twine upload --repository testpypi dist/*", description = "Build and upload the package to test PyPI" }
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
