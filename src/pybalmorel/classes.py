@@ -1022,6 +1022,7 @@ class Balmorel:
             # static input. Then excluded_incfiles can be an empty list as well
             # TODO: exclude DR_DATAINPUT and GDATA
             # TODO: INCLUDE HYRSDATA, but remember the relaxation line - put it somewhere else
+            # TODO: Write "Always remember to check outputted .inc files in new scenario, to make sure important symbols are not left out" in docs as a general rule above the warning admonition
 
             # Save aggregated files
             incfiles = self.incfiles_to_save
