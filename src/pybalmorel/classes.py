@@ -1020,6 +1020,8 @@ class Balmorel:
             # which then might be empty in aggregated files
             # TODO: Split DR_DATAINPUT.inc into a time-dependant one and the
             # static input. Then excluded_incfiles can be an empty list as well
+            # TODO: exclude DR_DATAINPUT and GDATA
+            # TODO: INCLUDE HYRSDATA, but remember the relaxation line - put it somewhere else
 
             # Save aggregated files
             incfiles = self.incfiles_to_save
