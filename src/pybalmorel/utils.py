@@ -4,7 +4,8 @@ Functions
 
 import gams
 import pandas as pd
-from typing import Tuple
+from pathlib import Path
+from ripgrepy import Ripgrepy
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 preformatted_columns = {
@@ -22,7 +23,7 @@ def create_parameter_columns(df: pd.DataFrame,
                              symbol: str,
                              mainresult_symbol_columns: dict,
                              cols: list | None):
-    if cols == None:
+    if cols is None:
         try:
             df.columns = mainresult_symbol_columns[symbol] + ['Unit', 'Value']
         except (ValueError, KeyError):
@@ -89,20 +90,24 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
         result_type (str): Is it a normal MainResults or a Optiflow Mainresults? Choose either 'balmorel' or 'optiflow'
         print_explanatory_text (bool): Print the text describing the symbol?
     """   
-    if type(db[symbol]) == gams.GamsParameter:
-        df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
-        df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
-        df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
-    elif type(db[symbol]) == gams.GamsSet:
-        df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
-        df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
-    elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
-        df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
-        df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
-        df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+    if not db[symbol].get_number_records() == 0:
+        if type(db[symbol]) == gams.GamsParameter:
+            df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
+            df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
+            df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        elif type(db[symbol]) == gams.GamsSet:
+            df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
+            df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
+            df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
+            df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
+            df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
+        else:
+            raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
     else:
-        raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
-    
+        print('Symbol contents are empty')
+        df = pd.DataFrame()
+        
     if print_explanatory_text:
         print(db[symbol].text)
     
@@ -116,4 +121,55 @@ def read_lines(name, file_path, make_space=True):
         string = ''.join(open(file_path + '/%s'%name).readlines())
    
     return string
+
+def search_in_incfiles(pattern: str, path: str | Path):
+    """
+    Use ripgrep to find a pattern (a string of text) in an .inc file
+
+    Args:
+       pattern (str): the string to find.
+       path (str): the path to the .inc files, e.g. Balmorel/base/data.
+
+
+    Returns:
+       list: a list of .inc files that contain the pattern.
+
+    """
+    
+    rg=Ripgrepy(pattern, str(path))
+    incfiles_containing_pattern=(
+        rg
+        .glob('*.inc')
+        .files_with_matches()
+        .run()
+        .as_string
+        .split('\n')
+        [:-1]
+    )
+
+    return incfiles_containing_pattern
+
+def prepare_incfile(filepath: str, symbol_name: str, domains: list | str, explanatory_text: str):
+    """Uses gams database information to prepare meta-data for an .inc file"""
+    
+    # Find filename and path
+    filename = filepath.split('/')[-1] 
+    path = filepath.rstrip(filename)
+
+    # Check nr. of domains
+    if type(domains) is not str and len(domains) > 1:
+        gams_variable_type = 'TABLE'
+    else:
+        gams_variable_type = 'PARAMETER'
+
+    prefix=f"{gams_variable_type} {symbol_name}({', '.join(domains)}) '{explanatory_text}'\n"
+    suffix="\n;"
+
+    # Check if filename is equal to symbol name
+    if filename[-4:] == '.inc':
+        filename_eq_symbol = filename[:-4] == symbol_name
+    else:
+        filename_eq_symbol = filename == symbol_name
+
+    return filename, path, prefix, suffix, domains, filename_eq_symbol
 

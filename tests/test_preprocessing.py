@@ -10,8 +10,7 @@ Created on 03.10.2024
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-from pybalmorel.classes import IncFile
-from pybalmorel import GUI
+from pybalmorel.classes import IncFile, Balmorel
 import pandas as pd
 import os
 
@@ -19,6 +18,19 @@ import os
 # %% ------------------------------- ###
 ###             1. Utils            ###
 ### ------------------------------- ###
+
+gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
+assert gams_system_directory is not None, (
+    "GAMS system directory not found. "
+    "Set GAMS_SYSTEM_DIR in the pyproject.toml file to point at your GAMS installation, e.g.:\n"
+    "  GAMS_SYSTEM_DIR=/opt/gams/53"
+)
+local_balmorel_dir = os.environ.get("LOCAL_BALMOREL_DIR", None)
+assert local_balmorel_dir is not None, (
+    "Local Balmorel model not found. "
+    "Set LOCAL_BALMOREL_DIR in the pyproject.toml file to point the Balmorel model you want to use for testing, e.g. the following if the model is one directory above this repository:\n"
+    "  LOCAL_BALMOREL_DIR=../Balmorel"
+)
 
 
 ### Create an .inc file
@@ -47,6 +59,32 @@ def test_IncFile():
     assert "DE.inc" in os.listdir("tests/output")
 
 
-# This makes an error when exiting the GUI, but in principle it works, so can be used locally
-# def test_GUI():
-#     GUI.geofilemaker()
+def test_temporal_aggregation():
+
+    if local_balmorel_dir is None:
+        raise FileNotFoundError("No path to local Balmorel folder provided")
+
+    m = Balmorel(local_balmorel_dir, gams_system_directory)
+
+    m.temporal_aggregation(
+        "base",
+        8,
+        24,
+        symbols_to_aggregate={
+            # 'SSS,TTT' : ['DE_VAR_T'],
+            "SSS,TTT": [],
+            "SSS": ["DR_RATE_S"],
+            # 'SSS' : ['GKRATE'],
+            "TTT": ["DR_RATE_T"],
+        },
+        incfile_symbol_relation={
+            # 'DE_VAR_T' : ['../Balmorel/base/data/DE_VAR_T.inc','../Balmorel/base/data/INDIVUSERS_DE_VAR_T.inc'],
+            "DR_RATE_S": "../Balmorel/base/data/DR_DATAINPUT.inc",
+            "DR_RATE_T": "../Balmorel/base/data/DR_DATAINPUT.inc",
+            "GKRATE": "../Balmorel/base/GKRATE.inc",
+        },
+        method="contiguous",
+        overwrite=True,
+    )
+
+    m.temporal_aggregation("base", 8, 24, overwrite=True)

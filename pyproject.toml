@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "0.6.0"
+version = "1.0.0"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@proton.me"},
   { name="Théodore Le Nalinec"},
@@ -19,7 +19,7 @@ license = "MIT"
 license-files = ["./LICENSE*"]
 dependencies = ['pandas>=2.1.4', 'matplotlib>=3.9.0', 'geopandas>=0.14.4', 
                 'gamsapi[transfer]>=45.7.0', 'ipywidgets>=8.1.3', 'cartopy>=0.24.1', 
-                'eel>=0.17.0', 'requests']
+                'eel>=0.17.0', 'requests', ]
 
 [project.urls]
 Repository = "https://github.com/Mathias157/pybalmorel"
@@ -62,18 +62,23 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 sphinx-autoapi = "*"
 sphinx-copybutton = "*"
+python-lsp-server = "*"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
+ripgrepy = ">=2.2.0,<3"
+tsam = "*"
 
 [tool.pixi.feature.dev.activation.env]
-GAMS_SYSTEM_DIR = "/opt/gams/53"
+GAMS_SYSTEM_DIR = "/opt/gams/50.4"
+LOCAL_BALMOREL_DIR = "../Balmorel"
 
 [tool.pixi.feature.dev.tasks]
-test = { cmd = "pytest tests", description = "Run the test suite" }
+test = { cmd = "pytest tests -s", description = "Run the test suite with print outputted to console" }
 _build = { cmd = "python -m build", description = "Build source and wheel distributions into dist/" }
 publish = { depends-on = ["_build"], cmd = "python -m twine upload dist/*", description = "Build and upload the package to PyPI" }
+publish-test = { depends-on = ["_build"], cmd = "python -m twine upload --repository testpypi dist/*", description = "Build and upload the package to test PyPI" }
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }

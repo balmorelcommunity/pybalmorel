@@ -13,14 +13,18 @@ import shutil
 import gams
 import pandas as pd
 import numpy as np
+import pickle as pkl
+import tsam
+import requests
+from datetime import datetime
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
-import requests
+from pathlib import Path
 from typing import Union, Tuple
-from functools import partial
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
-from .utils import symbol_to_df
+from .utils import symbol_to_df, search_in_incfiles, prepare_incfile
+from .formatting import SSS_TTT_index
 from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
@@ -48,16 +52,16 @@ class MainResults:
         """
 
         ## Loading scenarios
-        if type(files) == str:
+        if type(files) is str:
             # Change filenames to list if just one string
             files = [files]
             
         ## File paths
-        if type(paths) == str:
+        if type(paths) is str:
             # Create identical paths if only one given
             paths = [paths]*len(files)
             
-        elif ((type(paths) == list) or (type(paths) == tuple)) and (len(paths) == 1):
+        elif ((type(paths) is list) or (type(paths) is tuple)) and (len(paths) == 1):
             paths = paths*len(files)
             
         elif len(files) != len(paths):
@@ -65,9 +69,11 @@ class MainResults:
             raise Exception("%d files, but %d paths given!\nProvide only one path or the same amount of paths as files"%(len(files), len(paths)))
         
         ## Scenario Names
-        if scenario_names == None:
+        if scenario_names is None:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
+
+            assert scenario_names is not None, "Couldn't find any results"
             
             # Rename MainResults with no suffix
             if np.any(scenario_names == ''):
@@ -82,7 +88,7 @@ class MainResults:
 
             scenario_names = list(scenario_names)
 
-        elif type(scenario_names) == str:
+        elif type(scenario_names) is str:
             scenario_names = [scenario_names]
             
         if len(files) != len(scenario_names):    
@@ -96,17 +102,17 @@ class MainResults:
         self.type = result_type
         self.db = {}
             
-        if system_directory != None:
+        if system_directory is not None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
             self._gams_system_directory = system_directory
         else:
             ws = gams.GamsWorkspace()
             
         for i in range(len(files)):    
-            print('Loading', os.path.join(os.path.abspath(paths[i]), files[i]))
+            print('Loading', str(Path(paths[i]) / files[i]))
             try:
-                self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
-            except gams.control.workspace.GamsException as e:
+                self.db[scenario_names[i]] = ws.add_database_from_gdx(str((Path(paths[i]) / files[i]).absolute()))
+            except gams.GamsException:
                 raise FileNotFoundError(f'\nCouldnt add file {files[i]}!\nBeware of æ,ø,å,ö,ü,ä or other non-english letters in the folders of your absolute path: {os.path.abspath(paths[i])}.\nThe GAMS API requires an absolute path with no non-english letters.')
      
     # Getting a certain result
@@ -150,7 +156,7 @@ class MainResults:
     def plot_profile(self,
                      commodity: str,  
                      year: int, 
-                     scenario: str = 0,
+                     scenario: str | int = 0,
                      columns: str = 'Technology',
                      region: str = 'ALL',
                      style: str = 'light') -> Tuple[Figure, Axes]:
@@ -293,7 +299,7 @@ class IncFile:
     name (str): The name of the .inc file.
     path (str): The path to save the file, defaults to 'Balmorel/base/data'.
     """
-    def __init__(self, prefix: str = '', body: str = '', 
+    def __init__(self, prefix: str = '', body: str | pd.DataFrame = '', 
                  suffix: str = '', name: str = 'name', 
                  path: str = 'Balmorel/base/data/'):
         self.prefix = prefix
@@ -305,9 +311,12 @@ class IncFile:
     def body_concat(self, df: pd.DataFrame):
         """Concatenate a body temporarily being a dataframe to another dataframe
         """
+        if type(self.body) is not pd.DataFrame:
+            raise TypeError("Body must be a pandas DataFrame for this to work!")
+
         self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function.. 
 
-    def body_prepare(self, index: list, columns: list,
+    def body_prepare(self, index: list, columns: list | None = None,
                     values: str = 'Value',
                     aggfunc: str ='sum',
                     fill_value: Union[str, int] = ''):
@@ -344,11 +353,11 @@ class IncFile:
         if self.name[-4:] != '.inc':
             self.name += '.inc'  
        
-        with open(os.path.join(self.path, self.name), 'w') as f:
+        with open(Path(self.path) / self.name, 'w') as f:
             f.write(self.prefix)
-            if type(self.body) == str:
+            if type(self.body) is str:
                 f.write(self.body)
-            elif type(self.body) == pd.DataFrame:
+            elif type(self.body) is pd.DataFrame:
                 f.write(self.body.to_string())
             else:
                 print('Wrong format of %s.body!'%self.name)
@@ -362,29 +371,29 @@ class Balmorel:
         model_folder (str): The top level folder of Balmorel, where base and simex are located
     """
 
-    def __init__(self, model_folder: str, gams_system_directory: str = None):
+    def __init__(self, model_folder: str | Path, gams_system_directory: str | None  = None):
         
         # Get GAMS system directory (the default none will make GAMS find it by itself)
         self._gams_system_directory = gams_system_directory
         
         # Get full path
-        self.path = os.path.abspath(model_folder)
+        self.path = Path(model_folder)
+        directories = [file.name for file in self.path.iterdir() if file.is_dir()]
         
-        if not('base' in os.listdir(self.path)) or not('simex' in os.listdir(self.path)):
-            raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
+        if 'base' not in directories:
+            raise Exception(f"Incorrect Balmorel folder, couldn't find base in {self.path}")
         
         # Get scenario folders
-        scenarios = [SC for SC in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, SC)) and SC != 'simex' and SC != '.git']
+        scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name != 'simex' and SC.name[0] != '.']
         
         # Check validity of scenario folders and make list of scenarios
         self.scenarios = []
         self.input_data = {}
         for SC in scenarios:
-            if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
-                os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
-                    self.scenarios.append(SC)
+            if (SC / 'model/Balmorel.gms').exists() and ((SC / 'model/cplex.op4').exists() or (SC / 'model/cplex.op2').exists()):
+                self.scenarios.append(SC.name)
             else:
-                print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
+                print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 or {SC}/model/cplex.op2 did not exist')
 
     def locate_results(self):
         """
@@ -397,8 +406,8 @@ class Balmorel:
         self.scfolder_to_scname = {}
         self.scname_to_scfolder = {}
         for SC in self.scenarios:
-            path = os.path.join(self.path, '%s/model'%SC)
-            mainresults_files = pd.Series(os.listdir(path))
+            path = self.path / f'{SC}/model'
+            mainresults_files = pd.Series([file.name for file in path.iterdir()])
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
             self.files += list(mainresults_files)
             self.paths += [path]*len(mainresults_files)
@@ -477,46 +486,575 @@ class Balmorel:
             KeyError: _description_
         """
         
-        if not(scenario in self.scenarios):
+        if scenario not in self.scenarios:
             raise KeyError('%s scenario wasnt found.\nRun this Balmorel(...) class again if you just created the %s scenario.'%(scenario, scenario))
         
         
         # Path to the GAMS system directory
-        model_folder = os.path.join(self.path, scenario, 'model')
+        model_folder = self.path / scenario / 'model'
+
+        # Path to input .gdx file of scenario
+        input_gdx = model_folder / ('%s_input_data.gdx'%scenario)
         
-        if os.path.exists(os.path.join(model_folder, '%s_input_data.gdx'%scenario)) and not(overwrite):
+        if input_gdx.exists() and not(overwrite):
             ws = gams.GamsWorkspace(system_directory=self._gams_system_directory)
-            db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
+            db = ws.add_database_from_gdx(str((model_folder / ('%s_input_data.gdx'%scenario)).absolute()))
             self.input_data[scenario] = db
+            print(
+                '-'*20,
+                '\nLoaded existing input data - pass "overwrite = True" if you changed data since last incfile loading\n',
+                'Loaded .gdx file:\n', 
+                input_gdx,
+                '\n',
+                '-'*20,
+            )
             
         else:
             # Are you using the provided 'ReadData'-Balmorel files or a custom one?
             use_provided_read_files = True
             if use_provided_read_files:
                 pkgdir = sys.modules['pybalmorel'].__path__[0]
+                print('-'*150, '\npkgdir\n', pkgdir, '\n', '-'*150)
                 # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
                 # into the model folder if there isn't one already
                 for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
-                    if not(os.path.exists(os.path.join(model_folder, file))):
-                        shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
-                        print(os.path.join(model_folder, file))
+                    if not (model_folder / file).exists():
+                        shutil.copyfile(Path(pkgdir) / file, model_folder / file)
+                        print(Path(model_folder) / file)
 
             # Initialize GAMS Workspace
-            ws = gams.GamsWorkspace(working_directory=model_folder, system_directory=self._gams_system_directory)
+            ws = gams.GamsWorkspace(working_directory=model_folder, 
+                                    system_directory=self._gams_system_directory)
 
             # Set options
             opt = ws.add_options()
             opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
             
             # Load the GAMS model
-            model_db = ws.add_job_from_file(os.path.join(model_folder, read_file), job_name=scenario)
+            model_db = ws.add_job_from_file(str((model_folder / read_file).absolute()), job_name=scenario)
 
             # Run the GAMS file
             model_db.run(opt)
 
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
+
+    def get_input(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
+        """Get a certain input from the loaded input file(s) into a pandas DataFrame
+
+        Args:
+            symbol (str): The desired input, e.g. DE_VAR_T
+            cols (str, optional): Specify custom columns. Defaults to pre-defined formats or domain names.
+
+        Returns:
+            pd.DataFrame: The output DataFrame
+        """
+        # Placeholder
+        df = pd.DataFrame()
+        
+        for SC in self.input_data.keys():
+            # Get results from each scenario
+            try :
+                temp = symbol_to_df(self.input_data[SC], symbol, cols)
+                temp['Scenario'] = SC 
+                # Put scenario in first column
+                temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
+                # Save
+                df = pd.concat((df, temp), ignore_index=True)
             
+            except ValueError :
+                print(f'{SC} doesn\'t have any value in the table {symbol}')
+            
+        return df  
+
+    def temporal_aggregation(self, 
+                             scenario: str, 
+                             seasons: int, 
+                             terms: int, 
+                             method: str = 'contiguous', 
+                             representation: str = 'distribution_minmax',
+                             symbols_to_aggregate: dict | str = 'auto',
+                             incfile_symbol_relation: dict = {},
+                             overwrite: bool = False):
+        """
+        Do temporal aggregation of scenario, using tsam.
+        If symbols_to_aggregate is 'auto' (default setting), the 
+        script will try to automatically find the timeseries data.
+
+        NOTE:   If .inc files of the scenario you want to aggregate define both
+        time-related symbols AND symbols without S or T sets, this script will
+        produce new .inc files that does NOT include the non-S/T dependant
+        symbols. Hence, remember to copy paste those parts into the newly
+        generated .inc files afterwards.
+                
+
+        Args:
+           scenario (str): scenario to aggregate.
+           seasons (int): amount of seasons to aggregate to 
+           terms (int): amount of terms to aggregate to
+           method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+           representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
+           symbols_to_aggregate (dict | str): 'auto' for automatically finding 
+            the data. Otherwise, a dictionary with keys 'SSS,TTT', 'SSS'
+            and 'TTT' that each point to a list of symbols to aggregate for manual 
+            choice of aggregation.
+           incfile_symbol_relation (dict): if manually defining symbols to 
+            aggregate, this dict must be passed too. Keys should be symbols, 
+            and the values should be a list of .inc file paths, where the first one 
+            will be the new .inc file with aggregated data, and the others will be 
+            empty. E.g.: {'DE_VAR_T' : ['base/data/DE_VAR_T.inc',
+                                        'base/data/INDIVUSERS_DE_VAR_T.inc', 
+                                        '/base/data/TRANSPORT_DE_VAR_T.inc']}
+        """
+
+        # Create temporal aggregation class
+        self.ts = self.TimeAgg(parent=self)
+
+        # Collect and standardise time series input 
+        self.ts.collect_and_standardise(scenario, symbols_to_aggregate, 
+                                        incfile_symbol_relation, overwrite)
+
+        # Cluster collected time series input
+        self.ts.cluster(seasons, terms, method, representation)
+
+        # Prepare and save incfiles
+        self.ts.save_incfiles(scenario, excluded_incfiles=['HYRSDATASET.inc'])
+
+
+    class TimeAgg:
+        def __init__(self, parent):
+            self.parent = parent
+            self.symbols = {}
+            self.incfiles = {}
+            self.incfiles_to_save = {}
+            self.data = pd.DataFrame(index=SSS_TTT_index)
+
+        def collect_and_standardise(self, 
+                                    scenario: str, 
+                                    symbols_to_aggregate: dict | str = 'auto',
+                                    incfile_symbol_relation: dict = {},
+                                    overwrite: bool = False):
+            
+            # Collect .inc files
+            self.parent.load_incfiles(scenario, overwrite=overwrite)
+
+            # Check standardised time series data have already been collected, return if so and overwrite = False
+            std_data_file = self.parent.path / scenario / 'std_ts_data.pkl'
+            symbols_file = self.parent.path / scenario / 'symbols_to_agg.pkl'
+            incfiles_file = self.parent.path / scenario / 'incfile_symbol_relation.pkl'
+            if not overwrite and std_data_file.exists() and symbols_file.exists() and incfiles_file.exists():
+                with open(std_data_file, 'rb') as f:
+                    self.data = pkl.load(f)
+
+                # Load old standardised input
+                if symbols_to_aggregate == 'auto':
+                    with open(symbols_file, 'rb') as f:
+                        self.symbols = pkl.load(f)
+                # Manually defined, following a previous standardisation
+                elif type(symbols_to_aggregate) is not str:
+                    self.symbols = symbols_to_aggregate
+
+                # Load old relations
+                if incfile_symbol_relation == {}:
+                    with open(incfiles_file, 'rb') as f:
+                        self.incfiles = pkl.load(f)
+                # Manually defined, following a previous standardisation
+                else:
+                    self.incfiles = incfile_symbol_relation
+
+                return
+
+            # Collect input - start checking if input is correct
+            if type(symbols_to_aggregate) is dict and incfile_symbol_relation == {}:
+                # Make sure input is correct for manual entry
+                raise ValueError("incfile_symbol_relation must be defined if writing symbols to aggregate manually!")
+
+            elif type(symbols_to_aggregate) is dict:
+                # Check that incfiles were defined for each symbol
+                for timeseries_type in ['SSS,TTT', 'SSS', 'TTT']:
+                    for symbol in symbols_to_aggregate[timeseries_type]:
+                        try: 
+                            incfile_symbol_relation[symbol]
+                        except KeyError:
+                            raise ValueError(f"Missing incfile for {symbol}!")
+
+                # Correct input
+                self.symbols = symbols_to_aggregate
+                self.incfiles = incfile_symbol_relation
+
+            elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() == 'auto':
+                # Automatically find time series symbols
+                self.find_timeseries_input(scenario)
+                
+            elif type(symbols_to_aggregate) is str and symbols_to_aggregate.lower() != 'auto':
+                # Check that some other string was not passed
+                raise ValueError(r"Incorrect choice - did you mean symbols_to_aggregate = 'auto' ?")
+
+            else:
+                raise ValueError("Incorrect input!")
+
+            # Collect and standardise input 
+            for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
+                self.symbols_to_ignore = []
+                for symbol in self.symbols[symbol_type]:
+                    self.standardise_timeseries(scenario, symbol)
+
+                self.symbols[symbol_type] = [symbol for symbol in self.symbols[symbol_type] if symbol not in self.symbols_to_ignore]
+
+            # Save standardised input to a .pkl file
+            with open(std_data_file, 'wb') as f:
+                pkl.dump(self.data, f)
+            with open(symbols_file, 'wb') as f:
+                pkl.dump(self.symbols, f)
+            with open(incfiles_file, 'wb') as f:
+                pkl.dump(self.incfiles, f)
+
+        def find_timeseries_input(self, scenario: str,
+                                excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 
+                                                            'CHRONOHOUR', 'SSIZE',
+                                                            'TWORKDAY', 'TWEEKEND',
+                                                            'S', 'T', 'DE_VAR_T1',
+                                                            'DE_VAR_T1_INDIVHEATING',
+                                                            'DH_VAR_T1', 'DH_VAR_T_IND',
+                                                            'DH_VAR_T_INDIVHEATING', 
+                                                            'WND_VAR_T1', 'SOLE_VAR_T1',
+                                                            'SOLH_VAR_T1', 'X3FX_VAR_T1',
+                                                            ]):
+            """
+            Locates the timeseries inputs of Balmorel by loading symbols from .inc
+            files, filtering symbols with SSS or TTT domains, and filtering raw
+            data input from processed by matching symbol names to the text of ALL
+            .inc files in base/data and scenario/data. excluded_symbols can be used
+            to exclude temporal resolution input meta data, such as CHRONOHOUR, S
+            or T, or temporary profiles such as DE_VAR_T1. 
+
+            Args:
+            scenario (str): scenario timeseries data input to find.
+            excluded_symbols (list): symbols to exclude.
+
+            Returns:
+            str: description.
+            """
+            
+            # Make sure scenario data has been loaded
+            assert scenario in self.parent.input_data, (
+                f"Input data not loaded for {scenario}!"
+                f"Run 'Balmorel.load_incfiles({scenario})' before this command"
+            )
+
+            # Get a list of all symbols in this scenario
+            db = self.parent.input_data[scenario]
+            symbol_list = [symbol.name for symbol in db if symbol.name not in excluded_symbols]
+
+            # Categorise symbols
+            timeseries_symbols = {'SSS,TTT' : [], 'SSS' : [], 'TTT' : []}
+            symbols_incfiles = {}
+            for symbol in symbol_list:
+                # Only look at symbols with domains (e.g.: not CCCRRRAAA)
+                domains = [domain.name for domain in db[symbol].domains if domain != '*']            
+
+                # Use ripgrep to search for symbol in .inc files 
+                incfiles_containing_symbol = search_in_incfiles(symbol, self.parent.path / scenario / 'data')
+
+                # Try again in base/data, if symbol wasnt found in scenario/data
+                if len(incfiles_containing_symbol) == 0:
+                    incfiles_containing_symbol = search_in_incfiles(symbol, self.parent.path / 'base/data')
+
+                # Only collect if symbol exists in an .inc file
+                if len(incfiles_containing_symbol) > 0:
+                    if ('SSS' in domains or 'S' in domains) and ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['SSS,TTT'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+                    elif ('SSS' in domains or 'S' in domains) and not ('TTT' in domains or 'T' in domains):
+                        timeseries_symbols['SSS'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+                    elif ('TTT' in domains or 'T' in domains) and not ('SSS' in domains or 'S' in domains):
+                        timeseries_symbols['TTT'].append(symbol)
+                        symbols_incfiles[symbol] = incfiles_containing_symbol
+
+            self.symbols = timeseries_symbols
+            self.incfiles = symbols_incfiles
+            
+        def standardise_timeseries(self, scenario: str, symbol: str):
+            """
+            Collect and standardise timeseries
+
+            NOTE: This depends on the balmorel_symbol_columns in pybalmorel/formatting.py!
+                  Otherwise, the following symbols will get KeyErrors in .pivot_table 
+                  because of duplicate columns: 
+                    XKRATE: Duplicate RRR's instead of IRRRE and IRRRI
+            """
+
+            # Get symbol 
+            db = self.parent.input_data[scenario]
+            df = symbol_to_df(db, symbol)
+
+            # Make sure it is not empty, remove if so
+            if df.shape == (0, 0):
+                self.symbols_to_ignore.append(symbol)
+                print(f'Ignoring {symbol} in time aggregation since it was empty')
+                return
+
+            # Separate time domains from other domains
+            domains = [domain for domain in df.columns if domain not in ['SSS', 'S', 'TTT', 'T', 'Value']]            
+            time_domains = [domain for domain in df.columns if domain in ['SSS', 'S', 'TTT', 'T']]            
+
+            # Standardise
+            df = (
+                df
+                .pivot_table(index=time_domains, 
+                            columns=domains, 
+                            values='Value',
+                            fill_value=0)
+            )
+
+            # Check if symbol has only constant values
+            without_constants = df.loc[:, df.nunique() > 1]
+            
+            if len(without_constants.columns) == 0:
+                self.symbols_to_ignore.append(symbol)
+                print(f'Ignoring {symbol} in time aggregation since all time series were constant')
+                return
+
+            # Flatten column to one string name
+            if type(df.columns) is pd.MultiIndex:
+                cols = [f"{symbol}|{'|'.join(col)}" for col in df.columns]
+            else:
+                cols = [f"{symbol}|{col}" for col in df.columns]
+            df.columns = cols
+            
+            # Re-index to get full ST set for all (will duplicate S or T values to all T or S indices, respectively)
+            if 'TTT' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+            elif 'T' in time_domains and 'SSS' not in time_domains and 'S' not in time_domains:
+                df.index.name = 'TTT'
+                df = df.reindex(SSS_TTT_index, level='TTT').fillna(0)
+            elif 'SSS' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+            elif 'S' in time_domains and 'TTT' not in time_domains and 'T' not in time_domains:
+                df.index.name = 'SSS'
+                df = df.reindex(SSS_TTT_index, level='SSS').fillna(0)
+            else:
+                df.index.names = ['S', 'T']
+                df = df.reindex(SSS_TTT_index).fillna(0)
+
+            # Store time series data
+            self.data = self.data.join(df, how="outer").fillna(0) 
+
+        def cluster(
+                self,
+                seasons: int = 6,
+                terms: int = 24,
+                method: str = "contiguous",
+                representation: str = "distribution_minmax"
+        ):
+            """Cluster collect input data
+
+            Args:
+                scenario (str): The scenario folder to aggregate.
+                seasons (int): Amount of periods / seasons
+                terms (int): Amount of hours / terms
+                method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+                representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
+            """
+
+            # Using a Random Choice
+            if method == "random":
+                # # Make random time aggregation
+                # N_timeslices = seasons * terms
+                # N_hours = len(self.data)
+                #
+                # # Make choices
+                # agg_steps = []
+                # for i in range(N_timeslices):
+                #     agg_steps.append(np.random.randint(N_hours))
+                #
+                # # Sort chronologically
+                # agg_steps.sort()
+                #
+                # # Also save a small note with the chosen timesteps
+                # with open(
+                #     "Balmorel/%s/picked_times.txt"
+                #     % (
+                #         "W%dT%d_rand"
+                #         % (seasons, terms)
+                #     ),
+                #     "w",
+                # ) as f:
+                #     f.write(pd.Series(self.data.iloc[agg_steps].index).to_string())
+                raise NotImplementedError("To be developed. The outcommented code in this function can be used to index the collected data and create new .inc files")
+
+            # Using tsam
+            else:
+
+                # Clip very small values (doesn't seem to be working?)
+                df = self.data.clip(1e-5)
+
+                # Aggregate collected data
+                cluster_config = tsam.ClusterConfig(method, representation)
+                aggregation = tsam.aggregate(
+                    df,
+                    n_clusters=seasons,
+                    period_duration=terms,
+                    temporal_resolution=1,
+                    cluster=cluster_config,
+                )
+
+                # Make new Balmorel index
+                data = aggregation.cluster_representatives
+                data.index = pd.MultiIndex.from_product(
+                    [[f'S{i:02.0f}' for i in range(1, seasons+1)],
+                    [f'T{i:03.0f}' for i in range(1, terms+1)]],
+                    names=['SSS', 'TTT']
+                )
+
+                # Store to self
+                self.cluster_stats = aggregation
+                self.agg_data = aggregation.cluster_representatives
+                self.agg_resolution = {'S' : seasons, 'T' : terms}
+                self.method = method
+                self.representation = representation
+
+        def prepare_clustered_data(self, scenario: str, symbol_type: str):
+
+            # Prepare placeholders
+            incfiles = self.incfiles_to_save
+            symbols = self.symbols
+            incfile_relations = self.incfiles
+            db = self.parent.input_data[scenario]
+
+            # Prepare new, aggregated scenario and document
+            self.new_scenario_path.mkdir(parents=True, exist_ok=True)
+            with open(self.new_scenario_path / '../temporal_aggregation.md', 'w') as f:
+                f.write(f"Temporal aggregation made {datetime.now().strftime('%Y-%m-%d %T')}\n")
+                f.write(f"Method: {self.method}\n")
+                f.write(f"Representation: {self.representation}\n")
+                f.write(f'Aggregated resolution: {self.agg_resolution["S"]} seasons and {self.agg_resolution["T"]} terms\n')
+
+            # Loop through symbols
+            for symbol in symbols[symbol_type]:
+                # Collect metadata
+                domains = db[symbol].domains_as_strings
+                non_time_domains = [domain for domain in domains if domain not in ['SSS', 'TTT', 'Value']]
+                explanatory_text = db[symbol].text
+
+                # Collect aggregated data
+                symbol_data_idx = self.agg_data.columns.str.contains(symbol)
+                symbol_data = self.agg_data.loc[:, symbol_data_idx]
+
+                # Un-standardise (prepare for Balmorel input)
+                new_columns=symbol_data.columns.str.split('|', expand=True)
+                symbol_data.columns = new_columns
+                symbol_data.columns.names = ['symbol'] + non_time_domains
+
+                # Take median of aggregated values if only T or S based symbol
+                if symbol_type == 'TTT':
+                    symbol_data = symbol_data.pivot_table(index='TTT', aggfunc='median')
+                elif symbol_type == 'SSS':
+                    symbol_data = symbol_data.pivot_table(index='SSS', aggfunc='median')
+
+                # Get domain order correct
+                for _ in range(len(non_time_domains)):
+                    symbol_data = symbol_data.stack()
+                symbol_data = symbol_data.reset_index()
+
+                domain_len=len(domains)
+                symbol_data = symbol_data.pivot_table(index=domains[:domain_len-1], 
+                                                      columns=domains[domain_len-1], 
+                                                      values=symbol)
+
+                symbol_data.columns.name = ''
+                symbol_data.index.name = ''
+                symbol_data.index.names = ['']*symbol_data.index.nlevels
+                if symbol_data.index.nlevels >= 2:
+                    symbol_data.index = [' . '.join(ind) for ind in symbol_data.index]
+
+                # Loop through related .inc files
+                if type(incfile_relations[symbol]) is str:
+                    iterable = [incfile_relations[symbol]]
+                elif type(incfile_relations[symbol]) is list:
+                    iterable = incfile_relations[symbol]
+                else:
+                    raise TypeError(f"Wrong format of .inc-file-symbol relation dictionary entry for {symbol}!")
+
+                for incfile in iterable:
+                    # Prepare a new .inc file if it doesn't already exist
+                    if incfile not in incfiles.keys():
+                        # Prepare filename, path, prefix and figure out if symbol == filename
+                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
+                        incfiles[incfile] = IncFile(
+                            name=filename,
+                            path=str(self.new_scenario_path),
+                            body=symbol_data.to_string(),
+                            prefix=prefix, 
+                            suffix=suffix
+                        )
+
+                        # Store new attribute, relating to whether or not .inc filename equals symbol name 
+                        incfiles[incfile].sn_eq_ifn = filename_eq_symbol
+                
+                    # Append to existing .inc file
+                    else:
+                        filename, path, prefix, suffix, domains, filename_eq_symbol = prepare_incfile(incfile, symbol, domains, explanatory_text)
+                        incfiles[incfile].body += '\n'
+                        incfiles[incfile].body += '\n;\n' + prefix
+                        incfiles[incfile].body += symbol_data.to_string()
+
+                # Make first related .inc file the one to save data to, if no .inc file had a name equal to symbol name
+                incfiles_to_save = [incfiles[prepared_incfile].sn_eq_ifn for prepared_incfile in iterable]
+                if sum(incfiles_to_save) == 0:
+                    incfiles[iterable[0]].sn_eq_ifn = True
+                # Make sure that only one .inc file will be saved with the data
+                elif sum(incfiles_to_save) > 1:
+                    raise ValueError(f"More than one .inc file will contain data for symbol {symbol}, but only one should!")
+
+
+        def save_incfiles(self, scenario: str, excluded_incfiles: list = []):
+            self.new_scenario_path = Path(self.parent.path / f'{scenario}_S{self.agg_resolution["S"]}T{self.agg_resolution["T"]}/data')
+            # Save .inc files 
+            for symbol_type in ['SSS,TTT', 'SSS', 'TTT']:
+                self.prepare_clustered_data(scenario, symbol_type)
+
+            # TODO: Fix the fact that you are randomly saving EV leave profiles
+            # to one of the .inc files, but balopt chooses a specific one,
+            # which then might be empty in aggregated files
+            # TODO: Split DR_DATAINPUT.inc into a time-dependant one and the
+            # static input. Then excluded_incfiles can be an empty list as well
+            # TODO: exclude DR_DATAINPUT and GDATA
+            # TODO: INCLUDE HYRSDATA, but remember the relaxation line - put it somewhere else
+            # TODO: Write "Always remember to check outputted .inc files in new scenario, to make sure important symbols are not left out" in docs as a general rule above the warning admonition
+
+            # Save aggregated files
+            incfiles = self.incfiles_to_save
+            for incfile in incfiles:
+                # Don't save excluded .inc files
+                if incfiles[incfile].name in excluded_incfiles:
+                    continue
+
+                # Only write data to one of the .inc files that symbols relate to
+                if incfiles[incfile].sn_eq_ifn:
+                    incfiles[incfile].save()
+                # Write the rest as empty files (typically addon files)
+                else:
+                    # Empty file (addon files already included in previously written .inc file)
+                    with open(incfiles[incfile].path + '/' + incfiles[incfile].name, 'w') as f:
+                        f.write('')
+
+            # Finally save S and T 
+            bodies = {
+                'S' : ", ".join([f"S{i:02.0f}" for i in range(1, self.agg_resolution['S'] + 1)]),
+                'T' : ", ".join([f"T{i:03.0f}" for i in range(1, self.agg_resolution['T'] + 1)]),
+            }
+            for incfile in ['S', 'T']:
+                f = IncFile(
+                    name=incfile,
+                    path=str(self.new_scenario_path),
+                    prefix=f"SET {incfile}({incfile*3}) '{self.parent.input_data[scenario][incfile].text}'\n/\n",
+                    body=bodies[incfile],
+                    suffix='\n/;'
+                ).save()
+
+
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {
