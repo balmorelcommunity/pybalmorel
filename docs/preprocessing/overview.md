@@ -42,13 +42,18 @@ model = Balmorel('path/to/Balmorel')
 model.load_incfiles('base')
 
 # Print electricity demand dataframe
-print(symbol_to_df(model.input_data['base'], 'DE'))
+print(model.get_input('DE'))
 ```
 
 
 ## Defining Geography
 
-pybalmorel includes a GUI to interactively define nodes in Balmorel's hierarchical geographic structure comprising countries, regions and areas.
+pybalmorel includes a GUI to interactively define nodes in Balmorel's hierarchical geographic structure comprising countries, regions and areas. Note: This requires the eel module - install with pip or whatever package manager you are using:
+
+```bash
+pip install eel
+```
+
 ```python
 from pybalmorel import GUI
 GUI.geofilemaker()
