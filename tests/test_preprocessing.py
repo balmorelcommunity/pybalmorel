@@ -58,6 +58,18 @@ def test_IncFile():
 
     assert "DE.inc" in os.listdir("tests/output")
 
+    # Test body prepare 
+    DE.body = pd.DataFrame(
+        index=['R', 'Y', 'DEUSER', 'Value'],
+        data=[["DK1","DK1","DK1","DK2","DK2","DK2"],[2030, 2040, 2050, 2030, 2040, 2050], 
+              ["RESE","RESE","RESE","RESE","RESE","RESE",], [17e6, 20e6, 25e6, 14e6, 17e6, 20e6]],
+    ).T
+    DE.body_prepare(index=['R', 'DEUSER'], columns=['Y'])
+    DE.name='DE2'
+    DE.save()
+
+    assert "DE2.inc" in os.listdir("tests/output")
+
 
 def test_temporal_aggregation():
 
