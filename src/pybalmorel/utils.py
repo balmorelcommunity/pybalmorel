@@ -4,7 +4,6 @@ Functions
 
 import gams
 import pandas as pd
-from pathlib import Path
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
 preformatted_columns = {
@@ -121,8 +120,8 @@ def read_lines(name, file_path, make_space=True):
    
     return string
 
-
 def prepare_incfile(filepath: str, symbol_name: str, domains: list | str, explanatory_text: str):
+
     """Uses gams database information to prepare meta-data for an .inc file"""
     
     # Find filename and path

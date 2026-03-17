@@ -67,8 +67,7 @@ class MainResults:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
 
-            if scenario_names is None: 
-                raise FileNotFoundError("Couldn't find any results")
+            assert scenario_names is not None, "Couldn't find any results"
             
             # Rename MainResults with no suffix
             if np.any(scenario_names == ''):
@@ -494,7 +493,7 @@ class Balmorel:
         # Path to the GAMS system directory
         model_folder = self.path / scenario / 'model'
 
-        # Path to input .gdx file of scenario input_gdx = model_folder / ('%s_input_data.gdx'%scenario)
+        # Path to input .gdx file of scenario
         input_gdx = model_folder / ('%s_input_data.gdx'%scenario)
         
         if input_gdx.exists() and not(overwrite):
@@ -624,8 +623,6 @@ class Balmorel:
         self.ts.save_incfiles(scenario, excluded_incfiles=['HYRSDATASET.inc'])
 
 
-
-
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {
@@ -736,4 +733,5 @@ class GUI:
             None: An interactive GUI to generate geographic .inc files
         """
         from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
+
         return interactive_geofilemaker()
