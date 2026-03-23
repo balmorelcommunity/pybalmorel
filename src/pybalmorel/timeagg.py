@@ -123,6 +123,64 @@ class TimeAgg:
         with open(incfiles_file, "wb") as f:
             pkl.dump(self.incfiles, f)
 
+    def get_weights(self, scenario: str):
+        # Collect data input for calculating weights
+        Y = self.parent.get_input("Y").query(f'Scenario == "{scenario}"').YYY.unique()
+        RRRAAA = (
+            self.parent.get_input("RRRAAA")
+            .query(f'Scenario=="{scenario}"')
+            .pivot_table(index="AAA", values="RRR", aggfunc="max")
+        )
+        DE = (
+            self.parent.get_input("DE")
+            .query(f'Scenario=="{scenario}" and YYY in @Y')
+            .pivot_table(index="RRR", values="Value", aggfunc="sum")
+        )
+
+        ## Get regions for later - assuming all regions have exogenous electricity demand
+        DH = self.parent.get_input("DH").query(f'Scenario=="{scenario}" and YYY in @Y')
+        DH["RRR"] = DH["AAA"].map(RRRAAA["RRR"])
+        DH = DH.pivot_table(index="RRR", values="Value", aggfunc="sum")
+        HYDROGEN_DH2 = self.parent.get_input("HYDROGEN_DH2").query(
+            f'Scenario=="{scenario}" and YYY in @Y'
+        )
+        hydrogen_regions = [
+            region
+            for region in HYDROGEN_DH2["CCCRRRAAA"].unique()
+            if region in DE.index
+        ]
+        HYDROGEN_DH2 = HYDROGEN_DH2.query("CCCRRRAAA in @hydrogen_regions").pivot_table(
+            index="CCCRRRAAA", values="Value", aggfunc="sum"
+        )
+        HYDROGEN_DH2.index.name = "RRR"
+        SUBTECHGROUPKPOT = self.parent.get_input("SUBTECHGROUPKPOT").query(
+            f'Scenario=="{scenario}"'
+        )
+        subtech_regions = [
+            region
+            for region in SUBTECHGROUPKPOT["CCCRRRAAA"].unique()
+            if region in DE.index
+        ]
+        SUBTECHGROUPKPOT = SUBTECHGROUPKPOT.query(
+            "CCCRRRAAA in @subtech_regions"
+        ).pivot_table(index="CCCRRRAAA", values="Value", aggfunc="sum")
+        SUBTECHGROUPKPOT.index.name = "RRR"
+
+        # Calculate weight per region
+        weights_per_region  = (
+            DE.add(DH, fill_value=0)
+            .add(HYDROGEN_DH2, fill_value=0)
+            .add(SUBTECHGROUPKPOT, fill_value=0)
+        )
+        weights_per_region = weights_per_region  / weights_per_region.max()
+        
+        # Assign weight per area
+        weights_per_area = pd.DataFrame(index=RRRAAA.index, columns=['Value'], data=0.0)
+        for area in weights_per_area.index:
+            weights_per_area.loc[area, 'Value'] = weights_per_region.loc[RRRAAA.loc[area].values[0], 'Value']
+
+        return weights_per_region, weights_per_area
+
     def find_timeseries_input(
         self,
         scenario: str,
@@ -305,6 +363,8 @@ class TimeAgg:
         terms: int = 24,
         method: str = "contiguous",
         representation: str = "distribution_minmax",
+        weights_pr_region: pd.DataFrame = pd.DataFrame(),
+        weights_pr_area: pd.DataFrame = pd.DataFrame()
     ):
         """Cluster collect input data
 
@@ -349,8 +409,23 @@ class TimeAgg:
             # Clip very small values (doesn't seem to be working?)
             df = self.data.clip(1e-5)
 
+            # Assing weights 
+            lowest_weight=float(weights_pr_region.Value.min())
+            weights={}
+            for timeseries in df.columns:
+                area_sets=[area for area in timeseries.split('|') if area in weights_pr_area.index]
+                region_sets=[region for region in timeseries.split('|') if region in weights_pr_region.index]
+                if len(area_sets) > 0:
+                    weights[timeseries] = float(weights_pr_area.loc[area_sets[0], 'Value'])
+                else:
+                    if len(region_sets) == 0:
+                        print(f"Parameter {timeseries} did not contain any geography! Assigning lowest weight: {lowest_weight:0.6f}")
+                        weights[timeseries] = lowest_weight
+                    else:
+                        weights[timeseries] = float(weights_pr_region.loc[region_sets[0], 'Value'])
+
             # Aggregate collected data
-            cluster_config = tsam.ClusterConfig(method, representation)
+            cluster_config = tsam.ClusterConfig(method, representation, weights=weights)
             aggregation = tsam.aggregate(
                 df,
                 n_clusters=seasons,
@@ -490,6 +565,7 @@ class TimeAgg:
 
     def save_incfiles(self, scenario: str, excluded_incfiles: list = []):
         from . import IncFile  # deferred to avoid circular import with classes.py
+
         self.new_scenario_path = Path(
             self.parent.path
             / f"{scenario}_S{self.agg_resolution['S']}T{self.agg_resolution['T']}/data"

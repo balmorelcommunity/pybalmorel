@@ -575,6 +575,7 @@ class Balmorel:
                              representation: str = 'distribution_minmax',
                              symbols_to_aggregate: dict | str = 'auto',
                              incfile_symbol_relation: dict = {},
+                             excluded_incfiles: list = [],
                              overwrite: bool = False):
         """
         Do temporal aggregation of scenario, using tsam.
@@ -605,6 +606,8 @@ class Balmorel:
             empty. E.g.: {'DE_VAR_T' : ['base/data/DE_VAR_T.inc',
                                         'base/data/INDIVUSERS_DE_VAR_T.inc', 
                                         '/base/data/TRANSPORT_DE_VAR_T.inc']}
+           excluded_incfiles (list): A list of .inc files to exclude when saving .inc files
+           overwrite (bool): whether to use existing loaded data or overwrite and load again
         """
 
         from .timeagg import TimeAgg
@@ -616,11 +619,14 @@ class Balmorel:
         self.ts.collect_and_standardise(scenario, symbols_to_aggregate, 
                                         incfile_symbol_relation, overwrite)
 
+        # Get weights
+        weights_per_region, weights_per_area =self.ts.get_weights(scenario)
+
         # Cluster collected time series input
-        self.ts.cluster(seasons, terms, method, representation)
+        self.ts.cluster(seasons, terms, method, representation, weights_per_region, weights_per_area)
 
         # Prepare and save incfiles
-        self.ts.save_incfiles(scenario, excluded_incfiles=['HYRSDATASET.inc'])
+        self.ts.save_incfiles(scenario, excluded_incfiles=excluded_incfiles)
 
 
 @dataclass
