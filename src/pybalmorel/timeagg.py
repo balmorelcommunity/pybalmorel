@@ -124,6 +124,8 @@ class TimeAgg:
             pkl.dump(self.incfiles, f)
 
     def get_weights(self, scenario: str):
+        """Will calculate weights per region based on the sum of exogenous electricity, heat and hydrogen demand, and the total potential for technology investments"""
+
         # Collect data input for calculating weights
         Y = self.parent.get_input("Y").query(f'Scenario == "{scenario}"').YYY.unique()
         RRRAAA = (
