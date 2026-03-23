@@ -22,8 +22,11 @@ The method works in three steps:
    automatically) and extracts every time-indexed GAMS symbol (those with
 `SSS`/`TTT` domains). Each symbol's data is placed on a common `(SSS, TTT)`
 index and joined into a single DataFrame.
-2. **Cluster** — runs tsam to find representative periods for the collected data.
-3. **Save** — writes new `.inc` files containing the aggregated data, plus updated `S.inc` and `T.inc` set definitions, 
+2. **Calculate weights for each region**  - the weights are calculated based on the sum of 
+exogenously defined electricity, heat and hydrogen demands and assumed potential for 
+technology expansion in each region, in Balmorel language: DE + DH + HYDROGEN_DH2 + SUBTECHGROUPKPOT
+3. **Cluster** — runs tsam to find representative periods for the collected data.
+4. **Save** — writes new `.inc` files containing the aggregated data, plus updated `S.inc` and `T.inc` set definitions, 
 into a new scenario folder.
 
 :::{warning} 
