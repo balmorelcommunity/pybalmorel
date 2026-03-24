@@ -22,7 +22,7 @@ dependencies:
   - requests
   - pip
   - pip:
-    - pybalmorel==1.1.0
+    - pybalmorel==1.1.1
     - cartopy>=0.24.1
 ```
 
