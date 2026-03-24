@@ -395,9 +395,11 @@ class Balmorel:
             else:
                 print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 or {SC}/model/cplex.op2 did not exist')
 
-    def locate_results(self):
+    def locate_results(self, suffix_naming_only: bool = False):
         """
         Locates results, which is faster than collecting them if you just want an overview
+
+        suffix_naming_only (bool): Defaults to False, will only name scenarios after its suffix'es if True
         """
                 
         self.files = []
@@ -411,7 +413,7 @@ class Balmorel:
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
             self.files += list(mainresults_files)
             self.paths += [path]*len(mainresults_files)
-            if len(mainresults_files) == 1:
+            if len(mainresults_files) == 1 and not suffix_naming_only:
                 self.scenario_names += [SC]
                 self.scfolder_to_scname[SC] = [SC]
                 self.scname_to_scfolder[SC] = SC
