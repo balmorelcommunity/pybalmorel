@@ -872,8 +872,7 @@ def plot_map(path_to_result: str,
             i1 = df_line.set_index(keys).index
             i2 = df_bypass.set_index(keys).index
             df_line = df_line[~i1.isin(i2)] #Delete existing rows that need bypass
-            df_line = df_line._append(df_bypass, ignore_index = True, sort = True) #Append bypass rows
-
+            df_line = pd.concat([df_line, df_bypass], ignore_index=True, sort=True)
 
         ### 2.7 Define line centers
         
