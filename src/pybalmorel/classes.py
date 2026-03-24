@@ -429,12 +429,12 @@ class Balmorel:
                 for scenario_name in mainresults_files:
                     self.scname_to_scfolder[scenario_name] = SC 
 
-    def collect_results(self):
+    def collect_results(self, suffix_naming_only: bool = False):
         """
         Collects results
         """
 
-        self.locate_results()
+        self.locate_results(suffix_naming_only=suffix_naming_only)
 
         self.results = MainResults(files=self.files, paths=self.paths, scenario_names=self.scenario_names, system_directory=self._gams_system_directory)
             
