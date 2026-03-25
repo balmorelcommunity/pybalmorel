@@ -409,9 +409,13 @@ class TimeAgg:
         # Using tsam
         else:
             # Clip very small values (doesn't seem to be working?)
-            df = self.data.clip(1e-5)
+            df = self.data.mask(self.data.abs() < 1e-5, 0)
+            df.index = pd.date_range(start='2026-01-01', freq='1h', periods=8736) # apply generic date timeseries
 
-            # Assing weights 
+            # Normalise
+            df = df/df.abs().max()
+
+            # Assign weights 
             lowest_weight=float(weights_pr_region.Value.min())
             weights={}
             for timeseries in df.columns:
@@ -434,8 +438,9 @@ class TimeAgg:
                 period_duration=terms,
                 temporal_resolution=1,
                 cluster=cluster_config,
+                # segments=tsam.SegmentConfig(n_segments=terms), # Got better RMSE values wihtout segmentation
             )
-
+            
             # Make new Balmorel index
             data = aggregation.cluster_representatives
             data.index = pd.MultiIndex.from_product(
@@ -447,7 +452,7 @@ class TimeAgg:
             )
 
             # Store to self
-            self.cluster_stats = aggregation
+            self.aggregation = aggregation
             self.agg_data = aggregation.cluster_representatives
             self.agg_resolution = {"S": seasons, "T": terms}
             self.method = method
@@ -473,6 +478,7 @@ class TimeAgg:
             f.write(
                 f"Aggregated resolution: {self.agg_resolution['S']} seasons and {self.agg_resolution['T']} terms\n"
             )
+            f.write(str(self.aggregation.accuracy))
 
         # Loop through symbols
         for symbol in symbols[symbol_type]:
@@ -620,6 +626,19 @@ class TimeAgg:
                 body=bodies[incfile],
                 suffix="\n/;",
             ).save()
+
+    def plot_clustering(self, symbol: list, filename: str):
+        """Compare input data and clustered representation"""
+
+        # Find symbol data 
+        idx=self.data.columns.str[:len(symbol)] == symbol
+
+        if filename[-5:] != '.html':
+            filename+='.html'
+
+        # Plot it
+        fig=self.aggregation.plot.compare(columns=self.data.columns[idx])
+        fig.write_html(filename)
 
 def search_in_incfiles(pattern: str, path: str | Path):
     """

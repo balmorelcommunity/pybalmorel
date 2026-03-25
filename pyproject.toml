@@ -68,6 +68,8 @@ python-lsp-server = "*"
 pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
 ripgrepy = ">=2.2.0,<3"
+plotly = ">=6.6.0,<7"
+kaleido = ">=1.2.0,<2"
 tsam = "*"
 
 [tool.pixi.feature.dev.activation.env]
