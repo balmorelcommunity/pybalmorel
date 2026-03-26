@@ -453,7 +453,7 @@ class TimeAgg:
 
             # Store to self
             self.aggregation = aggregation
-            self.agg_data = aggregation.cluster_representatives
+            self.agg_data = data
             self.agg_resolution = {"S": seasons, "T": terms}
             self.method = method
             self.representation = representation
