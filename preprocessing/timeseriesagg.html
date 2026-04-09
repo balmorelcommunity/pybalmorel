@@ -1,0 +1,376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Series Aggregation &mdash; pybalmorel 1.1.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=937269b5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Execution" href="../execution.html" />
+    <link rel="prev" title="Pre-Processing" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Pre-Processing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Time Series Aggregation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clustering-methods">Clustering Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#representation-options">Representation Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#automatic-symbol-detection">Automatic Symbol Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#manual-symbol-selection">Manual Symbol Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output">Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#important-notes">Important Notes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../preprocessing.html">Pre-Processing</a></li>
+      <li class="breadcrumb-item active">Time Series Aggregation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/preprocessing/timeseriesagg.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="time-series-aggregation">
+<h1>Time Series Aggregation<a class="headerlink" href="#time-series-aggregation" title="Link to this heading"></a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This functionality is currently under development and being tested!
+Do not trust it blindly.</p>
+</div>
+<p>The time series aggregation function uses dependencies that are not automatically installed with pybalmorel: riprepy (a Python wrapper for <a class="reference external" href="https://github.com/BurntSushi/ripgrep">ripgrep</a>) and the time series aggregation package <a class="reference external" href="https://tsam.readthedocs.io/en/latest/">tsam</a>. Install them into your virtual environment with pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tsam
+pip<span class="w"> </span>install<span class="w"> </span>riprepy
+</pre></div>
+</div>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Balmorel.temporal_aggregation</span></code> aggregates the time series input data of a Balmorel scenario from a full hourly resolution down to a user-defined number of representative seasons (periods) and terms (hours per period). It uses <a class="reference external" href="https://tsam.readthedocs.io/en/latest/">tsam</a> under the hood to cluster the time series data, and then writes new <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files for the aggregated scenario into a new scenario folder named <code class="docutils literal notranslate"><span class="pre">{scenario}_S{seasons}T{terms}</span></code>.</p>
+<p>The method works in three steps:</p>
+<ol class="arabic simple">
+<li><p><strong>Collect and standardise</strong> — loads all <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files (manually or
+automatically) and extracts every time-indexed GAMS symbol (those with
+<code class="docutils literal notranslate"><span class="pre">SSS</span></code>/<code class="docutils literal notranslate"><span class="pre">TTT</span></code> domains). Each symbol’s data is placed on a common <code class="docutils literal notranslate"><span class="pre">(SSS,</span> <span class="pre">TTT)</span></code>
+index and joined into a single DataFrame.</p></li>
+<li><p><strong>Calculate weights for each region</strong>  - the weights are calculated based on the sum of
+exogenously defined electricity, heat and hydrogen demands and assumed potential for
+technology expansion in each region, in Balmorel language: DE + DH + HYDROGEN_DH2 + SUBTECHGROUPKPOT</p></li>
+<li><p><strong>Cluster</strong> — runs tsam to find representative periods for the collected data.</p></li>
+<li><p><strong>Save</strong> — writes new <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files containing the aggregated data, plus updated <code class="docutils literal notranslate"><span class="pre">S.inc</span></code> and <code class="docutils literal notranslate"><span class="pre">T.inc</span></code> set definitions,
+into a new scenario folder.</p></li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>Any .inc files that define both SSS/TTT-related symbols AND symbols without any SSS/TTT
+dependency will result in new .inc files that does NOT include the non-SSS/TTT dependant
+symbols. Hence, remember to copy paste those parts into the newly
+generated .inc files after aggregation, or re-organise before.</p></li>
+<li><p>This is also true for GAMS statements unrelated to the SSS/TTT symbols, such as <a class="reference external" href="https://github.com/balmorelcommunity/Balmorel_data/blob/4daf7f961893c05a973e059e11aaa14a52d85c9c/HYRSDATA.inc#L97">this one</a> in HYRSDATA.inc. Such lines
+would simply not be included in the new aggregated files.</p></li>
+<li><p>If you have several .inc files in the scenario/data folder that define the same symbol
+through some option in balopt.opt (like EV_profile, selecting only one of the profiles),
+only one of these files will contain data after aggregation. Remember to rename the one
+containing the data to match the selection in balopt.opt or just delete the .inc files that
+are not selected before aggregation.</p></li>
+</ul>
+</div>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Balmorel</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Balmorel</span><span class="p">(</span><span class="s1">&#39;path/to/Balmorel&#39;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">temporal_aggregation</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;base&#39;</span><span class="p">,</span>
+    <span class="n">seasons</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">terms</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This produces a new scenario folder <code class="docutils literal notranslate"><span class="pre">path/to/Balmorel/base_S8T24/</span></code> containing the aggregated <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files
+with 8 seasons and 24 terms.</p>
+</section>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scenario</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p>—</p></td>
+<td><p>The scenario folder to aggregate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">seasons</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Number of representative seasons (periods) to cluster to.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">terms</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Number of hours per period.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">method</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">'contiguous'</span></code></p></td>
+<td><p>Clustering method. See <a class="reference internal" href="#clustering-methods"><span class="xref myst">Clustering methods</span></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">representation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">'distribution_minmax'</span></code></p></td>
+<td><p>How cluster centres are represented. See <a class="reference internal" href="#representation-options"><span class="xref myst">Representation options</span></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">symbols_to_aggregate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict</span> <span class="pre">|</span> <span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">'auto'</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">'auto'</span></code> to detect time series symbols automatically, or a dict for manual selection. See <a class="reference internal" href="#manual-symbol-selection"><span class="xref myst">Manual symbol selection</span></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">incfile_symbol_relation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{}</span></code></p></td>
+<td><p>Required when <code class="docutils literal notranslate"><span class="pre">symbols_to_aggregate</span></code> is a dict. Maps each symbol to the <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file(s) it should be written to.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">overwrite</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p>Re-collect and re-standardise input data even if cached <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> files already exist.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="clustering-methods">
+<h2>Clustering Methods<a class="headerlink" href="#clustering-methods" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">method</span></code> parameter is passed directly to tsam. Available options:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'contiguous'</span></code></p></td>
+<td><p><em>(default)</em> Clusters consecutive time steps together, preserving temporal order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'averaging'</span></code></p></td>
+<td><p>Simple averaging within clusters.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'kmeans'</span></code></p></td>
+<td><p>k-means clustering.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'kmedoids'</span></code></p></td>
+<td><p>k-medoids clustering.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'kmaxoids'</span></code></p></td>
+<td><p>k-maxoids clustering.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'hierarchical'</span></code></p></td>
+<td><p>Agglomerative hierarchical clustering.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="representation-options">
+<h2>Representation Options<a class="headerlink" href="#representation-options" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">representation</span></code> parameter controls how the representative value for each cluster is chosen:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'distribution_minmax'</span></code></p></td>
+<td><p><em>(default)</em> Preserves the distribution of each time series and matches the min/max values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'mean'</span></code></p></td>
+<td><p>Uses the mean of the cluster.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'medoid'</span></code></p></td>
+<td><p>Uses the medoid (the actual time step closest to the centroid).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'maxoid'</span></code></p></td>
+<td><p>Uses the time step with the highest overall load.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'distribution'</span></code></p></td>
+<td><p>Preserves the distribution of each time series.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'minmax_mean'</span></code></p></td>
+<td><p>Matches the min and max values and uses the mean otherwise.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="automatic-symbol-detection">
+<h2>Automatic Symbol Detection<a class="headerlink" href="#automatic-symbol-detection" title="Link to this heading"></a></h2>
+<p>By default (<code class="docutils literal notranslate"><span class="pre">symbols_to_aggregate='auto'</span></code>), the method scans all loaded <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files and GAMS symbols to find every parameter that has <code class="docutils literal notranslate"><span class="pre">SSS</span></code> or <code class="docutils literal notranslate"><span class="pre">TTT</span></code> in its domain. It categorises them into three groups:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'SSS,TTT'</span></code> — symbols indexed over both seasons and terms (e.g. <code class="docutils literal notranslate"><span class="pre">DE_VAR_T</span></code>, <code class="docutils literal notranslate"><span class="pre">WND_VAR_T</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'SSS'</span></code> — symbols indexed over seasons only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'TTT'</span></code> — symbols indexed over terms only.</p></li>
+</ul>
+<p>Certain meta-data symbols are excluded automatically (e.g. <code class="docutils literal notranslate"><span class="pre">WEIGHT_S</span></code>, <code class="docutils literal notranslate"><span class="pre">CHRONOHOUR</span></code>, <code class="docutils literal notranslate"><span class="pre">S</span></code>, <code class="docutils literal notranslate"><span class="pre">T</span></code>). Symbols with all-constant time series are also skipped.</p>
+<p>Intermediate results are cached as <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> files in the scenario folder (<code class="docutils literal notranslate"><span class="pre">std_ts_data.pkl</span></code>, <code class="docutils literal notranslate"><span class="pre">symbols_to_agg.pkl</span></code>, <code class="docutils literal notranslate"><span class="pre">incfile_symbol_relation.pkl</span></code>). On subsequent runs, these are loaded directly unless <code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code> is passed, to reduce computational time when doing several clusterings of the same data.</p>
+</section>
+<section id="manual-symbol-selection">
+<h2>Manual Symbol Selection<a class="headerlink" href="#manual-symbol-selection" title="Link to this heading"></a></h2>
+<p>If you want precise control over which symbols are aggregated, pass a dict to <code class="docutils literal notranslate"><span class="pre">symbols_to_aggregate</span></code> and a companion dict to <code class="docutils literal notranslate"><span class="pre">incfile_symbol_relation</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">temporal_aggregation</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s1">&#39;base&#39;</span><span class="p">,</span>
+    <span class="n">seasons</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">terms</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">symbols_to_aggregate</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;SSS,TTT&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;DE_VAR_T&#39;</span><span class="p">,</span> <span class="s1">&#39;WND_VAR_T&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;SSS&#39;</span><span class="p">:</span>     <span class="p">[],</span>
+        <span class="s1">&#39;TTT&#39;</span><span class="p">:</span>     <span class="p">[],</span>
+    <span class="p">},</span>
+    <span class="n">incfile_symbol_relation</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;DE_VAR_T&#39;</span><span class="p">:</span>  <span class="p">[</span><span class="s1">&#39;base/data/DE_VAR_T.inc&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;base/data/INDIVUSERS_DE_VAR_T.inc&#39;</span>
+                      <span class="s1">&#39;base/data/TRANSPORT_DE_VAR_T.inc&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;WND_VAR_T&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;base/data/WND_VAR_T.inc&#39;</span><span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Each key in <code class="docutils literal notranslate"><span class="pre">incfile_symbol_relation</span></code> is a symbol name, and the value is a list of <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file paths. The first path
+will receive the aggregated data; the remaining files are written as empty stubs (since all appending to the symbol
+from addons will be contained in the first file, and the others therefore need
+to be empty to avoid reading of its ‘../../base/data’ counterpart).</p>
+</section>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading"></a></h2>
+<p>After a successful run, a new scenario folder is created:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Balmorel/
+└── base_S8T24/
+    └── data/
+        ├── S.inc                  ← updated season set (S01 … S08)
+        ├── T.inc                  ← updated term set (T001 … T024)
+        ├── DE_VAR_T.inc           ← aggregated demand profiles
+        ├── WND_VAR_T.inc          ← aggregated wind profiles
+        └── ...
+    └── temporal_aggregation.md    ← log of aggregation settings
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">temporal_aggregation.md</span></code> log records the timestamp, method, representation, and the aggregated resolution.</p>
+</section>
+<section id="important-notes">
+<h2>Important Notes<a class="headerlink" href="#important-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>If an <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file contains <strong>both</strong> time-dependent symbols and symbols without <code class="docutils literal notranslate"><span class="pre">S</span></code>/<code class="docutils literal notranslate"><span class="pre">T</span></code> sets, the newly generated file will <strong>only</strong> contain the time-dependent data. You must manually copy the non-time-dependent parts back into the new file or re-organise into several files before aggregation.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">overwrite=False</span></code> default means repeated calls are fast — the standardisation step is skipped if cached data is found. Pass <code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code> if your input data has changed since the last run.</p></li>
+<li><p>GAMS-dependent input loading (via <code class="docutils literal notranslate"><span class="pre">load_incfiles</span></code>) is performed internally; make sure a GAMS installation is available and <code class="docutils literal notranslate"><span class="pre">gams_system_directory</span></code> is set on the <code class="docutils literal notranslate"><span class="pre">Balmorel</span></code> object if GAMS cannot be found automatically.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="Pre-Processing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../execution.html" class="btn btn-neutral float-right" title="Execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

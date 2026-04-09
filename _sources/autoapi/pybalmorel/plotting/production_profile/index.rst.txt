@@ -1,0 +1,63 @@
+pybalmorel.plotting.production_profile
+======================================
+
+.. py:module:: pybalmorel.plotting.production_profile
+
+.. autoapi-nested-parse::
+
+   Created on 28.05.2022
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.production_profile.plot_profile
+   pybalmorel.plotting.production_profile.plot_profiles
+   pybalmorel.plotting.production_profile.single_profile_plot
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_profile(MainResults, commodity: str, year: int, scenario: str | int = 0, columns: str = 'Technology', region: str = 'ALL', style: str = 'light') -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Plots the production profile of a commodity, in a year, for a certain scenario
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str, optional): Defaults to the first scenario in MainResults.
+       columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+       region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+       style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+   Returns:
+       Figure, Axes: The figure and axes objects for further manipulations 
+
+
+.. py:function:: plot_profiles(MainResults, commodity: str, year: int, scenario: str | int = 0, chunk_size: int = 168, columns: str = 'Technology', region: str = 'ALL', style: str = 'light') -> Tuple[List, List]
+
+   Plots the production profile of a commodity, in a year, for a certain scenario
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str, optional): Defaults to the first scenario in MainResults.
+       chunk_size (int, optional): How many timeslices per profile, defaults to 168
+       columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+       region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+       style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+   Returns:
+       Figure, Axes: The figure and axes objects for further manipulations 
+
+
+.. py:function:: single_profile_plot(scenario, commodity, region, year, CorRorA, fD, fP, fc, f, c, demcolor)
+
