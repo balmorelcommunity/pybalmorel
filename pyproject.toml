@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "1.1.5"
+version = "1.1.6"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@proton.me"},
   { name="Théodore Le Nalinec"},
@@ -84,7 +84,7 @@ publish-test = { depends-on = ["_build"], cmd = "python -m twine upload --reposi
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
-release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.1.5/1.1.5/g\""
+release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.1.6/1.1.7/g\""
 
 # --- user: test pybalmorel as an end-user (PyPI install only) ---
 [tool.pixi.feature.user.pypi-dependencies]
