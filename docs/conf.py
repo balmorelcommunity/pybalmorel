@@ -1,7 +1,7 @@
 project = "pybalmorel"
 copyright = "2024, Mathias Berg Rosendal, Théodore Le Nalinec"
 author = "Mathias Berg Rosendal, Théodore Le Nalinec"
-release = "1.1.4"
+release = "1.1.5"
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".testenv", ".testenv/**"]
 
