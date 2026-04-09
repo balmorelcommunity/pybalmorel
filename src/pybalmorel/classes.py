@@ -17,11 +17,11 @@ import requests
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
 from pathlib import Path
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from .utils import symbol_to_df
-from .plotting.production_profile import plot_profile
+from .plotting.production_profile import plot_profile, plot_profiles
 from .plotting.maps_balmorel import plot_map
 
 #%% ------------------------------- ###
@@ -172,6 +172,30 @@ class MainResults:
         """
         return plot_profile(self, commodity, year, scenario, columns, region, style)
         
+    def plot_profiles(self,
+                    commodity: str,  
+                    year: int, 
+                    scenario: str | int = 0,
+                    chunk_size: int = 168,
+                    columns: str = 'Technology',
+                    region: str = 'ALL',
+                    style: str = 'light') -> Tuple[List, List]:
+        """Plots the production profile of a commodity, in a year, for a certain scenario
+
+        Args:
+            MainResults (_type_): The MainResults class containing results
+            commodity (str): The commodity (Electricity, Heat or Hydrogen)
+            year (int): The model year to plot
+            scenario (str, optional): Defaults to the first scenario in MainResults.
+            chunk_size (int, optional): How many timeslices per profile, defaults to 168
+            columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+            region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+            style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+        Returns:
+            Figure, Axes: The figure and axes objects for further manipulations 
+        """
+        return plot_profiles(self, commodity, year, scenario, chunk_size, columns, region, style)
     
     def plot_map(self, 
                  scenario: str, 

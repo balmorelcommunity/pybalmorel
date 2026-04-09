@@ -98,6 +98,12 @@ def test_MainResults():
         scenario="SC2", year=2050, commodity="Heat", columns="Technology", region="DK1"
     )
     fig.savefig("tests/output/heat_profile.png")
+    figs, axes = res.plot_profiles(
+        scenario="SC2", year=2050, commodity="Heat", columns="Technology", region="DK1",
+        chunk_size=4,
+    )
+    for i, fig in enumerate(figs):
+        fig.savefig(f"tests/output/heat_profile{i}.png", bbox_inches='tight')
     assert (
         "electricity_profile.png" in os.listdir("tests/output")
         and "heat_profile.png" in os.listdir("tests/output")
