@@ -594,7 +594,6 @@ def plot_profiles(MainResults,
     ### Plot a profile per 'week' - if less than 168 timeslices, will only plot one
     figs, axes = [], []
     for i in range(0, len(fD), chunk_size):
-        print(xticks[i:i+chunk_size])
         fig, ax = single_profile_plot(
             scenario,
             commodity,
