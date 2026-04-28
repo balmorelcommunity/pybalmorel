@@ -11,7 +11,6 @@ series and WNDFLH / SOLEFLH full-load-hour tables for both the DA and CapDev res
 import os
 
 import pandas as pd
-import yaml
 
 from .to_inc import create_SSS_TTT_AAA_inc,create_AAA_inc
 from .auxiliary_functions import (
@@ -20,6 +19,7 @@ from .auxiliary_functions import (
     create_time_column,
     get_onoff_source_from_folder,
 )
+from .config_models import ToBalmorelConfig
 
 
 def add_WND_VAR_T_Existing_RG2_RG3(combined_scaled_dfs):
@@ -157,8 +157,7 @@ def combine_excel_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: s
 
     return combined_df
 def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
-    with open(config_fn) as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
+    config = ToBalmorelConfig.from_file(config_fn)
 
     output_folder = os.path.join(output_folder, str(start_date))
     check_if_dir_exists(os.path.join(output_folder, "to_balmorel", "DA", "scaled"))
@@ -214,7 +213,11 @@ def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
             combined_scaled_FLH = add_FLH_existing_RG2_RG3(combined_scaled_FLH)
             create_AAA_inc(combined_scaled_FLH, FLH_name, da_out)
 
-            df_CapDev_scaled = calc_CapDev_timeseries(config, combined_scaled_dfs, df_t)
+            df_CapDev_scaled = calc_CapDev_timeseries(
+                config.capdev_timesteps_to_keep.as_legacy_dict(),
+                combined_scaled_dfs,
+                df_t,
+            )
             FLH_CapDev_scaled = (df_CapDev_scaled.mean().to_frame() * len(combined_scaled_dfs))[0]
 
             if scaled_raw_ts == "scaled":

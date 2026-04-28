@@ -5,12 +5,11 @@ CapDev formats and writes annual correction-factor .inc files for DH users.
 """
 
 import os
-from typing import Any
 
 import pandas as pd
-import yaml
 
 from .auxiliary_functions import calc_CapDev_timeseries
+from .config_models import DemandModuleConfig
 from .functions_demand_to_btc import (
     check_if_dir_exists,
     convert_to_list_df_annual_correction,
@@ -31,7 +30,7 @@ def _write_var_t_inc(
     da_raw_folder: str,
     da_scaled_folder: str,
     capdev_folder: str,
-    config: dict[str, Any],
+    config: DemandModuleConfig,
     time_df: pd.DataFrame,
 ) -> None:
     """Write DA raw/scaled and CapDev .inc files for one demand user group."""
@@ -42,7 +41,7 @@ def _write_var_t_inc(
     create_list_inc(df, symbol, filename, da_scaled_folder)
 
     df_scaled_capdev = calc_CapDev_timeseries(
-        config,
+        config.capdev_timesteps_to_keep.as_legacy_dict(),
         df_scaled,
         time_df,
         scaler=scale_data_to_same_mean_with_full_time_series,
@@ -72,12 +71,11 @@ def create_demand_inc(config_fn: str, year: int, output_folder: str) -> None:
         year: Weather year to process.
         output_folder: Root output directory.
     """
-    with open(config_fn) as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
+    config = DemandModuleConfig.from_file(config_fn)
 
-    spaceheat_to_hotwater_ratio = config["spaceHeat_to_hotWater_ratio"]
-    ann_corr_fac_ref_year = int(config["ann_corr_fac_ref_year"])
-    csv_folder = config["demand_model_results"]
+    spaceheat_to_hotwater_ratio = config.spaceheat_to_hotwater_ratio
+    ann_corr_fac_ref_year = config.ann_corr_fac_ref_year
+    csv_folder = config.demand_model_results
 
     df_classic = pd.read_csv(
         os.path.join(csv_folder, "classic_demand.csv"), index_col=0, parse_dates=True

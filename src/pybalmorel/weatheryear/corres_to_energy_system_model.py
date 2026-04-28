@@ -12,12 +12,11 @@ and solar (rooftop PV, utility-scale PV with/without tracking) technologies.
 import os
 import pandas as pd
 from pathlib import Path
-import numpy as np
-from datetime import datetime, timedelta
-import yaml
 import fnmatch
 from pprint import pformat
 import logging
+
+import numpy as np
 
 from .auxiliary_functions import (
     check_if_dir_exists,
@@ -25,6 +24,7 @@ from .auxiliary_functions import (
     fix_first_monday,
     scale_data_to_same_mean_with_full_time_series,
 )
+from .config_models import CorresModuleConfig
 
 
 def save_log(config, output_folder):
@@ -112,28 +112,27 @@ def treat_timeseries(df,start_date,end_date,source,fix_monday):
 
 
 
-def check_wind_tech_to_read(run_folder, tech, config):
-    turbine_to_keep = [turbine.replace("-", "_").replace("HH", "") for turbine in config["turbine_to_keep"]]
+def check_wind_tech_to_read(run_folder: str, tech: str, config: CorresModuleConfig) -> bool:
+    turbine_to_keep = [turbine.replace("-", "_").replace("HH", "") for turbine in config.turbine_to_keep]
 
-    if Path(run_folder).name not in config["tech_to_keep"]:
+    if Path(run_folder).name not in config.tech_to_keep:
         return False
 
     if "Future_Onshore" in run_folder or "Future_Offshore" in run_folder:
         found_turbine = next((t for t in turbine_to_keep if fnmatch.fnmatch(str(tech), f"*{t}*")), None)
-        found_rg = next((rg for rg in config["RGs_to_keep"][Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
+        found_rg = next((rg for rg in config.rg_to_keep[Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
         return bool(found_turbine and found_rg)
 
     return True
 
-def check_solar_tech_to_read(run_folder, tech, config):
-    found_rg = next((rg for rg in config["RGs_to_keep"][Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
-    return Path(run_folder).name in config["tech_to_keep"] and bool(found_rg)
+def check_solar_tech_to_read(run_folder: str, tech: str, config: CorresModuleConfig) -> bool:
+    found_rg = next((rg for rg in config.rg_to_keep[Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
+    return Path(run_folder).name in config.tech_to_keep and bool(found_rg)
 
 
 def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False, fix_monday=True):
     check_if_dir_exists(output_folder)
-    with open(config_fn) as file:
-        config = yaml.load(file, Loader=yaml.FullLoader)
+    config = CorresModuleConfig.from_file(config_fn)
 
     save_log(config, output_folder)
 
@@ -143,7 +142,7 @@ def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False,
         end_date = start_date
 
     for source in ["wind", "solar"]:
-        for run_folder in config["corres_results"][source]:
+        for run_folder in config.corres_results[source]:
             folder_name = os.path.basename(Path(run_folder))
 
             if "Existing" in folder_name or "Future" in folder_name:
@@ -178,12 +177,12 @@ def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False,
                     )
 
                     if "Onshore" in run_folder or "PV" in run_folder:
-                        df = df[df.columns.intersection(config["Regions_to_keep"]["onshore"])]
+                        df = df[df.columns.intersection(config.regions_to_keep.onshore)]
                     elif "Offshore" in run_folder:
-                        df = df[df.columns.intersection(config["Regions_to_keep"]["offshore"])]
+                        df = df[df.columns.intersection(config.regions_to_keep.offshore)]
                     elif "Existing" in run_folder:
                         df = df[df.columns.intersection(
-                            config["Regions_to_keep"]["onshore"] + config["Regions_to_keep"]["offshore"]
+                            config.regions_to_keep.onshore + config.regions_to_keep.offshore
                         )]
 
                     df, df_cut, df_scaled = treat_timeseries(df, start_date, end_date, source, fix_monday)

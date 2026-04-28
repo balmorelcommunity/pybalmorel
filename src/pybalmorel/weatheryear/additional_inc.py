@@ -9,10 +9,10 @@ ALLOWEDINV, ANNUITYCG), potential tables (SUBTECHGROUPKPOT), capacity factors
 """
 
 import numpy as np
-import yaml
 import os 
 import pandas as pd
 
+from .config_models import AdditionalIncConfig
 from .to_inc import create_list_inc,create_Table_inc
 from .get_GDATA_func import get_GDATA
 from .get_GKFX_func import get_GKFX
@@ -26,7 +26,7 @@ def _normalize_rg(rg: str) -> str:
     return rg.replace("RGA", "RG1").replace("RGB", "RG2").replace("RGC", "RG3")
 
 
-def get_INVDATASET(config,output_folder,techs,turbines): 
+def get_INVDATASET(config: AdditionalIncConfig, output_folder, techs, turbines): 
     INVDATASET_renewables=[]
     for tech in techs["wind"] :
                 
@@ -41,36 +41,36 @@ def get_INVDATASET(config,output_folder,techs,turbines):
                 
         elif "Future_Onshore" in tech:
             for tur in turbines["onshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     INVDATASET_renewables.append("VRE-ONS_" + tur + "_" + rg)
         
         elif "Future_Offshore_bottom_fixed" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     INVDATASET_renewables.append("VRE-OFF_bottom_fixed_" + tur + "_" + rg)
             
         elif "Future_Offshore_floating" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     INVDATASET_renewables.append("VRE-OFF_floating_" + tur + "_" + rg)
         
     for tech in techs["solar"] :
             
         if "PV_Rooftop" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 INVDATASET_renewables.append("PV_Rooftop_" + rg )
                 
         elif "PV_Utility_scale_no_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 INVDATASET_renewables.append("PV_Utility_scale_no_tracking_" + rg )
         
         elif "PV_Utility_scale_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 INVDATASET_renewables.append("PV_Utility_scale_tracking_" + rg )   
     
@@ -99,7 +99,7 @@ def get_INVDATA_renewable(INVDATASET_renewables_df,AAA_renewable_df,output_folde
     create_list_inc(INVDATA_df,"INVDATA_renewable",output_folder + "/to_balmorel",equations=True)
     return INVDATA_df
 
-def get_GGG(config,output_folder,techs,turbines):
+def get_GGG(config: AdditionalIncConfig, output_folder, techs, turbines):
     GGG_renewable=[]
     for tech in techs["wind"] :
         if "Existing" in tech:
@@ -111,20 +111,20 @@ def get_GGG(config,output_folder,techs,turbines):
             GGG_renewable.append("GNR_WT_WIND_OFF_Existing_RG3")
         elif  "Future_Onshore" in tech:
             for tur in turbines["onshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     for year in INVESTMENT_YEARS:
                         GGG_renewable.append( "GNR_WT-" + tur + "_ONS_" + rg + year)
         elif  "Future_Offshore_bottom_fixed" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     for year in INVESTMENT_YEARS:
                         GGG_renewable.append( "GNR_WT-" + tur + "_OFF_bottom_fixed_" + rg + year)
     
         elif  "Future_Offshore_floating" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     for year in INVESTMENT_YEARS:
                         GGG_renewable.append( "GNR_WT-" + tur + "_OFF_floating_" + rg + year)
@@ -133,20 +133,20 @@ def get_GGG(config,output_folder,techs,turbines):
         
         
         if  "PV_Rooftop" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 for year in INVESTMENT_YEARS:
                     GGG_renewable.append( "GNR_PV-" + "Rooftop_" + rg + year)
                 GGG_renewable.append( "GNR_PV-" + "Rooftop_" + rg + "_Existing")
         elif  "PV_Utility_scale_no_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 for year in INVESTMENT_YEARS:
                     GGG_renewable.append( "GNR_PV-" + "Utility_scale_no_tracking_" + rg + year)     
                 GGG_renewable.append( "GNR_PV-" + "Utility_scale_no_tracking_" + rg + "_Existing")
                 
         elif  "PV_Utility_scale_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 for year in INVESTMENT_YEARS:
                     GGG_renewable.append( "GNR_PV-" + "Utility_scale_tracking_" + rg + year)   
@@ -162,14 +162,14 @@ def get_GGG(config,output_folder,techs,turbines):
 
 
 
-def get_ANNUITYCG(GDATA,config,output_folder):
+def get_ANNUITYCG(GDATA, config: AdditionalIncConfig, output_folder):
     GDATA_future = GDATA.loc[GDATA["GDKVARIABL"]==1]
     annuity = (
-                (1 - config["ANNUITYCG_calculation"]["DEBT_SHARE"]) * config["ANNUITYCG_calculation"]["DISCOUNTRATE"] 
-                + config["ANNUITYCG_calculation"]["INTEREST_RATE"] * config["ANNUITYCG_calculation"]["DEBT_SHARE"] * 
-                (1 - (1 + config["ANNUITYCG_calculation"]["DISCOUNTRATE"] ) ** (-GDATA_future['GDLIFETIME'])) 
-                / (1 - (1 + config["ANNUITYCG_calculation"]["INTEREST_RATE"] ) ** (-GDATA_future['GDLIFETIME']))
-            ) / (1 - (1 + config["ANNUITYCG_calculation"]["DISCOUNTRATE"]) ** (-GDATA_future['GDLIFETIME']))
+                (1 - config.annuitycg_calculation.debt_share) * config.annuitycg_calculation.discount_rate
+                + config.annuitycg_calculation.interest_rate * config.annuitycg_calculation.debt_share *
+                (1 - (1 + config.annuitycg_calculation.discount_rate) ** (-GDATA_future['GDLIFETIME']))
+                / (1 - (1 + config.annuitycg_calculation.interest_rate) ** (-GDATA_future['GDLIFETIME']))
+            ) / (1 - (1 + config.annuitycg_calculation.discount_rate) ** (-GDATA_future['GDLIFETIME']))
 
     ANNUITYCG_list=[]
     for iter1 in annuity.index:
@@ -208,9 +208,9 @@ def get_AGKN(AAA,GGG,output_folder):
     AGKN.to_csv( output_folder + "/to_balmorel/AGKN_renewables" + ".csv",index=False)
 
 
-def get_AAA(config,output_folder,techs,turbines):
+def get_AAA(config: AdditionalIncConfig, output_folder, techs, turbines):
     AAA_renwable=[]
-    for region in config["Regions_to_keep"]["onshore"]:
+    for region in config.regions_to_keep.onshore:
        
         for tech in techs["wind"] :
             
@@ -222,28 +222,28 @@ def get_AAA(config,output_folder,techs,turbines):
             
             elif "Future_Onshore" in tech:
                 for tur in turbines["onshore"]:
-                    for rg in config["RGs_to_keep"][tech]:
+                    for rg in config.rgs_for(tech):
                         rg = _normalize_rg(rg)
                         AAA_renwable.append(region + "_VRE-ONS_" + tur + "_" + rg)
     
         for tech in techs["solar"] :
                 
             if "PV_Rooftop" in tech:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     AAA_renwable.append(region + "_VRE-PV_Rooftop_" + rg )
                     
             elif "PV_Utility_scale_no_tracking" in tech:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     AAA_renwable.append(region + "_VRE-PV_Utility_scale_no_tracking_" + rg )
             
             elif "PV_Utility_scale_tracking" in tech:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     AAA_renwable.append(region + "_VRE-PV_Utility_scale_tracking_" + rg )   
 
-    for region in config["Regions_to_keep"]["offshore"]:
+    for region in config.regions_to_keep.offshore:
         for tech in techs["wind"] :
 
             if "Existing" in tech:
@@ -254,13 +254,13 @@ def get_AAA(config,output_folder,techs,turbines):
             
             elif "Future_Offshore_bottom_fixed" in tech:
                 for tur in turbines["offshore"]:
-                    for rg in config["RGs_to_keep"][tech]:
+                    for rg in config.rgs_for(tech):
                         rg = _normalize_rg(rg)
                         AAA_renwable.append(region + "_VRE-OFF_bottom_fixed_" + tur + "_" + rg)
         
             elif "Future_Offshore_floating" in tech:
                 for tur in turbines["offshore"]:
-                    for rg in config["RGs_to_keep"][tech]:
+                    for rg in config.rgs_for(tech):
                         rg = _normalize_rg(rg)
                         AAA_renwable.append(region + "_VRE-OFF_floating_" + tur + "_" + rg)
 
@@ -274,13 +274,12 @@ def get_AAA(config,output_folder,techs,turbines):
     return AAA_ren_df
 
 
-def get_RRRAAA(AAA_renewable_df,config,output_folder):
+def get_RRRAAA(AAA_renewable_df, config: AdditionalIncConfig, output_folder):
     RRRAAA_renewable_df=pd.DataFrame()
     RRRAAA_renewable_df_off=pd.DataFrame()
-    #RRR["RRR"]=config["Regions_to_keep"]["offshore"]
     areas=[]
     regions=[]
-    for iter1 in config["Regions_to_keep"]["offshore"]:
+    for iter1 in config.regions_to_keep.offshore:
         
         areas=areas + list(AAA_renewable_df[AAA_renewable_df["AAA_renewable"].str.contains(iter1)]["AAA_renewable"].values[:])
         regions=regions + [iter1.replace("_OFF1","").replace("_OFF2","").replace("_OFF","")]*len(list(AAA_renewable_df[AAA_renewable_df["AAA_renewable"].str.contains(iter1)]["AAA_renewable"].values[:]))
@@ -291,7 +290,7 @@ def get_RRRAAA(AAA_renewable_df,config,output_folder):
     
     areas=[]
     regions=[]
-    for iter1 in config["Regions_to_keep"]["onshore"]:
+    for iter1 in config.regions_to_keep.onshore:
         
         all_areas= AAA_renewable_df[AAA_renewable_df["AAA_renewable"].str.contains(iter1)]
         areas=areas + list(all_areas[~all_areas["AAA_renewable"].str.contains("OFF")]["AAA_renewable"].values[:])
@@ -309,10 +308,10 @@ def get_RRRAAA(AAA_renewable_df,config,output_folder):
     return RRRAAA_renewable_df
     
     
-def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,turbines,techs,config,output_folder):
+def get_ALLOWEDINV(AAA_renewable_df, GGG_renewable_df, INVDATASET_renewables_df, turbines, techs, config: AdditionalIncConfig, output_folder):
 
     ALLOWEDINV_list=[]
-    region=config["Regions_to_keep"]["onshore"][0]
+    region=config.regions_to_keep.onshore[0]
     for tech in techs["wind"] :
         if "Existing" in tech:
             for rg in ["RG1","RG2","RG3"]:
@@ -331,7 +330,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
                     
         elif "Future_Onshore" in tech:
             for tur in turbines["onshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     areas=  AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains( tur + "_" + rg, regex=True)] 
                     area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -343,7 +342,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
                     ALLOWEDINV_list.append( str_to_add)
         elif "Future_Offshore_bottom_fixed" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     areas=AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains("_bottom_fixed_" + tur +"_" +  rg, regex=True)]
                     area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -356,7 +355,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
                     
         elif "Future_Offshore_floating" in tech:
             for tur in turbines["offshore"]:
-                for rg in config["RGs_to_keep"][tech]:
+                for rg in config.rgs_for(tech):
                     rg = _normalize_rg(rg)
                     areas=AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains("_floating_" + tur +"_" +  rg, regex=True)]
                     area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -370,7 +369,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
     for tech in techs["solar"] :  
     
         if "PV_Rooftop" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 areas=  AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains( "PV_Rooftop_" + rg, regex=True)] 
                 area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -382,7 +381,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
                 ALLOWEDINV_list.append( str_to_add)
                     
         elif "PV_Utility_scale_no_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 areas=  AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains( "PV_Utility_scale_no_tracking_" + rg, regex=True)] 
                 area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -394,7 +393,7 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
                 ALLOWEDINV_list.append( str_to_add)
         
         elif "PV_Utility_scale_tracking" in tech:
-            for rg in config["RGs_to_keep"][tech]:
+            for rg in config.rgs_for(tech):
                 rg = _normalize_rg(rg)
                 areas=  AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains( "PV_Utility_scale_tracking_" + rg, regex=True)] 
                 area=areas[areas['AAA_renewable'].str.contains(region, regex=True)]
@@ -438,11 +437,11 @@ def get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,tu
 
 
 
-def get_SUBTECHGROUPKPOT(RRRAAA_renewable_df,config,output_folder):
+def get_SUBTECHGROUPKPOT(RRRAAA_renewable_df, config: AdditionalIncConfig, output_folder):
 
     dfs=[]
     for iter1 in ["Onshore","Solar","Offshore"]:
-        dfs.append(pd.read_excel(config["VRE_potentials"],index_col="Region",sheet_name=iter1))
+        dfs.append(pd.read_excel(config.vre_potentials, index_col="Region", sheet_name=iter1))
     
     SUBTECHGROUPKPOT=pd.concat(dfs,axis=1)
     
@@ -463,8 +462,7 @@ def get_DISCOST_H_renewable(AAA_renewable_df,output_folder):
 
 
 def create_additional_inc(config_fn,output_folder,start_date):
-    with open(config_fn) as file:
-            config = yaml.load(file, Loader=yaml.FullLoader)
+    config = AdditionalIncConfig.from_file(config_fn)
 
     output_folder = os.path.join(output_folder, str(start_date))
     
@@ -484,18 +482,20 @@ def create_additional_inc(config_fn,output_folder,start_date):
     onshore_criteria = {'SP335-HH100', 'SP335-HH150','SP335-HH200','SP277-HH100',"SP277-HH150","SP277-HH200","SP199-HH100","SP199-HH150","SP199-HH200"}
     offshore_criteria = {'SP316-HH155','SP370-HH155'}
     turbines=dict()
-    turbines["onshore"] = {turb for turb in config["turbine_to_keep"] if any(criterion in turb for criterion in onshore_criteria)}
-    turbines["offshore"] = {turb for turb in config["turbine_to_keep"] if any(criterion in turb for criterion in offshore_criteria)}
+    turbines["onshore"] = {turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in onshore_criteria)}
+    turbines["offshore"] = {turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in offshore_criteria)}
+
+    legacy_config = config.as_legacy_dict()
 
     AAA_renewable_df=get_AAA(config,output_folder,techs,turbines)
     RRRAAA_renewable_df=get_RRRAAA(AAA_renewable_df,config,output_folder)
     get_DISCOST_H_renewable(AAA_renewable_df,output_folder)
     GGG_renewable_df=get_GGG(config,output_folder,techs,turbines)
-    GDATA=get_GDATA(GGG_renewable_df,turbines,techs,config,output_folder)
+    GDATA=get_GDATA(GGG_renewable_df,turbines,techs,legacy_config,output_folder)
     INVDATASET_renewables_df=get_INVDATASET(config,output_folder,techs,turbines)
     INVDATA=get_INVDATA_renewable(INVDATASET_renewables_df,AAA_renewable_df,output_folder)
     get_ALLOWEDINV(AAA_renewable_df,GGG_renewable_df,INVDATASET_renewables_df,turbines,techs,config,output_folder)
-    GKFX=get_GKFX(RRRAAA_renewable_df,config,output_folder)
+    GKFX=get_GKFX(RRRAAA_renewable_df,legacy_config,output_folder)
     get_ANNUITYCG(GDATA,config,output_folder)
     get_SUBTECHGROUPKPOT(RRRAAA_renewable_df,config,output_folder)
 
