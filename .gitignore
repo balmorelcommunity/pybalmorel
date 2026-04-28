@@ -7,6 +7,6 @@ __pycache__
 output
 config
 build
-
+examples/files/multiweather_year_reuslts/
 # This one is necessary to do tests
 !tests/output/.keepoutputfolder
