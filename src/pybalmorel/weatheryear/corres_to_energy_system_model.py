@@ -19,7 +19,12 @@ import fnmatch
 from pprint import pformat
 import logging
 
-from .auxiliary_functions import check_if_dir_exists,scale_data_to_same_mean_with_full_time_series
+from .auxiliary_functions import (
+    check_if_dir_exists,
+    cut_timeseries,
+    fix_first_monday,
+    scale_data_to_same_mean_with_full_time_series,
+)
 
 
 def save_log(config, output_folder):
@@ -73,29 +78,6 @@ def get_file_name(f_name,tech,run_folder):
                 "WS": "Wind_speed/" + tech + "_WindSpeed"}
     
     return new_file_name[f_name]
-
-
-def fix_first_monday(df,df_cut,start_date):
-    
-    t = np.arange(datetime(int(start_date),1,1), datetime(int(start_date),12,31), timedelta(hours=1)).astype(datetime)
-    
-    first_monday = t[np.array([date.weekday() for date in t]) == 0][0]
-    
-    df_cut= df_cut.loc[df_cut.index>=first_monday]
-
-    if len(df_cut)<8736:
-        to_add=df.loc[  (df.index.year==(start_date) + 1) ][:8736 - len(df_cut)]
-        df_cut=pd.concat([df_cut,to_add])
-
-    return df_cut
-    
-def cut_timeseries(df, start_date, end_date):
-    df.index = pd.to_datetime(df.index)
-    mask = (df.index.year >= start_date) & (df.index.year <= end_date)
-    df = df.loc[mask]
-    return df
-    
-
 def calculate_CF_FLH(df,tech):
     tech_sub_name=tech.replace("Offshore_","").replace("Onshore_","").replace("PV_","")
     CF=df.mean().to_frame()
@@ -111,6 +93,9 @@ def treat_timeseries(df,start_date,end_date,source,fix_monday):
 
     if source == "solar":
         df[df < 0] = 0
+
+    # CorRES CSV indices are read as strings and must be normalized before year filtering.
+    df.index = pd.to_datetime(df.index)
     
     df_cut=cut_timeseries(df,start_date,end_date)
     if fix_monday:

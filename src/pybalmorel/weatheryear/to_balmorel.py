@@ -14,7 +14,12 @@ import pandas as pd
 import yaml
 
 from .to_inc import create_SSS_TTT_AAA_inc,create_AAA_inc
-from .auxiliary_functions import check_if_dir_exists,get_onoff_source_from_folder,get_CapDev_timesteps,scale_data_to_same_mean_with_full_time_series
+from .auxiliary_functions import (
+    calc_CapDev_timeseries,
+    check_if_dir_exists,
+    create_time_column,
+    get_onoff_source_from_folder,
+)
 
 
 def add_WND_VAR_T_Existing_RG2_RG3(combined_scaled_dfs):
@@ -151,36 +156,6 @@ def combine_excel_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: s
         combined_df = pd.merge(combined_df, df, left_index=True, right_index=True)
 
     return combined_df
-
-
-def create_time_column() -> pd.DataFrame:
-    list_s = [f"S{str(i).zfill(2)}" for i in range(1, 53)]
-    list_t = [f"T{str(i).zfill(3)}" for i in range(1, 169)]
-    time_periods = [f"{s}.{t}" for s in list_s for t in list_t]
-    df = pd.DataFrame(time_periods, columns=["CapDev_time"])
-
-    list_s = [f"S{str(i).zfill(3)}" for i in range(1, 365)]
-    list_t = [f"T{str(i).zfill(2)}" for i in range(1, 25)]
-    time_periods = [f"{s}.{t}" for s in list_s for t in list_t]
-
-    df["DA_time"]=time_periods
-
-    return df
-
-
-def calc_CapDev_timeseries(
-    config: dict, combined_scaled_dfs: pd.DataFrame, df_t: pd.DataFrame
-) -> pd.DataFrame:
-    CapDev_timesteps = get_CapDev_timesteps(config)
-    df_t_cut = df_t[df_t.CapDev_time.isin(CapDev_timesteps)]
-    filtered_df1 = combined_scaled_dfs[combined_scaled_dfs.index.isin(df_t_cut.DA_time)]
-    combined_scaled_dfs.index = df_t.index
-    filtered_df1.index = df_t_cut.index
-    df_scaled = scale_data_to_same_mean_with_full_time_series(combined_scaled_dfs, filtered_df1)
-    df_scaled.index = df_t_cut.CapDev_time
-    return df_scaled
-
-
 def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
     with open(config_fn) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)

@@ -10,26 +10,16 @@ from typing import Any
 import pandas as pd
 import yaml
 
+from .auxiliary_functions import calc_CapDev_timeseries
 from .functions_demand_to_btc import (
     check_if_dir_exists,
     convert_to_list_df_annual_correction,
     convert_to_list_df_new,
     create_list_inc,
     create_time_column,
-    get_CapDev_timesteps,
     scale_data_to_same_mean_with_full_time_series,
     treat_timeseries,
 )
-
-
-def _build_capdev_scaled(df_scaled: pd.DataFrame, time_df: pd.DataFrame, config: dict[str, Any]) -> pd.DataFrame:
-    """Create CapDev-resolution scaled series from DA-resolution scaled series."""
-    capdev_timesteps = get_CapDev_timesteps(config)
-    df_t_cut = time_df[time_df.CapDev_time.isin(capdev_timesteps)]
-    filtered_df = df_scaled[df_scaled.index.isin(df_t_cut.DA_time)]
-    df_scaled_capdev = scale_data_to_same_mean_with_full_time_series(df_scaled, filtered_df)
-    df_scaled_capdev.index = df_t_cut.CapDev_time
-    return df_scaled_capdev
 
 
 def _write_var_t_inc(
@@ -51,7 +41,12 @@ def _write_var_t_inc(
     df = convert_to_list_df_new(df_scaled, symbol, user_name)
     create_list_inc(df, symbol, filename, da_scaled_folder)
 
-    df_scaled_capdev = _build_capdev_scaled(df_scaled, time_df, config)
+    df_scaled_capdev = calc_CapDev_timeseries(
+        config,
+        df_scaled,
+        time_df,
+        scaler=scale_data_to_same_mean_with_full_time_series,
+    )
     df = convert_to_list_df_new(df_scaled_capdev, symbol, user_name)
     create_list_inc(df, symbol, filename, capdev_folder)
 
@@ -237,10 +232,6 @@ def create_demand_inc(config_fn: str, year: int, output_folder: str) -> None:
     )
     df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "RESH")
     create_list_inc(df, "DH", "DH_RESH", to_balmorel_folder)
-    df_heat_corr_factor_year = df_heat_corr_factors_resh.loc[year]/df_heat_corr_factors_resh.loc[ann_corr_fac_ref_year]
-
-    df = convert_to_list_df_annual_correction(df_heat_corr_factor_year,'DH','RESH')
-    create_list_inc(df,'DH','DH_RESH',output_folder+'/'+str(year)+'/to_balmorel/')
 
 
 
