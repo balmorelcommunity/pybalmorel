@@ -12,6 +12,24 @@ class ConfigValidationError(ValueError):
     """Raised when a weather-year configuration is missing required fields."""
 
 
+_MODULE_KEYS = {
+    "CapDev_timesteps_to_keep",
+    "spaceHeat_to_hotWater_ratio",
+    "ann_corr_fac_ref_year",
+    "demand_model_results",
+    "corres_results",
+    "Regions_to_keep",
+    "RGs_to_keep",
+    "turbine_to_keep",
+    "tech_to_keep",
+    "ANNUITYCG_calculation",
+    "VRE_potentials",
+    "VRE_tech_costs",
+    "Existing_wind_cap",
+    "Existing_solar_cap",
+}
+
+
 def _expect_dict(raw: Any, context: str) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ConfigValidationError(f"{context} must be a mapping, got {type(raw).__name__}")
@@ -44,6 +62,72 @@ def _load_yaml_file(config_fn: str) -> dict[str, Any]:
     with open(config_fn) as file:
         raw = yaml.safe_load(file)
     return _expect_dict(raw, "root config")
+
+
+def load_weatheryear_config(config_fn: str, required_keys: set[str] | None = None) -> dict[str, Any]:
+    """Load weatheryear YAML once and normalize known fields in a central utility.
+
+    Args:
+        config_fn: Path to YAML config.
+        required_keys: Optional top-level keys that must exist for the caller.
+
+    Returns:
+        Normalized config mapping for all known top-level keys present in the file.
+    """
+    raw = _load_yaml_file(config_fn)
+
+    if required_keys:
+        missing = sorted(required_keys - set(raw.keys()))
+        if missing:
+            raise ConfigValidationError(
+                f"Missing required top-level keys in root config: {missing}"
+            )
+
+    normalized: dict[str, Any] = {}
+    for key in _MODULE_KEYS:
+        if key not in raw:
+            continue
+
+        value = raw[key]
+
+        if key == "CapDev_timesteps_to_keep":
+            normalized[key] = CapDevTimestepsConfig.from_raw(value)
+        elif key == "Regions_to_keep":
+            normalized[key] = RegionsConfig.from_raw(value)
+        elif key == "ANNUITYCG_calculation":
+            normalized[key] = AnnuityCalculationConfig.from_raw(value)
+        elif key in {"RGs_to_keep", "corres_results"}:
+            normalized[key] = _expect_dict_of_list_str(value, key)
+        elif key in {"turbine_to_keep", "tech_to_keep"}:
+            normalized[key] = _expect_list_of_str(value, key)
+        elif key == "spaceHeat_to_hotWater_ratio":
+            try:
+                normalized[key] = float(value)
+            except (TypeError, ValueError) as exc:
+                raise ConfigValidationError(
+                    "spaceHeat_to_hotWater_ratio must be numeric"
+                ) from exc
+        elif key == "ann_corr_fac_ref_year":
+            try:
+                normalized[key] = int(value)
+            except (TypeError, ValueError) as exc:
+                raise ConfigValidationError(
+                    "ann_corr_fac_ref_year must be an integer"
+                ) from exc
+        else:
+            if not isinstance(value, str):
+                raise ConfigValidationError(f"{key} must be a string")
+            normalized[key] = value
+
+    if "corres_results" in normalized:
+        required_sources = {"wind", "solar"}
+        missing_sources = required_sources - set(normalized["corres_results"].keys())
+        if missing_sources:
+            raise ConfigValidationError(
+                f"corres_results is missing required source keys: {sorted(missing_sources)}"
+            )
+
+    return normalized
 
 
 @dataclass(frozen=True)
@@ -104,24 +188,20 @@ class DemandModuleConfig:
 
     @classmethod
     def from_file(cls, config_fn: str) -> "DemandModuleConfig":
-        raw = _load_yaml_file(config_fn)
-        ratio = _require(raw, "spaceHeat_to_hotWater_ratio", "root config")
-        ref_year = _require(raw, "ann_corr_fac_ref_year", "root config")
-        demand_results = _require(raw, "demand_model_results", "root config")
-        if not isinstance(demand_results, str):
-            raise ConfigValidationError("demand_model_results must be a string")
-        try:
-            ratio_value = float(ratio)
-            ref_year_value = int(ref_year)
-        except (TypeError, ValueError) as exc:
-            raise ConfigValidationError("spaceHeat_to_hotWater_ratio and ann_corr_fac_ref_year must be numeric") from exc
+        raw = load_weatheryear_config(
+            config_fn,
+            required_keys={
+                "spaceHeat_to_hotWater_ratio",
+                "ann_corr_fac_ref_year",
+                "demand_model_results",
+                "CapDev_timesteps_to_keep",
+            },
+        )
         return cls(
-            spaceheat_to_hotwater_ratio=ratio_value,
-            ann_corr_fac_ref_year=ref_year_value,
-            demand_model_results=demand_results,
-            capdev_timesteps_to_keep=CapDevTimestepsConfig.from_raw(
-                _require(raw, "CapDev_timesteps_to_keep", "root config")
-            ),
+            spaceheat_to_hotwater_ratio=raw["spaceHeat_to_hotWater_ratio"],
+            ann_corr_fac_ref_year=raw["ann_corr_fac_ref_year"],
+            demand_model_results=raw["demand_model_results"],
+            capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"],
         )
 
 
@@ -131,11 +211,9 @@ class ToBalmorelConfig:
 
     @classmethod
     def from_file(cls, config_fn: str) -> "ToBalmorelConfig":
-        raw = _load_yaml_file(config_fn)
+        raw = load_weatheryear_config(config_fn, required_keys={"CapDev_timesteps_to_keep"})
         return cls(
-            capdev_timesteps_to_keep=CapDevTimestepsConfig.from_raw(
-                _require(raw, "CapDev_timesteps_to_keep", "root config")
-            )
+            capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"]
         )
 
 
@@ -149,24 +227,22 @@ class WeatherYearConfig:
 
     @classmethod
     def from_file(cls, config_fn: str) -> "WeatherYearConfig":
-        raw = _load_yaml_file(config_fn)
-        corres_results = _expect_dict_of_list_str(
-            _require(raw, "corres_results", "root config"),
-            "corres_results",
+        raw = load_weatheryear_config(
+            config_fn,
+            required_keys={
+                "corres_results",
+                "Regions_to_keep",
+                "RGs_to_keep",
+                "turbine_to_keep",
+                "tech_to_keep",
+            },
         )
-        required_sources = {"wind", "solar"}
-        missing_sources = required_sources - set(corres_results.keys())
-        if missing_sources:
-            raise ConfigValidationError(
-                f"corres_results is missing required source keys: {sorted(missing_sources)}"
-            )
-
         return cls(
-            corres_results=corres_results,
-            regions_to_keep=RegionsConfig.from_raw(_require(raw, "Regions_to_keep", "root config")),
-            rg_to_keep=_expect_dict_of_list_str(_require(raw, "RGs_to_keep", "root config"), "RGs_to_keep"),
-            turbine_to_keep=_expect_list_of_str(_require(raw, "turbine_to_keep", "root config"), "turbine_to_keep"),
-            tech_to_keep=_expect_list_of_str(_require(raw, "tech_to_keep", "root config"), "tech_to_keep"),
+            corres_results=raw["corres_results"],
+            regions_to_keep=raw["Regions_to_keep"],
+            rg_to_keep=raw["RGs_to_keep"],
+            turbine_to_keep=raw["turbine_to_keep"],
+            tech_to_keep=raw["tech_to_keep"],
         )
 
     def regions_for_source(self, source: str) -> list[str]:
@@ -192,31 +268,29 @@ class AdditionalIncConfig:
 
     @classmethod
     def from_file(cls, config_fn: str) -> "AdditionalIncConfig":
-        raw = _load_yaml_file(config_fn)
-        vre_potentials = _require(raw, "VRE_potentials", "root config")
-        vre_tech_costs = _require(raw, "VRE_tech_costs", "root config")
-        existing_wind_cap = _require(raw, "Existing_wind_cap", "root config")
-        existing_solar_cap = _require(raw, "Existing_solar_cap", "root config")
-        for key, value in {
-            "VRE_potentials": vre_potentials,
-            "VRE_tech_costs": vre_tech_costs,
-            "Existing_wind_cap": existing_wind_cap,
-            "Existing_solar_cap": existing_solar_cap,
-        }.items():
-            if not isinstance(value, str):
-                raise ConfigValidationError(f"{key} must be a string")
+        raw = load_weatheryear_config(
+            config_fn,
+            required_keys={
+                "Regions_to_keep",
+                "RGs_to_keep",
+                "turbine_to_keep",
+                "ANNUITYCG_calculation",
+                "VRE_potentials",
+                "VRE_tech_costs",
+                "Existing_wind_cap",
+                "Existing_solar_cap",
+            },
+        )
 
         return cls(
-            regions_to_keep=RegionsConfig.from_raw(_require(raw, "Regions_to_keep", "root config")),
-            rg_to_keep=_expect_dict_of_list_str(_require(raw, "RGs_to_keep", "root config"), "RGs_to_keep"),
-            turbine_to_keep=_expect_list_of_str(_require(raw, "turbine_to_keep", "root config"), "turbine_to_keep"),
-            annuitycg_calculation=AnnuityCalculationConfig.from_raw(
-                _require(raw, "ANNUITYCG_calculation", "root config")
-            ),
-            vre_potentials=vre_potentials,
-            vre_tech_costs=vre_tech_costs,
-            existing_wind_cap=existing_wind_cap,
-            existing_solar_cap=existing_solar_cap,
+            regions_to_keep=raw["Regions_to_keep"],
+            rg_to_keep=raw["RGs_to_keep"],
+            turbine_to_keep=raw["turbine_to_keep"],
+            annuitycg_calculation=raw["ANNUITYCG_calculation"],
+            vre_potentials=raw["VRE_potentials"],
+            vre_tech_costs=raw["VRE_tech_costs"],
+            existing_wind_cap=raw["Existing_wind_cap"],
+            existing_solar_cap=raw["Existing_solar_cap"],
         )
 
     def rgs_for(self, tech: str) -> list[str]:
