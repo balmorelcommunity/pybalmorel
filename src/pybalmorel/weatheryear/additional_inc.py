@@ -13,7 +13,7 @@ import os
 import pandas as pd
 
 from .config_models import AdditionalIncConfig
-from .to_inc import build_inc_file_list_type,create_Table_inc
+from .to_inc import build_inc_file_list_type, create_Table_inc
 from .get_GDATA_func import build_GDATA
 from .get_GKFX_func import build_GKFX
 
@@ -26,7 +26,12 @@ def _convert_corres_rg_to_balmorel(rg: str) -> str:
     return rg.replace("RGA", "RG1").replace("RGB", "RG2").replace("RGC", "RG3")
 
 
-def build_INVDATASET(config: AdditionalIncConfig, output_folder, techs, turbines): 
+def build_INVDATASET(
+    config: AdditionalIncConfig,
+    output_folder: str,
+    techs: dict[str, set[str]],
+    turbines: dict[str, set[str]],
+) -> pd.DataFrame:
     INVDATASET_renewables=[]
     for tech in techs["wind"] :
                 
@@ -81,7 +86,11 @@ def build_INVDATASET(config: AdditionalIncConfig, output_folder, techs, turbines
     return INVDATASET_renewables_df
 
 
-def build_INVDATA_renewable(INVDATASET_renewables_df,AAA_renewable_df,output_folder):
+def build_INVDATA_renewable(
+    INVDATASET_renewables_df: pd.DataFrame,
+    AAA_renewable_df: pd.DataFrame,
+    output_folder: str,
+) -> pd.DataFrame:
     INVDATA=[]
     for iter1 in INVDATASET_renewables_df["INVDATASET_renewables"]:
             if "SP" in iter1:
@@ -99,7 +108,12 @@ def build_INVDATA_renewable(INVDATASET_renewables_df,AAA_renewable_df,output_fol
     build_inc_file_list_type(INVDATA_df,"INVDATA_renewable",output_folder + "/to_balmorel",equations=True)
     return INVDATA_df
 
-def build_GGG(config: AdditionalIncConfig, output_folder, techs, turbines):
+def build_GGG(
+    config: AdditionalIncConfig,
+    output_folder: str,
+    techs: dict[str, set[str]],
+    turbines: dict[str, set[str]],
+) -> pd.DataFrame:
     GGG_renewable=[]
     for tech in techs["wind"] :
         if "Existing" in tech:
@@ -162,7 +176,7 @@ def build_GGG(config: AdditionalIncConfig, output_folder, techs, turbines):
 
 
 
-def build_ANNUITYCG(GDATA, config: AdditionalIncConfig, output_folder):
+def build_ANNUITYCG(GDATA: pd.DataFrame, config: AdditionalIncConfig, output_folder: str) -> None:
     GDATA_future = GDATA.loc[GDATA["GDKVARIABL"]==1]
     annuity = (
                 (1 - config.annuitycg_calculation.debt_share) * config.annuitycg_calculation.discount_rate
@@ -183,7 +197,7 @@ def build_ANNUITYCG(GDATA, config: AdditionalIncConfig, output_folder):
 
 
 
-def build_AGKN(AAA,GGG,output_folder):
+def build_AGKN(AAA: pd.DataFrame, GGG: pd.DataFrame, output_folder: str) -> None:
 
     AGKN=pd.DataFrame()
     agkn_list=[]
@@ -208,7 +222,12 @@ def build_AGKN(AAA,GGG,output_folder):
     AGKN.to_csv( output_folder + "/to_balmorel/AGKN_renewables" + ".csv",index=False)
 
 
-def build_AAA(config: AdditionalIncConfig, output_folder, techs, turbines):
+def build_AAA(
+    config: AdditionalIncConfig,
+    output_folder: str,
+    techs: dict[str, set[str]],
+    turbines: dict[str, set[str]],
+) -> pd.DataFrame:
     AAA_renwable=[]
     for region in config.regions_to_keep.onshore:
        
@@ -274,7 +293,11 @@ def build_AAA(config: AdditionalIncConfig, output_folder, techs, turbines):
     return AAA_ren_df
 
 
-def build_RRRAAA(AAA_renewable_df, config: AdditionalIncConfig, output_folder):
+def build_RRRAAA(
+    AAA_renewable_df: pd.DataFrame,
+    config: AdditionalIncConfig,
+    output_folder: str,
+) -> pd.DataFrame:
     RRRAAA_renewable_df=pd.DataFrame()
     RRRAAA_renewable_df_off=pd.DataFrame()
     areas=[]
@@ -308,7 +331,15 @@ def build_RRRAAA(AAA_renewable_df, config: AdditionalIncConfig, output_folder):
     return RRRAAA_renewable_df
     
     
-def build_ALLOWEDINV(AAA_renewable_df, GGG_renewable_df, INVDATASET_renewables_df, turbines, techs, config: AdditionalIncConfig, output_folder):
+def build_ALLOWEDINV(
+    AAA_renewable_df: pd.DataFrame,
+    GGG_renewable_df: pd.DataFrame,
+    INVDATASET_renewables_df: pd.DataFrame,
+    turbines: dict[str, set[str]],
+    techs: dict[str, set[str]],
+    config: AdditionalIncConfig,
+    output_folder: str,
+) -> None:
 
     ALLOWEDINV_list=[]
     region=config.regions_to_keep.onshore[0]
@@ -437,7 +468,11 @@ def build_ALLOWEDINV(AAA_renewable_df, GGG_renewable_df, INVDATASET_renewables_d
 
 
 
-def build_SUBTECHGROUPKPOT(RRRAAA_renewable_df, config: AdditionalIncConfig, output_folder):
+def build_SUBTECHGROUPKPOT(
+    RRRAAA_renewable_df: pd.DataFrame,
+    config: AdditionalIncConfig,
+    output_folder: str,
+) -> None:
 
     dfs=[]
     for iter1 in ["Onshore","Solar","Offshore"]:
@@ -449,19 +484,23 @@ def build_SUBTECHGROUPKPOT(RRRAAA_renewable_df, config: AdditionalIncConfig, out
     SUBTECHGROUPKPOT=SUBTECHGROUPKPOT.replace(np.nan,"")
     SUBTECHGROUPKPOT = SUBTECHGROUPKPOT[SUBTECHGROUPKPOT.index.isin(RRRAAA_renewable_df['Region'])]
     
-    create_Table_inc(SUBTECHGROUPKPOT,"SUBTECHGROUPKPOT",output_folder + "/to_balmorel/")
+    create_Table_inc(SUBTECHGROUPKPOT, "SUBTECHGROUPKPOT", output_folder + "/to_balmorel/")
     
-def build_DISCOST_H_renewable(AAA_renewable_df,output_folder):
+def build_DISCOST_H_renewable(AAA_renewable_df: pd.DataFrame, output_folder: str) -> None:
     DISCOST_H=  AAA_renewable_df[AAA_renewable_df['AAA_renewable'].str.contains('OFF_Existing', regex=True)]
     #DISCOST_H[""]=[2]*len(DISCOST_H)
     DISCOST_H = DISCOST_H.copy()
     DISCOST_H.loc[:, ""] = [2] * len(DISCOST_H)
     DISCOST_H=DISCOST_H.set_index("AAA_renewable")
     DISCOST_H.index.name=""
-    create_Table_inc(DISCOST_H,"DISCOST_H_renewable",output_folder + "/to_balmorel/")
+    create_Table_inc(DISCOST_H, "DISCOST_H_renewable", output_folder + "/to_balmorel/")
 
 
-def create_additional_inc(config_fn,output_folder,start_date):
+def create_additional_inc(
+    config_fn: str,
+    output_folder: str,
+    start_date: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     config = AdditionalIncConfig.from_file(config_fn)
 
     output_folder = os.path.join(output_folder, str(start_date))

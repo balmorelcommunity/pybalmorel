@@ -47,6 +47,76 @@ def save_log(config: WeatherYearConfig, output_folder: str) -> None:
     logging.info("\n%s", pformat(config))
 
 
+def _source_file_names(folder_name: str) -> list[str]:
+    """Return input result file stems to read for one CorRES run folder."""
+    if "Existing" in folder_name or "Future" in folder_name:
+        return ["P"]
+    if "CSP" in folder_name:
+        return ["CSP_with_storage_dispatched", "CSP_with_excess", "DNI"]
+    if "PV" in folder_name:
+        return ["P"]
+    return ["P"]
+
+
+def _select_region_columns(
+    df: pd.DataFrame,
+    run_folder: str,
+    config: WeatherYearConfig,
+) -> pd.DataFrame:
+    """Return a filtered dataframe containing only configured Balmorel regions."""
+    if "Onshore" in run_folder or "PV" in run_folder:
+        selected_regions = config.regions_to_keep.onshore
+    elif "Offshore" in run_folder:
+        selected_regions = config.regions_to_keep.offshore
+    elif "Existing" in run_folder:
+        selected_regions = config.regions_to_keep.onshore + config.regions_to_keep.offshore
+    else:
+        selected_regions = list(df.columns)
+    return df[df.columns.intersection(selected_regions)]
+
+
+def _write_processed_timeseries(
+    df_cut: pd.DataFrame,
+    df_scaled: pd.DataFrame,
+    destination_path: str,
+    file_base: str,
+) -> None:
+    """Write raw and scaled time series for one processed technology file."""
+    df_cut.to_excel(os.path.join(destination_path, "raw", file_base + "_raw.xlsx"))
+    df_scaled.to_excel(os.path.join(destination_path, "scaled", file_base + "_scaled.xlsx"))
+
+
+def _write_stats_excel(
+    stats_path: str,
+    run_folder: str,
+    full_ts_stats: dict[str, list[pd.DataFrame]],
+    raw_ts_stats: dict[str, list[pd.DataFrame]],
+    scaled_ts_stats: dict[str, list[pd.DataFrame]],
+) -> None:
+    """Persist CF/FLH stats with existing and future run-specific formatting."""
+
+    def _write_per_sheet(df_combined: pd.DataFrame, filename: str) -> None:
+        with pd.ExcelWriter(os.path.join(stats_path, filename), engine="xlsxwriter") as writer:
+            for col in df_combined.columns:
+                df_combined[col].dropna().to_excel(writer, sheet_name=col, index=True)
+
+    if "Existing" not in run_folder:
+        pd.concat(full_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_full_ts.xlsx"))
+        pd.concat(full_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_full_ts.xlsx"))
+        pd.concat(raw_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_raw_ts.xlsx"))
+        pd.concat(raw_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_raw_ts.xlsx"))
+        pd.concat(scaled_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_scaled_ts.xlsx"))
+        pd.concat(scaled_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_scaled_ts.xlsx"))
+        return
+
+    _write_per_sheet(pd.concat(full_ts_stats["CF"], axis=1), "CF_full_ts.xlsx")
+    _write_per_sheet(pd.concat(full_ts_stats["FLH"], axis=1), "FLH_full_ts.xlsx")
+    _write_per_sheet(pd.concat(raw_ts_stats["CF"], axis=1), "CF_raw_ts.xlsx")
+    _write_per_sheet(pd.concat(raw_ts_stats["FLH"], axis=1), "FLH_raw_ts.xlsx")
+    _write_per_sheet(pd.concat(scaled_ts_stats["CF"], axis=1), "CF_scaled_ts.xlsx")
+    _write_per_sheet(pd.concat(scaled_ts_stats["FLH"], axis=1), "FLH_scaled_ts.xlsx")
+
+
 
 
 def extract_technology_folders(path :str) -> list[str]:
@@ -66,6 +136,8 @@ def extract_technology_folders(path :str) -> list[str]:
     elif "PV" in path:
         folders = [item for item in contents
                    if os.path.isdir(os.path.join(path, item)) and "PV" in item and "RG" in item]
+    else:
+        folders = []
     return folders
 
 
@@ -180,7 +252,13 @@ def is_solar_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig)
     return Path(run_folder).name in config.tech_to_keep and bool(found_rg)
 
 
-def export_timeseries_to_xlsx(config_fn, start_date, output_folder, end_date=False, fix_monday=True):
+def export_timeseries_to_xlsx(
+    config_fn: str,
+    start_date: str,
+    output_folder: str,
+    end_date: str | bool = False,
+    fix_monday: bool = True,
+) -> None:
     create_directory_if_needed(output_folder)
     config = WeatherYearConfig.from_file(config_fn)
 
@@ -195,12 +273,7 @@ def export_timeseries_to_xlsx(config_fn, start_date, output_folder, end_date=Fal
         for run_folder in config.corres_results[source]:
             folder_name = os.path.basename(Path(run_folder))
 
-            if "Existing" in folder_name or "Future" in folder_name:
-                files_names = ["P"]
-            elif "CSP" in folder_name:
-                files_names = ["CSP_with_storage_dispatched", "CSP_with_excess", "DNI"]
-            elif "PV" in folder_name:
-                files_names = ["P"]
+            files_names = _source_file_names(folder_name)
 
             techs = extract_technology_folders(run_folder)
 
@@ -226,20 +299,12 @@ def export_timeseries_to_xlsx(config_fn, start_date, output_folder, end_date=Fal
                         index_col="time",
                     )
 
-                    if "Onshore" in run_folder or "PV" in run_folder:
-                        df = df[df.columns.intersection(config.regions_to_keep.onshore)]
-                    elif "Offshore" in run_folder:
-                        df = df[df.columns.intersection(config.regions_to_keep.offshore)]
-                    elif "Existing" in run_folder:
-                        df = df[df.columns.intersection(
-                            config.regions_to_keep.onshore + config.regions_to_keep.offshore
-                        )]
+                    df = _select_region_columns(df, run_folder, config)
 
                     df, df_cut, df_scaled = process_timeseries_with_scaling(df, start_date, end_date, source, fix_monday)
 
                     file_base = generate_output_filename_for_technology(f_name, tech, folder_name)
-                    df_cut.to_excel(os.path.join(destination_path, "raw", file_base + "_raw.xlsx"))
-                    df_scaled.to_excel(os.path.join(destination_path, "scaled", file_base + "_scaled.xlsx"))
+                    _write_processed_timeseries(df_cut, df_scaled, destination_path, file_base)
 
                     CF_full, FLH_full = compute_capacity_factor_and_flh(df, tech)
                     full_ts_stats["CF"].append(CF_full)
@@ -254,23 +319,11 @@ def export_timeseries_to_xlsx(config_fn, start_date, output_folder, end_date=Fal
                     scaled_ts_stats["FLH"].append(FLH_scaled)
             
                     stats_path = os.path.join(destination_path, "stats")
-                    if "Existing" not in run_folder:
-                        pd.concat(full_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_full_ts.xlsx"))
-                        pd.concat(full_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_full_ts.xlsx"))
-                        pd.concat(raw_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_raw_ts.xlsx"))
-                        pd.concat(raw_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_raw_ts.xlsx"))
-                        pd.concat(scaled_ts_stats["CF"], axis=1).to_excel(os.path.join(stats_path, "CF_scaled_ts.xlsx"))
-                        pd.concat(scaled_ts_stats["FLH"], axis=1).to_excel(os.path.join(stats_path, "FLH_scaled_ts.xlsx"))
-                    else:
-                        def _write_per_sheet(df_combined, filename):
-                            with pd.ExcelWriter(os.path.join(stats_path, filename), engine='xlsxwriter') as writer:
-                                for col in df_combined.columns:
-                                    df_combined[col].dropna().to_excel(writer, sheet_name=col, index=True)
-
-                        _write_per_sheet(pd.concat(full_ts_stats["CF"], axis=1), "CF_full_ts.xlsx")
-                        _write_per_sheet(pd.concat(full_ts_stats["FLH"], axis=1), "FLH_full_ts.xlsx")
-                        _write_per_sheet(pd.concat(raw_ts_stats["CF"], axis=1), "CF_raw_ts.xlsx")
-                        _write_per_sheet(pd.concat(raw_ts_stats["FLH"], axis=1), "FLH_raw_ts.xlsx")
-                        _write_per_sheet(pd.concat(scaled_ts_stats["CF"], axis=1), "CF_scaled_ts.xlsx")
-                        _write_per_sheet(pd.concat(scaled_ts_stats["FLH"], axis=1), "FLH_scaled_ts.xlsx")
+                    _write_stats_excel(
+                        stats_path=stats_path,
+                        run_folder=run_folder,
+                        full_ts_stats=full_ts_stats,
+                        raw_ts_stats=raw_ts_stats,
+                        scaled_ts_stats=scaled_ts_stats,
+                    )
                            

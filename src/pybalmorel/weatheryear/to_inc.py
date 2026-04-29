@@ -32,7 +32,7 @@ class IncFile_temp:
         self.name = name
         self.path = path
 
-    def body_concat(self, df: pd.DataFrame):
+    def body_concat(self, df: pd.DataFrame) -> None:
         """Concatenate a body temporarily being a dataframe to another dataframe
         """
         self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function.. 
@@ -40,7 +40,7 @@ class IncFile_temp:
     def body_prepare(self, index: list, columns: list,
                     values: str = 'Value',
                     aggfunc: str ='sum',
-                    fill_value: Union[str, int] = ''):
+                    fill_value: Union[str, int] = '') -> None:
     
         # Pivot
         self.body = self.body.pivot_table(index=index, columns=columns, 
@@ -70,15 +70,15 @@ class IncFile_temp:
         self.body.index.name = ''
 
 
-    def save(self):
+    def save(self) -> None:
         if self.name[-4:] != '.inc':
             self.name += '.inc'  
        
         with open(os.path.join(self.path, self.name), 'w') as f:
             f.write(self.prefix)
-            if type(self.body) == str:
+            if isinstance(self.body, str):
                 f.write(self.body)
-            elif type(self.body) == pd.DataFrame:
+            elif isinstance(self.body, pd.DataFrame):
                 f.write(self.body.to_string())
             else:
                 print('Wrong format of %s.body!'%self.name)
@@ -89,7 +89,7 @@ class IncFile_temp:
 
 
 
-def create_SSS_TTT_AAA_inc(df,name,output_folder):
+def create_SSS_TTT_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
 
     if name=="WND_VAR_T":
         prefix = "TABLE   WND_VAR_T1(SSS,TTT,AAA)  'Variation of the wind generation'\n"
@@ -112,7 +112,7 @@ def create_SSS_TTT_AAA_inc(df,name,output_folder):
     #df.to_csv(output_folder + "/" + name + ".csv") #might be removed in the future since it is not necessary
 
 
-def create_AAA_inc(df,name,output_folder):
+def create_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
 
     if name=="WNDFLH":
         prefix = "PARAMETER WNDFLH(AAA)  'Full load hours for wind power (hours)'  \n / \n "
@@ -135,7 +135,7 @@ def create_AAA_inc(df,name,output_folder):
 
 
 
-def create_GGG_GDATASET_inc(df,name,output_folder):
+def create_GGG_GDATASET_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
 
     if name=="GDATA_renewable":
         prefix = "$onMulti \n TABLE GDATA(GGG,GDATASET)  'Technologies characteristics'  \n"
@@ -158,7 +158,7 @@ def create_GGG_GDATASET_inc(df,name,output_folder):
 
 
 
-def append_split_wind_solar_sets(the_file,df,name):
+def append_split_wind_solar_sets(the_file, df: pd.DataFrame, name: str) -> None:
     if name=="AAA_renewable":
         prefix_wind = "SET IA_wind(AAA)  'Areas with renewables'  \n "
         prefix_solar = "SET IA_solar(AAA)  'Areas with renewables'  \n "
@@ -188,7 +188,12 @@ def append_split_wind_solar_sets(the_file,df,name):
     the_file.write("/ ;")
 
 
-def build_inc_file_list_type(df,name,output_folder,equations=False):
+def build_inc_file_list_type(
+    df: pd.DataFrame,
+    name: str,
+    output_folder: str,
+    equations: bool = False,
+) -> None:
 
     
     if name=="AAA_renewable":
@@ -233,7 +238,7 @@ def build_inc_file_list_type(df,name,output_folder,equations=False):
 
 
 
-def create_GKFX_inc(GKFX,name,output_folder):
+def create_GKFX_inc(GKFX: pd.DataFrame, name: str, output_folder: str) -> None:
     if name=="GKFX_renewable":
             prefix = "$onMulti \n TABLE GKFX1(AAA,GGG,YYY)  'Technologies characteristics'  \n"
             suffix = "\n;\n"
@@ -247,7 +252,7 @@ def create_GKFX_inc(GKFX,name,output_folder):
     
     ts.save()
     
-def create_Table_inc(df,name,output_folder):
+def create_Table_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
     if name=="SUBTECHGROUPKPOT":
         prefix = "$onMulti \nTABLE SUBTECHGROUPKPOT(CCCRRRAAA,TECH_GROUP,SUBTECH_GROUP) 'SubTechnology group capacity restriction by geography (MW)' \n"
         suffix = "\n;\n"
