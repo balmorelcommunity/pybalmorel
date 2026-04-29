@@ -19,16 +19,20 @@ import logging
 import numpy as np
 
 from .auxiliary_functions import (
-    check_if_dir_exists,
-    cut_timeseries,
-    fix_first_monday,
-    scale_data_to_same_mean_with_full_time_series,
+    create_directory_if_needed,
+    filter_timeseries_by_dates,
+    align_timeseries_to_first_monday,
+    scale_timeseries_to_full_distribution,
 )
-from .config_models import CorresModuleConfig
+from .config_models import WeatherYearConfig
 
 
-def save_log(config, output_folder):
-    """Set up file-only logging and write the active config to the log."""
+def save_log(config: WeatherYearConfig, output_folder: str) -> None:
+    """Save the configuration details to a log file in the output folder for traceability.
+     Args:
+        config: The WeatherYearConfig object containing the configuration details.
+        output_folder: The folder where the log file will be saved.
+    """
     log_filename = os.path.join(output_folder, 'logfile.log')
     logger = logging.getLogger()
     logger.handlers.clear()
@@ -45,7 +49,13 @@ def save_log(config, output_folder):
 
 
 
-def get_tech_folders(path):
+def extract_technology_folders(path :str) -> list[str]:
+    """Get technology folders from a CorRES results directory based on expected naming patterns.
+     Args:
+        path: The path to the CorRES results directory.
+     Returns:
+        A list of technology folder names.
+    """
     contents = os.listdir(path)
     if "Future_Onshore" in path or "Future_Offshore" in path:
         folders = [item for item in contents
@@ -59,7 +69,15 @@ def get_tech_folders(path):
     return folders
 
 
-def get_file_name(f_name,tech,run_folder):
+def generate_output_filename_for_technology(f_name: str, tech: str, run_folder: str) -> str:
+    """Generate a standardized file name for output files based on technology and source type.
+     Args:
+        f_name: The type of file to generate the name for (e.g., "P" for power, "WS" for wind speed).
+        tech: The technology name.
+        run_folder: The folder where the run is located.
+     Returns:
+        The standardized file name.
+    """
 
     if "Onshore_2020"== tech  :
          new_file_name={"P": "Onshore_Existing",
@@ -78,8 +96,15 @@ def get_file_name(f_name,tech,run_folder):
                 "WS": "Wind_speed/" + tech + "_WindSpeed"}
     
     return new_file_name[f_name]
-def calculate_CF_FLH(df,tech):
-    tech_sub_name=tech.replace("Offshore_","").replace("Onshore_","").replace("PV_","")
+def compute_capacity_factor_and_flh(df: pd.DataFrame, tech: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Calculate Capacity Factor (CF) and Full Load Hours (FLH) for a given technology based on its time series data.
+     Args:
+        df: The DataFrame containing the time series data for the technology.
+        tech: The technology name, used for labeling the output DataFrames.
+     Returns:
+        A tuple containing two DataFrames: CF (Capacity Factor) and FLH (Full Load Hours).
+    """
+    #tech_sub_name=tech.replace("Offshore_","").replace("Onshore_","").replace("PV_","")
     CF=df.mean().to_frame()
     CF.columns=[tech]
     FLH= CF * len(df)
@@ -88,8 +113,17 @@ def calculate_CF_FLH(df,tech):
 
 
     
-def treat_timeseries(df,start_date,end_date,source,fix_monday):
-
+def process_timeseries_with_scaling(df: pd.DataFrame, start_date: str, end_date: str, source: str, fix_monday: bool) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Apply necessary treatments to the time series data, including filtering by date range, fixing the first Monday if needed, and scaling the data to have the same mean as the full time series.
+     Args:
+        df: The original DataFrame containing the time series data.
+        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
+        end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format).
+        source: The source type (e.g., "wind" or "solar") to determine specific treatments.
+        fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
+    Returns:
+        A tuple containing three DataFrames: the original full time series, the cut time series based on the date range, and the scaled time series.
+    """
 
     if source == "solar":
         df[df < 0] = 0
@@ -97,12 +131,12 @@ def treat_timeseries(df,start_date,end_date,source,fix_monday):
     # CorRES CSV indices are read as strings and must be normalized before year filtering.
     df.index = pd.to_datetime(df.index)
     
-    df_cut=cut_timeseries(df,start_date,end_date)
+    df_cut=filter_timeseries_by_dates(df,start_date,end_date)
     if fix_monday:
-        df_cut= fix_first_monday(df,df_cut,start_date)
+        df_cut= align_timeseries_to_first_monday(df,df_cut,start_date)
 
     
-    df_scaled=scale_data_to_same_mean_with_full_time_series(df,df_cut)
+    df_scaled=scale_timeseries_to_full_distribution(df,df_cut)
     
     
 
@@ -112,7 +146,15 @@ def treat_timeseries(df,start_date,end_date,source,fix_monday):
 
 
 
-def check_wind_tech_to_read(run_folder: str, tech: str, config: CorresModuleConfig) -> bool:
+def is_wind_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig) -> bool:
+    """Determine whether a given wind technology should be read based on the configuration settings.
+     Args:
+        run_folder: The folder where the run is located, used to determine the source type (e.g., "Existing", "Future_Onshore", "Future_Offshore").
+        tech: The technology name, used for matching against the configuration settings.
+        config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.
+    Returns:
+        A boolean indicating whether the technology should be read (True) or skipped (False).
+        """
     turbine_to_keep = [turbine.replace("-", "_").replace("HH", "") for turbine in config.turbine_to_keep]
 
     if Path(run_folder).name not in config.tech_to_keep:
@@ -125,14 +167,22 @@ def check_wind_tech_to_read(run_folder: str, tech: str, config: CorresModuleConf
 
     return True
 
-def check_solar_tech_to_read(run_folder: str, tech: str, config: CorresModuleConfig) -> bool:
+def is_solar_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig) -> bool:
+    """Determine whether a given solar technology should be read based on the configuration settings.
+     Args:
+        run_folder: The folder where the run is located, used to determine the source type (e.g., "PV").
+        tech: The technology name, used for matching against the configuration settings.
+        config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.
+    Returns:
+        A boolean indicating whether the technology should be read (True) or skipped (False).
+    """
     found_rg = next((rg for rg in config.rg_to_keep[Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
     return Path(run_folder).name in config.tech_to_keep and bool(found_rg)
 
 
-def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False, fix_monday=True):
-    check_if_dir_exists(output_folder)
-    config = CorresModuleConfig.from_file(config_fn)
+def export_timeseries_to_xlsx(config_fn, start_date, output_folder, end_date=False, fix_monday=True):
+    create_directory_if_needed(output_folder)
+    config = WeatherYearConfig.from_file(config_fn)
 
     save_log(config, output_folder)
 
@@ -152,7 +202,7 @@ def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False,
             elif "PV" in folder_name:
                 files_names = ["P"]
 
-            techs = get_tech_folders(run_folder)
+            techs = extract_technology_folders(run_folder)
 
             full_ts_stats = {"CF": [], "FLH": []}
             raw_ts_stats = {"CF": [], "FLH": []}
@@ -160,16 +210,16 @@ def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False,
             
             for tech in techs:
                 for f_name in files_names:
-                    if source == "wind" and not check_wind_tech_to_read(run_folder, tech, config):
+                    if source == "wind" and not is_wind_tech_enabled(run_folder, tech, config):
                         continue
-                    if source == "solar" and not check_solar_tech_to_read(run_folder, tech, config):
+                    if source == "solar" and not is_solar_tech_enabled(run_folder, tech, config):
                         continue
 
                     destination_path = os.path.join(output_folder, folder_name)
-                    check_if_dir_exists(destination_path)
-                    check_if_dir_exists(os.path.join(destination_path, "raw"))
-                    check_if_dir_exists(os.path.join(destination_path, "scaled"))
-                    check_if_dir_exists(os.path.join(destination_path, "stats"))
+                    create_directory_if_needed(destination_path)
+                    create_directory_if_needed(os.path.join(destination_path, "raw"))
+                    create_directory_if_needed(os.path.join(destination_path, "scaled"))
+                    create_directory_if_needed(os.path.join(destination_path, "stats"))
 
                     df = pd.read_csv(
                         os.path.join(run_folder, tech, "Results", f_name + ".csv"),
@@ -185,21 +235,21 @@ def get_energy_system_xlsx(config_fn, start_date, output_folder, end_date=False,
                             config.regions_to_keep.onshore + config.regions_to_keep.offshore
                         )]
 
-                    df, df_cut, df_scaled = treat_timeseries(df, start_date, end_date, source, fix_monday)
+                    df, df_cut, df_scaled = process_timeseries_with_scaling(df, start_date, end_date, source, fix_monday)
 
-                    file_base = get_file_name(f_name, tech, folder_name)
+                    file_base = generate_output_filename_for_technology(f_name, tech, folder_name)
                     df_cut.to_excel(os.path.join(destination_path, "raw", file_base + "_raw.xlsx"))
                     df_scaled.to_excel(os.path.join(destination_path, "scaled", file_base + "_scaled.xlsx"))
 
-                    CF_full, FLH_full = calculate_CF_FLH(df, tech)
+                    CF_full, FLH_full = compute_capacity_factor_and_flh(df, tech)
                     full_ts_stats["CF"].append(CF_full)
                     full_ts_stats["FLH"].append(FLH_full)
 
-                    CF_raw, FLH_raw = calculate_CF_FLH(df_cut, tech)
+                    CF_raw, FLH_raw = compute_capacity_factor_and_flh(df_cut, tech)
                     raw_ts_stats["CF"].append(CF_raw)
                     raw_ts_stats["FLH"].append(FLH_raw)
 
-                    CF_scaled, FLH_scaled = calculate_CF_FLH(df_scaled, tech)
+                    CF_scaled, FLH_scaled = compute_capacity_factor_and_flh(df_scaled, tech)
                     scaled_ts_stats["CF"].append(CF_scaled)
                     scaled_ts_stats["FLH"].append(FLH_scaled)
             

@@ -15,12 +15,12 @@ import numpy as np
 import pandas as pd
 
 
-def check_if_dir_exists(destination_path: str) -> None:
+def create_directory_if_needed(destination_path: str) -> None:
     """Create directory tree if it does not exist."""
     Path(destination_path).mkdir(parents=True, exist_ok=True)
 
 
-def fix_first_monday(df: pd.DataFrame, df_cut: pd.DataFrame, start_date: int) -> pd.DataFrame:
+def align_timeseries_to_first_monday(df: pd.DataFrame, df_cut: pd.DataFrame, start_date: int) -> pd.DataFrame:
     """Align the first timestep to Monday and ensure 8736 hourly steps."""
     t = np.arange(
         datetime(int(start_date), 1, 1),
@@ -40,13 +40,13 @@ def fix_first_monday(df: pd.DataFrame, df_cut: pd.DataFrame, start_date: int) ->
     return df_cut
 
 
-def cut_timeseries(df: pd.DataFrame, start_date: int, end_date: int) -> pd.DataFrame:
+def filter_timeseries_by_dates(df: pd.DataFrame, start_date: int, end_date: int) -> pd.DataFrame:
     """Cut a datetime-indexed DataFrame to a year range [start_date, end_date]."""
     mask = (df.index.year >= start_date) & (df.index.year <= end_date)
     return df.loc[mask]
 
 
-def get_onoff_source_from_folder(folder: str) -> tuple[str, str]:
+def parse_technology_folder_name(folder: str) -> tuple[str, str]:
     """Infer technology variant and source type from a folder name.
 
     Args:
@@ -75,7 +75,7 @@ def get_onoff_source_from_folder(folder: str) -> tuple[str, str]:
     raise ValueError(f"Unknown technology folder format: {folder}")
 
 
-def get_CapDev_timesteps(config: dict[str, Any]) -> list[str]:
+def build_capdev_timesteps_list(config: dict[str, Any]) -> list[str]:
     """Build CapDev timesteps from config values.
 
     Args:
@@ -90,7 +90,7 @@ def get_CapDev_timesteps(config: dict[str, Any]) -> list[str]:
     return [f"{s}.{t}" for s in s_values for t in config["CapDev_timesteps_to_keep"]["T"]]
 
 
-def create_time_column() -> pd.DataFrame:
+def create_balmorel_time_mapping() -> pd.DataFrame:
     """Create DA and CapDev time translation columns used by Balmorel."""
     list_s = [f"S{str(i).zfill(2)}" for i in range(1, 53)]
     list_t = [f"T{str(i).zfill(3)}" for i in range(1, 169)]
@@ -105,7 +105,7 @@ def create_time_column() -> pd.DataFrame:
     return df
 
 
-def _ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
+def _calculate_ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
     """Compute empirical CDF arrays (x, y) for a one-dimensional sample."""
     x = np.sort(data)
     n = x.size
@@ -113,13 +113,13 @@ def _ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
     return x, y
 
 
-def _inverse_ecdf(data: pd.Series, quantiles: np.ndarray) -> np.ndarray:
+def _compute_inverse_quantile(data: pd.Series, quantiles: np.ndarray) -> np.ndarray:
     """Map quantiles to values using empirical inverse CDF interpolation."""
-    x, y = _ecdf(data)
+    x, y = _calculate_ecdf(data)
     return np.interp(quantiles, y, x)
 
 
-def scale_data_to_same_mean_with_full_time_series(
+def scale_timeseries_to_full_distribution(
     df: pd.DataFrame,
     df_cut: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -141,24 +141,24 @@ def scale_data_to_same_mean_with_full_time_series(
         mask_zero_df = df[column_name] == 0
         mask_zero_df_cut = df_cut[column_name] == 0
 
-        x_cut, u_cut = _ecdf(df_cut[column_name].loc[~mask_zero_df_cut])
+        x_cut, u_cut = _calculate_ecdf(df_cut[column_name].loc[~mask_zero_df_cut])
         u_sel_orig = np.interp(df_cut[column_name].loc[~mask_zero_df_cut], x_cut, u_cut)
 
-        df_scaled.loc[~mask_zero_df_cut, column_name] = _inverse_ecdf(
+        df_scaled.loc[~mask_zero_df_cut, column_name] = _compute_inverse_quantile(
             df[column_name].loc[~mask_zero_df], u_sel_orig
         )
 
     return df_scaled
 
 
-def calc_CapDev_timeseries(
+def compute_capdev_timeseries(
     config: dict[str, Any],
     combined_scaled_dfs: pd.DataFrame,
     df_t: pd.DataFrame,
-    scaler: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame] = scale_data_to_same_mean_with_full_time_series,
+    scaler: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame] = scale_timeseries_to_full_distribution,
 ) -> pd.DataFrame:
     """Convert DA-scaled series to CapDev timeseries using configured timesteps."""
-    capdev_timesteps = get_CapDev_timesteps(config)
+    capdev_timesteps = build_capdev_timesteps_list(config)
     df_t_cut = df_t[df_t.CapDev_time.isin(capdev_timesteps)]
     filtered_df = combined_scaled_dfs[combined_scaled_dfs.index.isin(df_t_cut.DA_time)]
 

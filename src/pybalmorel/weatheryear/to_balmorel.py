@@ -14,10 +14,10 @@ import pandas as pd
 
 from .to_inc import create_SSS_TTT_AAA_inc,create_AAA_inc
 from .auxiliary_functions import (
-    calc_CapDev_timeseries,
-    check_if_dir_exists,
-    create_time_column,
-    get_onoff_source_from_folder,
+    compute_capdev_timeseries,
+    create_directory_if_needed,
+    create_balmorel_time_mapping,
+    parse_technology_folder_name,
 )
 from .config_models import ToBalmorelConfig
 
@@ -45,7 +45,7 @@ def add_FLH_existing_RG2_RG3(combined_scaled_FLH):
 
     return combined_scaled_FLH
 
-def fix_wind_column_names_to_balmorel(df: pd.DataFrame, tech_csv: str, onoff: str) -> pd.DataFrame:
+def format_wind_column_names_for_balmorel(df: pd.DataFrame, tech_csv: str, onoff: str) -> pd.DataFrame:
     if onoff == "Existing":
         if "Offshore" in tech_csv:
             onoff_suf = "_OFF"
@@ -73,7 +73,7 @@ def fix_wind_column_names_to_balmorel(df: pd.DataFrame, tech_csv: str, onoff: st
         df.columns = df.columns + onoff_suf + "_" + tech + "_" + rg
     return df
 
-def fix_WFLH_areas(df_cf: pd.DataFrame, onoff: str) -> pd.Series:
+def transform_wind_flh_to_balmorel_format(df_cf: pd.DataFrame, onoff: str) -> pd.Series:
 
     df_cf_melted = df_cf.reset_index().melt(id_vars='index', var_name='Column', value_name='Value')
 
@@ -96,7 +96,7 @@ def fix_WFLH_areas(df_cf: pd.DataFrame, onoff: str) -> pd.Series:
     return df_cf_melted
 
 
-def fix_solar_column_names_to_balmorel(df: pd.DataFrame, tech_csv: str, onoff: str) -> pd.DataFrame:
+def format_solar_column_names_for_balmorel(df: pd.DataFrame, tech_csv: str, onoff: str) -> pd.DataFrame:
     if "RGA" in tech_csv:
         rg = "RG1"
     elif "RGB" in tech_csv:
@@ -115,7 +115,7 @@ def fix_solar_column_names_to_balmorel(df: pd.DataFrame, tech_csv: str, onoff: s
     return df
 
 
-def get_FLH_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: str) -> pd.Series:
+def load_full_load_hours_data(folder: str, output_folder: str, scaled_raw_ts: str) -> pd.Series:
     if "Existing" in folder:
         df_cf = pd.read_excel(
             os.path.join(output_folder, folder, "stats", f"FLH_{scaled_raw_ts}_ts.xlsx"),
@@ -131,14 +131,14 @@ def get_FLH_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: str) ->
             index_col="Unnamed: 0",
         )
 
-    onoff, source = get_onoff_source_from_folder(folder)
-    df_cf = fix_WFLH_areas(df_cf, onoff)
+    onoff, source = parse_technology_folder_name(folder)
+    df_cf = transform_wind_flh_to_balmorel_format(df_cf, onoff)
     return df_cf
 
 
-def combine_excel_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: str) -> pd.DataFrame:
+def combine_technology_timeseries_files(folder: str, output_folder: str, scaled_raw_ts: str) -> pd.DataFrame:
     tech_csvs = os.listdir(os.path.join(output_folder, folder, scaled_raw_ts))
-    onoff, source = get_onoff_source_from_folder(folder)
+    onoff, source = parse_technology_folder_name(folder)
     combined_df = pd.DataFrame()
 
     for i, filename in enumerate(tech_csvs):
@@ -149,20 +149,20 @@ def combine_excel_for_balmorel(folder: str, output_folder: str, scaled_raw_ts: s
             combined_df.index=df.index
 
         if source=="wind":
-            df = fix_wind_column_names_to_balmorel(df, filename, onoff)
+            df = format_wind_column_names_for_balmorel(df, filename, onoff)
         elif source == "solar":
-            df = fix_solar_column_names_to_balmorel(df, filename, onoff)
+            df = format_solar_column_names_for_balmorel(df, filename, onoff)
 
         combined_df = pd.merge(combined_df, df, left_index=True, right_index=True)
 
     return combined_df
-def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
+def export_timeseries_to_balmorel_format(config_fn: str, start_date, output_folder: str):
     config = ToBalmorelConfig.from_file(config_fn)
 
     output_folder = os.path.join(output_folder, str(start_date))
-    check_if_dir_exists(os.path.join(output_folder, "to_balmorel", "DA", "scaled"))
-    check_if_dir_exists(os.path.join(output_folder, "to_balmorel", "DA", "raw"))
-    check_if_dir_exists(os.path.join(output_folder, "to_balmorel", "CapDev"))
+    create_directory_if_needed(os.path.join(output_folder, "to_balmorel", "DA", "scaled"))
+    create_directory_if_needed(os.path.join(output_folder, "to_balmorel", "DA", "raw"))
+    create_directory_if_needed(os.path.join(output_folder, "to_balmorel", "CapDev"))
 
     contents = os.listdir(output_folder)
     wind_criteria = {"Offshore", "Onshore", "Existing"}
@@ -192,12 +192,12 @@ def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
 
             dfs = []
             for tech in techs[source]:
-                dfs.append(combine_excel_for_balmorel(tech, output_folder, scaled_raw_ts))
+                dfs.append(combine_technology_timeseries_files(tech, output_folder, scaled_raw_ts))
 
             combined_scaled_dfs = pd.concat(dfs, axis=1)
             combined_scaled_FLH = (combined_scaled_dfs.mean().to_frame() * len(combined_scaled_dfs))[0]
 
-            df_t = create_time_column()
+            df_t = create_balmorel_time_mapping()
             if len(combined_scaled_dfs) > len(df_t):
                 combined_scaled_dfs = combined_scaled_dfs[: len(df_t)]
             df_t.index = combined_scaled_dfs.index
@@ -213,7 +213,7 @@ def timeseries_to_balmorel(config_fn: str, start_date, output_folder: str):
             combined_scaled_FLH = add_FLH_existing_RG2_RG3(combined_scaled_FLH)
             create_AAA_inc(combined_scaled_FLH, FLH_name, da_out)
 
-            df_CapDev_scaled = calc_CapDev_timeseries(
+            df_CapDev_scaled = compute_capdev_timeseries(
                 config.capdev_timesteps_to_keep.as_legacy_dict(),
                 combined_scaled_dfs,
                 df_t,

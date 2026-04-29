@@ -140,7 +140,7 @@ class ToBalmorelConfig:
 
 
 @dataclass(frozen=True)
-class CorresModuleConfig:
+class WeatherYearConfig:
     corres_results: dict[str, list[str]]
     regions_to_keep: RegionsConfig
     rg_to_keep: dict[str, list[str]]
@@ -148,7 +148,7 @@ class CorresModuleConfig:
     tech_to_keep: list[str]
 
     @classmethod
-    def from_file(cls, config_fn: str) -> "CorresModuleConfig":
+    def from_file(cls, config_fn: str) -> "WeatherYearConfig":
         raw = _load_yaml_file(config_fn)
         corres_results = _expect_dict_of_list_str(
             _require(raw, "corres_results", "root config"),

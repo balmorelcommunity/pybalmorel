@@ -188,7 +188,7 @@ def append_split_wind_solar_sets(the_file,df,name):
     the_file.write("/ ;")
 
 
-def create_list_inc(df,name,output_folder,equations=False):
+def build_inc_file_list_type(df,name,output_folder,equations=False):
 
     
     if name=="AAA_renewable":

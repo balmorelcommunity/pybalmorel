@@ -6,17 +6,17 @@ import numpy as np
 import pandas as pd
 
 from .auxiliary_functions import (
-    calc_CapDev_timeseries,
-    check_if_dir_exists,
-    create_time_column,
-    cut_timeseries,
-    fix_first_monday,
-    get_CapDev_timesteps,
+    compute_capdev_timeseries,
+    create_directory_if_needed,
+    create_balmorel_time_mapping,
+    filter_timeseries_by_dates,
+    align_timeseries_to_first_monday,
+    build_capdev_timesteps_list,
 )
 
 
 
-def _ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
+def _calculate_ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
     """Compute empirical CDF arrays (x, y) for one-dimensional data."""
     x = np.sort(data)
     n = x.size
@@ -24,23 +24,23 @@ def _ecdf(data: pd.Series) -> tuple[np.ndarray, np.ndarray]:
     return x, y
 
 
-def _inverse_ecdf(data: pd.Series, quantiles: np.ndarray) -> np.ndarray:
+def _compute_inverse_quantile(data: pd.Series, quantiles: np.ndarray) -> np.ndarray:
     """Compute inverse ECDF (quantile mapping) via interpolation."""
-    x, y = _ecdf(data)
+    x, y = _calculate_ecdf(data)
     return np.interp(quantiles, y, x)
 
 
-def scale_data_to_same_mean_with_full_time_series(
+def scale_timeseries_to_full_distribution(
     df: pd.DataFrame,
     df_cut: pd.DataFrame,
 ) -> pd.DataFrame:
     """Scale cut series by matching quantiles to the full-series distribution."""
     df_scaled = pd.DataFrame()
     for column_name in df.columns:
-        x_cut, u_cut = _ecdf(df_cut[column_name])
+        x_cut, u_cut = _calculate_ecdf(df_cut[column_name])
         u_sel_orig = np.interp(df_cut[column_name], x_cut, u_cut)
         new_data = pd.DataFrame(
-            _inverse_ecdf(df[column_name], u_sel_orig), columns=[column_name]
+            _compute_inverse_quantile(df[column_name], u_sel_orig), columns=[column_name]
         )
         df_scaled = pd.concat([df_scaled, new_data], axis=1)
 
@@ -48,18 +48,18 @@ def scale_data_to_same_mean_with_full_time_series(
     return df_scaled
 
 
-def treat_timeseries(
+def process_timeseries_with_scaling(
     df: pd.DataFrame,
     start_date: int,
     end_date: int,
     fix_monday: bool,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Cut, optionally Monday-align, and scale a time series."""
-    df_cut = cut_timeseries(df, start_date, end_date)
+    df_cut = filter_timeseries_by_dates(df, start_date, end_date)
     if fix_monday:
-        df_cut = fix_first_monday(df, df_cut, start_date)
+        df_cut = align_timeseries_to_first_monday(df, df_cut, start_date)
 
-    df_scaled = scale_data_to_same_mean_with_full_time_series(df, df_cut)
+    df_scaled = scale_timeseries_to_full_distribution(df, df_cut)
     return df, df_cut, df_scaled
 
 
@@ -116,7 +116,7 @@ def convert_to_list_df(df: pd.DataFrame, name: str, user_group: str) -> pd.DataF
 
 
 
-def create_list_inc(df: pd.DataFrame, name: str, filename: str, output_folder: str) -> None:
+def build_inc_file_list_type(df: pd.DataFrame, name: str, filename: str, output_folder: str) -> None:
     """Write Balmorel assignment lines to a .inc file."""
     with open(os.path.join(output_folder, f"{filename}.inc"), "w") as the_file:
         the_file.write("*File created from weatheryear module")

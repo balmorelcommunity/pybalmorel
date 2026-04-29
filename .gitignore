@@ -9,5 +9,7 @@ config
 build
 examples/files/multiweather_year_reuslts/
 examples/.ipynb_checkpoints/
+src/pybalmorel/.ipynb_checkpoints/
+src/pybalmorel/weatheryear/.ipynb_checkpoints/
 # This one is necessary to do tests
 !tests/output/.keepoutputfolder

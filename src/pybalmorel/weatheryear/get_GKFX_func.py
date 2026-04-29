@@ -14,7 +14,7 @@ import pandas as pd
 
 from .to_inc import create_GKFX_inc
 
-def get_GKFX(
+def build_GKFX(
     rrraaa_renewable_df: pd.DataFrame,
     config: dict,
     output_folder: str,

@@ -140,7 +140,7 @@ def add_unit_size_col(
 
 
 
-def get_GDATA(
+def build_GDATA(
     GGG_renewable_df: pd.DataFrame,
     turbines: dict,
     techs: dict,

@@ -27,10 +27,10 @@ from .interactive.interactive_functions import interactive_bar_chart
 from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 from .plotting.production_profile import plot_profile
 from .plotting.maps_balmorel import plot_map
-from .weatheryear.corres_to_energy_system_model import get_energy_system_xlsx
-from .weatheryear.to_balmorel import timeseries_to_balmorel
+from .weatheryear.corres_to_energy_system_model import export_timeseries_to_xlsx
+from .weatheryear.to_balmorel import export_timeseries_to_balmorel_format
 from .weatheryear.additional_inc import create_additional_inc
-from .weatheryear.demand2btc import create_demand_inc
+from .weatheryear.demand2btc import generate_demand_balmorel_inc_files
 
 #%% ------------------------------- ###
 ###           1. Outputs            ###
@@ -634,8 +634,8 @@ class WEATHERYEAR:
 
     def get_vre_data(self):
 
-        get_energy_system_xlsx(self.config_fn,self.year,self.output_folder)
-        dfs,FLH=timeseries_to_balmorel(self.config_fn,self.year,self.output_folder)
+        export_timeseries_to_xlsx(self.config_fn,self.year,self.output_folder)
+        dfs,FLH=export_timeseries_to_balmorel_format(self.config_fn,self.year,self.output_folder)
 
     def get_vre_related_files(self):
 
@@ -643,4 +643,4 @@ class WEATHERYEAR:
     
     def get_demand_data(self):
 
-        create_demand_inc(self.config_fn,self.year,self.output_folder)
+        generate_demand_balmorel_inc_files(self.config_fn,self.year,self.output_folder)
