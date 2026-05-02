@@ -25,6 +25,10 @@ from .auxiliary_functions import (
     scale_timeseries_to_full_distribution,
 )
 from .config_models import WeatherYearConfig
+from .exceptions import MissingRequiredColumnsError, EmptyMergeResultError
+
+
+logger = logging.getLogger(__name__)
 
 
 def save_log(config: WeatherYearConfig, output_folder: str) -> None:
@@ -34,17 +38,31 @@ def save_log(config: WeatherYearConfig, output_folder: str) -> None:
         output_folder: The folder where the log file will be saved.
     """
     log_filename = os.path.join(output_folder, 'logfile.log')
-    logger = logging.getLogger()
-    logger.handlers.clear()
-
     file_handler = logging.FileHandler(log_filename)
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-    logger.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
 
-    logging.info("Config file content:")
-    logging.info("\n%s", pformat(config))
+    config_logger = logging.getLogger(f"{__name__}.config")
+    config_logger.setLevel(logging.INFO)
+    config_logger.propagate = False
+    config_logger.addHandler(file_handler)
+
+    try:
+        config_logger.info("Config file content:")
+        config_logger.info("\n%s", pformat(config))
+    finally:
+        config_logger.removeHandler(file_handler)
+        file_handler.close()
+
+
+def _require_columns(df: pd.DataFrame, required_columns: set[str], context: str) -> None:
+    """Ensure required columns exist in a DataFrame before downstream processing."""
+    missing = sorted(required_columns - set(df.columns))
+    if missing:
+        raise MissingRequiredColumnsError(
+            f"Missing required columns {missing} in {context}. "
+            f"Available columns: {list(df.columns)}"
+        )
 
 
 def _source_file_names(folder_name: str) -> list[str]:
@@ -294,12 +312,17 @@ def export_timeseries_to_xlsx(
                     create_directory_if_needed(os.path.join(destination_path, "scaled"))
                     create_directory_if_needed(os.path.join(destination_path, "stats"))
 
-                    df = pd.read_csv(
-                        os.path.join(run_folder, tech, "Results", f_name + ".csv"),
-                        index_col="time",
-                    )
+                    csv_path = os.path.join(run_folder, tech, "Results", f_name + ".csv")
+                    df = pd.read_csv(csv_path)
+                    _require_columns(df, {"time"}, context=f"CSV '{csv_path}'")
+                    df = df.set_index("time")
 
                     df = _select_region_columns(df, run_folder, config)
+                    if df.columns.empty:
+                        raise EmptyMergeResultError(
+                            "No region columns remain after filtering configured regions for "
+                            f"technology '{tech}' in run folder '{run_folder}'."
+                        )
 
                     df, df_cut, df_scaled = process_timeseries_with_scaling(df, start_date, end_date, source, fix_monday)
 

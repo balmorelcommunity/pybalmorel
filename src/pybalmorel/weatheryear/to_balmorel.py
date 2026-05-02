@@ -20,6 +20,7 @@ from .auxiliary_functions import (
     parse_technology_folder_name,
 )
 from .config_models import ToBalmorelConfig
+from .exceptions import EmptyMergeResultError, MissingRequiredColumnsError
 
 
 def add_WND_VAR_T_Existing_RG2_RG3(combined_scaled_dfs):
@@ -139,21 +140,36 @@ def load_full_load_hours_data(folder: str, output_folder: str, scaled_raw_ts: st
 def combine_technology_timeseries_files(folder: str, output_folder: str, scaled_raw_ts: str) -> pd.DataFrame:
     tech_csvs = os.listdir(os.path.join(output_folder, folder, scaled_raw_ts))
     onoff, source = parse_technology_folder_name(folder)
-    combined_df = pd.DataFrame()
+    if not tech_csvs:
+        raise EmptyMergeResultError(
+            f"No time-series files found in '{os.path.join(output_folder, folder, scaled_raw_ts)}'."
+        )
 
-    for i, filename in enumerate(tech_csvs):
+    dfs: list[pd.DataFrame] = []
+
+    for filename in tech_csvs:
         df = pd.read_excel(
             os.path.join(output_folder, folder, scaled_raw_ts, filename), index_col="time"
         )
-        if i==0:
-            combined_df.index=df.index
+
+        if df.columns.empty:
+            raise MissingRequiredColumnsError(
+                f"No data columns found in '{filename}' under folder '{folder}'."
+            )
 
         if source=="wind":
             df = format_wind_column_names_for_balmorel(df, filename, onoff)
         elif source == "solar":
             df = format_solar_column_names_for_balmorel(df, filename, onoff)
 
-        combined_df = pd.merge(combined_df, df, left_index=True, right_index=True)
+        dfs.append(df)
+
+    combined_df = pd.concat(dfs, axis=1, join="inner")
+    if combined_df.empty or combined_df.columns.empty:
+        raise EmptyMergeResultError(
+            "Combined technology time series is empty after merging on the time index for "
+            f"folder '{folder}' ({scaled_raw_ts})."
+        )
 
     return combined_df
 def export_timeseries_to_balmorel_format(config_fn: str, start_date, output_folder: str):

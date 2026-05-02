@@ -14,6 +14,8 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 
+from .exceptions import MalformedTechnologyFolderError
+
 
 def create_directory_if_needed(destination_path: str) -> None:
     """Create directory tree if it does not exist."""
@@ -56,7 +58,7 @@ def parse_technology_folder_name(folder: str) -> tuple[str, str]:
         Tuple of (onoff, source) used by downstream formatting logic.
 
     Raises:
-        ValueError: If no known folder pattern is found.
+        MalformedTechnologyFolderError: If no known folder pattern is found.
     """
     folder_map = [
         ("Future_Onshore", ("Onshore", "wind")),
@@ -72,7 +74,12 @@ def parse_technology_folder_name(folder: str) -> tuple[str, str]:
         if pattern in folder:
             return result
 
-    raise ValueError(f"Unknown technology folder format: {folder}")
+    raise MalformedTechnologyFolderError(
+        f"Unknown technology folder format: '{folder}'. "
+        "Expected one of: Future_Onshore, Future_Offshore_floating, "
+        "Future_Offshore_bottom_fixed, Existing_ERA5_GWA2, PV_Rooftop, "
+        "PV_Utility_scale_no_tracking, PV_Utility_scale_tracking."
+    )
 
 
 def build_capdev_timesteps_list(config: dict[str, Any]) -> list[str]:
