@@ -98,7 +98,12 @@ def build_capdev_timesteps_list(config: dict[str, Any]) -> list[str]:
 
 
 def create_balmorel_time_mapping() -> pd.DataFrame:
-    """Create DA and CapDev time translation columns used by Balmorel."""
+    """Create a DataFrame mapping CapDev and DA timesteps to Balmorel time identifiers.
+    Args:
+        None
+    Returns:
+        DataFrame with columns 'CapDev_time' and 'DA_time'.
+    """
     list_s = [f"S{str(i).zfill(2)}" for i in range(1, 53)]
     list_t = [f"T{str(i).zfill(3)}" for i in range(1, 169)]
     capdev_periods = [f"{s}.{t}" for s in list_s for t in list_t]
@@ -129,6 +134,7 @@ def _compute_inverse_quantile(data: pd.Series, quantiles: np.ndarray) -> np.ndar
 def scale_timeseries_to_full_distribution(
     df: pd.DataFrame,
     df_cut: pd.DataFrame,
+    source: str,
 ) -> pd.DataFrame:
     """Scale reduced time series using the distribution of the full series.
 
@@ -138,7 +144,7 @@ def scale_timeseries_to_full_distribution(
     Args:
         df: Full-resolution DataFrame.
         df_cut: Reduced-resolution DataFrame to be scaled.
-
+        source: The source type (e.g., "wind" or "solar") to determine specific scaling logic.
     Returns:
         Scaled DataFrame with the same shape and index/columns as df_cut.
     """
@@ -148,23 +154,65 @@ def scale_timeseries_to_full_distribution(
         mask_zero_df = df[column_name] == 0
         mask_zero_df_cut = df_cut[column_name] == 0
 
-        x_cut, u_cut = _calculate_ecdf(df_cut[column_name].loc[~mask_zero_df_cut])
-        u_sel_orig = np.interp(df_cut[column_name].loc[~mask_zero_df_cut], x_cut, u_cut)
-
-        df_scaled.loc[~mask_zero_df_cut, column_name] = _compute_inverse_quantile(
+        if source == "solar":
+            x_cut, u_cut = _calculate_ecdf(df_cut[column_name].loc[~mask_zero_df_cut])
+            u_sel_orig = np.interp(df_cut[column_name].loc[~mask_zero_df_cut], x_cut, u_cut)
+            
+            df_scaled.loc[~mask_zero_df_cut, column_name] = _compute_inverse_quantile(
             df[column_name].loc[~mask_zero_df], u_sel_orig
         )
+        else:
+            x_cut, u_cut = _calculate_ecdf(df_cut[column_name])
+            u_sel_orig = np.interp(df_cut[column_name], x_cut, u_cut)
+            df_scaled[column_name] = _compute_inverse_quantile(df[column_name], u_sel_orig)
 
     return df_scaled
 
+def process_timeseries_with_scaling(df: pd.DataFrame, start_date: str, end_date: str, source: str, fix_monday: bool) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Apply necessary treatments to the time series data, including filtering by date range, fixing the first Monday if needed, and scaling the data to have the same mean as the full time series.
+     Args:
+        df: The original DataFrame containing the time series data.
+        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
+        end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format).
+        source: The source type (e.g., "wind" or "solar") to determine specific treatments.
+        fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
+    Returns:
+        A tuple containing three DataFrames: the original full time series, the cut time series based on the date range, and the scaled time series.
+    """
+
+    if source == "solar":
+        df[df < 0] = 0
+
+    # CorRES CSV indices are read as strings and must be normalized before year filtering.
+    df.index = pd.to_datetime(df.index)
+    
+    df_cut=filter_timeseries_by_dates(df,start_date,end_date)
+    if fix_monday:
+        df_cut= align_timeseries_to_first_monday(df,df_cut,start_date)
+
+    
+    df_scaled=scale_timeseries_to_full_distribution(df,df_cut,source)
+    
+    
+
+    
+    return df, df_cut,df_scaled
 
 def compute_capdev_timeseries(
     config: dict[str, Any],
     combined_scaled_dfs: pd.DataFrame,
     df_t: pd.DataFrame,
-    scaler: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame] = scale_timeseries_to_full_distribution,
+    source: str,
 ) -> pd.DataFrame:
-    """Convert DA-scaled series to CapDev timeseries using configured timesteps."""
+    """Convert DA-scaled series to CapDev timeseries using configured timesteps.
+    Args:
+        config: Configuration dictionary containing 'CapDev_timesteps_to_keep'.
+        combined_scaled_dfs: DataFrame of DA-scaled time series.
+        df_t: DataFrame mapping CapDev and DA timesteps.
+        source: The source type (e.g., "wind" or "solar","demand") to determine specific scaling logic.
+    Returns:
+        df_scaled:DataFrame of CapDev-scaled time series with index as CapDev_time.
+    """
     capdev_timesteps = build_capdev_timesteps_list(config)
     df_t_cut = df_t[df_t.CapDev_time.isin(capdev_timesteps)]
     filtered_df = combined_scaled_dfs[combined_scaled_dfs.index.isin(df_t_cut.DA_time)]
@@ -174,6 +222,7 @@ def compute_capdev_timeseries(
     combined_scaled_copy.index = df_t.index
     filtered_copy.index = df_t_cut.index
 
-    df_scaled = scaler(combined_scaled_copy, filtered_copy)
+    df_scaled=scale_timeseries_to_full_distribution(combined_scaled_copy,filtered_copy, source)
+    #df_scaled = scaler(combined_scaled_copy, filtered_copy)
     df_scaled.index = df_t_cut.CapDev_time
     return df_scaled

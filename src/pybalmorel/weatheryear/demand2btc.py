@@ -8,17 +8,19 @@ import os
 
 import pandas as pd
 
-from .auxiliary_functions import compute_capdev_timeseries
+from .auxiliary_functions import (
+    compute_capdev_timeseries,
+    create_directory_if_needed,
+    create_balmorel_time_mapping,
+    process_timeseries_with_scaling,
+    scale_timeseries_to_full_distribution
+)
 from .config_models import DemandModuleConfig
 from .functions_demand_to_btc import (
-    create_directory_if_needed,
     convert_to_list_df_annual_correction,
     convert_to_list_df_new,
-    build_inc_file_list_type,
-    create_balmorel_time_mapping,
-    scale_timeseries_to_full_distribution,
-    process_timeseries_with_scaling,
 )
+from .to_inc import build_inc_file_list_type
 
 
 def _apply_balmorel_da_time_index(df: pd.DataFrame, time_df: pd.DataFrame) -> pd.DataFrame:
@@ -45,7 +47,14 @@ def _annual_correction_factor_for_year(
     year: int,
     reference_year: int,
 ) -> pd.Series:
-    """Compute annual correction factor for one year relative to a reference year."""
+    """Compute annual correction factor for one year relative to a reference year.
+    Args:
+        correction_factors_df: DataFrame with annual correction factors indexed by year.
+        year: The year for which to compute the correction factor.
+        reference_year: The reference year for comparison.
+    Returns:
+        A Series containing the correction factors for the specified year.
+    """
     return correction_factors_df.loc[year] / correction_factors_df.loc[reference_year]
 
 
@@ -79,19 +88,19 @@ def _write_demand_timeseries_inc_files(
 ) -> None:
     """Write DA raw/scaled and CapDev .inc files for one demand user group."""
     df = convert_to_list_df_new(df_raw, symbol, user_name)
-    build_inc_file_list_type(df, symbol, filename, da_raw_folder)
+    build_inc_file_list_type(df, symbol, da_raw_folder, filename=filename)
 
     df = convert_to_list_df_new(df_scaled, symbol, user_name)
-    build_inc_file_list_type(df, symbol, filename, da_scaled_folder)
+    build_inc_file_list_type(df, symbol, da_scaled_folder, filename=filename)
 
     df_scaled_capdev = compute_capdev_timeseries(
         config.capdev_timesteps_to_keep.as_legacy_dict(),
         df_scaled,
         time_df,
-        scaler=scale_timeseries_to_full_distribution,
+        source="demand"
     )
     df = convert_to_list_df_new(df_scaled_capdev, symbol, user_name)
-    build_inc_file_list_type(df, symbol, filename, capdev_folder)
+    build_inc_file_list_type(df, symbol, capdev_folder, filename=filename)
 
 
 def _prepare_common_output_dirs(year_output_folder: str) -> tuple[str, str, str]:
@@ -109,12 +118,12 @@ def _prepare_common_output_dirs(year_output_folder: str) -> tuple[str, str, str]
 
 def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder: str) -> None:
     """Create demand-related Balmorel .inc files for one weather year.
-
     Args:
         config_fn: Path to YAML config file.
         year: Weather year to process.
         output_folder: Root output directory.
     """
+    # Load configuration and input CSVs
     config = DemandModuleConfig.from_file(config_fn)
 
     spaceheat_to_hotwater_ratio = config.spaceheat_to_hotwater_ratio
@@ -139,12 +148,12 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     df_heat_corr_factors_resh = pd.read_csv(
         os.path.join(csv_folder, "heat_yearly_corr_factors_resh.csv"), index_col=0
     )
-
+    
     year_output_folder = os.path.join(output_folder, str(year))
     da_raw_folder, da_scaled_folder, capdev_folder = _prepare_common_output_dirs(year_output_folder)
 
-    # Electricity demand
-    _, df_cut, df_scaled = process_timeseries_with_scaling(df_classic, year, year, fix_monday=True)
+    # Electricity demand: individual users
+    _, df_cut, df_scaled = process_timeseries_with_scaling(df_classic, year, year, "demand", fix_monday=True)
 
     _write_raw_and_scaled_csv(
         df_raw=df_cut,
@@ -184,7 +193,7 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     )
 
     # Heat demand: individual users
-    _, df_cut, df_scaled = process_timeseries_with_scaling(df_space_heat_profile, year, year, fix_monday=True)
+    _, df_cut, df_scaled = process_timeseries_with_scaling(df_space_heat_profile, year, year,"demand", fix_monday=True)
 
     _write_raw_and_scaled_csv(
         df_raw=df_cut,
@@ -224,7 +233,7 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     )
 
     # Heat demand: RESH (space heat blended with hot-water profile)
-    _, df_cut, df_scaled = process_timeseries_with_scaling(df_resh_heat_profile, year, year, fix_monday=True)
+    _, df_cut, df_scaled = process_timeseries_with_scaling(df_resh_heat_profile, year, year, "demand", fix_monday=True)
 
     resh_raw_folder = os.path.join(year_output_folder, "heat_profile_resh", "raw")
     resh_scaled_folder = os.path.join(year_output_folder, "heat_profile_resh", "scaled")
@@ -276,10 +285,10 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         reference_year=ann_corr_fac_ref_year,
     )
     df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "RESIDENTIAL")
-    build_inc_file_list_type(df, "DH", "DH_RESIDENTIAL", to_balmorel_folder)
+    build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_RESIDENTIAL")
 
     df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "TERTIARY")
-    build_inc_file_list_type(df, "DH", "DH_TERTIARY", to_balmorel_folder)
+    build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_TERTIARY")
 
     df_heat_corr_factor_year = _annual_correction_factor_for_year(
         correction_factors_df=df_heat_corr_factors_resh,
@@ -287,7 +296,7 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         reference_year=ann_corr_fac_ref_year,
     )
     df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "RESH")
-    build_inc_file_list_type(df, "DH", "DH_RESH", to_balmorel_folder)
+    build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_RESH")
 
 
 

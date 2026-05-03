@@ -20,9 +20,7 @@ import numpy as np
 
 from .auxiliary_functions import (
     create_directory_if_needed,
-    filter_timeseries_by_dates,
-    align_timeseries_to_first_monday,
-    scale_timeseries_to_full_distribution,
+    process_timeseries_with_scaling
 )
 from .config_models import WeatherYearConfig
 from .exceptions import MissingRequiredColumnsError, EmptyMergeResultError
@@ -203,35 +201,7 @@ def compute_capacity_factor_and_flh(df: pd.DataFrame, tech: str) -> tuple[pd.Dat
 
 
     
-def process_timeseries_with_scaling(df: pd.DataFrame, start_date: str, end_date: str, source: str, fix_monday: bool) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Apply necessary treatments to the time series data, including filtering by date range, fixing the first Monday if needed, and scaling the data to have the same mean as the full time series.
-     Args:
-        df: The original DataFrame containing the time series data.
-        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
-        end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format).
-        source: The source type (e.g., "wind" or "solar") to determine specific treatments.
-        fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
-    Returns:
-        A tuple containing three DataFrames: the original full time series, the cut time series based on the date range, and the scaled time series.
-    """
 
-    if source == "solar":
-        df[df < 0] = 0
-
-    # CorRES CSV indices are read as strings and must be normalized before year filtering.
-    df.index = pd.to_datetime(df.index)
-    
-    df_cut=filter_timeseries_by_dates(df,start_date,end_date)
-    if fix_monday:
-        df_cut= align_timeseries_to_first_monday(df,df_cut,start_date)
-
-    
-    df_scaled=scale_timeseries_to_full_distribution(df,df_cut)
-    
-    
-
-    
-    return df, df_cut,df_scaled
 
 
 
@@ -277,73 +247,100 @@ def export_timeseries_to_xlsx(
     end_date: str | bool = False,
     fix_monday: bool = True,
 ) -> None:
+    """Main function to read CorRES output files, process the time series data, and export it to Excel files for use in Balmorel.
+     Args:
+        config_fn: The file path to the configuration file (e.g., YAML) containing settings for which technologies and regions to keep, as well as the paths to the CorRES results.
+        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
+        output_folder: The folder where the processed Excel files will be saved.
+        end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format). If False, no end date filtering is applied.
+        fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing. Defaults to True.
+    Returns:
+        None. The function saves the processed time series data to Excel files in the specified output folder.
+     Raises:
+        MissingRequiredColumnsError: If required columns are missing from the input CSV files.
+        EmptyMergeResultError: If no region columns remain after filtering for the configured regions.
+    """
+    # Create the output directory if it doesn't exist
     create_directory_if_needed(output_folder)
-    config = WeatherYearConfig.from_file(config_fn)
 
-    save_log(config, output_folder)
+    # Load the configuration from the specified file
+    weather_config = WeatherYearConfig.from_file(config_fn)
+    
+    # Save the configuration to a log file in the output folder for traceability
+    save_log(weather_config, output_folder)
 
-    output_folder = os.path.join(output_folder, str(start_date))
+    # Append the start date to the output folder path to create a subfolder for this specific weather year processing
+    year_output_folder = os.path.join(output_folder, str(start_date))
 
     if not end_date:
         end_date = start_date
-
-    for source in ["wind", "solar"]:
-        for run_folder in config.corres_results[source]:
+    
+    # Iterate over the configured sources (wind and solar) and their corresponding run folders to process the time series data for each technology.
+    for source_name in ["wind", "solar"]:
+        for run_folder in weather_config.corres_results[source_name]:
             folder_name = os.path.basename(Path(run_folder))
-
-            files_names = _source_file_names(folder_name)
-
-            techs = extract_technology_folders(run_folder)
+            # Determine which input file names to read based on the folder name and source type (e.g., "P" for power, "WS" for wind speed, "DNI" for solar direct normal irradiance).
+            input_file_names = _source_file_names(folder_name)
+            # Extract the technology folders from the CorRES results directory based on expected naming patterns (e.g., "Onshore", "Offshore", "PV", "SP", "RG").
+            technology_folders = extract_technology_folders(run_folder)
 
             full_ts_stats = {"CF": [], "FLH": []}
             raw_ts_stats = {"CF": [], "FLH": []}
             scaled_ts_stats = {"CF": [], "FLH": []}
-            
-            for tech in techs:
-                for f_name in files_names:
-                    if source == "wind" and not is_wind_tech_enabled(run_folder, tech, config):
+            # Loop through each technology folder and input file name, applying the necessary filters based on the configuration settings for which technologies and regions to keep. Process the time series data, 
+            # compute the capacity factor and full load hours, and save the results to Excel files in the appropriate subfolders (raw, scaled, stats) within the year-specific output folder.
+            for technology_name in technology_folders:
+                for input_file_stem in input_file_names:
+                    if source_name == "wind" and not is_wind_tech_enabled(run_folder, technology_name, weather_config):
                         continue
-                    if source == "solar" and not is_solar_tech_enabled(run_folder, tech, config):
+                    if source_name == "solar" and not is_solar_tech_enabled(run_folder, technology_name, weather_config):
                         continue
+                    
+                    # Ensure output directories exist for this run folder.
+                    destination_folder = os.path.join(year_output_folder, folder_name)
+                    create_directory_if_needed(destination_folder)
+                    for subfolder_name in ("raw", "scaled", "stats"):
+                        create_directory_if_needed(os.path.join(destination_folder, subfolder_name))
+                    
+                    # Read the time series data from the corresponding CSV file for this technology and input type, ensuring that the required "time" column is present. Set the "time" column as the index of the DataFrame.
+                    csv_path = os.path.join(run_folder, technology_name, "Results", input_file_stem + ".csv")
+                    time_series_df = pd.read_csv(csv_path)
+                    _require_columns(time_series_df, {"time"}, context=f"CSV '{csv_path}'")
+                    time_series_df = time_series_df.set_index("time")
 
-                    destination_path = os.path.join(output_folder, folder_name)
-                    create_directory_if_needed(destination_path)
-                    create_directory_if_needed(os.path.join(destination_path, "raw"))
-                    create_directory_if_needed(os.path.join(destination_path, "scaled"))
-                    create_directory_if_needed(os.path.join(destination_path, "stats"))
-
-                    csv_path = os.path.join(run_folder, tech, "Results", f_name + ".csv")
-                    df = pd.read_csv(csv_path)
-                    _require_columns(df, {"time"}, context=f"CSV '{csv_path}'")
-                    df = df.set_index("time")
-
-                    df = _select_region_columns(df, run_folder, config)
-                    if df.columns.empty:
+                    time_series_df = _select_region_columns(time_series_df, run_folder, weather_config)
+                    if time_series_df.columns.empty:
                         raise EmptyMergeResultError(
                             "No region columns remain after filtering configured regions for "
-                            f"technology '{tech}' in run folder '{run_folder}'."
+                            f"technology '{technology_name}' in run folder '{run_folder}'."
                         )
+                
+                    full_series_df, raw_window_df, scaled_window_df = process_timeseries_with_scaling(
+                        time_series_df,
+                        start_date,
+                        end_date,
+                        source_name,
+                        fix_monday,
+                    )
 
-                    df, df_cut, df_scaled = process_timeseries_with_scaling(df, start_date, end_date, source, fix_monday)
+                    output_file_base = generate_output_filename_for_technology(input_file_stem, technology_name, folder_name)
+                    _write_processed_timeseries(raw_window_df, scaled_window_df, destination_folder, output_file_base)
 
-                    file_base = generate_output_filename_for_technology(f_name, tech, folder_name)
-                    _write_processed_timeseries(df_cut, df_scaled, destination_path, file_base)
+                    full_cf_df, full_flh_df = compute_capacity_factor_and_flh(full_series_df, technology_name)
+                    full_ts_stats["CF"].append(full_cf_df)
+                    full_ts_stats["FLH"].append(full_flh_df)
 
-                    CF_full, FLH_full = compute_capacity_factor_and_flh(df, tech)
-                    full_ts_stats["CF"].append(CF_full)
-                    full_ts_stats["FLH"].append(FLH_full)
+                    raw_cf_df, raw_flh_df = compute_capacity_factor_and_flh(raw_window_df, technology_name)
+                    raw_ts_stats["CF"].append(raw_cf_df)
+                    raw_ts_stats["FLH"].append(raw_flh_df)
 
-                    CF_raw, FLH_raw = compute_capacity_factor_and_flh(df_cut, tech)
-                    raw_ts_stats["CF"].append(CF_raw)
-                    raw_ts_stats["FLH"].append(FLH_raw)
-
-                    CF_scaled, FLH_scaled = compute_capacity_factor_and_flh(df_scaled, tech)
-                    scaled_ts_stats["CF"].append(CF_scaled)
-                    scaled_ts_stats["FLH"].append(FLH_scaled)
+                    scaled_cf_df, scaled_flh_df = compute_capacity_factor_and_flh(scaled_window_df, technology_name)
+                    scaled_ts_stats["CF"].append(scaled_cf_df)
+                    scaled_ts_stats["FLH"].append(scaled_flh_df)
             
-                    stats_path = os.path.join(destination_path, "stats")
+                    stats_folder = os.path.join(destination_folder, "stats")
                     _write_stats_excel(
-                        stats_path=stats_path,
+                        stats_path=stats_folder,
                         run_folder=run_folder,
                         full_ts_stats=full_ts_stats,
                         raw_ts_stats=raw_ts_stats,

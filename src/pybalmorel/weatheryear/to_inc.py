@@ -14,6 +14,19 @@ import os
 
 #from pybalmorel.classes import IncFile
 
+
+_INC_PREFIX_MAP: dict[str, str] = {
+    "AAA_renewable":        "SET AAA(CCCRRRAAA)  'Areas with renewables'  \n ",
+    "CCCRRRAAA_renewable":  "SET CCCRRRAAA  'Areas with renewables' \n",
+    "GGG_renewable":        "SET GGG  'Renewable technologies' \n",
+    "G_renewable":          "SET G(GGG)  'Renewable technologies' \n",
+    "RRRAAA_renewable":     "SET RRRAAA(RRR,AAA)  'Areas in regions'  \n",
+    "INVDATASET_renewables": "SET INVDATASET    \n",
+    "INVDATA_renewable":    "",
+    "ALLOWEDINV":           "SET ALLOWEDINV(AAA,GGG) ",
+    "ANNUITYCG_renewables": "PARAMETER ANNUITYCG(CCC,GGG) ",
+}
+
 class IncFile_temp:
     """A useful class for creating .inc-files for GAMS models
     Args:
@@ -188,50 +201,44 @@ def append_split_wind_solar_sets(the_file, df: pd.DataFrame, name: str) -> None:
     the_file.write("/ ;")
 
 
+
+
 def build_inc_file_list_type(
     df: pd.DataFrame,
     name: str,
     output_folder: str,
     equations: bool = False,
+    filename: str | None = None,
 ) -> None:
+    """Write Balmorel set/parameter assignment lines to a .inc file.
 
-    
-    if name=="AAA_renewable":
-        prefix = "SET AAA(CCCRRRAAA)  'Areas with renewables'  \n "
-       
-    elif name=="CCCRRRAAA_renewable":
-        prefix = "SET CCCRRRAAA  'Areas with renewables' \n"
-    elif name=="GGG_renewable":
-        prefix = "SET GGG  'Renewable technologies' \n"
-    elif name=="G_renewable":
-        prefix = "SET G(GGG)  'Renewable technologies' \n"
-    elif name=="RRRAAA_renewable":
-        prefix = "SET RRRAAA(RRR,AAA)  'Areas in regions'  \n"
-    elif name=="INVDATASET_renewables":
-        prefix = "SET INVDATASET    \n"
-    elif name=="INVDATA_renewable":
-        prefix = ""
-    elif name=="ALLOWEDINV":
-        prefix = "SET ALLOWEDINV(AAA,GGG) "   
-    elif name=="ANNUITYCG_renewables":
-        prefix = "PARAMETER ANNUITYCG(CCC,GGG) "    
-        
-    with open(output_folder + "/" + name + ".inc", "w") as the_file:
-            the_file.write("*File created from weatheryear module")
-            the_file.write("\n")
-            if not equations:
-                the_file.write("$onMulti")
-                the_file.write("\n")
-                the_file.write(prefix )
-                the_file.write("\n")
-                the_file.write("/ ")
-                the_file.write("\n")
-            for item in df[name]:
-                the_file.write(item +"\n" )
-            if not equations:
-                the_file.write("/ ;")
-            if (name=="AAA_renewable")  | (name=="G_renewable") :
-                append_split_wind_solar_sets(the_file,df,name)
+    Args:
+        df: DataFrame whose column ``name`` contains the assignment lines to write.
+        name: Column key used to look up lines in ``df`` and to resolve the GAMS
+            prefix/suffix for known renewable-set names.
+        output_folder: Directory where the ``.inc`` file is written.
+        equations: When *True*, skip the ``$onMulti`` / ``/ … /;`` envelope and
+            write raw assignment lines only (used for INVDATA and ANNUITYCG blocks).
+        filename: Output file stem (without ``.inc``). Defaults to ``name`` when
+            not provided, allowing callers to write a different file name while
+            still keying into ``df`` by ``name``.
+    """
+    output_filename = filename if filename is not None else name
+    prefix = _INC_PREFIX_MAP.get(name)
+    write_envelope = (prefix is not None) and (not equations)
+
+    with open(os.path.join(output_folder, f"{output_filename}.inc"), "w") as the_file:
+        the_file.write("*File created from weatheryear module\n")
+        if write_envelope:
+            the_file.write("$onMulti\n")
+            the_file.write(prefix)
+            the_file.write("\n/ \n")
+        for item in df[name]:
+            the_file.write(item + "\n")
+        if write_envelope:
+            the_file.write("/ ;")
+        if name in ("AAA_renewable", "G_renewable"):
+            append_split_wind_solar_sets(the_file, df, name)
             #elif name=="ALLOWEDINV":
             #    append_ALLOWEDINV_eqs(the_file,df)
 
