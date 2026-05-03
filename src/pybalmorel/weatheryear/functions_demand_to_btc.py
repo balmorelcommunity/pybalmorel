@@ -2,43 +2,6 @@
 import pandas as pd
 
 
-
-
-
-#def scale_timeseries_to_full_distribution(
-#    df: pd.DataFrame,
-#    df_cut: pd.DataFrame,
-#) -> pd.DataFrame:
-#    """Scale cut series by matching quantiles to the full-series distribution."""
-#    df_scaled = pd.DataFrame()
-#    for column_name in df.columns:
-#        x_cut, u_cut = _calculate_ecdf(df_cut[column_name])
-#        u_sel_orig = np.interp(df_cut[column_name], x_cut, u_cut)
-#        new_data = pd.DataFrame(
-#            _compute_inverse_quantile(df[column_name], u_sel_orig), columns=[column_name]
-#        )
-#        df_scaled = pd.concat([df_scaled, new_data], axis=1)
-
-#    df_scaled.index = df_cut.index
-#    return df_scaled
-
-
-#def process_timeseries_with_scaling(
-#    df: pd.DataFrame,
-#    start_date: int,
-#    end_date: int,
-#    fix_monday: bool,
-#) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-#    """Cut, optionally Monday-align, and scale a time series."""
-#    df_cut = filter_timeseries_by_dates(df, start_date, end_date)
-#    if fix_monday:
-#        df_cut = align_timeseries_to_first_monday(df, df_cut, start_date)
-
-#    df_scaled = scale_timeseries_to_full_distribution(df, df_cut)
-#    return df, df_cut, df_scaled
-
-
-
 def convert_to_list_df_new(df: pd.DataFrame, name: str, user_name: str) -> pd.DataFrame:
     """Convert time-series DataFrame to Balmorel assignment lines."""
     output = []

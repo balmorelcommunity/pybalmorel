@@ -8,7 +8,8 @@ Description
 """
 
 
-from typing import Union
+from dataclasses import dataclass
+from typing import Callable, Union
 import pandas as pd
 import os
 
@@ -26,6 +27,97 @@ _INC_PREFIX_MAP: dict[str, str] = {
     "ALLOWEDINV":           "SET ALLOWEDINV(AAA,GGG) ",
     "ANNUITYCG_renewables": "PARAMETER ANNUITYCG(CCC,GGG) ",
 }
+
+
+@dataclass(frozen=True)
+class _IncTableSpec:
+    prefix: str
+    suffix: str
+    body_builder: Callable[[pd.DataFrame | pd.Series], pd.DataFrame]
+
+
+def _copy_table_body(data: pd.DataFrame | pd.Series) -> pd.DataFrame:
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+    return pd.DataFrame(index=list(data.index), columns=list(data.columns), data=data.values)
+
+
+def _single_value_parameter_body(data: pd.DataFrame | pd.Series) -> pd.DataFrame:
+    if isinstance(data, pd.DataFrame):
+        if data.shape[1] != 1:
+            raise ValueError("Single-value parameter .inc files require exactly one data column")
+        data = data.iloc[:, 0]
+    return pd.DataFrame(index=list(data.index), columns=[""], data=data.values)
+
+
+_INC_TABLE_SPECS: dict[str, _IncTableSpec] = {
+    "WND_VAR_T": _IncTableSpec(
+        prefix="TABLE   WND_VAR_T1(SSS,TTT,AAA)  'Variation of the wind generation'\n",
+        suffix="\n;\nWND_VAR_T(AAA,SSS,TTT) = WND_VAR_T1(SSS,TTT,AAA);  \nWND_VAR_T(IA,SSS,TTT)$((NOT SUM((S,T), WND_VAR_T(IA,S,T))) AND WNDFLH(IA)) = WND_VAR_T('DK2_NoDH',SSS,TTT) ; \nWND_VAR_T1(SSS,TTT,AAA)=0;",
+        body_builder=_copy_table_body,
+    ),
+    "SOLE_VAR_T": _IncTableSpec(
+        prefix="TABLE SOLE_VAR_T1(SSS,TTT,AAA)  'Variation of the solar generation'\n",
+        suffix="\n;\nSOLE_VAR_T(IA,SSS,TTT)= SOLE_VAR_T1(SSS,TTT,IA); \n SOLE_VAR_T1(SSS,TTT,AAA)=0;     ",
+        body_builder=_copy_table_body,
+    ),
+    "WNDFLH": _IncTableSpec(
+        prefix="PARAMETER WNDFLH(AAA)  'Full load hours for wind power (hours)'  \n / \n ",
+        suffix="\n/;\n",
+        body_builder=_single_value_parameter_body,
+    ),
+    "SOLEFLH": _IncTableSpec(
+        prefix="PARAMETER SOLEFLH(AAA)  'Full load hours for solar power' \n / \n ",
+        suffix="\n/;\n     ",
+        body_builder=_single_value_parameter_body,
+    ),
+    "GDATA_renewable": _IncTableSpec(
+        prefix="$onMulti \n TABLE GDATA(GGG,GDATASET)  'Technologies characteristics'  \n",
+        suffix="\n;\n",
+        body_builder=_copy_table_body,
+    ),
+    "GKFX_renewable": _IncTableSpec(
+        prefix="$onMulti \n TABLE GKFX1(AAA,GGG,YYY)  'Technologies characteristics'  \n",
+        suffix="\n;\n",
+        body_builder=_copy_table_body,
+    ),
+    "SUBTECHGROUPKPOT": _IncTableSpec(
+        prefix="$onMulti \nTABLE SUBTECHGROUPKPOT(CCCRRRAAA,TECH_GROUP,SUBTECH_GROUP) 'SubTechnology group capacity restriction by geography (MW)' \n",
+        suffix="\n;\n",
+        body_builder=_copy_table_body,
+    ),
+    "DISCOST_H_renewable": _IncTableSpec(
+        prefix="$onMulti \n PARAMETER DISCOST_H(AAA)  'Cost of heat distribution (Money/MWh)'   \n/\n",
+        suffix="\n/;",
+        body_builder=_copy_table_body,
+    ),
+}
+
+
+def create_table_style_inc(
+    data: pd.DataFrame | pd.Series,
+    name: str,
+    output_folder: str,
+) -> None:
+    """Create an .inc file for table or parameter-style data blocks.
+
+    The emitted format is driven by the ``name``-specific prefix, suffix, and
+    body conversion defined in ``_INC_TABLE_SPECS``.
+    """
+    try:
+        spec = _INC_TABLE_SPECS[name]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported .inc table definition: {name}") from exc
+
+    inc_file = IncFile_temp(
+        name=name,
+        prefix=spec.prefix,
+        suffix=spec.suffix,
+        path=output_folder,
+    )
+    inc_file.body = spec.body_builder(data)
+    inc_file.save()
+
 
 class IncFile_temp:
     """A useful class for creating .inc-files for GAMS models
@@ -100,71 +192,6 @@ class IncFile_temp:
 
 
 
-
-
-def create_SSS_TTT_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
-
-    if name=="WND_VAR_T":
-        prefix = "TABLE   WND_VAR_T1(SSS,TTT,AAA)  'Variation of the wind generation'\n"
-        suffix = "\n;\nWND_VAR_T(AAA,SSS,TTT) = WND_VAR_T1(SSS,TTT,AAA);  \nWND_VAR_T(IA,SSS,TTT)$((NOT SUM((S,T), WND_VAR_T(IA,S,T))) AND WNDFLH(IA)) = WND_VAR_T('DK2_NoDH',SSS,TTT) ; \nWND_VAR_T1(SSS,TTT,AAA)=0;"
-    elif name=="SOLE_VAR_T":
-        prefix = "TABLE SOLE_VAR_T1(SSS,TTT,AAA)  'Variation of the solar generation'\n"
-        suffix = "\n;\nSOLE_VAR_T(IA,SSS,TTT)= SOLE_VAR_T1(SSS,TTT,IA); \n SOLE_VAR_T1(SSS,TTT,AAA)=0;     "
-    
-    
-    ts=IncFile_temp(name= name,
-        prefix=prefix,
-        suffix=suffix,
-        path=output_folder)
-    
-    ts.body = pd.DataFrame(index=list(df.index) , columns=list(df.columns),
-                       data=df.values)
-    ts.save()
-
-    
-    #df.to_csv(output_folder + "/" + name + ".csv") #might be removed in the future since it is not necessary
-
-
-def create_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
-
-    if name=="WNDFLH":
-        prefix = "PARAMETER WNDFLH(AAA)  'Full load hours for wind power (hours)'  \n / \n "
-        suffix = "\n/;\n"
-    elif name=="SOLEFLH":
-        prefix = "PARAMETER SOLEFLH(AAA)  'Full load hours for solar power' \n / \n "
-        suffix = "\n/;\n     "
-    
-    
-    ts=IncFile_temp(name= name,
-        prefix=prefix,
-        suffix=suffix,
-        path=output_folder)
-    
-    ts.body = pd.DataFrame(index=list(df.index),columns=[""],data=df.values)
-
-    ts.save()
-
-
-
-
-
-def create_GGG_GDATASET_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
-
-    if name=="GDATA_renewable":
-        prefix = "$onMulti \n TABLE GDATA(GGG,GDATASET)  'Technologies characteristics'  \n"
-        suffix = "\n;\n"
-
-    
-    
-    ts=IncFile_temp(name= name,
-        prefix=prefix,
-        suffix=suffix,
-        path=output_folder)
-    
-    #ts.body = pd.DataFrame(index=list(df.index),columns=[""],data=df.values)
-    ts.body=df
-
-    ts.save()
 
 
 
@@ -246,33 +273,21 @@ def build_inc_file_list_type(
 
 
 def create_GKFX_inc(GKFX: pd.DataFrame, name: str, output_folder: str) -> None:
-    if name=="GKFX_renewable":
-            prefix = "$onMulti \n TABLE GKFX1(AAA,GGG,YYY)  'Technologies characteristics'  \n"
-            suffix = "\n;\n"
-    
-    ts=IncFile_temp(name= name,
-            prefix=prefix,
-            suffix=suffix,
-            path=output_folder)
-    
-    ts.body=GKFX
-    
-    ts.save()
+    create_table_style_inc(GKFX, name, output_folder)
     
 def create_Table_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
-    if name=="SUBTECHGROUPKPOT":
-        prefix = "$onMulti \nTABLE SUBTECHGROUPKPOT(CCCRRRAAA,TECH_GROUP,SUBTECH_GROUP) 'SubTechnology group capacity restriction by geography (MW)' \n"
-        suffix = "\n;\n"
-    elif name=="DISCOST_H_renewable":
-        prefix = "$onMulti \n PARAMETER DISCOST_H(AAA)  'Cost of heat distribution (Money/MWh)'   \n/\n"
-        suffix = "\n/;"
+    create_table_style_inc(df, name, output_folder)
 
-    ts=IncFile_temp(name= name,
-            prefix=prefix,
-            suffix=suffix,
-            path=output_folder)
+def create_SSS_TTT_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
+    create_table_style_inc(df, name, output_folder)
+
     
-    ts.body=df
-    
-    ts.save()
-    
+    #df.to_csv(output_folder + "/" + name + ".csv") #might be removed in the future since it is not necessary
+
+def create_AAA_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
+    create_table_style_inc(df, name, output_folder)
+
+
+def create_GGG_GDATASET_inc(df: pd.DataFrame, name: str, output_folder: str) -> None:
+    create_table_style_inc(df, name, output_folder)
+
