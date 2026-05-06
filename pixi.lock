@@ -9688,9 +9688,9 @@ packages:
 - pypi: ./
   name: pybalmorel
   version: 1.1.8
-  sha256: 1ba66d408c74d8d32f2ffc4fed9e16b7f483d2ac136509de728b38f1a77a2c3e
+  sha256: d73bfca62544303e3f7e314031999a530d8a12387e22f35635e74843c022342b
   requires_dist:
-  - pandas>=2.1.4
+  - pandas
   - matplotlib>=3.9.0
   - geopandas>=0.14.4
   - gamsapi[transfer]>=45.7.0
