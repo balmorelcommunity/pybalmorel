@@ -475,14 +475,14 @@ class Balmorel:
         
         # Run Balmorel
         try:
-            job = ws.add_job_from_file(os.path.join(wk_dir, 'Balmorel'), job_name=scenario)
+            job = ws.add_job_from_file('Balmorel.gms', job_name=scenario)
             job.run(opt)
         except gams.GamsExceptionExecution as e:
             exec_error = e
             print('Execution error! Check output, division by zero in OUTPUT_SUMMARY can happen and may not be a problem')
         
         # Check feasibility
-        with open(os.path.join(wk_dir, '%s.lst'%scenario), 'r') as f:
+        with open(os.path.join(wk_dir, '%s.lst'%scenario), 'r', encoding='latin-1') as f:
             output = pd.Series(f.readlines())
 
         output = output[(output.str.find('LP status') != -1) | (output.str.find('MIP status') != -1)] # Find all status
