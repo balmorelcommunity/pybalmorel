@@ -14,4 +14,4 @@ dependencies:
   - requests
   - pip
   - pip:
-    - pybalmorel==1.1.13
+    - pybalmorel==1.1.13

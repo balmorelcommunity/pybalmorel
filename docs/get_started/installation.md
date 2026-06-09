@@ -1,9 +1,6 @@
 # Installation
-Install into your virtual python environment with:
-
-`pip install pybalmorel`
-
-For more information on how to manage and install virtual environments check out [this resource](https://docs.python.org/3/library/venv.html), or if you are a conda user, [this resource](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+Install into your virtual python environment with [conda](https://www.anaconda.com/) or [pixi](https://pixi.prefix.dev/latest/).
+For more information on how to manage and install virtual environments check out [this resource](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) if you are a conda user.
 
 ## Requirements
 pybalmorel has the following requirements - here illustrated in an environment.yml file that can be used to create the necessary conda environment (note that it will also install pybalmorel itself):
@@ -23,7 +20,7 @@ dependencies:
   - requests
   - pip
   - pip:
-    - pybalmorel==1.1.13
+    - pybalmorel==1.1.13
 ```
 
 Note: If you want to use the [time series aggregation tools](../preprocessing/timeseriesagg.md), you will also need to pip install the python packages tsam and ripgrepy.
