@@ -10966,7 +10966,7 @@ packages:
 - pypi: .
   name: pybalmorel
   requires_dist:
-  - pandas>=2.0.0,<2.3.0
+  - pandas>=2.1.4
   - matplotlib>=3.9.0
   - geopandas>=0.14.4
   - gamsapi[transfer]>=45.7.0

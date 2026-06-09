@@ -17,13 +17,13 @@ dependencies:
   - pandas>=2.1.4 
   - matplotlib>=3.9.0 
   - geopandas>=1.0.1
+  - cartopy>=0.24.1
   - ipywidgets>=8.1.3
   - ipykernel>=6.29.5
   - requests
   - pip
   - pip:
-    - pybalmorel==1.1.12
-    - cartopy>=0.24.1
+    - pybalmorel==1.1.13
 ```
 
 Note: If you want to use the [time series aggregation tools](../preprocessing/timeseriesagg.md), you will also need to pip install the python packages tsam and ripgrepy.
