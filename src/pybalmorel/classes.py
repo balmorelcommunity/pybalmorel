@@ -15,17 +15,15 @@ import shutil
 import gams
 import pandas as pd
 import numpy as np
+import requests
 from dataclasses import dataclass, field
 from urllib.parse import urljoin
-import requests
-from typing import Union, Tuple
-from functools import partial
+from pathlib import Path
+from typing import Union, Tuple, List
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from .utils import symbol_to_df
-from .interactive.interactive_functions import interactive_bar_chart
-from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
-from .plotting.production_profile import plot_profile
+from .plotting.production_profile import plot_profile, plot_profiles
 from .plotting.maps_balmorel import plot_map
 from .weatheryear.corres_to_energy_system_model import export_timeseries_to_xlsx
 from .weatheryear.to_balmorel import export_timeseries_to_balmorel_format
@@ -39,8 +37,8 @@ from .weatheryear.demand2btc import generate_demand_balmorel_inc_files
 class MainResults:
     def __init__(self, files: Union[str, list, tuple], 
                  paths: Union[str, list, tuple] = '.', 
-                 scenario_names: Union[str, list, tuple] = None,
-                 system_directory: str = None,
+                 scenario_names: str | list | tuple | None = None,
+                 system_directory: str | None = None,
                  result_type: str = 'balmorel'):
         """
         Initialises the MainResults class and loads gdx result file(s)
@@ -54,16 +52,16 @@ class MainResults:
         """
 
         ## Loading scenarios
-        if type(files) == str:
+        if type(files) is str:
             # Change filenames to list if just one string
             files = [files]
             
         ## File paths
-        if type(paths) == str:
+        if type(paths) is str:
             # Create identical paths if only one given
             paths = [paths]*len(files)
             
-        elif ((type(paths) == list) or (type(paths) == tuple)) and (len(paths) == 1):
+        elif ((type(paths) is list) or (type(paths) is tuple)) and (len(paths) == 1):
             paths = paths*len(files)
             
         elif len(files) != len(paths):
@@ -71,9 +69,11 @@ class MainResults:
             raise Exception("%d files, but %d paths given!\nProvide only one path or the same amount of paths as files"%(len(files), len(paths)))
         
         ## Scenario Names
-        if scenario_names == None:
+        if scenario_names is None:
             # Try to make scenario names from filenames, if None given
             scenario_names = pd.Series(files).str.replace('MainResults_', '').str.replace('MainResults','').str.replace('.gdx', '')
+
+            assert scenario_names is not None, "Couldn't find any results"
             
             # Rename MainResults with no suffix
             if np.any(scenario_names == ''):
@@ -88,7 +88,7 @@ class MainResults:
 
             scenario_names = list(scenario_names)
 
-        elif type(scenario_names) == str:
+        elif type(scenario_names) is str:
             scenario_names = [scenario_names]
             
         if len(files) != len(scenario_names):    
@@ -102,18 +102,21 @@ class MainResults:
         self.type = result_type
         self.db = {}
             
-        if system_directory != None:
+        if system_directory is not None:
             ws = gams.GamsWorkspace(system_directory=system_directory)
             self._gams_system_directory = system_directory
         else:
             ws = gams.GamsWorkspace()
             
         for i in range(len(files)):    
-            print(os.path.join(os.path.abspath(paths[i]), files[i]))
-            self.db[scenario_names[i]] = ws.add_database_from_gdx(os.path.join(os.path.abspath(paths[i]), files[i]))
+            print('Loading', str(Path(paths[i]) / files[i]))
+            try:
+                self.db[scenario_names[i]] = ws.add_database_from_gdx(str((Path(paths[i]) / files[i]).absolute()))
+            except gams.GamsException:
+                raise FileNotFoundError(f'\nCouldnt add file {files[i]}!\nBeware of æ,ø,å,ö,ü,ä or other non-english letters in the folders of your absolute path: {os.path.abspath(paths[i])}.\nThe GAMS API requires an absolute path with no non-english letters.')
      
     # Getting a certain result
-    def get_result(self, symbol: str, cols: Tuple[list, None] = None) -> pd.DataFrame:
+    def get_result(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
         """Get a certain result from the loaded gdx file(s) into a pandas DataFrame
 
         Args:
@@ -147,13 +150,16 @@ class MainResults:
         """
         GUI for bar chart plotting
         """
+
+        from .interactive.interactive_functions import interactive_bar_chart
+
         return  interactive_bar_chart(self, plot_style)        
     
     # Plotting a production profile
     def plot_profile(self,
                      commodity: str,  
                      year: int, 
-                     scenario: str = 0,
+                     scenario: str | int = 0,
                      columns: str = 'Technology',
                      region: str = 'ALL',
                      style: str = 'light') -> Tuple[Figure, Axes]:
@@ -172,86 +178,124 @@ class MainResults:
         """
         return plot_profile(self, commodity, year, scenario, columns, region, style)
         
+    def plot_profiles(self,
+                    commodity: str,  
+                    year: int, 
+                    scenario: str | int = 0,
+                    chunk_size: int = 168,
+                    columns: str = 'Technology',
+                    region: str = 'ALL',
+                    style: str = 'light') -> Tuple[List, List]:
+        """Plots the production profile of a commodity, in a year, for a certain scenario
+
+        Args:
+            MainResults (_type_): The MainResults class containing results
+            commodity (str): The commodity (Electricity, Heat or Hydrogen)
+            year (int): The model year to plot
+            scenario (str, optional): Defaults to the first scenario in MainResults.
+            chunk_size (int, optional): How many timeslices per profile, defaults to 168
+            columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+            region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+            style (str, optional): Plot style, light or dark. Defaults to 'light'.
+
+        Returns:
+            Figure, Axes: The figure and axes objects for further manipulations 
+        """
+        return plot_profiles(self, commodity, year, scenario, chunk_size, columns, region, style)
     
     def plot_map(self, 
                  scenario: str, 
                  year: int,
-                 commodity: str,
-                 lines: str = 'Capacity', 
-                 generation: str = 'Capacity',
-                 background : str = None,
+                 commodity: str | None = None,
+                 lines: str | None = None, 
+                 generation: str | None = None,
+                 background : str | None = None,
                  save_fig: bool = False,
-                 path_to_geofile: str = None,
+                 path_to_geofile: str | None = None,
                  geo_file_region_column: str = 'id',
                  **kwargs) -> Tuple[Figure, Axes]:
         """Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
 
-    Args:
-        path_to_result (str): Path to the .gdx file
-        scenario (str): The scenario name       
-        year (int): The year of the results
-        commodity (str): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
-        lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime]. Defaults to 'Capacity'.
-        generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production']. Defaults to 'Capacity'.
-        background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
-        save_fig (bool, optional): Save the figure or not. Defaults to False.
-        path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
-        geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
-        Structural additional options:
-            **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
-            **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
-            **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
-            **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
-            **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
-            **generation_exclude_H2Storage (bool, optional): Do not plot the capacities of the H2 storage. Defaults to True.
-            **generation_exclude_ElectricStorage (bool, optional): Do not plot the production of Electric storage. Defaults to True.
-            **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
-            **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
-        Visual additional options:
-            **legend_show (bool, optional): Show legend_show or not. Defaults to True.
-            **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
-            **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
-            **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
-            Lines options :
-                **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
-                **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
-                **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
-                **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
-                **line_cluster_groups (list, optional): The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in point.
-                **line_cluster_widths (list, optional): The widths for the corresponding capacity group (has to be same size as cluster_groups). Defaults values depends on commodity. Values in point.
-                **line_opacity (float, optional): Opacity of lines. Defaults to 1.
-                **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
-                **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
-                **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
-                **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
-                **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
-            Generation options :
-                **generation_show (bool, optional): Showing or not the generation capacities or production. Defaults to True.
-                **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
-                **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
-                **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
-                **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
-                **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
-                **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
-                **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
-                **pie_cluster_groups = The capacity groupings if cat is 'cluster'. Defaults values depends on commodity. Used for the legend. Values in data unit.
-                **pie_cluster_radius = The radius for the corresponding capacity group (has to be same size as pie_cluster_groups). Defaults values depends on commodity. Values in data unit.
-        Colors additional options:
-            **background_color (str, optional): Background color of the map. Defaults to 'white'.
-            **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
-            **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
-            **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
-            **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
-            **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
-            **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
-        Geography additional options:
-            **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
-            **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
-            **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+        Args:
+            path_to_result (str): Path to the .gdx file
+            scenario (str): The scenario name       
+            year (int): The year of the results
+            commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+            lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
+            generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
+            background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
+            save_fig (bool, optional): Save the figure or not. Defaults to False.
+            path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+            geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
+            Structural additional options:
+                **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
+                **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
+                **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
+                **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
+                **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
+                **generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+                **generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
+                **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+                **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+                **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
+            Visual additional options:
+                **title_show (bool, optional): Show title or not. Defaults to True.
+                **legend_show (bool, optional): Show legend_show or not. Defaults to True.
+                **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
+                **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
+                **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
+                Lines options :
+                    **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                    **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
+                    **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+                    **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+                    **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                    **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+                    **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
+                    **line_opacity (float, optional): Opacity of lines. Defaults to 1.
+                    **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
+                    **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
+                    **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
+                    **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
+                    **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
+                Generation options :
+                    **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
+                    **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
+                    **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
+                    **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+                    **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+                    **pie_radius_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+                    **pie_radius_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+                    **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+                    **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+                    **pie_legend_cluster_radius (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+                Background options :
+                    **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+                    **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
+                    **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+                    **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+                    **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+                    **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
+            Colors additional options:
+                **background_color (str, optional): Background color of the map. Defaults to 'white'.
+                **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
+                **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
+                **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
+                **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
+                **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
+                **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+                **background_colormap (str, optional): Personalized background colormap on the countries.
+                **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
+            Geography additional options:
+                **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
+                **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
+                **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+                **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+                **countries_background_path = Path to the csv file containing the personnalized background of the countries
 
-    Returns:
-        Tuple[Figure, Axes]: The figure and axes objects of the plot
-    """
+        Returns:
+            Tuple[Figure, Axes]: The figure and axes objects of the plot
+        """
         # Find path of scenario
         idx = np.array(self.sc) == scenario
         path = np.array(self.paths)[idx][0]
@@ -282,7 +326,7 @@ class IncFile:
     name (str): The name of the .inc file.
     path (str): The path to save the file, defaults to 'Balmorel/base/data'.
     """
-    def __init__(self, prefix: str = '', body: str = '', 
+    def __init__(self, prefix: str = '', body: str | pd.DataFrame = '', 
                  suffix: str = '', name: str = 'name', 
                  path: str = 'Balmorel/base/data/'):
         self.prefix = prefix
@@ -294,14 +338,20 @@ class IncFile:
     def body_concat(self, df: pd.DataFrame):
         """Concatenate a body temporarily being a dataframe to another dataframe
         """
+        if type(self.body) is not pd.DataFrame:
+            raise TypeError("Body must be a pandas DataFrame for this to work!")
+
         self.body = pd.concat((self.body, df)) # perhaps make a IncFile.body.concat function.. 
 
-    def body_prepare(self, index: list, columns: list,
+    def body_prepare(self, index: list, columns: list | None = None,
                     values: str = 'Value',
                     aggfunc: str ='sum',
                     fill_value: Union[str, int] = ''):
     
         # Pivot
+        if type(self.body) is not pd.DataFrame:
+            raise TypeError(".inc file body needs to be a DataFrame for this to work!")
+
         self.body = self.body.pivot_table(index=index, columns=columns, 
                             values=values, aggfunc=aggfunc,
                             fill_value=fill_value)
@@ -333,11 +383,11 @@ class IncFile:
         if self.name[-4:] != '.inc':
             self.name += '.inc'  
        
-        with open(os.path.join(self.path, self.name), 'w') as f:
+        with open(Path(self.path) / self.name, 'w') as f:
             f.write(self.prefix)
-            if type(self.body) == str:
+            if type(self.body) is str:
                 f.write(self.body)
-            elif type(self.body) == pd.DataFrame:
+            elif type(self.body) is pd.DataFrame:
                 f.write(self.body.to_string())
             else:
                 print('Wrong format of %s.body!'%self.name)
@@ -351,33 +401,35 @@ class Balmorel:
         model_folder (str): The top level folder of Balmorel, where base and simex are located
     """
 
-    def __init__(self, model_folder: str, gams_system_directory: str = None):
+    def __init__(self, model_folder: str | Path, gams_system_directory: str | None  = None):
         
         # Get GAMS system directory (the default none will make GAMS find it by itself)
         self._gams_system_directory = gams_system_directory
         
         # Get full path
-        self.path = os.path.abspath(model_folder)
+        self.path = Path(model_folder)
+        directories = [file.name for file in self.path.iterdir() if file.is_dir()]
         
-        if not('base' in os.listdir(self.path)) or not('simex' in os.listdir(self.path)):
-            raise Exception("Incorrect Balmorel folder, couldn't find base and/or simex in %s"%self.path)
+        if 'base' not in directories:
+            raise Exception(f"Incorrect Balmorel folder, couldn't find base in {self.path}")
         
         # Get scenario folders
-        scenarios = [SC for SC in os.listdir(self.path) if os.path.isdir(os.path.join(self.path, SC)) and SC != 'simex' and SC != '.git']
+        scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name != 'simex' and SC.name[0] != '.']
         
         # Check validity of scenario folders and make list of scenarios
         self.scenarios = []
         self.input_data = {}
         for SC in scenarios:
-            if os.path.exists(os.path.join(self.path, SC, 'model/Balmorel.gms')) and \
-                os.path.exists(os.path.join(self.path, SC, 'model/cplex.op4')):
-                    self.scenarios.append(SC)
+            if (SC / 'model/Balmorel.gms').exists() and ((SC / 'model/cplex.op4').exists() or (SC / 'model/cplex.op2').exists()):
+                self.scenarios.append(SC.name)
             else:
-                print('Folder %s not added to scenario as the necessary %s/model/Balmorel.gms and/or %s/model/cplex.op4 did not exist'%tuple([SC]*3))
+                print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 or {SC}/model/cplex.op2 did not exist')
 
-    def locate_results(self):
+    def locate_results(self, suffix_naming_only: bool = False):
         """
         Locates results, which is faster than collecting them if you just want an overview
+
+        suffix_naming_only (bool): Defaults to False, will only name scenarios after its suffix'es if True
         """
                 
         self.files = []
@@ -386,12 +438,12 @@ class Balmorel:
         self.scfolder_to_scname = {}
         self.scname_to_scfolder = {}
         for SC in self.scenarios:
-            path = os.path.join(self.path, '%s/model'%SC)
-            mainresults_files = pd.Series(os.listdir(path))
+            path = self.path / f'{SC}/model'
+            mainresults_files = pd.Series([file.name for file in path.iterdir()])
             mainresults_files = mainresults_files[(mainresults_files.str.find('MainResults') != -1) & (mainresults_files.str.find('.gdx') != -1)]
             self.files += list(mainresults_files)
             self.paths += [path]*len(mainresults_files)
-            if len(mainresults_files) == 1:
+            if len(mainresults_files) == 1 and not suffix_naming_only:
                 self.scenario_names += [SC]
                 self.scfolder_to_scname[SC] = [SC]
                 self.scname_to_scfolder[SC] = SC
@@ -407,12 +459,12 @@ class Balmorel:
                 for scenario_name in mainresults_files:
                     self.scname_to_scfolder[scenario_name] = SC 
 
-    def collect_results(self):
+    def collect_results(self, suffix_naming_only: bool = False):
         """
         Collects results
         """
 
-        self.locate_results()
+        self.locate_results(suffix_naming_only=suffix_naming_only)
 
         self.results = MainResults(files=self.files, paths=self.paths, scenario_names=self.scenario_names, system_directory=self._gams_system_directory)
             
@@ -429,14 +481,14 @@ class Balmorel:
         
         # Run Balmorel
         try:
-            job = ws.add_job_from_file(os.path.join(wk_dir, 'Balmorel'), job_name=scenario)
+            job = ws.add_job_from_file('Balmorel.gms', job_name=scenario)
             job.run(opt)
         except gams.GamsExceptionExecution as e:
             exec_error = e
             print('Execution error! Check output, division by zero in OUTPUT_SUMMARY can happen and may not be a problem')
         
         # Check feasibility
-        with open(os.path.join(wk_dir, '%s.lst'%scenario), 'r') as f:
+        with open(os.path.join(wk_dir, '%s.lst'%scenario), 'r', encoding='latin-1') as f:
             output = pd.Series(f.readlines())
 
         output = output[(output.str.find('LP status') != -1) | (output.str.find('MIP status') != -1)] # Find all status
@@ -466,46 +518,149 @@ class Balmorel:
             KeyError: _description_
         """
         
-        if not(scenario in self.scenarios):
+        if scenario not in self.scenarios:
             raise KeyError('%s scenario wasnt found.\nRun this Balmorel(...) class again if you just created the %s scenario.'%(scenario, scenario))
         
         
         # Path to the GAMS system directory
-        model_folder = os.path.join(self.path, scenario, 'model')
+        model_folder = self.path / scenario / 'model'
+
+        # Path to input .gdx file of scenario
+        input_gdx = model_folder / ('%s_input_data.gdx'%scenario)
         
-        if os.path.exists(os.path.join(model_folder, '%s_input_data.gdx'%scenario)) and not(overwrite):
+        if input_gdx.exists() and not(overwrite):
             ws = gams.GamsWorkspace(system_directory=self._gams_system_directory)
-            db = ws.add_database_from_gdx(os.path.join(model_folder, '%s_input_data.gdx'%scenario))
+            db = ws.add_database_from_gdx(str((model_folder / ('%s_input_data.gdx'%scenario)).absolute()))
             self.input_data[scenario] = db
+            print(
+                '-'*20,
+                '\nLoaded existing input data - pass "overwrite = True" if you changed data since last incfile loading\n',
+                'Loaded .gdx file:\n', 
+                input_gdx,
+                '\n',
+                '-'*20,
+            )
             
         else:
             # Are you using the provided 'ReadData'-Balmorel files or a custom one?
             use_provided_read_files = True
             if use_provided_read_files:
                 pkgdir = sys.modules['pybalmorel'].__path__[0]
+                print('-'*150, '\npkgdir\n', pkgdir, '\n', '-'*150)
                 # Copy Balmorel_ReadData and Balmorelbb4_ReadData 
                 # into the model folder if there isn't one already
                 for file in ['Balmorel_ReadData.gms', 'Balmorelbb4_ReadData.inc']:
-                    if not(os.path.exists(os.path.join(model_folder, file))):
-                        shutil.copyfile(os.path.join(pkgdir, file), os.path.join(model_folder, file))
-                        print(os.path.join(model_folder, file))
+                    if not (model_folder / file).exists():
+                        shutil.copyfile(Path(pkgdir) / file, model_folder / file)
+                        print(Path(model_folder) / file)
 
             # Initialize GAMS Workspace
-            ws = gams.GamsWorkspace(working_directory=model_folder, system_directory=self._gams_system_directory)
+            ws = gams.GamsWorkspace(working_directory=model_folder, 
+                                    system_directory=self._gams_system_directory)
 
             # Set options
             opt = ws.add_options()
             opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
             
             # Load the GAMS model
-            model_db = ws.add_job_from_file(os.path.join(model_folder, read_file), job_name=scenario)
+            model_db = ws.add_job_from_file(str((model_folder / read_file).absolute()), job_name=scenario)
 
             # Run the GAMS file
             model_db.run(opt)
 
             # Store the database (will take some minutes)
             self.input_data[scenario] = model_db.get_out_db()
+
+    def get_input(self, symbol: str, cols: list | None = None) -> pd.DataFrame:
+        """Get a certain input from the loaded input file(s) into a pandas DataFrame
+
+        Args:
+            symbol (str): The desired input, e.g. DE_VAR_T
+            cols (str, optional): Specify custom columns. Defaults to pre-defined formats or domain names.
+
+        Returns:
+            pd.DataFrame: The output DataFrame
+        """
+        # Placeholder
+        df = pd.DataFrame()
+        
+        for SC in self.input_data.keys():
+            # Get results from each scenario
+            try :
+                temp = symbol_to_df(self.input_data[SC], symbol, cols)
+                temp['Scenario'] = SC 
+                # Put scenario in first column
+                temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
+                # Save
+                df = pd.concat((df, temp), ignore_index=True)
             
+            except ValueError :
+                print(f'{SC} doesn\'t have any value in the table {symbol}')
+            
+        return df  
+
+    def temporal_aggregation(self, 
+                             scenario: str, 
+                             seasons: int, 
+                             terms: int, 
+                             method: str = 'contiguous', 
+                             representation: str = 'distribution_minmax',
+                             symbols_to_aggregate: dict | str = 'auto',
+                             incfile_symbol_relation: dict = {},
+                             excluded_incfiles: list = [],
+                             overwrite: bool = False):
+        """
+        Do temporal aggregation of scenario, using tsam.
+        If symbols_to_aggregate is 'auto' (default setting), the 
+        script will try to automatically find the timeseries data.
+
+        NOTE:   If .inc files of the scenario you want to aggregate define both
+        time-related symbols AND symbols without S or T sets, this script will
+        produce new .inc files that does NOT include the non-S/T dependant
+        symbols. Hence, remember to copy paste those parts into the newly
+        generated .inc files afterwards.
+                
+
+        Args:
+           scenario (str): scenario to aggregate.
+           seasons (int): amount of seasons to aggregate to 
+           terms (int): amount of terms to aggregate to
+           method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+           representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
+           symbols_to_aggregate (dict | str): 'auto' for automatically finding 
+            the data. Otherwise, a dictionary with keys 'SSS,TTT', 'SSS'
+            and 'TTT' that each point to a list of symbols to aggregate for manual 
+            choice of aggregation.
+           incfile_symbol_relation (dict): if manually defining symbols to 
+            aggregate, this dict must be passed too. Keys should be symbols, 
+            and the values should be a list of .inc file paths, where the first one 
+            will be the new .inc file with aggregated data, and the others will be 
+            empty. E.g.: {'DE_VAR_T' : ['base/data/DE_VAR_T.inc',
+                                        'base/data/INDIVUSERS_DE_VAR_T.inc', 
+                                        '/base/data/TRANSPORT_DE_VAR_T.inc']}
+           excluded_incfiles (list): A list of .inc files to exclude when saving .inc files
+           overwrite (bool): whether to use existing loaded data or overwrite and load again
+        """
+
+        from .timeagg import TimeAgg
+
+        # Create temporal aggregation class
+        self.ts = TimeAgg(parent=self)
+
+        # Collect and standardise time series input 
+        self.ts.collect_and_standardise(scenario, symbols_to_aggregate, 
+                                        incfile_symbol_relation, overwrite)
+
+        # Get weights
+        weights_per_region, weights_per_area =self.ts.get_weights(scenario)
+
+        # Cluster collected time series input
+        self.ts.cluster(seasons, terms, method, representation, weights_per_region, weights_per_area)
+
+        # Prepare and save incfiles
+        self.ts.save_incfiles(scenario, excluded_incfiles=excluded_incfiles)
+
+
 @dataclass
 class TechData:
     files: dict = field(default_factory=lambda: {
@@ -580,7 +735,7 @@ class TechData:
             # ..in case you wrote the full name of the file
             filename = file
             
-        if not(filename in os.listdir(save_to_folder)):
+        if filename not in os.listdir(save_to_folder):
             self.download_file(urljoin(domain, filename), save_to_folder)
         else:
             print('\nThe file:\t\t%s\nalready exists in:\t%s'%(self.files[file], save_to_folder))
@@ -605,6 +760,8 @@ class GUI:
         Returns:
             None: An interactive GUI is opened to plot bar charts 
         """                
+        from .interactive.interactive_functions import interactive_bar_chart
+
         return  interactive_bar_chart(MainResults_instance)  
     
     def geofilemaker():
@@ -613,6 +770,8 @@ class GUI:
         Returns:
             None: An interactive GUI to generate geographic .inc files
         """
+        from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
+
         return interactive_geofilemaker()
     
 

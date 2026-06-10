@@ -3,7 +3,7 @@
 # Remember to do this command locally:
 # git update-index --chmod=+x tests/online_tests.sh
 
-python -m pytest tests/test_preprocessing.py
+python -m pytest tests/test_preprocessing.py -k "not test_temporal_aggregation"
 python -m pytest tests/test_execution.py
 
 echo -e

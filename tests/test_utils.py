@@ -19,8 +19,16 @@ import os
 ###             1. Utils            ###
 ### ------------------------------- ###
 
+gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
+assert gams_system_directory is not None, (
+    "GAMS system directory not found. "
+    "Set GAMS_SYSTEM_DIR in the pyproject.toml file to point at your GAMS installation, e.g.:\n"
+    "  GAMS_SYSTEM_DIR=/opt/gams/53"
+)
+
+
 def test_symbol_to_df_mainresults():
-    ws = gams.GamsWorkspace()
+    ws = gams.GamsWorkspace(system_directory=gams_system_directory)
     db = ws.add_database_from_gdx(os.path.abspath('examples/files/MainResults_Example1.gdx'))
     
     f = symbol_to_df(db, 'EL_PRICE_YCRST')
@@ -30,7 +38,7 @@ def test_symbol_to_df_mainresults():
 # test_symbol_to_df_optiflow()
 
 def test_symbol_to_df_all_endofmodel():
-    ws = gams.GamsWorkspace()
+    ws = gams.GamsWorkspace(system_directory=gams_system_directory)
     db = ws.add_database_from_gdx(os.path.abspath('examples/files/all_endofmodel.gdx'))
     
     # A parameter

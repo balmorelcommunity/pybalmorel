@@ -7,17 +7,7 @@ Created on 03.06.2024
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-# Choice of either dark or bright plots
-# import matplotlib.pyplot as plt
-
-# style = 'report'
-
-# if style == 'report':
-#     plt.style.use('default')
-#     fc = 'white'
-# elif style == 'ppt':
-#     plt.style.use('dark_background')
-#     fc = 'none'
+import pandas as pd
 
 #%% ------------------------------- ###
 ###          1. Colours             ###
@@ -146,7 +136,8 @@ balmorel_symbol_columns = {'F_CONS_YCRA':     ['Year','Country','Region','Area',
                            'XH2_FLOW_YCRST':  ['Year','Country','From','To','Season','Time'],
                            'XH_CAP_YCA':      ['Year','Country','From','To','Category'],
                            'XH_FLOW_YCA':     ['Year','Country','From','To'],
-                           'XH_FLOW_YCAST':   ['Year','Country','From','To','Season','Time']
+                           'XH_FLOW_YCAST':   ['Year','Country','From','To','Season','Time'],
+                           'XKRATE' : ['IRRRE', 'IRRRI', 'SSS']
 }
 
 
@@ -226,4 +217,14 @@ optiflow_mainresults_symbol_columns = {'ECO_INDIC': ['Scenario','Year','Indicato
 }
 
 
+SSS_TTT_index = pd.MultiIndex.from_product(
+    [[f'S{i:02.0f}' for i in range(1,53)],
+    [f'T{i:03.0f}' for i in range(1,169)]],
+    names=['SSS', 'TTT']
+)
 
+S_T_index = pd.MultiIndex.from_product(
+    [[f'S{i:02.0f}' for i in range(1,53)],
+    [f'T{i:03.0f}' for i in range(1,169)]],
+    names=['S', 'T']
+)
