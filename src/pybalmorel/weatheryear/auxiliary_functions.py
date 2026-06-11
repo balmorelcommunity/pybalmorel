@@ -203,6 +203,7 @@ def compute_capdev_timeseries(
     combined_scaled_dfs: pd.DataFrame,
     df_t: pd.DataFrame,
     source: str,
+    scale:bool
 ) -> pd.DataFrame:
     """Convert DA-scaled series to CapDev timeseries using configured timesteps.
     Args:
@@ -210,6 +211,7 @@ def compute_capdev_timeseries(
         combined_scaled_dfs: DataFrame of DA-scaled time series.
         df_t: DataFrame mapping CapDev and DA timesteps.
         source: The source type (e.g., "wind" or "solar","demand") to determine specific scaling logic.
+        scale: A boolean indicating whether to apply scaling to the CapDev time series.
     Returns:
         df_scaled:DataFrame of CapDev-scaled time series with index as CapDev_time.
     """
@@ -222,7 +224,12 @@ def compute_capdev_timeseries(
     combined_scaled_copy.index = df_t.index
     filtered_copy.index = df_t_cut.index
 
-    df_scaled=scale_timeseries_to_full_distribution(combined_scaled_copy,filtered_copy, source)
-    #df_scaled = scaler(combined_scaled_copy, filtered_copy)
-    df_scaled.index = df_t_cut.CapDev_time
-    return df_scaled
+    if scale:
+        df_final=scale_timeseries_to_full_distribution(combined_scaled_copy,filtered_copy, source)
+        #df_scaled = scaler(combined_scaled_copy, filtered_copy)
+    else:
+        df_final=filtered_copy
+
+    df_final.index = df_t_cut.CapDev_time
+    return df_final
+

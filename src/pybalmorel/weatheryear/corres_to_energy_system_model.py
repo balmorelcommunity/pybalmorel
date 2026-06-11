@@ -99,7 +99,7 @@ def _write_processed_timeseries(
 ) -> None:
     """Write raw and scaled time series for one processed technology file."""
     df_cut.to_excel(os.path.join(destination_path, "raw", file_base + "_raw.xlsx"))
-    df_scaled.to_excel(os.path.join(destination_path, "scaled", file_base + "_scaled.xlsx"))
+    df_scaled.to_excel(os.path.join(destination_path, "scaled_long_term", file_base + "_scaled.xlsx"))
 
 
 def _write_stats_excel(
@@ -299,7 +299,7 @@ def export_timeseries_to_xlsx(
                     # Ensure output directories exist for this run folder.
                     destination_folder = os.path.join(year_output_folder, folder_name)
                     create_directory_if_needed(destination_folder)
-                    for subfolder_name in ("raw", "scaled", "stats"):
+                    for subfolder_name in ("raw", "scaled_long_term", "stats"):
                         create_directory_if_needed(os.path.join(destination_folder, subfolder_name))
                     
                     # Read the time series data from the corresponding CSV file for this technology and input type, ensuring that the required "time" column is present. Set the "time" column as the index of the DataFrame.

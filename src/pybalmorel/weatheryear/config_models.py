@@ -17,6 +17,8 @@ _MODULE_KEYS = {
     "spaceHeat_to_hotWater_ratio",
     "ann_corr_fac_ref_year",
     "demand_model_results",
+    "hydro_model_results",
+    "cop_model_results",
     "corres_results",
     "Regions_to_keep",
     "RGs_to_keep",
@@ -201,6 +203,40 @@ class DemandModuleConfig:
             spaceheat_to_hotwater_ratio=raw["spaceHeat_to_hotWater_ratio"],
             ann_corr_fac_ref_year=raw["ann_corr_fac_ref_year"],
             demand_model_results=raw["demand_model_results"],
+            capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"],
+        )
+
+
+@dataclass(frozen=True)
+class HydroModuleConfig:
+    hydro_model_results: str
+    capdev_timesteps_to_keep: CapDevTimestepsConfig
+
+    @classmethod
+    def from_file(cls, config_fn: str) -> "HydroModuleConfig":
+        raw = load_weatheryear_config(
+            config_fn,
+            required_keys={"hydro_model_results", "CapDev_timesteps_to_keep"},
+        )
+        return cls(
+            hydro_model_results=raw["hydro_model_results"],
+            capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"],
+        )
+
+
+@dataclass(frozen=True)
+class CopModuleConfig:
+    cop_model_results: str
+    capdev_timesteps_to_keep: CapDevTimestepsConfig
+
+    @classmethod
+    def from_file(cls, config_fn: str) -> "CopModuleConfig":
+        raw = load_weatheryear_config(
+            config_fn,
+            required_keys={"cop_model_results", "CapDev_timesteps_to_keep"},
+        )
+        return cls(
+            cop_model_results=raw["cop_model_results"],
             capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"],
         )
 

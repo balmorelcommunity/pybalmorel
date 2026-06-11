@@ -172,6 +172,8 @@ def combine_technology_timeseries_files(folder: str, output_folder: str, scaled_
         )
 
     return combined_df
+
+
 def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output_folder: str) -> tuple[dict[str, dict[str, list[pd.DataFrame]]], dict[str, dict[str, list[pd.Series]]]]:
     """Main function to export time series data to Balmorel .inc format.
     
@@ -187,13 +189,35 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
         EmptyMergeResultError: If any of the combined technology time series DataFrames are empty after merging.
         MissingRequiredColumnsError: If any of the required columns are missing in the input Excel files during the merging process.
     """
+    
+    def process_capdev(scale, folder_suffix):
+        """Helper function to process capacity development time series for a given configuration and scaling option."""
+
+        capdev_timeseries_df = compute_capdev_timeseries(
+            balmorel_config.capdev_timesteps_to_keep.as_legacy_dict(),
+            combined_timeseries_df,
+            time_mapping_df,
+            source=source_name,
+            scale=scale
+        )
+
+        capdev_flh_series = (capdev_timeseries_df.mean() * len(combined_timeseries_df))
+
+        capdev_output_folder = os.path.join(
+            year_output_folder, "to_balmorel", "CapDev", folder_suffix
+        )
+
+        create_SSS_TTT_AAA_inc(capdev_timeseries_df, timeseries_inc_name, capdev_output_folder)
+        create_AAA_inc(capdev_flh_series, flh_inc_name, capdev_output_folder)
+
+
     # Load the configuration for the export process from the specified file.
     balmorel_config = ToBalmorelConfig.from_file(config_fn)
 
     # Create the necessary output directories for the Balmorel .inc files, organized by date and category (DA, CapDev).
     year_output_folder = os.path.join(output_folder, str(start_date))
     balmorel_output_root = os.path.join(year_output_folder, "to_balmorel")
-    for subfolder_parts in (("DA", "scaled"), ("DA", "raw"), ("CapDev",)):
+    for subfolder_parts in (("HourlyDispatch", "scaled_long_term"), ("HourlyDispatch", "raw"), ("CapDev", "scaled_long_term"), ("CapDev", "raw"), ("CapDev", "scaled_full_year")):
         create_directory_if_needed(os.path.join(balmorel_output_root, *subfolder_parts))
 
     # List the contents of the output folder to identify the technology folders for wind and solar, based on specified criteria in their names.
@@ -224,7 +248,7 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
             timeseries_inc_name = "SOLE_VAR_T"
             flh_inc_name = "SOLEFLH"
 
-        for series_variant in ["scaled", "raw"]:
+        for series_variant in ["scaled_long_term", "raw"]:
             exported_timeseries_by_source[source_name][series_variant] = []
             exported_flh_by_source[source_name][series_variant] = []
             # Load and combine the time series data for each technology folder corresponding to the current energy source (wind/solar) and type (scaled/raw),
@@ -251,7 +275,7 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
 
             # Create the .inc file for the time series data in the DA resolution, using the 
             # combined and formatted DataFrame of time series data for the current energy source and type (scaled/raw).
-            da_output_folder = os.path.join(year_output_folder, "to_balmorel", "DA", series_variant)
+            da_output_folder = os.path.join(year_output_folder, "to_balmorel", "HourlyDispatch", series_variant)
             create_SSS_TTT_AAA_inc(combined_timeseries_df, timeseries_inc_name, da_output_folder)
 
             combined_flh_series.rename_axis(None, axis="index", inplace=True)
@@ -260,19 +284,17 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
             # for the current energy source and type (scaled/raw).
             create_AAA_inc(combined_flh_series, flh_inc_name, da_output_folder)
             # Compute the capacity development time series for the CapDev resolution, using the combined time series data and the time mapping DataFrame,
-            capdev_timeseries_df = compute_capdev_timeseries(
-                balmorel_config.capdev_timesteps_to_keep.as_legacy_dict(),
-                combined_timeseries_df,
-                time_mapping_df,
-                source=source_name
-            )
-            capdev_flh_series = (capdev_timeseries_df.mean().to_frame() * len(combined_timeseries_df))[0]
-
-            if series_variant == "scaled":
-                capdev_output_folder = os.path.join(year_output_folder, "to_balmorel", "CapDev")
-                create_SSS_TTT_AAA_inc(capdev_timeseries_df, timeseries_inc_name, capdev_output_folder)
-                create_AAA_inc(capdev_flh_series, flh_inc_name, capdev_output_folder)
-
+            
+            if series_variant == "scaled_long_term":
+                process_capdev(scale=True, folder_suffix=series_variant)
+            
+            elif series_variant == "raw":
+                # scaled full year
+                process_capdev(scale=True, folder_suffix="scaled_full_year")
+            
+                # raw (unscaled)
+                process_capdev(scale=False, folder_suffix=series_variant)
+            
             exported_timeseries_by_source[source_name][series_variant].append(combined_timeseries_df)
             exported_flh_by_source[source_name][series_variant].append(combined_flh_series)
 

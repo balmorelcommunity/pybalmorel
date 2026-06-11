@@ -15,19 +15,18 @@ from .auxiliary_functions import (
     process_timeseries_with_scaling,
     scale_timeseries_to_full_distribution
 )
-from .config_models import DemandModuleConfig
-from .functions_demand_to_btc import (
-    convert_to_list_df_annual_correction,
-    convert_to_list_df_new,
+from .balmorel_converters import (
+    apply_balmorel_da_time_index,
+    prepare_balmorel_output_dirs,
+    to_balmorel_timeseries_assignment_lines,
+    to_balmorel_factor_assignment_lines,
+    write_raw_and_scaled_csv,
 )
+from .config_models import DemandModuleConfig
 from .to_inc import build_inc_file_list_type
 
 
-def _apply_balmorel_da_time_index(df: pd.DataFrame, time_df: pd.DataFrame) -> pd.DataFrame:
-    """Return a copy of a time series with Balmorel DA index applied."""
-    indexed_df = df.copy()
-    indexed_df.index = time_df["DA_time"]
-    return indexed_df
+
 
 
 def _blend_space_heat_and_hotwater(
@@ -35,7 +34,13 @@ def _blend_space_heat_and_hotwater(
     hotwater_df: pd.DataFrame,
     spaceheat_to_hotwater_ratio: float,
 ) -> pd.DataFrame:
-    """Blend space-heat and hot-water profiles using a fixed annual ratio."""
+    """Blend space-heat and hot-water profiles using a fixed annual ratio.
+    Args:
+        space_heat_df: DataFrame with space-heat time series.
+        hotwater_df: DataFrame with hot-water time series.
+        spaceheat_to_hotwater_ratio: The ratio of space heat to hot water.
+    Returns:
+        A DataFrame with the blended time series."""
     return (
         space_heat_df * spaceheat_to_hotwater_ratio
         + hotwater_df * (1 - spaceheat_to_hotwater_ratio)
@@ -58,20 +63,7 @@ def _annual_correction_factor_for_year(
     return correction_factors_df.loc[year] / correction_factors_df.loc[reference_year]
 
 
-def _write_raw_and_scaled_csv(
-    df_raw: pd.DataFrame,
-    df_scaled: pd.DataFrame,
-    year_output_folder: str,
-    subfolder_name: str,
-    csv_name: str,
-) -> None:
-    """Persist raw and scaled hourly time series CSV outputs."""
-    raw_folder = os.path.join(year_output_folder, subfolder_name, "raw")
-    scaled_folder = os.path.join(year_output_folder, subfolder_name, "scaled")
-    create_directory_if_needed(raw_folder)
-    create_directory_if_needed(scaled_folder)
-    df_raw.to_csv(os.path.join(raw_folder, csv_name))
-    df_scaled.to_csv(os.path.join(scaled_folder, csv_name))
+
 
 
 def _write_demand_timeseries_inc_files(
@@ -82,38 +74,44 @@ def _write_demand_timeseries_inc_files(
     filename: str,
     da_raw_folder: str,
     da_scaled_folder: str,
-    capdev_folder: str,
+    capdev_scaled_long_term_folder: str,
+    capdev_scaled_full_year_folder: str,
+    capdev_raw_folder: str,
     config: DemandModuleConfig,
     time_df: pd.DataFrame,
 ) -> None:
-    """Write DA raw/scaled and CapDev .inc files for one demand user group."""
-    df = convert_to_list_df_new(df_raw, symbol, user_name)
+    """Write DA raw/scaled and CapDev .inc files for one demand user group.
+    Args:
+        df_raw: DataFrame with raw hourly time series.
+        df_scaled: DataFrame with scaled hourly time series.
+        symbol: Symbol for the demand user group.
+        user_name: Name of the demand user group.
+        filename: Name of the .inc file to save.
+        da_raw_folder: Path to the folder for raw DA files.
+        da_scaled_folder: Path to the folder for scaled DA files.
+        capdev_scaled_long_term_folder: Path to the scaled long-term CapDev folder.
+        capdev_scaled_full_year_folder: Path to the scaled full-year CapDev folder.
+        capdev_raw_folder: Path to the raw CapDev folder.
+        config: Configuration object for the demand module.
+        time_df: DataFrame with Balmorel DA time index.
+    """
+    df = to_balmorel_timeseries_assignment_lines(df_raw, symbol, user_name)
     build_inc_file_list_type(df, symbol, da_raw_folder, filename=filename)
 
-    df = convert_to_list_df_new(df_scaled, symbol, user_name)
+    df = to_balmorel_timeseries_assignment_lines(df_scaled, symbol, user_name)
     build_inc_file_list_type(df, symbol, da_scaled_folder, filename=filename)
 
-    df_scaled_capdev = compute_capdev_timeseries(
-        config.capdev_timesteps_to_keep.as_legacy_dict(),
-        df_scaled,
-        time_df,
-        source="demand"
-    )
-    df = convert_to_list_df_new(df_scaled_capdev, symbol, user_name)
-    build_inc_file_list_type(df, symbol, capdev_folder, filename=filename)
+    capdev_cases = [
+        (df_scaled, True,  capdev_scaled_long_term_folder),
+        (df_raw,    True,  capdev_scaled_full_year_folder),
+        (df_raw,    False, capdev_raw_folder),
+    ]
+    capdev_config = config.capdev_timesteps_to_keep.as_legacy_dict()
+    for src_df, scale, output_folder in capdev_cases:
+        capdev_df = compute_capdev_timeseries(capdev_config, src_df, time_df, source="demand", scale=scale)
+        df = to_balmorel_timeseries_assignment_lines(capdev_df, symbol, user_name)
+        build_inc_file_list_type(df, symbol, output_folder, filename=filename)
 
-
-def _prepare_common_output_dirs(year_output_folder: str) -> tuple[str, str, str]:
-    """Create and return common Balmorel output directories for one weather year."""
-    da_raw_folder = os.path.join(year_output_folder, "to_balmorel", "DA", "raw")
-    da_scaled_folder = os.path.join(year_output_folder, "to_balmorel", "DA", "scaled")
-    capdev_folder = os.path.join(year_output_folder, "to_balmorel", "CapDev")
-
-    create_directory_if_needed(year_output_folder)
-    create_directory_if_needed(da_raw_folder)
-    create_directory_if_needed(da_scaled_folder)
-    create_directory_if_needed(capdev_folder)
-    return da_raw_folder, da_scaled_folder, capdev_folder
 
 
 def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder: str) -> None:
@@ -150,22 +148,28 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     )
     
     year_output_folder = os.path.join(output_folder, str(year))
-    da_raw_folder, da_scaled_folder, capdev_folder = _prepare_common_output_dirs(year_output_folder)
+    (
+        da_raw_folder,
+        da_scaled_folder,
+        capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder,
+        capdev_raw_folder,
+    ) = prepare_balmorel_output_dirs(year_output_folder)
 
     # Electricity demand: individual users
     _, df_cut, df_scaled = process_timeseries_with_scaling(df_classic, year, year, "demand", fix_monday=True)
 
-    _write_raw_and_scaled_csv(
+    write_raw_and_scaled_csv(
         df_raw=df_cut,
         df_scaled=df_scaled,
-        year_output_folder=year_output_folder,
+        output_folder=year_output_folder,
         subfolder_name="classic_elec",
         csv_name="classic_elec.csv",
     )
 
     time_df = create_balmorel_time_mapping()
-    df_cut = _apply_balmorel_da_time_index(df_cut, time_df)
-    df_scaled = _apply_balmorel_da_time_index(df_scaled, time_df)
+    df_cut = apply_balmorel_da_time_index(df_cut, time_df)
+    df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
 
     _write_demand_timeseries_inc_files(
         df_raw=df_cut,
@@ -175,7 +179,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         filename="DE_VAR_T_RESE",
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
-        capdev_folder=capdev_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
         config=config,
         time_df=time_df,
     )
@@ -187,7 +193,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         filename="DE_VAR_T_OTHER",
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
-        capdev_folder=capdev_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
         config=config,
         time_df=time_df,
     )
@@ -195,17 +203,17 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     # Heat demand: individual users
     _, df_cut, df_scaled = process_timeseries_with_scaling(df_space_heat_profile, year, year,"demand", fix_monday=True)
 
-    _write_raw_and_scaled_csv(
+    write_raw_and_scaled_csv(
         df_raw=df_cut,
         df_scaled=df_scaled,
-        year_output_folder=year_output_folder,
+        output_folder=year_output_folder,
         subfolder_name="heat_profile_indiv_user",
         csv_name="heat_profile_indiv_user.csv",
     )
 
     time_df = create_balmorel_time_mapping()
-    df_cut = _apply_balmorel_da_time_index(df_cut, time_df)
-    df_scaled = _apply_balmorel_da_time_index(df_scaled, time_df)
+    df_cut = apply_balmorel_da_time_index(df_cut, time_df)
+    df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
 
     _write_demand_timeseries_inc_files(
         df_raw=df_cut,
@@ -215,7 +223,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         filename="DH_VAR_T_RESIDENTIAL",
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
-        capdev_folder=capdev_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
         config=config,
         time_df=time_df,
     )
@@ -227,7 +237,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         filename="DH_VAR_T_TERTIARY",
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
-        capdev_folder=capdev_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
         config=config,
         time_df=time_df,
     )
@@ -241,9 +253,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     create_directory_if_needed(resh_scaled_folder)
 
     time_df = create_balmorel_time_mapping()
-    df_cut = _apply_balmorel_da_time_index(df_cut, time_df)
-    df_scaled = _apply_balmorel_da_time_index(df_scaled, time_df)
-    df_resh_hotwater_profile = _apply_balmorel_da_time_index(df_resh_hotwater_profile, time_df)
+    df_cut = apply_balmorel_da_time_index(df_cut, time_df)
+    df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
+    df_resh_hotwater_profile = apply_balmorel_da_time_index(df_resh_hotwater_profile, time_df)
 
     df_cut = _blend_space_heat_and_hotwater(
         space_heat_df=df_cut,
@@ -256,10 +268,10 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         spaceheat_to_hotwater_ratio=spaceheat_to_hotwater_ratio,
     )
 
-    _write_raw_and_scaled_csv(
+    write_raw_and_scaled_csv(
         df_raw=df_cut,
         df_scaled=df_scaled,
-        year_output_folder=year_output_folder,
+        output_folder=year_output_folder,
         subfolder_name="heat_profile_resh",
         csv_name="heat_profile_resh.csv",
     )
@@ -272,7 +284,9 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         filename="DH_VAR_T_RESH",
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
-        capdev_folder=capdev_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
         config=config,
         time_df=time_df,
     )
@@ -284,10 +298,10 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         year=year,
         reference_year=ann_corr_fac_ref_year,
     )
-    df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "RESIDENTIAL")
+    df = to_balmorel_factor_assignment_lines(df_heat_corr_factor_year, "DH", "RESIDENTIAL")
     build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_RESIDENTIAL")
 
-    df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "TERTIARY")
+    df = to_balmorel_factor_assignment_lines(df_heat_corr_factor_year, "DH", "TERTIARY")
     build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_TERTIARY")
 
     df_heat_corr_factor_year = _annual_correction_factor_for_year(
@@ -295,47 +309,5 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
         year=year,
         reference_year=ann_corr_fac_ref_year,
     )
-    df = convert_to_list_df_annual_correction(df_heat_corr_factor_year, "DH", "RESH")
+    df = to_balmorel_factor_assignment_lines(df_heat_corr_factor_year, "DH", "RESH")
     build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_RESH")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

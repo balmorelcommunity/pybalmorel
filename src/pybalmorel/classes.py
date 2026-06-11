@@ -29,7 +29,8 @@ from .weatheryear.corres_to_energy_system_model import export_timeseries_to_xlsx
 from .weatheryear.to_balmorel import export_timeseries_to_balmorel_format
 from .weatheryear.additional_inc import create_additional_inc
 from .weatheryear.demand2btc import generate_demand_balmorel_inc_files
-
+from .weatheryear.hydro_to_btc import create_hydro_inc
+from .weatheryear.cop_to_btc import create_cop_inc
 #%% ------------------------------- ###
 ###           1. Outputs            ###
 ### ------------------------------- ###
@@ -803,3 +804,9 @@ class WEATHERYEAR:
     def get_demand_data(self):
 
         generate_demand_balmorel_inc_files(self.config_fn,self.year,self.output_folder)
+
+    def get_hydro_data(self):
+        create_hydro_inc(self.config_fn,self.year,self.output_folder)
+
+    def get_cop_data(self):
+        create_cop_inc(self.config_fn,self.year,self.output_folder)
