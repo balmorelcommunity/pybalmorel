@@ -35,7 +35,7 @@ turbine_to_keep:
   
 
 PV_to_keep:
-  - PV_Roofop
+  - PV_Rooftop
   - PV_Utility_scale_no_tracking
   - PV_Utility_scale_tracking
 
