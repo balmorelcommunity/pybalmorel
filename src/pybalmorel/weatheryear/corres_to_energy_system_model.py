@@ -242,7 +242,7 @@ def is_solar_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig)
 
 def export_timeseries_to_xlsx(
     config_fn: str,
-    start_date: str,
+    start_date: int,
     output_folder: str,
     end_date: str | bool = False,
     fix_monday: bool = True,
@@ -250,7 +250,7 @@ def export_timeseries_to_xlsx(
     """Main function to read CorRES output files, process the time series data, and export it to Excel files for use in Balmorel.
      Args:
         config_fn: The file path to the configuration file (e.g., YAML) containing settings for which technologies and regions to keep, as well as the paths to the CorRES results.
-        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
+        start_date: The start year for filtering the time series ('int' type).
         output_folder: The folder where the processed Excel files will be saved.
         end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format). If False, no end date filtering is applied.
         fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing. Defaults to True.

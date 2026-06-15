@@ -172,7 +172,7 @@ def process_timeseries_with_scaling(df: pd.DataFrame, start_date: str, end_date:
     """Apply necessary treatments to the time series data, including filtering by date range, fixing the first Monday if needed, and scaling the data to have the same mean as the full time series.
      Args:
         df: The original DataFrame containing the time series data.
-        start_date: The start date for filtering the time series (in 'YYYY-MM-DD' format).
+        start_date: The start year for filtering the time series ('int' format).
         end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format).
         source: The source type (e.g., "wind" or "solar") to determine specific treatments.
         fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
