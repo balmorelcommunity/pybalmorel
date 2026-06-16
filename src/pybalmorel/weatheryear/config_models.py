@@ -5,9 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import yaml
-
-
 class ConfigValidationError(ValueError):
     """Raised when a weather-year configuration is missing required fields."""
 
@@ -61,6 +58,13 @@ def _expect_dict_of_list_str(value: Any, context: str) -> dict[str, list[str]]:
 
 
 def _load_yaml_file(config_fn: str) -> dict[str, Any]:
+    try:
+        import yaml
+    except ImportError:
+        raise ImportError(
+            "pyyaml is required to use the weatheryear module. "
+            "Install it with: pip install pybalmorel[weatheryear]"
+        )
     with open(config_fn) as file:
         raw = yaml.safe_load(file)
     return _expect_dict(raw, "root config")

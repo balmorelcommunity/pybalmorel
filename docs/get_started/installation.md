@@ -24,3 +24,9 @@ dependencies:
 ```
 
 Note: If you want to use the [time series aggregation tools](../preprocessing/timeseriesagg.md), you will also need to pip install the python packages tsam and ripgrepy.
+
+Note: If you want to use the [multi-weather-year input tools](../preprocessing/multi_weather_year_input.md), you will also need the optional `weatheryear` dependencies. Install them with:
+
+```bash
+pip install pybalmorel[weatheryear]
+```

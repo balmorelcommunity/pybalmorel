@@ -18,6 +18,11 @@ import logging
 
 import numpy as np
 
+try:
+    import xlsxwriter as _xlsxwriter  # noqa: F401
+except ImportError:
+    _xlsxwriter = None  # type: ignore[assignment]
+
 from .auxiliary_functions import (
     create_directory_if_needed,
     process_timeseries_with_scaling
@@ -112,6 +117,11 @@ def _write_stats_excel(
     """Persist CF/FLH stats with existing and future run-specific formatting."""
 
     def _write_per_sheet(df_combined: pd.DataFrame, filename: str) -> None:
+        if _xlsxwriter is None:
+            raise ImportError(
+                "xlsxwriter is required to export Excel files from the weatheryear module. "
+                "Install it with: pip install pybalmorel[weatheryear]"
+            )
         with pd.ExcelWriter(os.path.join(stats_path, filename), engine="xlsxwriter") as writer:
             for col in df_combined.columns:
                 df_combined[col].dropna().to_excel(writer, sheet_name=col, index=True)
