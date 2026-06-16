@@ -30,8 +30,8 @@ def build_GKFX(
     Returns:
         GKFX DataFrame indexed by generator names.
     """
-    rrraaa_renewable_df[['Region', 'AreasRG']] = rrraaa_renewable_df['RRRAAA_renewable'].str.split(
-        pat='.', n=1, expand=True
+    rrraaa_renewable_df[["Region", "AreasRG"]] = rrraaa_renewable_df["RRRAAA_renewable"].str.split(
+        pat=r"\.", n=1, expand=True
     )
     rrraaa_renewable_df[['Areas', 'RG']] = rrraaa_renewable_df['AreasRG'].str.rsplit(
         '_', n=1, expand=True
