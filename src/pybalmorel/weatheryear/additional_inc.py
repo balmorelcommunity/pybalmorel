@@ -480,9 +480,10 @@ def build_SUBTECHGROUPKPOT(
     
     SUBTECHGROUPKPOT=pd.concat(dfs,axis=1)
     
-    SUBTECHGROUPKPOT.index.name=""
-    SUBTECHGROUPKPOT=SUBTECHGROUPKPOT.replace(np.nan,"")
-    SUBTECHGROUPKPOT = SUBTECHGROUPKPOT[SUBTECHGROUPKPOT.index.isin(RRRAAA_renewable_df['Region'])]
+    SUBTECHGROUPKPOT.index.name = ""
+    SUBTECHGROUPKPOT = SUBTECHGROUPKPOT.replace(np.nan, "")
+    regions = RRRAAA_renewable_df["RRRAAA_renewable"].str.split(r"\.", n=1).str[0]
+    SUBTECHGROUPKPOT = SUBTECHGROUPKPOT[SUBTECHGROUPKPOT.index.isin(regions)]
     
     create_Table_inc(SUBTECHGROUPKPOT, "SUBTECHGROUPKPOT", output_folder + "/to_balmorel/")
     
