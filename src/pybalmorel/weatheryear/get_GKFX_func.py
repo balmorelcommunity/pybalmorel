@@ -91,7 +91,10 @@ def build_GKFX(
         elif solar_tech == "PV_Utility_scale_tracking":
             g_name = "GNR_PV-Utility_scale_tracking_"
         
-        df_merged = pd.merge(existing_solar_cap, tech_split[solar_tech], on='Region')
+        #df_merged = pd.merge(existing_solar_cap, tech_split[solar_tech], on='Region')
+        df_merged = existing_solar_cap.merge(
+             tech_split[[solar_tech]].reset_index(), on="Region", how="left"
+         )
         df_merged["RG"] = df_merged["Technology"]
         df_merged["Technology"] = g_name + df_merged["Technology"] + "_Existing"
         df_merged[year_columns] = df_merged[year_columns].multiply(df_merged[solar_tech], axis=0)
