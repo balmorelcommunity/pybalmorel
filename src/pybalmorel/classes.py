@@ -2,6 +2,8 @@
 Created on 08.06.2024
 
 @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+@contributor: Polyneikis Kanellas, Development Engineer DTU Wind 
+@contributor: Shubham Nayak, PhD Student at DTU Wind
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###
@@ -23,7 +25,12 @@ from matplotlib.axes import Axes
 from .utils import symbol_to_df
 from .plotting.production_profile import plot_profile, plot_profiles
 from .plotting.maps_balmorel import plot_map
-
+from .weatheryear.corres_to_energy_system_model import export_timeseries_to_xlsx
+from .weatheryear.to_balmorel import export_timeseries_to_balmorel_format
+from .weatheryear.additional_inc import create_additional_inc
+from .weatheryear.demand2btc import generate_demand_balmorel_inc_files
+from .weatheryear.hydro_to_btc import create_hydro_inc
+from .weatheryear.cop_to_btc import create_cop_inc
 #%% ------------------------------- ###
 ###           1. Outputs            ###
 ### ------------------------------- ###
@@ -767,3 +774,39 @@ class GUI:
         from .interactive.dashboard.eel_dashboard import interactive_geofilemaker
 
         return interactive_geofilemaker()
+    
+
+class WEATHERYEAR:
+
+    """A class for processing the CorRES database and creating weather year 
+    data CSV and .inc files for the Balmorel model for a specific year (1980–2021).
+
+    Args:
+        year (int): The year for which weather data is processed.
+        config_fn (str): The configuration file name.
+        output_folder (str): The folder where output files will be stored.
+    """
+
+    def __init__(self, year: int, config_fn: str, output_folder: str):
+        self.year = year
+        self.config_fn = config_fn
+        self.output_folder = output_folder
+
+    def get_vre_data(self):
+
+        export_timeseries_to_xlsx(self.config_fn,self.year,self.output_folder)
+        dfs,FLH=export_timeseries_to_balmorel_format(self.config_fn,self.year,self.output_folder)
+
+    def get_vre_related_files(self):
+
+        AAA_renewable_df,RRRAAA_renewable_df,GKFX,GGG_renewable_df=create_additional_inc(self.config_fn,self.output_folder,self.year)
+    
+    def get_demand_data(self):
+
+        generate_demand_balmorel_inc_files(self.config_fn,self.year,self.output_folder)
+
+    def get_hydro_data(self):
+        create_hydro_inc(self.config_fn,self.year,self.output_folder)
+
+    def get_cop_data(self):
+        create_cop_inc(self.config_fn,self.year,self.output_folder)

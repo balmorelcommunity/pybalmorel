@@ -12,6 +12,8 @@ dependencies:
   - ipykernel>=6.29.5
   - pytest=8.3.3
   - requests
+  - xlsxwriter
+  - pyyaml
   - pip
   - pip:
     - pybalmorel==1.1.13
