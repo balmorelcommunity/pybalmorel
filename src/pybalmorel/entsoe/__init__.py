@@ -80,7 +80,7 @@ bidding_zone_codes = {
 }
 
 
-def main(year: int, path: str):
+def get_dayahead_prices(year: int, path: str):
     api_key = getpass("API key for ENTSO-E transparency platform: ")
 
     for bidding_zone in [
@@ -142,10 +142,13 @@ def main(year: int, path: str):
                 prices_df.to_csv(
                     p.joinpath(f"{year}_{bidding_zone}_dayaheadprices.csv")
                 )
-        except (ValueError, NoMatchingDataError) as e:
+        except ValueError as e:
             print(f"Couldn't fetch bidding zone {bidding_zone}")
+            print(e)
+        except NoMatchingDataError as e:
+            print(f"Couldn't find any data for bidding zone {bidding_zone}")
             print(e)
 
 
 if __name__ == "__main__":
-    main(2024, ".")
+    get_dayahead_prices(2024, "tests/output")
