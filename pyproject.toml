@@ -98,3 +98,4 @@ pybalmorel = "*"
 [tool.pixi.dependencies]
 sqlite = ">=3.53.1,<4"
 entsoe-py = ">=0.8.0,<0.9"
+python-decouple = ">=3.8,<4"

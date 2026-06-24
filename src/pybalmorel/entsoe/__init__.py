@@ -13,57 +13,10 @@ Created on 18.06.2026
 
 import pandas as pd
 from pathlib import Path
-from entsoe import EntsoePandasClient
+from entsoe.entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 from getpass import getpass
-
-# ------------------------------- #
-#          1. Functions           #
-# ------------------------------- #
-
-
-def fetch_day_ahead_prices(api_key, start_date, end_date, bidding_zone):
-    """Fetch day-ahead electricity prices for a specified bidding zone.
-
-    Args:
-        api_key (str): API key for the ENTSO-E Transparency Platform.
-        start_date (str): Start date in the format 'YYYYMMDD'.
-        end_date (str): End date in the format 'YYYYMMDD'.
-        bidding_zone (str): Bidding zone code (e.g., '10YNO-1--------J').
-
-    Returns:
-        pd.DataFrame: DataFrame containing the day-ahead prices.
-    """
-    client = EntsoePandasClient(api_key=api_key)
-    start_date = date_format(start_date)
-    end_date = date_format(end_date)
-    prices = client.query_day_ahead_prices(
-        bidding_zone,
-        start=start_date,  # pyright: ignore
-        end=end_date,  # pyright: ignore
-    )
-    return prices
-
-
-def date_format(date):
-    if type(date) is not pd.Timestamp:
-        proper_date = pd.Timestamp(date, tz="Europe/Brussels")
-    else:
-        proper_date = date
-    return proper_date
-
-
-def get_full_year(year: int):
-
-    start_date = pd.Timestamp(f"{year}0101", tz="Europe/Brussels")
-    end_date = pd.Timestamp(f"{year + 1}0101", tz="Europe/Brussels")
-
-    return start_date, end_date
-
-
-# ------------------------------- #
-#            2. Main              #
-# ------------------------------- #
+from decouple import config, UndefinedValueError
 
 bidding_zone_codes = {
     "IT-NORD": "10Y1001A1001A73I",
@@ -135,21 +88,63 @@ bidding_zones = [
     "10Y1001A1001A74G",
 ]
 
+# ------------------------------- #
+#          1. Functions           #
+# ------------------------------- #
 
-def get_dayahead_prices(year: int, path: str):
-    api_key = getpass("API key for ENTSO-E transparency platform: ")
 
+def date_format(date):
+    if type(date) is not pd.Timestamp:
+        proper_date = pd.Timestamp(date, tz="Europe/Brussels")
+    else:
+        proper_date = date
+    return proper_date
+
+
+def get_full_year(year: int):
+
+    start_date = pd.Timestamp(f"{year}0101", tz="Europe/Brussels")
+    end_date = pd.Timestamp(f"{year + 1}0101", tz="Europe/Brussels")
+
+    return start_date, end_date
+
+
+def get_api_key():
+    try:
+        api_key = config("ENTSOE_API_KEY")
+    except UndefinedValueError:
+        print(
+            "Couldn't find ENSTOE_API_KEY in environment variables, define it in an .env file in project root to avoid being prompted every time."
+        )
+        api_key = getpass("API key for ENTSO-E transparency platform: ")
+
+    return api_key
+
+
+# ------------------------------- #
+#            2. Main              #
+# ------------------------------- #
+
+
+def fetch_annual_data(
+    entsoe_query,
+    year,
+    path,
+):
+    api_key = get_api_key()
+    client = EntsoePandasClient(api_key=api_key)
+    start_date, end_date = get_full_year(year)
+    p = Path(path)
     for bidding_zone in bidding_zones:
-        p = Path(path)
-        start_date, end_date = get_full_year(year)
         try:
-            if not p.joinpath(f"{year}_{bidding_zone}_dayaheadprices.csv").exists():
-                prices_df = fetch_day_ahead_prices(
-                    api_key, start_date, end_date, bidding_zone
+            if not p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv").exists():
+                df = getattr(client, f"query_{entsoe_query}")(
+                    bidding_zone,
+                    start=start_date,  # pyright: ignore
+                    end=end_date,  # pyright: ignore
                 )
-                prices_df.to_csv(
-                    p.joinpath(f"{year}_{bidding_zone}_dayaheadprices.csv")
-                )
+
+                df.to_csv(p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv"))
         except ValueError as e:
             print(f"Couldn't fetch bidding zone {bidding_zone}")
             print(e)
@@ -159,4 +154,5 @@ def get_dayahead_prices(year: int, path: str):
 
 
 if __name__ == "__main__":
-    get_dayahead_prices(2024, "tests/output")
+    fetch_annual_data("load", 2024, "tests/output")
+    fetch_annual_data("day_ahead_prices", 2024, "tests/output")
