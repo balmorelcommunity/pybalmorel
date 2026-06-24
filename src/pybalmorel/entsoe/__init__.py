@@ -126,12 +126,7 @@ def get_api_key():
 # ------------------------------- #
 
 
-def fetch_annual_data(
-    entsoe_query,
-    year,
-    path,
-):
-    api_key = get_api_key()
+def fetch_annual_data(entsoe_query, year, path, api_key):
     client = EntsoePandasClient(api_key=api_key)
     start_date, end_date = get_full_year(year)
     p = Path(path)
@@ -154,5 +149,6 @@ def fetch_annual_data(
 
 
 if __name__ == "__main__":
-    fetch_annual_data("load", 2024, "tests/output")
-    fetch_annual_data("day_ahead_prices", 2024, "tests/output")
+    api_key = get_api_key()
+    fetch_annual_data("load", 2024, "tests/output", api_key)
+    fetch_annual_data("day_ahead_prices", 2024, "tests/output", api_key)
