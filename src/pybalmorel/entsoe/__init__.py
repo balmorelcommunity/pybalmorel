@@ -38,6 +38,7 @@ bidding_zone_codes = {
     "BA": "10YBA-JPCC-----D",
 }
 
+# Note: No data for CY or TR in 2024
 bidding_zones = [
     "IE_SEM",
     "10YGB----------A",
