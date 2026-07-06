@@ -26,6 +26,87 @@ from .config_models import DemandModuleConfig
 from .to_inc import build_inc_file_list_type
 
 
+def _load_individual_heat_profiles(csv_folder: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load individual-user heat profiles for residential and tertiary demand."""
+    combined_path = os.path.join(csv_folder, "heat_profile_indiv_user.csv")
+    if os.path.exists(combined_path):
+        combined = pd.read_csv(combined_path, index_col=0, parse_dates=True)
+        return combined.copy(), combined.copy()
+
+    residential_path = os.path.join(csv_folder, "heat_profile_indiv_user_residential.csv")
+    tertiary_path = os.path.join(csv_folder, "heat_profile_indiv_user_tertiary.csv")
+    return (
+        pd.read_csv(residential_path, index_col=0, parse_dates=True),
+        pd.read_csv(tertiary_path, index_col=0, parse_dates=True),
+    )
+
+
+def _load_individual_heat_correction_factors(csv_folder: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load annual correction factors for residential and tertiary individual users."""
+    combined_path = os.path.join(csv_folder, "heat_yearly_corr_factors_indiv_user.csv")
+    if os.path.exists(combined_path):
+        combined = pd.read_csv(combined_path, index_col=0)
+        return combined.copy(), combined.copy()
+
+    residential_path = os.path.join(csv_folder, "heat_yearly_corr_factors_indiv_user_residential.csv")
+    tertiary_path = os.path.join(csv_folder, "heat_yearly_corr_factors_indiv_user_tertiary.csv")
+    return (
+        pd.read_csv(residential_path, index_col=0),
+        pd.read_csv(tertiary_path, index_col=0),
+    )
+
+
+def _process_individual_heat_user(
+    df_space_heat_profile: pd.DataFrame,
+    year: int,
+    user_name: str,
+    subfolder_name: str,
+    filename: str,
+    year_output_folder: str,
+    da_raw_folder: str,
+    da_scaled_folder: str,
+    capdev_scaled_long_term_folder: str,
+    capdev_scaled_full_year_folder: str,
+    capdev_raw_folder: str,
+    config: DemandModuleConfig,
+) -> None:
+    """Process one individual-user heat profile and export Balmorel files."""
+    _, df_cut, df_scaled = process_timeseries_with_scaling(
+        df_space_heat_profile,
+        year,
+        year,
+        "demand",
+        fix_monday=True,
+    )
+
+    write_raw_and_scaled_csv(
+        df_raw=df_cut,
+        df_scaled=df_scaled,
+        output_folder=year_output_folder,
+        subfolder_name=subfolder_name,
+        csv_name=f"{subfolder_name}.csv",
+    )
+
+    time_df = create_balmorel_time_mapping()
+    df_cut = apply_balmorel_da_time_index(df_cut, time_df)
+    df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
+
+    _write_demand_timeseries_inc_files(
+        df_raw=df_cut,
+        df_scaled=df_scaled,
+        symbol="DH_VAR_T",
+        user_name=user_name,
+        filename=filename,
+        da_raw_folder=da_raw_folder,
+        da_scaled_folder=da_scaled_folder,
+        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+        capdev_raw_folder=capdev_raw_folder,
+        config=config,
+        time_df=time_df,
+    )
+
+
 
 
 
@@ -131,18 +212,17 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     df_classic = pd.read_csv(
         os.path.join(csv_folder, "classic_demand.csv"), index_col=0, parse_dates=True
     )
-    df_space_heat_profile = pd.read_csv(
-        os.path.join(csv_folder, "heat_profile_indiv_user.csv"), index_col=0, parse_dates=True
-    )
+    df_space_heat_profile_residential, df_space_heat_profile_tertiary = _load_individual_heat_profiles(csv_folder)
     df_resh_heat_profile = pd.read_csv(
         os.path.join(csv_folder, "heat_profile_resh.csv"), index_col=0, parse_dates=True
     )
     df_resh_hotwater_profile = pd.read_csv(
-        os.path.join(csv_folder, "hotWater_profile_resh.csv"), index_col=0
+        os.path.join(csv_folder, "hotwater_profile_resh.csv"), index_col=0
     )
-    df_heat_corr_factors_indiv_user = pd.read_csv(
-        os.path.join(csv_folder, "heat_yearly_corr_factors_indiv_user.csv"), index_col=0
-    )
+    (
+        df_heat_corr_factors_indiv_user_residential,
+        df_heat_corr_factors_indiv_user_tertiary,
+    ) = _load_individual_heat_correction_factors(csv_folder)
     df_heat_corr_factors_resh = pd.read_csv(
         os.path.join(csv_folder, "heat_yearly_corr_factors_resh.csv"), index_col=0
     )
@@ -201,47 +281,33 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     )
 
     # Heat demand: individual users
-    _, df_cut, df_scaled = process_timeseries_with_scaling(df_space_heat_profile, year, year,"demand", fix_monday=True)
-
-    write_raw_and_scaled_csv(
-        df_raw=df_cut,
-        df_scaled=df_scaled,
-        output_folder=year_output_folder,
-        subfolder_name="heat_profile_indiv_user",
-        csv_name="heat_profile_indiv_user.csv",
-    )
-
-    time_df = create_balmorel_time_mapping()
-    df_cut = apply_balmorel_da_time_index(df_cut, time_df)
-    df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
-
-    _write_demand_timeseries_inc_files(
-        df_raw=df_cut,
-        df_scaled=df_scaled,
-        symbol="DH_VAR_T",
+    _process_individual_heat_user(
+        df_space_heat_profile=df_space_heat_profile_residential,
+        year=year,
         user_name="RESIDENTIAL",
+        subfolder_name="heat_profile_indiv_user_residential",
         filename="DH_VAR_T_RESIDENTIAL",
+        year_output_folder=year_output_folder,
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
         capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
         capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
         capdev_raw_folder=capdev_raw_folder,
         config=config,
-        time_df=time_df,
     )
-    _write_demand_timeseries_inc_files(
-        df_raw=df_cut,
-        df_scaled=df_scaled,
-        symbol="DH_VAR_T",
+    _process_individual_heat_user(
+        df_space_heat_profile=df_space_heat_profile_tertiary,
+        year=year,
         user_name="TERTIARY",
+        subfolder_name="heat_profile_indiv_user_tertiary",
         filename="DH_VAR_T_TERTIARY",
+        year_output_folder=year_output_folder,
         da_raw_folder=da_raw_folder,
         da_scaled_folder=da_scaled_folder,
         capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
         capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
         capdev_raw_folder=capdev_raw_folder,
         config=config,
-        time_df=time_df,
     )
 
     # Heat demand: RESH (space heat blended with hot-water profile)
@@ -294,13 +360,18 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     # Annual DH correction factors
     to_balmorel_folder = os.path.join(year_output_folder, "to_balmorel")
     df_heat_corr_factor_year = _annual_correction_factor_for_year(
-        correction_factors_df=df_heat_corr_factors_indiv_user,
+        correction_factors_df=df_heat_corr_factors_indiv_user_residential,
         year=year,
         reference_year=ann_corr_fac_ref_year,
     )
     df = to_balmorel_factor_assignment_lines(df_heat_corr_factor_year, "DH", "RESIDENTIAL")
     build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_RESIDENTIAL")
 
+    df_heat_corr_factor_year = _annual_correction_factor_for_year(
+        correction_factors_df=df_heat_corr_factors_indiv_user_tertiary,
+        year=year,
+        reference_year=ann_corr_fac_ref_year,
+    )
     df = to_balmorel_factor_assignment_lines(df_heat_corr_factor_year, "DH", "TERTIARY")
     build_inc_file_list_type(df, "DH", to_balmorel_folder, filename="DH_TERTIARY")
 

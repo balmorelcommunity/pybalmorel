@@ -29,25 +29,14 @@ Each method generates both Day-Ahead and CapDev time series.
 All methods are driven by a single YAML configuration file. Below is an annotated template:
 
 ```yaml
-# --- VRE data ---
-corres_results:
-  wind:
-    - path/to/Future_Onshore
-    - path/to/Future_Offshore_bottom_fixed
-    - path/to/Existing_ERA5_GWA2
-  solar:
-    - path/to/PV_Rooftop
-    - path/to/PV_Utility_scale_no_tracking
-    - path/to/PV_Utility_scale_tracking
+# Optional convenience key: weather-year input root folder.
+# If provided, defaults are inferred for:
+# corres_results, VRE_tech_costs, Existing_wind_cap, Existing_solar_cap,
+# VRE_potentials, demand_model_results, hydro_model_results, cop_model_results.
+weatheryear_inputs_folder: path/to/weatheryear_inputs
 
-# VRE technology subsets to process
-tech_to_keep:
-  - Future_Onshore
-  - Future_Offshore_bottom_fixed
-  - Existing_ERA5_GWA2
-  - PV_Rooftop
-  - PV_Utility_scale_no_tracking
-  - PV_Utility_scale_tracking
+# Backward-compatible alternative key:
+# multiweather_other_inputs_folder: path/to/weatheryear_inputs/multiweather_other_inputs
 
 # Wind turbine models (future installations only)
 turbine_to_keep:
@@ -66,27 +55,16 @@ Regions_to_keep:
   onshore: [DK1, DK2, FIN, DE4-E, DE4-N, ...]
   offshore: [DK1_OFF, DK2_OFF, FIN_OFF, DE4-N_OFF, ...]
 
-# --- VRE investment / cost data ---
-VRE_tech_costs: path/to/VRE_Tech_Costs_EUR2015.xlsx
-VRE_potentials: path/to/VRE_Potentials.xlsx
-Existing_wind_cap: path/to/Existing_wind_capacities.xlsx
-Existing_solar_cap: path/to/Existing_solar_capacities.xlsx
-
+# --- VRE investment 
 ANNUITYCG_calculation:
   DEBT_SHARE: 0
   INTEREST_RATE: 0.04
   DISCOUNTRATE: 0.04
 
 # --- Demand data ---
-demand_model_results: path/to/demand_model_csv_folder
 spaceHeat_to_hotWater_ratio: 0.7   # fraction of heat demand attributed to space heating
 ann_corr_fac_ref_year: 2012        # reference year for annual correction factors
 
-# --- Hydro data ---
-hydro_model_results: path/to/hydro_model_csv_folder
-
-# --- COP data ---
-cop_model_results: path/to/cop_model_csv_folder
 
 # --- CapDev time-series aggregation ---
 # Representative seasons (S) and hours (T) used for the aggregated resolution
@@ -96,6 +74,25 @@ CapDev_timesteps_to_keep:
       T097, T100, T103, T106, T109, T112, T115, T118,
       T121, T124, T127, T130, T133, T136, T139, T142]
 ```
+
+When `weatheryear_inputs_folder` is set, the module assumes this structure:
+
+```text
+weatheryear_inputs/
+├── Corres_runs/
+├── demand_data/
+├── hydro_data/
+├── cop_data/
+└── multiweather_other_inputs/
+```
+
+Defaults are resolved as follows:
+
+- `corres_results` from `Corres_runs` (or `CorRES_runs` if present)
+- `VRE_tech_costs`, `VRE_potentials`, `Existing_wind_cap`, `Existing_solar_cap` from `multiweather_other_inputs`
+- `demand_model_results` from `demand_data` (falls back to `multiweather_other_inputs/Demand_model_Bal_ready_csv*`)
+- `hydro_model_results` from `hydro_data`
+- `cop_model_results` from `cop_data`
 
 ## Basic Usage
 

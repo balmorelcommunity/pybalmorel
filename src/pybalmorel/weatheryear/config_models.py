@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import glob
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,6 +29,115 @@ _MODULE_KEYS = {
     "Existing_wind_cap",
     "Existing_solar_cap",
 }
+
+_MULTIWEATHER_INPUTS_KEY = "multiweather_other_inputs_folder"
+_WEATHERYEAR_INPUTS_KEY = "weatheryear_inputs_folder"
+
+
+def _default_demand_folder(weatheryear_root: str, multiweather_folder: str) -> str:
+    """Return the preferred default folder for demand-model CSV inputs."""
+    demand_data_folder = os.path.join(weatheryear_root, "demand_data")
+    if os.path.isdir(demand_data_folder):
+        return demand_data_folder
+
+    default_name = os.path.join(multiweather_folder, "Demand_model_Bal_ready_csv")
+    if os.path.isdir(default_name):
+        return default_name
+
+    candidates = sorted(glob.glob(os.path.join(multiweather_folder, "Demand_model_Bal_ready_csv*")))
+    if candidates:
+        return candidates[0]
+
+    return default_name
+
+
+def _resolve_root_and_multiweather_folder(raw: dict[str, Any]) -> tuple[str, str] | None:
+    """Resolve root and multiweather input folders from supported config keys."""
+    root_value = raw.get(_WEATHERYEAR_INPUTS_KEY)
+    if root_value is not None:
+        if not isinstance(root_value, str):
+            raise ConfigValidationError(f"{_WEATHERYEAR_INPUTS_KEY} must be a string")
+        normalized_root = os.path.normpath(root_value)
+        if os.path.basename(normalized_root) == "multiweather_other_inputs":
+            return os.path.dirname(normalized_root), normalized_root
+        return normalized_root, os.path.join(normalized_root, "multiweather_other_inputs")
+
+    multiweather_value = raw.get(_MULTIWEATHER_INPUTS_KEY)
+    if multiweather_value is None:
+        return None
+    if not isinstance(multiweather_value, str):
+        raise ConfigValidationError(f"{_MULTIWEATHER_INPUTS_KEY} must be a string")
+
+    normalized_path = os.path.normpath(multiweather_value)
+    if os.path.basename(normalized_path) == "multiweather_other_inputs":
+        return os.path.dirname(normalized_path), normalized_path
+
+    return normalized_path, os.path.join(normalized_path, "multiweather_other_inputs")
+
+
+def _default_corres_root(weatheryear_root: str) -> str:
+    """Return default CorRES runs folder under the weather-year inputs root."""
+    preferred = os.path.join(weatheryear_root, "Corres_runs")
+    if os.path.isdir(preferred):
+        return preferred
+    alternative = os.path.join(weatheryear_root, "CorRES_runs")
+    if os.path.isdir(alternative):
+        return alternative
+    return preferred
+
+
+def _build_default_corres_results(corres_root: str) -> dict[str, list[str]]:
+    """Build default CorRES run folders from the CorRES root folder."""
+    timeseries_root = os.path.normpath(corres_root)
+    wind_folders = [
+        "Future_Onshore",
+        "Future_Offshore_floating",
+        "Future_Offshore_bottom_fixed",
+        "Existing_ERA5_GWA2",
+    ]
+    solar_folders = [
+        "PV_Rooftop",
+        "PV_Utility_scale_no_tracking",
+        "PV_Utility_scale_tracking",
+    ]
+    return {
+        "wind": [os.path.join(timeseries_root, folder) for folder in wind_folders],
+        "solar": [os.path.join(timeseries_root, folder) for folder in solar_folders],
+    }
+
+
+def _apply_multiweather_defaults(raw: dict[str, Any]) -> dict[str, Any]:
+    """Apply optional path defaults derived from a shared multiweather input folder."""
+    resolved = _resolve_root_and_multiweather_folder(raw)
+    if resolved is None:
+        return raw
+
+    weatheryear_root, multiweather_folder = resolved
+    enriched = dict(raw)
+
+    default_files = {
+        "VRE_tech_costs": "VRE_Tech_Costs_EUR2015.xlsx",
+        "Existing_wind_cap": "Existing_wind_capacities.xlsx",
+        "Existing_solar_cap": "Existing_solar_capacities.xlsx",
+        "VRE_potentials": "VRE_Potentials.xlsx",
+    }
+    for key, file_name in default_files.items():
+        if key not in enriched:
+            enriched[key] = os.path.join(multiweather_folder, file_name)
+
+    if "demand_model_results" not in enriched:
+        enriched["demand_model_results"] = _default_demand_folder(weatheryear_root, multiweather_folder)
+
+    if "hydro_model_results" not in enriched:
+        enriched["hydro_model_results"] = os.path.join(weatheryear_root, "hydro_data")
+
+    if "cop_model_results" not in enriched:
+        enriched["cop_model_results"] = os.path.join(weatheryear_root, "cop_data")
+
+    if "corres_results" not in enriched:
+        enriched["corres_results"] = _build_default_corres_results(_default_corres_root(weatheryear_root))
+
+    return enriched
 
 
 def _expect_dict(raw: Any, context: str) -> dict[str, Any]:
@@ -80,14 +191,7 @@ def load_weatheryear_config(config_fn: str, required_keys: set[str] | None = Non
     Returns:
         Normalized config mapping for all known top-level keys present in the file.
     """
-    raw = _load_yaml_file(config_fn)
-
-    if required_keys:
-        missing = sorted(required_keys - set(raw.keys()))
-        if missing:
-            raise ConfigValidationError(
-                f"Missing required top-level keys in root config: {missing}"
-            )
+    raw = _apply_multiweather_defaults(_load_yaml_file(config_fn))
 
     normalized: dict[str, Any] = {}
     for key in _MODULE_KEYS:
@@ -131,6 +235,13 @@ def load_weatheryear_config(config_fn: str, required_keys: set[str] | None = Non
         if missing_sources:
             raise ConfigValidationError(
                 f"corres_results is missing required source keys: {sorted(missing_sources)}"
+            )
+
+    if required_keys:
+        missing = sorted(required_keys - set(normalized.keys()))
+        if missing:
+            raise ConfigValidationError(
+                f"Missing required top-level keys in root config: {missing}"
             )
 
     return normalized
