@@ -20,7 +20,7 @@ dependencies:
   - requests
   - pip
   - pip:
-    - pybalmorel==1.1.13
+    - pybalmorel==1.2.0
 ```
 
 Note: If you want to use the [time series aggregation tools](../preprocessing/timeseriesagg.md), you will also need to pip install the python packages tsam and ripgrepy.
