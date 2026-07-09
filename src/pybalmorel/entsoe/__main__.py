@@ -799,7 +799,6 @@ def plot_price_profile(prices: pd.DataFrame):
 
 @click.group()
 def main():
-
     pass
 
 
@@ -901,7 +900,21 @@ def generation(balmorel_scenario_path):
     plot_bar_chart(generation, ["Technology"])
     plot_bar_chart(generation, ["Technology"], True)
 
-    # plot_price_profile(prices)
+
+@main.command()
+@click.argument("balmorel-scenario-path", type=str)
+def prices(balmorel_scenario_path):
+
+    prices_file = Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv")
+
+    if not (prices_file.exists()):
+        raise FileNotFoundError(
+            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
+        )
+    else:
+        print("Load csv's from last loading")
+        prices = pd.read_csv(prices_file, index_col=[0, 1, 2])
+    plot_price_profile(prices)
 
 
 if __name__ == "__main__":
