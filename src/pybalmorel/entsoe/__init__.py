@@ -178,9 +178,10 @@ def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_k
 
 
 if __name__ == "__main__":
+    # Example use of functions
     api_key = get_api_key()
-    fetch_annual_data("load", 2024, "tests/output", api_key)
-    fetch_annual_data("day_ahead_prices", 2024, "tests/output", api_key)
+    fetch_annual_data("load", 2024, ".", api_key)
+    fetch_annual_data("day_ahead_prices", 2024, ".", api_key)
     fetch_annual_transmission_data(
-        "crossborder_flows", [["ES", "FR"]], 2024, "tests/output", api_key
+        "crossborder_flows", [["ES", "FR"]], 2024, ".", api_key
     )

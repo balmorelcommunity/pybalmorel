@@ -797,6 +797,13 @@ def plot_price_profile(prices: pd.DataFrame):
 # ------------------------------- #
 
 
+@click.group()
+def main():
+
+    pass
+
+
+@main.command()
 @click.argument("balmorel-scenario", type=str)
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("entsoe-data-path", type=str)
@@ -807,9 +814,7 @@ def plot_price_profile(prices: pd.DataFrame):
     default="mean",
     help="The function used for spatial aggregation of electricity prices.",
 )
-@click.option("--overwrite", "-o", is_flag=True, default=False)
-@click.command()
-def main(
+def collect_and_format(
     balmorel_scenario,
     balmorel_scenario_path,
     entsoe_data_path,
@@ -824,21 +829,34 @@ def main(
         Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
     )
 
-    if overwrite or not (
-        load_file.exists() and price_file.exists() and generation_file.exists()
-    ):
-        print("Load ENTSO-E raw csvs and Balmorel results")
-        prices, loads, generation = load_and_align(
-            balmorel_scenario,
-            balmorel_scenario_path,
-            entsoe_data_path,
-            year,
-            elpriceaggfunc,
-            overwrite,
+    print("Load ENTSO-E raw csvs and Balmorel results")
+    prices, loads, generation = load_and_align(
+        balmorel_scenario,
+        balmorel_scenario_path,
+        entsoe_data_path,
+        year,
+        elpriceaggfunc,
+        overwrite,
+    )
+    loads.to_csv(load_file)
+    prices.to_csv(price_file)
+    generation.to_csv(generation_file)
+
+
+@main.command()
+@click.argument("balmorel-scenario-path", type=str)
+def statistics(balmorel_scenario_path):
+
+    load_file, price_file, generation_file = (
+        Path(balmorel_scenario_path).joinpath("backcastoutput/loads.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
+    )
+
+    if not (load_file.exists() and price_file.exists() and generation_file.exists()):
+        raise FileNotFoundError(
+            "Couldn't find data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
         )
-        loads.to_csv(load_file)
-        prices.to_csv(price_file)
-        generation.to_csv(generation_file)
     else:
         print("Load csv's from last loading")
         loads = pd.read_csv(load_file, index_col=[0, 1])
@@ -863,10 +881,27 @@ def main(
         calculate_statistics(generation.loc[(slice(None), technology, slice(None))])
     print("-" * 100)
 
+
+@main.command()
+@click.argument("balmorel-scenario-path", type=str)
+def generation(balmorel_scenario_path):
+
+    generation_file = Path(balmorel_scenario_path).joinpath(
+        "backcastoutput/generation.csv"
+    )
+
+    if not (generation_file.exists()):
+        raise FileNotFoundError(
+            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
+        )
+    else:
+        print("Load csv's from last loading")
+        generation = pd.read_csv(generation_file, index_col=[0, 1, 2])
+
     plot_bar_chart(generation, ["Technology"])
     plot_bar_chart(generation, ["Technology"], True)
 
-    plot_price_profile(prices)
+    # plot_price_profile(prices)
 
 
 if __name__ == "__main__":
