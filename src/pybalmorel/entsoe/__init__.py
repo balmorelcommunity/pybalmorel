@@ -150,7 +150,37 @@ def fetch_annual_data(entsoe_query, year, path, api_key):
             print(e)
 
 
+def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key):
+    client = EntsoePandasClient(api_key=api_key)
+    start_date, end_date = get_full_year(year)
+    p = Path(path)
+    for region_from, region_to in from_to_list:
+        try:
+            if not p.joinpath(
+                f"{year}_{region_from}-{region_to}_{entsoe_query}.csv"
+            ).exists():
+                df = getattr(client, f"query_{entsoe_query}")(
+                    region_from,
+                    region_to,
+                    start=start_date,  # pyright: ignore
+                    end=end_date,  # pyright: ignore
+                )
+
+                df.to_csv(
+                    p.joinpath(f"{year}_{region_from}-{region_to}_{entsoe_query}.csv")
+                )
+        except ValueError as e:
+            print(f"Couldn't fetch link {region_from}-{region_to}")
+            print(e)
+        except NoMatchingDataError as e:
+            print(f"Couldn't find any data for link {region_from}-{region_to}")
+            print(e)
+
+
 if __name__ == "__main__":
     api_key = get_api_key()
     fetch_annual_data("load", 2024, "tests/output", api_key)
     fetch_annual_data("day_ahead_prices", 2024, "tests/output", api_key)
+    fetch_annual_transmission_data(
+        "crossborder_flows", [["ES", "FR"]], 2024, "tests/output", api_key
+    )
