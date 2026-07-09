@@ -802,6 +802,9 @@ def main():
     pass
 
 
+# TODO: Reformat this, so it just needs a Balmorel model folder, scenario name and entsoe-data-path
+# After that, the remaining folders should be created automatically, and the other functions should 'just'
+# be provided a scenario folder name
 @main.command()
 @click.argument("balmorel-scenario", type=str)
 @click.argument("balmorel-scenario-path", type=str)
@@ -914,6 +917,7 @@ def prices(balmorel_scenario_path):
     else:
         print("Load csv's from last loading")
         prices = pd.read_csv(prices_file, index_col=[0, 1, 2])
+
     plot_price_profile(prices)
 
 
