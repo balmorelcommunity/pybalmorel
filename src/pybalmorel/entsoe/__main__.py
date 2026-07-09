@@ -816,7 +816,7 @@ def main():
     default="mean",
     help="The function used for spatial aggregation of electricity prices.",
 )
-def collect_and_format(
+def format(
     balmorel_scenario,
     balmorel_scenario_path,
     entsoe_data_path,
@@ -830,6 +830,10 @@ def collect_and_format(
         Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv"),
         Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
     )
+
+    # TODO: Include cross-border flows
+    # 2024_ES-FR_crossborder_flows.csv
+    # 2024_FR-ES_crossborder_flows.csv
 
     print("Load ENTSO-E raw csvs and Balmorel results")
     prices, loads, generation = load_and_align(
@@ -857,7 +861,7 @@ def statistics(balmorel_scenario_path):
 
     if not (load_file.exists() and price_file.exists() and generation_file.exists()):
         raise FileNotFoundError(
-            "Couldn't find data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
+            "Couldn't find data and/or results.\nRun `python -m pybalmorel.entsoe format`"
         )
     else:
         print("Load csv's from last loading")
@@ -894,7 +898,7 @@ def generation(balmorel_scenario_path):
 
     if not (generation_file.exists()):
         raise FileNotFoundError(
-            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
+            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe format`"
         )
     else:
         print("Load csv's from last loading")
@@ -912,7 +916,7 @@ def prices(balmorel_scenario_path):
 
     if not (prices_file.exists()):
         raise FileNotFoundError(
-            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe collect_and_format`"
+            "Couldn't find generation data and/or results.\nRun `python -m pybalmorel.entsoe format`"
         )
     else:
         print("Load csv's from last loading")
