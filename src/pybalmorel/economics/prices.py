@@ -20,6 +20,7 @@ import pandas as pd
 
 
 def get_conversion_rate(path: str, filename: str = "estat_tec00033.tsv"):
+    """Get conversion rates from other currencies to Euro"""
     file = Path(path).joinpath(filename)
     if not file.exists():
         raise FileNotFoundError(
@@ -43,6 +44,7 @@ def get_harmonised_price_index(
     filename: str = "estat_prc_hicp_aind$defaultview_filtered.tsv",
     index_choice: str = "CP00",
 ):
+    """Get the harmonised index for consumer prices (HICP)"""
     file = Path(path).joinpath(filename)
     if not file.exists():
         raise FileNotFoundError(
@@ -88,7 +90,24 @@ def inflation_correction(
 
     corrected_value = value * to_index / from_index
 
-    return float(corrected_value)
+    if corrected_value.shape[0] > 1:
+        raise ValueError("More price indices were found for the input parameters!")
+
+    return float(corrected_value.iloc[0])
+
+
+def euro_conversion_rate(
+    year: int,
+    currency: str,
+    currency_table: pd.DataFrame,
+):
+
+    df = currency_table.query(f'currency == "{currency}"')
+
+    if df[year].shape[0] > 1:
+        raise ValueError("More conversion rates were found for the input parameters!")
+
+    return float(df[year].iloc[0])
 
 
 # ------------------------------- #
@@ -102,8 +121,9 @@ def main():
 
 
 if __name__ == "__main__":
-    df = get_conversion_rate("tests/output")
-    print(df)
-    df = get_harmonised_price_index("tests/output")
-    converted_value = inflation_correction(10, 2016, 2024, df)
+    currency_table = get_conversion_rate("tests/output")
+    hicp = get_harmonised_price_index("tests/output")
+    converted_value = inflation_correction(10, 2016, 2024, hicp)
     print(f"10 € converted from €2024 to €2016:\n{converted_value}")
+    in_usd = converted_value * euro_conversion_rate(2016, "USD", currency_table)
+    print(f"Then, convert this to USD2016:\n{in_usd}")
