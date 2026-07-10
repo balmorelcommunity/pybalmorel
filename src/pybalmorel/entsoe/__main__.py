@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import click
 from decouple import config
-from pybalmorel import MainResults
+from .. import MainResults
 from warnings import warn
 
 # Replace with pybalmorel.entsoe import in the future
