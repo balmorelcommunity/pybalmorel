@@ -82,6 +82,7 @@ def inflation_correction(
     inflation_table: pd.DataFrame,
     region: str = "EU",
 ):
+    """Inflation corrects a value based on an input inflation table"""
 
     inflation_table = inflation_table.query(f'geo == "{region}"')
 
@@ -101,6 +102,7 @@ def euro_conversion_rate(
     currency: str,
     currency_table: pd.DataFrame,
 ):
+    """Outputs conversion rate in currency / euro for a specific year"""
 
     df = currency_table.query(f'currency == "{currency}"')
 
