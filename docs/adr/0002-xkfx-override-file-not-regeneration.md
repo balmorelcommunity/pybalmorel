@@ -2,7 +2,14 @@
 
 The backcast pipeline only computes Observed Max Flow ([[0001]]) for borders with a clean 1:1 (or aggregatable) mapping between a Balmorel region and an ENTSO-E bidding zone, for a single target year. Every other entry in `XKFX.inc` — inter-`DE4-*` internal links, and any border ENTSO-E has no usable data for — must keep its current value untouched.
 
-Rather than parsing and regenerating the entire `XKFX.inc` (its existing symmetric base `TABLE` plus hand-tuned asymmetric overrides), the pipeline writes a separate `XKFX_ENTSOE.inc` containing only `XKFX('<year>','A','B')=value;` assignment lines for the borders it computed — the same style already used for the hand-written NO1/NO2/NO5 corrections. This file is pulled in via Balmorel's standard scenario-fallback `$INCLUDE` pattern (checking `<scenario>/data/` first, falling back to `base/data/`) appended at the end of the base `XKFX.inc`. Because GAMS assignments execute in file order, anything the override file doesn't mention is left exactly as the base table set it — the script cannot corrupt or silently drop a link it doesn't understand, which a full-file regeneration could.
+Rather than parsing and regenerating the entire `XKFX.inc` (its existing symmetric base `TABLE` plus hand-tuned asymmetric overrides), the pipeline writes a separate `XKFX_ENTSOE.inc` containing only `XKFX('<year>','A','B')=value;` assignment lines for the borders it computed — the same style already used for the hand-written NO1/NO2/NO5 corrections. This file is pulled in via Balmorel's standard scenario-fallback `$INCLUDE` pattern (checking `<scenario>/data/` first, falling back to `base/data/`), which the script appends to the end of the base `XKFX.inc` itself (idempotently — it checks whether the block is already present before appending, so re-running the command doesn't duplicate it):
+
+```
+$if     EXIST '../data/XKFX_ENTSOE.inc' $INCLUDE         '../data/XKFX_ENTSOE.inc';
+$if not EXIST '../data/XKFX_ENTSOE.inc' $INCLUDE '../../base/data/XKFX_ENTSOE.inc';
+```
+
+Because GAMS assignments execute in file order, anything the override file doesn't mention is left exactly as the base table set it. The script only ever *appends* this fixed two-line block to `XKFX.inc` — it never parses or rewrites the base table — so it cannot corrupt or silently drop a link it doesn't understand, which a full-file regeneration could.
 
 Two aggregation rules apply when writing the override file, needed because Balmorel and ENTSO-E don't always share the same regional resolution:
 
