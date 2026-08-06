@@ -19,13 +19,9 @@ from pathlib import Path
 import click
 from decouple import config
 from .. import MainResults
+from . import bidding_zone_translation
 from warnings import warn
 
-# Replace with pybalmorel.entsoe import in the future
-# import sys
-# sys.path.append("/home/mberos/Repos/pybalmorel/src/pybalmorel")
-# print(sys.path)
-# from entsoe import bidding_zone_codes, bidding_zones
 reversed_bidding_zone_codes = {
     "IT-NORD": "10Y1001A1001A73I",
     "IT-CNOR": "10Y1001A1001A70O",
@@ -169,21 +165,6 @@ balmorel_regions = [
     "MT",
     "CY",
 ]
-
-bidding_zone_translation = {
-    "IT-NORD": "IT",
-    "IT-CNOR": "IT",
-    "IT-CSUD": "IT",
-    "IT-SUD": "IT",
-    "IT-Calabria": "IT",
-    "IT-Sicily": "IT",
-    "IT-Sardinia": "IT",
-    "DE4-E": "DE",
-    "DE4-N": "DE",
-    "DE4-S": "DE",
-    "DE4-W": "DE",
-    "FIN": "FI",
-}
 
 balmorel_to_category = {
     # Wind
@@ -923,6 +904,38 @@ def prices(balmorel_scenario_path):
         prices = pd.read_csv(prices_file, index_col=[0, 1, 2])
 
     plot_price_profile(prices)
+
+
+@main.command(name="transmission-max-flow")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("entsoe-data-path", type=str)
+@click.argument("year", type=int)
+def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
+    """Write XKFX_ENTSOE.inc: backcast transmission overrides from ENTSO-E Observed Max Flow.
+
+    Reads the scenario's current XKFX borders, fetches matching ENTSO-E
+    cross-border flows for YEAR, and writes/updates
+    <balmorel-scenario-path>/data/XKFX_ENTSOE.inc plus the $include in XKFX.inc.
+    See CONTEXT.md and docs/adr/0001, 0002.
+    """
+    from .flows import generate_transmission_max_flow_overrides
+    from . import get_api_key
+
+    balmorel_scenario_path = Path(balmorel_scenario_path)
+    balmorel_model_folder = balmorel_scenario_path.parent
+    scenario = balmorel_scenario_path.name
+
+    api_key = get_api_key()
+    gams_system_directory = config("GAMS_SYSTEM_DIR", None)
+
+    generate_transmission_max_flow_overrides(
+        balmorel_model_folder,
+        scenario,
+        year,
+        entsoe_data_path,
+        api_key,
+        gams_system_directory=gams_system_directory,
+    )
 
 
 if __name__ == "__main__":

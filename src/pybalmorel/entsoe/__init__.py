@@ -90,6 +90,24 @@ bidding_zones = [
     "10Y1001A1001A74G",
 ]
 
+# Balmorel region name -> canonical name shared with an ENTSO-E zone,
+# for regions where Balmorel's resolution differs from ENTSO-E's
+# (finer Balmorel regions collapsing to one ENTSO-E zone, or a spelling difference).
+bidding_zone_translation = {
+    "IT-NORD": "IT",
+    "IT-CNOR": "IT",
+    "IT-CSUD": "IT",
+    "IT-SUD": "IT",
+    "IT-Calabria": "IT",
+    "IT-Sicily": "IT",
+    "IT-Sardinia": "IT",
+    "DE4-E": "DE",
+    "DE4-N": "DE",
+    "DE4-S": "DE",
+    "DE4-W": "DE",
+    "FIN": "FI",
+}
+
 # ------------------------------- #
 #          1. Functions           #
 # ------------------------------- #
@@ -180,8 +198,13 @@ def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_k
 if __name__ == "__main__":
     # Example use of functions
     api_key = get_api_key()
-    fetch_annual_data("load", 2024, ".", api_key)
-    fetch_annual_data("day_ahead_prices", 2024, ".", api_key)
-    fetch_annual_transmission_data(
-        "crossborder_flows", [["ES", "FR"]], 2024, ".", api_key
-    )
+    # fetch_annual_data("load", 2024, bidding_zones, ".", api_key)
+    # fetch_annual_data("day_ahead_prices", 2024, bidding_zones, ".", api_key)
+    for year in [2020, 2021, 2022, 2023, 2024, 2025]:
+        fetch_annual_transmission_data(
+            "crossborder_flows",
+            [["ES", "FR"], ["FR", "ES"]],
+            year,
+            "tests/output",
+            api_key,
+        )
