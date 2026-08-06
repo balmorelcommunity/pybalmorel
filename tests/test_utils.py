@@ -6,16 +6,19 @@ Description
 Created on 03.10.2024
 @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
 """
-#%% ------------------------------- ###
+# %% ------------------------------- ###
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
 from pybalmorel.utils import symbol_to_df
+from pybalmorel.entsoe import fetch_load
+from getpass import getpass
+from decouple import config, UndefinedValueError
 import pandas as pd
 import gams
 import os
 
-#%% ------------------------------- ###
+# %% ------------------------------- ###
 ###             1. Utils            ###
 ### ------------------------------- ###
 
