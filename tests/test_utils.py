@@ -11,7 +11,6 @@ Created on 03.10.2024
 ### ------------------------------- ###
 
 from pybalmorel.utils import symbol_to_df
-from pybalmorel.entsoe import fetch_load
 from getpass import getpass
 from decouple import config, UndefinedValueError
 import pandas as pd

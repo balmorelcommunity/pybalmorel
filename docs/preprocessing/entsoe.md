@@ -1,92 +1,51 @@
-"""
-ENTSO-E Data Preprocessing Module
-================================
+# ENTSO-E Data Fetching
 
-This module provides functionality for fetching, processing, and validating
-historical electricity market data from the ENTSO-E Transparency Platform
-for use in Balmorel model backcasting and validation.
+`pybalmorel.entsoe` is a thin, Balmorel-independent client for the ENTSO-E
+Transparency Platform. It fetches raw load, day-ahead price, generation, and
+cross-border flow data, and it owns the zone-code vocabulary that bridges
+Balmorel region names and ENTSO-E bidding zones (see `CONTEXT.md`). It has no
+dependency on Balmorel results — `pybalmorel.backcasting` builds on top of it
+for validating Balmorel against these observations (see
+[backcasting](backcasting.md)).
 
-Module Structure
----------------
+## Zone vocabulary
 
-The module consists of two main components:
+- `bidding_zone_codes` — dict, canonical region name → ENTSO-E query code
+  (`IT-NORD`, `NO1`–`NO5`, `SE1`–`SE4`, `BA`, etc.)
+- `bidding_zones` — list of every ENTSO-E bidding zone identifier this package
+  knows about.
+- `bidding_zone_translation` — dict, Balmorel region name → canonical name
+  shared with ENTSO-E (e.g. `DE4-E`/`DE4-N`/`DE4-S`/`DE4-W` → `DE`,
+  `IT-NORD`/... → `IT`, `FIN` → `FI`). See `CONTEXT.md`'s "Canonical Region
+  Name".
+- `region_to_entsoe_code(canonical_region)` — canonical name → the code
+  `entsoe-py` expects for querying it, including the handful of codes (`DE`,
+  `IE`, `UK`, `DK1`, `DK2`) that aren't equal to their canonical name.
+- `entsoe_subzones(canonical_region)` — the ENTSO-E bidding zones that
+  collapse to a canonical region (e.g. `'IT'` → the 7 Italian bidding zones).
+- `entsoe_code_to_region(code)` — inverse of `region_to_entsoe_code`.
 
-1. **Data Fetching** (`__init__.py`)
-   - Fetches raw data from ENTSO-E API
-   - Handles authentication and API key management
-   - Supports annual data downloads for:
-     - Load data
-     - Day-ahead prices
-     - Generation data
-     - Cross-border flows
+## Fetching data
 
-2. **Data Processing & Validation** (`__main__.py`)
-   - Loads and formats ENTSO-E CSV data
-   - Aligns Balmorel model results with ENTSO-E data
-   - Provides statistical analysis and visualization
-   - Supports backcast validation workflows
+- `get_api_key()` — reads `ENTSOE_API_KEY` from `.env`, or prompts for it.
+- `fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key)` —
+  fetch a full calendar year of a single-zone query (e.g. `'load'`,
+  `'day_ahead_prices'`, `'generation'`) for each zone, skipping any already
+  downloaded.
+- `fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key)`
+  — same, but for a border-pair query (e.g. `'crossborder_flows'`).
 
-Key Features
-------------
+## Example
 
-- **Bidding Zone Mapping**: Comprehensive mapping between ENTSO-E bidding zones
-  and Balmorel model regions (see `bidding_zone_codes` and `bidding_zone_translation`)
+```python
+from pybalmorel.entsoe import get_api_key, fetch_annual_data, bidding_zones
 
-- **Technology Categorization**: Standardized mapping of generation technologies
-  between ENTSO-E and Balmorel (see `balmorel_to_category` and `entsoe_to_category`)
-
-- **Temporal Alignment**: Conversion between Balmorel's seasonal time slices
-  and ENTSO-E's hourly data
-
-- **Data Aggregation**: Spatial aggregation of sub-regions (e.g., DE4 zones → DE,
-  IT-* zones → IT)
-
-- **Visualization**: Built-in plotting functions for:
-  - Generation mix comparison
-  - Price duration curves
-  - Regional comparisons
-
-Usage
------
-
-The module provides a CLI interface with three main commands:
-
-```bash
-# Fetch and format data for validation
-python -m pybalmorel.entsoe format \
-    <balmorel-scenario> \
-    <balmorel-scenario-path> \
-    <entsoe-data-path> \
-    <year>
-
-# Generate statistics
-python -m pybalmorel.entsoe statistics <balmorel-scenario-path>
-
-# Generate plots
-python -m pybalmorel.entsoe generation <balmorel-scenario-path>
-python -m pybalmorel.entsoe prices <balmorel-scenario-path>
+api_key = get_api_key()
+fetch_annual_data("load", 2024, bidding_zones, "entsoe_data", api_key)
 ```
 
-Configuration
--------------
+## TODO
 
-- **API Key**: Set `ENTSOE_API_KEY` in `.env` file or provide when prompted
-- **GAMS Path**: Set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing
-- **Output**: Processed data cached in `<scenario-path>/backcastoutput/`
-
-Data Flow
----------
-
-1. Raw ENTSO-E data fetched via API and saved as CSV
-2. Balmorel model results extracted from GDX files
-3. Both datasets formatted to common temporal and regional structure
-4. Datasets aligned and joined for comparison
-5. Statistics calculated and visualizations generated
-
-Limitations
-------------
-
-- No data available for Cyprus (CY) or Turkey (TR) in ENTSO-E
-- Some bidding zones may lack complete data coverage
-- Cross-border flow data requires explicit region pairs
-"""
+A standalone CLI (`python -m pybalmorel.entsoe`) for downloading raw ENTSO-E
+data scoped to Balmorel bidding zones, independent of the backcasting
+validation workflow, is planned but not yet built.

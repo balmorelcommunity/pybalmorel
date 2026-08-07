@@ -18,11 +18,11 @@ import pandas as pd
 from pathlib import Path
 from warnings import warn
 from itertools import product
-from . import (
-    bidding_zone_codes,
-    bidding_zones,
+from ..entsoe import (
     bidding_zone_translation,
+    entsoe_subzones,
     fetch_annual_transmission_data,
+    region_to_entsoe_code,
 )
 from ..classes import Balmorel, IncFile
 
@@ -85,38 +85,6 @@ def observed_max_flow(
 # ------------------------------- #
 #   2. XKFX overrides (backcast)  #
 # ------------------------------- #
-
-# Balmorel region/ENTSO-E zone names known to have no ENTSO-E-native query code
-# equal to their canonical name (see bidding_zone_translation in entsoe/__init__.py)
-_extra_entsoe_codes = {
-    "DE": "DE_LU",
-    "IE": "IE_SEM",
-    "UK": "10YGB----------A",
-    "DK1": "10YDK-1--------W",
-    "DK2": "10YDK-2--------M",
-}
-
-
-def region_to_entsoe_code(canonical_region: str) -> str:
-    """Map a canonical region name to the code entsoe-py expects for querying it."""
-    if canonical_region in bidding_zone_codes:
-        return bidding_zone_codes[canonical_region]
-    return _extra_entsoe_codes.get(canonical_region, canonical_region)
-
-
-def entsoe_subzones(canonical_region: str) -> list[str]:
-    """The ENTSO-E bidding zones that collapse to `canonical_region`.
-
-    Returns multiple zones only when ENTSO-E's resolution is finer than Balmorel's
-    for this region (e.g. 'IT' -> the 7 Italian bidding zones). Otherwise returns
-    a single-item list of the canonical name itself.
-    """
-    subzones = [
-        raw
-        for raw, canon in bidding_zone_translation.items()
-        if canon == canonical_region and raw in bidding_zone_codes
-    ]
-    return subzones if subzones else [canonical_region]
 
 
 def get_current_borders(

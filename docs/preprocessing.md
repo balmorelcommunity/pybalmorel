@@ -8,5 +8,7 @@ The package includes many plotting tools. Go to the next page to get an overview
 preprocessing/overview.md
 preprocessing/timeseriesagg.md
 preprocessing/economics.md
+preprocessing/entsoe.md
+preprocessing/backcasting.md
 ```
 

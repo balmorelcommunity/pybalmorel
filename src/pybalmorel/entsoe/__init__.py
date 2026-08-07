@@ -1,7 +1,14 @@
 """
-ENTOS-E API
+ENTSO-E API
 
-For backcast validation of Balmorel
+Generic client for fetching data from the ENTSO-E transparency platform,
+including the zone-code vocabulary bridging ENTSO-E bidding zones and
+Balmorel regions (see CONTEXT.md). Independent of Balmorel backcasting -
+see pybalmorel.backcasting for that.
+
+TODO: consider a standalone CLI here (e.g. `python -m pybalmorel.entsoe`)
+for downloading raw ENTSO-E data scoped to Balmorel bidding zones, separate
+from the backcasting validation workflow.
 
 Created on 18.06.2026
 @author: Mathias Berg Rosendal
@@ -108,9 +115,55 @@ bidding_zone_translation = {
     "FIN": "FI",
 }
 
+# Balmorel region/ENTSO-E zone names known to have no ENTSO-E-native query code
+# equal to their canonical name (see bidding_zone_translation above)
+_extra_entsoe_codes = {
+    "DE": "DE_LU",
+    "IE": "IE_SEM",
+    "UK": "10YGB----------A",
+    "DK1": "10YDK-1--------W",
+    "DK2": "10YDK-2--------M",
+}
+
 # ------------------------------- #
 #          1. Functions           #
 # ------------------------------- #
+
+
+def region_to_entsoe_code(canonical_region: str) -> str:
+    """Map a canonical region name to the code entsoe-py expects for querying it."""
+    if canonical_region in bidding_zone_codes:
+        return bidding_zone_codes[canonical_region]
+    return _extra_entsoe_codes.get(canonical_region, canonical_region)
+
+
+_code_to_region = {
+    **{code: region for region, code in bidding_zone_codes.items()},
+    **{code: region for region, code in _extra_entsoe_codes.items()},
+}
+
+
+def entsoe_code_to_region(code: str) -> str:
+    """Map an ENTSO-E query code back to its region name.
+
+    Inverse of region_to_entsoe_code. Falls back to the code itself if unmapped.
+    """
+    return _code_to_region.get(code, code)
+
+
+def entsoe_subzones(canonical_region: str) -> list[str]:
+    """The ENTSO-E bidding zones that collapse to `canonical_region`.
+
+    Returns multiple zones only when ENTSO-E's resolution is finer than Balmorel's
+    for this region (e.g. 'IT' -> the 7 Italian bidding zones). Otherwise returns
+    a single-item list of the canonical name itself.
+    """
+    subzones = [
+        raw
+        for raw, canon in bidding_zone_translation.items()
+        if canon == canonical_region and raw in bidding_zone_codes
+    ]
+    return subzones if subzones else [canonical_region]
 
 
 def date_format(date):
