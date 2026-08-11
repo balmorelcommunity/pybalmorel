@@ -149,7 +149,9 @@ def compute_entsoe_transmission_overrides(
         tuple[pd.DataFrame, list[tuple[str, str]]]: Overrides (Year, RegionFrom,
             RegionTo, Value) and the ENTSO-E zone pairs that could not be fetched.
     """
-    borders = get_current_borders(balmorel_model_folder, scenario, gams_system_directory)
+    borders = get_current_borders(
+        balmorel_model_folder, scenario, gams_system_directory
+    )
 
     borders["CanonicalFrom"] = borders.RegionFrom.map(
         lambda r: bidding_zone_translation.get(r, r)
@@ -177,7 +179,9 @@ def compute_entsoe_transmission_overrides(
 
     failed_pairs = []
     results = []
-    for (canon_from, canon_to), group in borders.groupby(["CanonicalFrom", "CanonicalTo"]):
+    for (canon_from, canon_to), group in borders.groupby(
+        ["CanonicalFrom", "CanonicalTo"]
+    ):
         from_codes = [region_to_entsoe_code(sz) for sz in entsoe_subzones(canon_from)]
         to_codes = [region_to_entsoe_code(sz) for sz in entsoe_subzones(canon_to)]
 
@@ -309,7 +313,7 @@ def generate_transmission_max_flow_overrides(
 
 def main():
     df = pd.DataFrame()
-    for year in [2020, 2021, 2022, 2023, 2024, 2025]:
+    for year in [2024]:
         temp = get_data(year, [["FR", "ES"], ["ES", "FR"]])
 
         if len(df) == 0:
