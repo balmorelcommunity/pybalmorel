@@ -795,5 +795,33 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
     )
 
 
+@main.command(name="fuelprices")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("historicalprices-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--eur-per-usd",
+    type=float,
+    required=True,
+    help="EUR/USD exchange rate for converting the USD-quoted Rotterdam coal price.",
+)
+def fuelprices(balmorel_scenario_path, historicalprices_path, year, eur_per_usd):
+    """Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical
+    NATGAS/COAL prices for backcasting.
+
+    Reads HISTORICALPRICES_PATH's CSVs, maps them onto Balmorel's S01-S52 x
+    T001-T168 grid, and writes <balmorel-scenario-path>/data/FUELPRICE.inc and
+    FUELPRICE_CONSTANT.inc. See docs/adr/0001-fuelprice-season-term-resolution.md
+    in the Balmorel repo. Requires FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT to be set
+    in the scenario's balopt.opt (not done by this command) - see that ADR's
+    open issue 4.
+    """
+    from .fuelprices import generate_fuelprice_overrides
+
+    generate_fuelprice_overrides(
+        historicalprices_path, year, eur_per_usd, balmorel_scenario_path
+    )
+
+
 if __name__ == "__main__":
     main()

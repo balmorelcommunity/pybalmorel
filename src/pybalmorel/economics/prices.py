@@ -125,7 +125,7 @@ def main():
 if __name__ == "__main__":
     currency_table = get_conversion_rate("tests/output")
     hicp = get_harmonised_price_index("tests/output")
-    converted_value = inflation_correction(10, 2016, 2024, hicp)
-    print(f"10 € converted from €2024 to €2016:\n{converted_value}")
-    in_usd = converted_value * euro_conversion_rate(2016, "USD", currency_table)
-    print(f"Then, convert this to USD2016:\n{in_usd}")
+    eur = euro_conversion_rate(2024, "USD", currency_table)
+    print(f"1 $2024 converted to €2024:\n{eur}")
+    converted_value = inflation_correction(eur, 2016, 2024, hicp)
+    print(f"Then, convert this to €2016:\n{converted_value}")
