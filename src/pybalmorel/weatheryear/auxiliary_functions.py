@@ -91,9 +91,7 @@ def build_capdev_timesteps_list(config: dict[str, Any]) -> list[str]:
     Returns:
         List of 'Sxxx.Txx' timestep strings to keep for CapDev processing.
     """
-    s_values = [
-        s.strip() for s in config["CapDev_timesteps_to_keep"]["S"].strip(":[]").split(",")
-    ]
+    s_values = config["CapDev_timesteps_to_keep"]["S"]
     return [f"{s}.{t}" for s in s_values for t in config["CapDev_timesteps_to_keep"]["T"]]
 
 
@@ -168,12 +166,12 @@ def scale_timeseries_to_full_distribution(
 
     return df_scaled
 
-def process_timeseries_with_scaling(df: pd.DataFrame, start_date: int, end_date: int, source: str, fix_monday: bool) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Apply necessary treatments to the time series data, including filtering by year range, fixing the first Monday if needed, and scaling the data to have the same distribution as the full time series.
+def process_timeseries_with_scaling(df: pd.DataFrame, start_date: int, end_date: int, source: str, fix_monday: bool) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Apply necessary treatments to the time series data, including filtering by year range, fixing the first Monday if needed, and scaling the data to have the same distribution as the full time series.
      Args:
         df: The original DataFrame containing the time series data.
-        start_date: The start year for filtering the time series (int).
-        end_date: The end year for filtering the time series (int).
+        start_date: The start year for filtering the time series (int).
+        end_date: The end year for filtering the time series (int).
         source: The source type (e.g., "wind" or "solar") to determine specific treatments.
         fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
     Returns:

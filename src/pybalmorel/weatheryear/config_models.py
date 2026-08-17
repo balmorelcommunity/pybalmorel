@@ -249,7 +249,7 @@ def load_weatheryear_config(config_fn: str, required_keys: set[str] | None = Non
 
 @dataclass(frozen=True)
 class CapDevTimestepsConfig:
-    s: str
+    s: list[str]
     t: list[str]
 
     @classmethod
@@ -257,9 +257,10 @@ class CapDevTimestepsConfig:
         raw = _expect_dict(raw, "CapDev_timesteps_to_keep")
         s = _require(raw, "S", "CapDev_timesteps_to_keep")
         t = _require(raw, "T", "CapDev_timesteps_to_keep")
-        if not isinstance(s, str):
-            raise ConfigValidationError("CapDev_timesteps_to_keep['S'] must be a string")
-        return cls(s=s, t=_expect_list_of_str(t, "CapDev_timesteps_to_keep['T']"))
+        return cls(
+            s=_expect_list_of_str(s, "CapDev_timesteps_to_keep['S']"),
+            t=_expect_list_of_str(t, "CapDev_timesteps_to_keep['T']"),
+        )
 
     def as_legacy_dict(self) -> dict[str, Any]:
         return {"CapDev_timesteps_to_keep": {"S": self.s, "T": self.t}}
