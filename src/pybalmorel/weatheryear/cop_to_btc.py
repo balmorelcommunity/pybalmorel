@@ -31,7 +31,6 @@ _COP_TYPES: dict[str, str] = {
 }
 
 
-
 def _write_cop_timeseries_inc_files(
     df_raw: pd.DataFrame,
     df_scaled: pd.DataFrame,
@@ -53,7 +52,9 @@ def _write_cop_timeseries_inc_files(
         (df_scaled, hd_scaled_folder),
     ]
     for src_df, output_folder in dispatch_cases:
-        df = to_balmorel_timeseries_assignment_lines(src_df, "COP_VAR_T", technology_name)
+        df = to_balmorel_timeseries_assignment_lines(
+            src_df, "COP_VAR_T", technology_name
+        )
         build_inc_file_list_type(df, "COP_VAR_T", output_folder, filename=filename)
         src_df.to_csv(os.path.join(output_folder, f"cop_{cop_type}.csv"))
 
@@ -71,10 +72,11 @@ def _write_cop_timeseries_inc_files(
             source="demand",
             scale=scale,
         )
-        df = to_balmorel_timeseries_assignment_lines(capdev_df, "COP_VAR_T", technology_name)
+        df = to_balmorel_timeseries_assignment_lines(
+            capdev_df, "COP_VAR_T", technology_name
+        )
         build_inc_file_list_type(df, "COP_VAR_T", output_folder, filename=filename)
         capdev_df.to_csv(os.path.join(output_folder, f"cop_{cop_type}.csv"))
-
 
 
 def _write_cop_factor_inc_files(
@@ -91,26 +93,42 @@ def _write_cop_factor_inc_files(
     """Write annual and long-term COP correction-factor .inc files."""
     filename = f"COP_WY_{cop_type}"
 
-    yearly_factor = correction_factors_df.loc[str(year)].iloc[0] / correction_factors_df.mean()
-    df = to_balmorel_technology_factor_assignment_lines(yearly_factor, "COP", technology_name)
+    yearly_factor = (
+        correction_factors_df.loc[str(year)].iloc[0] / correction_factors_df.mean()
+    )
+    df = to_balmorel_technology_factor_assignment_lines(
+        yearly_factor, "COP", technology_name
+    )
 
-    build_inc_file_list_type(df, "COP", capdev_scaled_full_year_folder, filename=filename)
+    build_inc_file_list_type(
+        df, "COP", capdev_scaled_full_year_folder, filename=filename
+    )
     build_inc_file_list_type(df, "COP", capdev_raw_folder, filename=filename)
     build_inc_file_list_type(df, "COP", hd_raw_folder, filename=filename)
 
-    yearly_factor.to_csv(os.path.join(capdev_scaled_full_year_folder, f"cop_fac_{cop_type}.csv"))
+    yearly_factor.to_csv(
+        os.path.join(capdev_scaled_full_year_folder, f"cop_fac_{cop_type}.csv")
+    )
     yearly_factor.to_csv(os.path.join(capdev_raw_folder, f"cop_fac_{cop_type}.csv"))
     yearly_factor.to_csv(os.path.join(hd_raw_folder, f"cop_fac_{cop_type}.csv"))
 
-    long_term_factor = correction_factors_df.loc[str(year)].iloc[0] / correction_factors_df.loc[str(year)].iloc[0]
-    df = to_balmorel_technology_factor_assignment_lines(long_term_factor, "COP", technology_name)
+    long_term_factor = (
+        correction_factors_df.loc[str(year)].iloc[0]
+        / correction_factors_df.loc[str(year)].iloc[0]
+    )
+    df = to_balmorel_technology_factor_assignment_lines(
+        long_term_factor, "COP", technology_name
+    )
 
-    build_inc_file_list_type(df, "COP", capdev_scaled_long_term_folder, filename=filename)
+    build_inc_file_list_type(
+        df, "COP", capdev_scaled_long_term_folder, filename=filename
+    )
     build_inc_file_list_type(df, "COP", hd_scaled_folder, filename=filename)
 
-    long_term_factor.to_csv(os.path.join(capdev_scaled_long_term_folder, f"cop_fac_{cop_type}.csv"))
+    long_term_factor.to_csv(
+        os.path.join(capdev_scaled_long_term_folder, f"cop_fac_{cop_type}.csv")
+    )
     long_term_factor.to_csv(os.path.join(hd_scaled_folder, f"cop_fac_{cop_type}.csv"))
-
 
 
 def create_cop_inc(config_fn: str, year: int, output_folder: str) -> None:
