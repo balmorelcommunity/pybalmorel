@@ -152,20 +152,22 @@ def create_cop_inc(config_fn: str, year: int, output_folder: str) -> None:
     ) = prepare_balmorel_output_dirs(year_output_folder)
 
     for cop_type, technology_name in _COP_TYPES.items():
+        if cop_type == "ground_water":
+            # TODO: Make some rough assumption to produce this otherwise manual fix
+            # Ground-source heat pump COP doesn't vary by weather year: Balmorel already
+            # carries a fixed per-area annual-average value in base/data/SEASONALCOP_COP.inc.
+            continue
+
         profile_path = os.path.join(csv_folder, f"cop_{cop_type}_profile.csv")
         df_cop_ts = pd.read_csv(profile_path, index_col=0, parse_dates=True)
 
-        if cop_type == "ground_water":
-            df_cut = df_cop_ts.copy()
-            df_scaled = df_cop_ts.copy()
-        else:
-            _, df_cut, df_scaled = process_timeseries_with_scaling(
-                df_cop_ts,
-                year,
-                year,
-                source="demand",
-                fix_monday=True,
-            )
+        _, df_cut, df_scaled = process_timeseries_with_scaling(
+            df_cop_ts,
+            year,
+            year,
+            source="demand",
+            fix_monday=True,
+        )
 
         write_raw_and_scaled_csv(
             df_raw=df_cut,
@@ -192,9 +194,6 @@ def create_cop_inc(config_fn: str, year: int, output_folder: str) -> None:
             config=config,
             time_df=time_df,
         )
-
-        if cop_type == "ground_water":
-            continue
 
         factors_path = os.path.join(csv_folder, f"cop_{cop_type}_corr_factors.csv")
         df_cop_factors = pd.read_csv(factors_path, index_col=0, parse_dates=True)
