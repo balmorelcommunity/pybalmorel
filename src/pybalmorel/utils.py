@@ -3,6 +3,7 @@ Functions
 """
 
 import gams
+import gams.transfer as gt
 import pandas as pd
 from .formatting import balmorel_symbol_columns, optiflow_symbol_columns
 
@@ -89,16 +90,18 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
         print_explanatory_text (bool): Print the text describing the symbol?
     """   
     if not db[symbol].get_number_records() == 0:
+        container = gt.Container(system_directory=db.workspace.system_directory)
+        container.read(db, symbols=[symbol])
+        df = container[symbol].records
+
         if type(db[symbol]) == gams.GamsParameter:
-            df = dict( (tuple(rec.keys), rec.value) for rec in db[symbol] )
-            df = pd.DataFrame(df, index=['Value']).T.reset_index() # Convert to dataframe
+            df = df.astype({col: object for col in df.columns[:-1]}) # Domain columns come back as category dtype
             df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         elif type(db[symbol]) == gams.GamsSet:
-            df = pd.DataFrame([tuple(rec.keys)  for rec in db[symbol] ])
+            df = df.drop(columns=['element_text']).astype(object)
             df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
-            df = dict( (tuple(rec.keys), rec.level) for rec in db[symbol] )
-            df = pd.DataFrame(df, index=['Value', 'Marginal', 'Lower', 'Upper', 'Scale']).T.reset_index() # Convert to dataframe
+            df = df.astype({col: object for col in df.columns[:-5]}) # Domain columns come back as category dtype
             df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         else:
             raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))
