@@ -1,0 +1,78 @@
+pybalmorel.weatheryear.additional_inc
+=====================================
+
+.. py:module:: pybalmorel.weatheryear.additional_inc
+
+.. autoapi-nested-parse::
+
+   Functions for generating additional Balmorel .inc files from CorRES VRE data.
+
+   Creates generator sets (GGG, AAA, RRRAAA), investment data (INVDATA, INVDATASET,
+   ALLOWEDINV, ANNUITYCG), potential tables (SUBTECHGROUPKPOT), capacity factors
+   (GKFX) and GDATA for renewable technologies.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.additional_inc.INVESTMENT_YEARS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.additional_inc._convert_corres_rg_to_balmorel
+   pybalmorel.weatheryear.additional_inc.build_INVDATASET
+   pybalmorel.weatheryear.additional_inc.build_INVDATA_renewable
+   pybalmorel.weatheryear.additional_inc.build_GGG
+   pybalmorel.weatheryear.additional_inc.build_ANNUITYCG
+   pybalmorel.weatheryear.additional_inc.build_AGKN
+   pybalmorel.weatheryear.additional_inc.build_AAA
+   pybalmorel.weatheryear.additional_inc.build_RRRAAA
+   pybalmorel.weatheryear.additional_inc.build_ALLOWEDINV
+   pybalmorel.weatheryear.additional_inc.build_SUBTECHGROUPKPOT
+   pybalmorel.weatheryear.additional_inc.build_DISCOST_H_renewable
+   pybalmorel.weatheryear.additional_inc.create_additional_inc
+
+
+Module Contents
+---------------
+
+.. py:data:: INVESTMENT_YEARS
+   :value: ['_Y-2020', '_Y-2030', '_Y-2040', '_Y-2050']
+
+
+.. py:function:: _convert_corres_rg_to_balmorel(rg: str) -> str
+
+   Translate CorRES resource-grade labels (RGA/B/C) to Balmorel labels (RG1/2/3).
+
+
+.. py:function:: build_INVDATASET(config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str, techs: dict[str, set[str]], turbines: dict[str, set[str]]) -> pandas.DataFrame
+
+.. py:function:: build_INVDATA_renewable(INVDATASET_renewables_df: pandas.DataFrame, AAA_renewable_df: pandas.DataFrame, output_folder: str) -> pandas.DataFrame
+
+.. py:function:: build_GGG(config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str, techs: dict[str, set[str]], turbines: dict[str, set[str]]) -> pandas.DataFrame
+
+.. py:function:: build_ANNUITYCG(GDATA: pandas.DataFrame, config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str) -> None
+
+.. py:function:: build_AGKN(AAA: pandas.DataFrame, GGG: pandas.DataFrame, output_folder: str) -> None
+
+.. py:function:: build_AAA(config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str, techs: dict[str, set[str]], turbines: dict[str, set[str]]) -> pandas.DataFrame
+
+.. py:function:: build_RRRAAA(AAA_renewable_df: pandas.DataFrame, config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str) -> pandas.DataFrame
+
+.. py:function:: build_ALLOWEDINV(AAA_renewable_df: pandas.DataFrame, GGG_renewable_df: pandas.DataFrame, INVDATASET_renewables_df: pandas.DataFrame, turbines: dict[str, set[str]], techs: dict[str, set[str]], config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str) -> None
+
+.. py:function:: build_SUBTECHGROUPKPOT(RRRAAA_renewable_df: pandas.DataFrame, config: pybalmorel.weatheryear.config_models.AdditionalIncConfig, output_folder: str) -> None
+
+.. py:function:: build_DISCOST_H_renewable(AAA_renewable_df: pandas.DataFrame, output_folder: str) -> None
+
+.. py:function:: create_additional_inc(config_fn: str, output_folder: str, start_date: int) -> tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+

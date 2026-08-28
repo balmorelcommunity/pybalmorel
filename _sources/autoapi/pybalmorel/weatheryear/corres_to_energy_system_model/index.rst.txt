@@ -1,0 +1,156 @@
+pybalmorel.weatheryear.corres_to_energy_system_model
+====================================================
+
+.. py:module:: pybalmorel.weatheryear.corres_to_energy_system_model
+
+.. autoapi-nested-parse::
+
+   Functions for reading CorRES VRE output files and converting them to
+   Balmorel inputs (xlsx and Balmorel .inc files).
+
+   Handles wind (onshore, offshore bottom-fixed, offshore floating, existing)
+   and solar (rooftop PV, utility-scale PV with/without tracking) technologies.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.corres_to_energy_system_model._xlsxwriter
+   pybalmorel.weatheryear.corres_to_energy_system_model.logger
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.corres_to_energy_system_model.save_log
+   pybalmorel.weatheryear.corres_to_energy_system_model._require_columns
+   pybalmorel.weatheryear.corres_to_energy_system_model._source_file_names
+   pybalmorel.weatheryear.corres_to_energy_system_model._select_region_columns
+   pybalmorel.weatheryear.corres_to_energy_system_model._write_processed_timeseries
+   pybalmorel.weatheryear.corres_to_energy_system_model._write_stats_excel
+   pybalmorel.weatheryear.corres_to_energy_system_model.extract_technology_folders
+   pybalmorel.weatheryear.corres_to_energy_system_model.generate_output_filename_for_technology
+   pybalmorel.weatheryear.corres_to_energy_system_model.compute_capacity_factor_and_flh
+   pybalmorel.weatheryear.corres_to_energy_system_model.is_wind_tech_enabled
+   pybalmorel.weatheryear.corres_to_energy_system_model.is_solar_tech_enabled
+   pybalmorel.weatheryear.corres_to_energy_system_model.export_timeseries_to_xlsx
+
+
+Module Contents
+---------------
+
+.. py:data:: _xlsxwriter
+   :value: None
+
+
+.. py:data:: logger
+
+.. py:function:: save_log(config: pybalmorel.weatheryear.config_models.WeatherYearConfig, output_folder: str) -> None
+
+   Save the configuration details to a log file in the output folder for traceability.
+   Args:
+      config: The WeatherYearConfig object containing the configuration details.
+      output_folder: The folder where the log file will be saved.
+
+
+.. py:function:: _require_columns(df: pandas.DataFrame, required_columns: set[str], context: str) -> None
+
+   Ensure required columns exist in a DataFrame before downstream processing.
+
+
+.. py:function:: _source_file_names(folder_name: str) -> list[str]
+
+   Return input result file stems to read for one CorRES run folder.
+
+
+.. py:function:: _select_region_columns(df: pandas.DataFrame, run_folder: str, config: pybalmorel.weatheryear.config_models.WeatherYearConfig) -> pandas.DataFrame
+
+   Return a filtered dataframe containing only configured Balmorel regions.
+
+
+.. py:function:: _write_processed_timeseries(df_cut: pandas.DataFrame, df_scaled: pandas.DataFrame, destination_path: str, file_base: str) -> None
+
+   Write raw and scaled time series for one processed technology file.
+
+
+.. py:function:: _write_stats_excel(stats_path: str, run_folder: str, full_ts_stats: dict[str, list[pandas.DataFrame]], raw_ts_stats: dict[str, list[pandas.DataFrame]], scaled_ts_stats: dict[str, list[pandas.DataFrame]]) -> None
+
+   Persist CF/FLH stats with existing and future run-specific formatting.
+
+
+.. py:function:: extract_technology_folders(path: str) -> list[str]
+
+   Get technology folders from a CorRES results directory based on expected naming patterns.
+   Args:
+      path: The path to the CorRES results directory.
+   Returns:
+      A list of technology folder names.
+
+
+.. py:function:: generate_output_filename_for_technology(f_name: str, tech: str, run_folder: str) -> str
+
+   Generate a standardized file name for output files based on technology and source type.
+   Args:
+      f_name: The type of file to generate the name for (e.g., "P" for power, "WS" for wind speed).
+      tech: The technology name.
+      run_folder: The folder where the run is located.
+   Returns:
+      The standardized file name.
+
+
+.. py:function:: compute_capacity_factor_and_flh(df: pandas.DataFrame, tech: str) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   Calculate Capacity Factor (CF) and Full Load Hours (FLH) for a given technology based on its time series data.
+   Args:
+      df: The DataFrame containing the time series data for the technology.
+      tech: The technology name, used for labeling the output DataFrames.
+   Returns:
+      A tuple containing two DataFrames: CF (Capacity Factor) and FLH (Full Load Hours).
+
+
+.. py:function:: is_wind_tech_enabled(run_folder: str, tech: str, config: pybalmorel.weatheryear.config_models.WeatherYearConfig) -> bool
+
+   Determine whether a given wind technology should be read based on the configuration settings.
+    Args:
+       run_folder: The folder where the run is located, used to determine the source type (e.g., "Existing", "Future_Onshore", "Future_Offshore").
+       tech: The technology name, used for matching against the configuration settings.
+       config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.
+   Returns:
+       A boolean indicating whether the technology should be read (True) or skipped (False).
+       
+
+
+.. py:function:: is_solar_tech_enabled(run_folder: str, tech: str, config: pybalmorel.weatheryear.config_models.WeatherYearConfig) -> bool
+
+   Determine whether a given solar technology should be read based on the configuration settings.
+    Args:
+       run_folder: The folder where the run is located, used to determine the source type (e.g., "PV").
+       tech: The technology name, used for matching against the configuration settings.
+       config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.
+   Returns:
+       A boolean indicating whether the technology should be read (True) or skipped (False).
+
+
+.. py:function:: export_timeseries_to_xlsx(config_fn: str, start_date: int, output_folder: str, end_date: str | bool = False, fix_monday: bool = True) -> None
+
+   Main function to read CorRES output files, process the time series data, and export it to Excel files for use in Balmorel.
+    Args:
+       config_fn: The file path to the configuration file (e.g., YAML) containing settings for which technologies and regions to keep, as well as the paths to the CorRES results.
+       start_date: The start year for filtering the time series ('int' type).
+       output_folder: The folder where the processed Excel files will be saved.
+       end_date: The end date for filtering the time series (in 'YYYY-MM-DD' format). If False, no end date filtering is applied.
+       fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing. Defaults to True.
+   Returns:
+       None. The function saves the processed time series data to Excel files in the specified output folder.
+    Raises:
+       MissingRequiredColumnsError: If required columns are missing from the input CSV files.
+       EmptyMergeResultError: If no region columns remain after filtering for the configured regions.
+
+

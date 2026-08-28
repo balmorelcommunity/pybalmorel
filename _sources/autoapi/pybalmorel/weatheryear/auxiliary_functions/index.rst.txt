@@ -1,0 +1,137 @@
+pybalmorel.weatheryear.auxiliary_functions
+==========================================
+
+.. py:module:: pybalmorel.weatheryear.auxiliary_functions
+
+.. autoapi-nested-parse::
+
+   Auxiliary helpers for the weather-year preprocessing to Balmorel conversion.
+
+   This module provides utility functions for path creation, technology/source parsing,
+   CapDev timestep generation, and ECDF-based scaling of reduced time-series subsets.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.auxiliary_functions.create_directory_if_needed
+   pybalmorel.weatheryear.auxiliary_functions.align_timeseries_to_first_monday
+   pybalmorel.weatheryear.auxiliary_functions.filter_timeseries_by_dates
+   pybalmorel.weatheryear.auxiliary_functions.parse_technology_folder_name
+   pybalmorel.weatheryear.auxiliary_functions.build_capdev_timesteps_list
+   pybalmorel.weatheryear.auxiliary_functions.create_balmorel_time_mapping
+   pybalmorel.weatheryear.auxiliary_functions._calculate_ecdf
+   pybalmorel.weatheryear.auxiliary_functions._compute_inverse_quantile
+   pybalmorel.weatheryear.auxiliary_functions.scale_timeseries_to_full_distribution
+   pybalmorel.weatheryear.auxiliary_functions.process_timeseries_with_scaling
+   pybalmorel.weatheryear.auxiliary_functions.compute_capdev_timeseries
+
+
+Module Contents
+---------------
+
+.. py:function:: create_directory_if_needed(destination_path: str) -> None
+
+   Create directory tree if it does not exist.
+
+
+.. py:function:: align_timeseries_to_first_monday(df: pandas.DataFrame, df_cut: pandas.DataFrame, start_date: int) -> pandas.DataFrame
+
+   Align the first timestep to Monday and ensure 8736 hourly steps.
+
+
+.. py:function:: filter_timeseries_by_dates(df: pandas.DataFrame, start_date: int, end_date: int) -> pandas.DataFrame
+
+   Cut a datetime-indexed DataFrame to a year range [start_date, end_date].
+
+
+.. py:function:: parse_technology_folder_name(folder: str) -> tuple[str, str]
+
+   Infer technology variant and source type from a folder name.
+
+   Args:
+       folder: Folder name such as 'Future_Onshore' or 'PV_Rooftop'.
+
+   Returns:
+       Tuple of (onoff, source) used by downstream formatting logic.
+
+   Raises:
+       MalformedTechnologyFolderError: If no known folder pattern is found.
+
+
+.. py:function:: build_capdev_timesteps_list(config: dict[str, Any]) -> list[str]
+
+   Build CapDev timesteps from config values.
+
+   Args:
+       config: Configuration dictionary containing 'CapDev_timesteps_to_keep'.
+
+   Returns:
+       List of 'Sxxx.Txx' timestep strings to keep for CapDev processing.
+
+
+.. py:function:: create_balmorel_time_mapping() -> pandas.DataFrame
+
+   Create a DataFrame mapping CapDev and DA timesteps to Balmorel time identifiers.
+   Args:
+       None
+   Returns:
+       DataFrame with columns 'CapDev_time' and 'DA_time'.
+
+
+.. py:function:: _calculate_ecdf(data: pandas.Series) -> tuple[numpy.ndarray, numpy.ndarray]
+
+   Compute empirical CDF arrays (x, y) for a one-dimensional sample.
+
+
+.. py:function:: _compute_inverse_quantile(data: pandas.Series, quantiles: numpy.ndarray) -> numpy.ndarray
+
+   Map quantiles to values using empirical inverse CDF interpolation.
+
+
+.. py:function:: scale_timeseries_to_full_distribution(df: pandas.DataFrame, df_cut: pandas.DataFrame, source: str) -> pandas.DataFrame
+
+   Scale reduced time series using the distribution of the full series.
+
+   For each column, non-zero entries in df_cut are mapped through quantiles from
+   df_cut and then projected onto the empirical inverse CDF of df.
+
+   Args:
+       df: Full-resolution DataFrame.
+       df_cut: Reduced-resolution DataFrame to be scaled.
+       source: The source type (e.g., "wind" or "solar") to determine specific scaling logic.
+   Returns:
+       Scaled DataFrame with the same shape and index/columns as df_cut.
+
+
+.. py:function:: process_timeseries_with_scaling(df: pandas.DataFrame, start_date: int, end_date: int, source: str, fix_monday: bool) -> tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+
+   Apply necessary treatments to the time series data, including filtering by year range, fixing the first Monday if needed, and scaling the data to have the same distribution as the full time series.
+    Args:
+       df: The original DataFrame containing the time series data.
+       start_date: The start year for filtering the time series (int).
+       end_date: The end year for filtering the time series (int).
+       source: The source type (e.g., "wind" or "solar") to determine specific treatments.
+       fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.
+   Returns:
+       A tuple containing three DataFrames: the original full time series, the cut time series based on the date range, and the scaled time series.
+
+
+.. py:function:: compute_capdev_timeseries(config: dict[str, Any], combined_scaled_dfs: pandas.DataFrame, df_t: pandas.DataFrame, source: str, scale: bool) -> pandas.DataFrame
+
+   Convert DA-scaled series to CapDev timeseries using configured timesteps.
+   Args:
+       config: Configuration dictionary containing 'CapDev_timesteps_to_keep'.
+       combined_scaled_dfs: DataFrame of DA-scaled time series.
+       df_t: DataFrame mapping CapDev and DA timesteps.
+       source: The source type (e.g., "wind" or "solar","demand") to determine specific scaling logic.
+       scale: A boolean indicating whether to apply scaling to the CapDev time series.
+   Returns:
+       df_scaled:DataFrame of CapDev-scaled time series with index as CapDev_time.
+
+

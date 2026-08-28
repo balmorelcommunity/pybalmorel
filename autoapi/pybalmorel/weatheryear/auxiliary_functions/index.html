@@ -1,0 +1,312 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.auxiliary_functions &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.balmorel_converters" href="../balmorel_converters/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.additional_inc" href="../additional_inc/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.auxiliary_functions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/auxiliary_functions/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.auxiliary_functions">
+<span id="pybalmorel-weatheryear-auxiliary-functions"></span><h1>pybalmorel.weatheryear.auxiliary_functions<a class="headerlink" href="#module-pybalmorel.weatheryear.auxiliary_functions" title="Link to this heading"></a></h1>
+<p>Auxiliary helpers for the weather-year preprocessing to Balmorel conversion.</p>
+<p>This module provides utility functions for path creation, technology/source parsing,
+CapDev timestep generation, and ECDF-based scaling of reduced time-series subsets.</p>
+<p>&#64;author: Polyneikis Kanellas, Development Engineer DTU Wind</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.create_directory_if_needed" title="pybalmorel.weatheryear.auxiliary_functions.create_directory_if_needed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_directory_if_needed</span></code></a>(→ None)</p></td>
+<td><p>Create directory tree if it does not exist.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.align_timeseries_to_first_monday" title="pybalmorel.weatheryear.auxiliary_functions.align_timeseries_to_first_monday"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_timeseries_to_first_monday</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Align the first timestep to Monday and ensure 8736 hourly steps.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.filter_timeseries_by_dates" title="pybalmorel.weatheryear.auxiliary_functions.filter_timeseries_by_dates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_timeseries_by_dates</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Cut a datetime-indexed DataFrame to a year range [start_date, end_date].</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.parse_technology_folder_name" title="pybalmorel.weatheryear.auxiliary_functions.parse_technology_folder_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_technology_folder_name</span></code></a>(→ tuple[str, str])</p></td>
+<td><p>Infer technology variant and source type from a folder name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.build_capdev_timesteps_list" title="pybalmorel.weatheryear.auxiliary_functions.build_capdev_timesteps_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_capdev_timesteps_list</span></code></a>(→ list[str])</p></td>
+<td><p>Build CapDev timesteps from config values.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.create_balmorel_time_mapping" title="pybalmorel.weatheryear.auxiliary_functions.create_balmorel_time_mapping"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_balmorel_time_mapping</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Create a DataFrame mapping CapDev and DA timesteps to Balmorel time identifiers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions._calculate_ecdf" title="pybalmorel.weatheryear.auxiliary_functions._calculate_ecdf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_calculate_ecdf</span></code></a>(→ tuple[numpy.ndarray, numpy.ndarray])</p></td>
+<td><p>Compute empirical CDF arrays (x, y) for a one-dimensional sample.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions._compute_inverse_quantile" title="pybalmorel.weatheryear.auxiliary_functions._compute_inverse_quantile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_compute_inverse_quantile</span></code></a>(→ numpy.ndarray)</p></td>
+<td><p>Map quantiles to values using empirical inverse CDF interpolation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.scale_timeseries_to_full_distribution" title="pybalmorel.weatheryear.auxiliary_functions.scale_timeseries_to_full_distribution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scale_timeseries_to_full_distribution</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Scale reduced time series using the distribution of the full series.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.process_timeseries_with_scaling" title="pybalmorel.weatheryear.auxiliary_functions.process_timeseries_with_scaling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_timeseries_with_scaling</span></code></a>(...)</p></td>
+<td><p>Apply necessary treatments to the time series data, including filtering by year range, fixing the first Monday if needed, and scaling the data to have the same distribution as the full time series.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.auxiliary_functions.compute_capdev_timeseries" title="pybalmorel.weatheryear.auxiliary_functions.compute_capdev_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_capdev_timeseries</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Convert DA-scaled series to CapDev timeseries using configured timesteps.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.create_directory_if_needed">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">create_directory_if_needed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">destination_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.create_directory_if_needed" title="Link to this definition"></a></dt>
+<dd><p>Create directory tree if it does not exist.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.align_timeseries_to_first_monday">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">align_timeseries_to_first_monday</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cut</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.align_timeseries_to_first_monday" title="Link to this definition"></a></dt>
+<dd><p>Align the first timestep to Monday and ensure 8736 hourly steps.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.filter_timeseries_by_dates">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">filter_timeseries_by_dates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.filter_timeseries_by_dates" title="Link to this definition"></a></dt>
+<dd><p>Cut a datetime-indexed DataFrame to a year range [start_date, end_date].</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.parse_technology_folder_name">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">parse_technology_folder_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.parse_technology_folder_name" title="Link to this definition"></a></dt>
+<dd><p>Infer technology variant and source type from a folder name.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>folder: Folder name such as ‘Future_Onshore’ or ‘PV_Rooftop’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple of (onoff, source) used by downstream formatting logic.</p>
+</dd>
+<dt>Raises:</dt><dd><p>MalformedTechnologyFolderError: If no known folder pattern is found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.build_capdev_timesteps_list">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">build_capdev_timesteps_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.build_capdev_timesteps_list" title="Link to this definition"></a></dt>
+<dd><p>Build CapDev timesteps from config values.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config: Configuration dictionary containing ‘CapDev_timesteps_to_keep’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>List of ‘Sxxx.Txx’ timestep strings to keep for CapDev processing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.create_balmorel_time_mapping">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">create_balmorel_time_mapping</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.create_balmorel_time_mapping" title="Link to this definition"></a></dt>
+<dd><p>Create a DataFrame mapping CapDev and DA timesteps to Balmorel time identifiers.
+Args:</p>
+<blockquote>
+<div><p>None</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>DataFrame with columns ‘CapDev_time’ and ‘DA_time’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions._calculate_ecdf">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">_calculate_ecdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions._calculate_ecdf" title="Link to this definition"></a></dt>
+<dd><p>Compute empirical CDF arrays (x, y) for a one-dimensional sample.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions._compute_inverse_quantile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">_compute_inverse_quantile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions._compute_inverse_quantile" title="Link to this definition"></a></dt>
+<dd><p>Map quantiles to values using empirical inverse CDF interpolation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.scale_timeseries_to_full_distribution">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">scale_timeseries_to_full_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cut</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.scale_timeseries_to_full_distribution" title="Link to this definition"></a></dt>
+<dd><p>Scale reduced time series using the distribution of the full series.</p>
+<p>For each column, non-zero entries in df_cut are mapped through quantiles from
+df_cut and then projected onto the empirical inverse CDF of df.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>df: Full-resolution DataFrame.
+df_cut: Reduced-resolution DataFrame to be scaled.
+source: The source type (e.g., “wind” or “solar”) to determine specific scaling logic.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Scaled DataFrame with the same shape and index/columns as df_cut.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.process_timeseries_with_scaling">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">process_timeseries_with_scaling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_monday</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.process_timeseries_with_scaling" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Apply necessary treatments to the time series data, including filtering by year range, fixing the first Monday if needed, and scaling the data to have the same distribution as the full time series.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>df: The original DataFrame containing the time series data.
+start_date: The start year for filtering the time series (int).
+end_date: The end year for filtering the time series (int).
+source: The source type (e.g., “wind” or “solar”) to determine specific treatments.
+fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>A tuple containing three DataFrames: the original full time series, the cut time series based on the date range, and the scaled time series.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.auxiliary_functions.compute_capdev_timeseries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.auxiliary_functions.</span></span><span class="sig-name descname"><span class="pre">compute_capdev_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combined_scaled_dfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.auxiliary_functions.compute_capdev_timeseries" title="Link to this definition"></a></dt>
+<dd><p>Convert DA-scaled series to CapDev timeseries using configured timesteps.
+Args:</p>
+<blockquote>
+<div><p>config: Configuration dictionary containing ‘CapDev_timesteps_to_keep’.
+combined_scaled_dfs: DataFrame of DA-scaled time series.
+df_t: DataFrame mapping CapDev and DA timesteps.
+source: The source type (e.g., “wind” or “solar”,”demand”) to determine specific scaling logic.
+scale: A boolean indicating whether to apply scaling to the CapDev time series.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>df_scaled:DataFrame of CapDev-scaled time series with index as CapDev_time.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../additional_inc/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.additional_inc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../balmorel_converters/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.balmorel_converters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,57 @@
+pybalmorel.weatheryear.exceptions
+=================================
+
+.. py:module:: pybalmorel.weatheryear.exceptions
+
+.. autoapi-nested-parse::
+
+   Domain-specific exceptions for the weatheryear module.
+
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.exceptions.WeatherYearError
+   pybalmorel.weatheryear.exceptions.MissingRequiredColumnsError
+   pybalmorel.weatheryear.exceptions.MalformedTechnologyFolderError
+   pybalmorel.weatheryear.exceptions.EmptyMergeResultError
+
+
+Module Contents
+---------------
+
+.. py:exception:: WeatherYearError
+
+   Bases: :py:obj:`Exception`
+
+
+   Base exception for weather-year preprocessing and conversion errors.
+
+
+.. py:exception:: MissingRequiredColumnsError
+
+   Bases: :py:obj:`WeatherYearError`
+
+
+   Raised when required columns are missing from an input table.
+
+
+.. py:exception:: MalformedTechnologyFolderError
+
+   Bases: :py:obj:`WeatherYearError`
+
+
+   Raised when a technology folder name does not match expected patterns.
+
+
+.. py:exception:: EmptyMergeResultError
+
+   Bases: :py:obj:`WeatherYearError`
+
+
+   Raised when a merge/combine operation produces an empty output.
+
+

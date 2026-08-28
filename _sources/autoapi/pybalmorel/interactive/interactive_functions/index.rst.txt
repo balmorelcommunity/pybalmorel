@@ -1,0 +1,24 @@
+pybalmorel.interactive.interactive_functions
+============================================
+
+.. py:module:: pybalmorel.interactive.interactive_functions
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.interactive.interactive_functions.interactive_bar_chart
+
+
+Module Contents
+---------------
+
+.. py:function:: interactive_bar_chart(MainResults_instance, plot_style: str = 'light')
+
+   GUI for bar chart plotting
+
+   MainResults_instance (MainResults): Takes an instance of the MainResults class and opens a GUI for plotting
+
+

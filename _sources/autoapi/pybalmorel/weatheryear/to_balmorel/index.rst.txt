@@ -1,0 +1,66 @@
+pybalmorel.weatheryear.to_balmorel
+==================================
+
+.. py:module:: pybalmorel.weatheryear.to_balmorel
+
+.. autoapi-nested-parse::
+
+   Functions to assemble CorRES VRE time-series outputs into Balmorel .inc files.
+
+   Reads per-technology scaled and raw Excel files produced by corres_to_energy_system_model,
+   combines them into area-indexed DataFrames, and writes WND_VAR_T / SOLE_VAR_T capacity-factor
+   series and WNDFLH / SOLEFLH full-load-hour tables for both the DA and CapDev resolutions.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.to_balmorel.add_WND_VAR_T_Existing_RG2_RG3
+   pybalmorel.weatheryear.to_balmorel.add_FLH_existing_RG2_RG3
+   pybalmorel.weatheryear.to_balmorel.format_wind_column_names_for_balmorel
+   pybalmorel.weatheryear.to_balmorel.transform_wind_flh_to_balmorel_format
+   pybalmorel.weatheryear.to_balmorel.format_solar_column_names_for_balmorel
+   pybalmorel.weatheryear.to_balmorel.load_full_load_hours_data
+   pybalmorel.weatheryear.to_balmorel.combine_technology_timeseries_files
+   pybalmorel.weatheryear.to_balmorel.export_timeseries_to_balmorel_format
+
+
+Module Contents
+---------------
+
+.. py:function:: add_WND_VAR_T_Existing_RG2_RG3(combined_scaled_dfs)
+
+.. py:function:: add_FLH_existing_RG2_RG3(combined_scaled_FLH)
+
+.. py:function:: format_wind_column_names_for_balmorel(df: pandas.DataFrame, tech_csv: str, onoff: str) -> pandas.DataFrame
+
+.. py:function:: transform_wind_flh_to_balmorel_format(df_cf: pandas.DataFrame, onoff: str) -> pandas.Series
+
+.. py:function:: format_solar_column_names_for_balmorel(df: pandas.DataFrame, tech_csv: str, onoff: str) -> pandas.DataFrame
+
+.. py:function:: load_full_load_hours_data(folder: str, output_folder: str, scaled_raw_ts: str) -> pandas.Series
+
+.. py:function:: combine_technology_timeseries_files(folder: str, output_folder: str, scaled_raw_ts: str) -> pandas.DataFrame
+
+.. py:function:: export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output_folder: str) -> tuple[dict[str, dict[str, list[pandas.DataFrame]]], dict[str, dict[str, list[pandas.Series]]]]
+
+   Main function to export time series data to Balmorel .inc format.
+
+   Args:
+       config_fn: Path to the configuration file specifying parameters for the export process.
+       start_date: The starting date for the time series data to be exported.
+       output_folder: The folder where the output .inc files will be saved.
+   Returns:
+       A tuple containing two dictionaries: (dfs_scaled, FLH_scaled). 
+       - dfs_scaled is a dictionary of DataFrames for the scaled time series data, organized by source and type (scaled/raw).
+       - FLH_scaled is a dictionary of Series for the full-load hours, organized by source and type (scaled/raw).
+   Raises:
+       EmptyMergeResultError: If any of the combined technology time series DataFrames are empty after merging.
+       MissingRequiredColumnsError: If any of the required columns are missing in the input Excel files during the merging process.
+
+

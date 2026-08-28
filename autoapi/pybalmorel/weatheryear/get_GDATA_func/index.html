@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.get_GDATA_func &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.get_GKFX_func" href="../get_GKFX_func/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.exceptions" href="../exceptions/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.get_GDATA_func</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/get_GDATA_func/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.get_GDATA_func">
+<span id="pybalmorel-weatheryear-get-gdata-func"></span><h1>pybalmorel.weatheryear.get_GDATA_func<a class="headerlink" href="#module-pybalmorel.weatheryear.get_GDATA_func" title="Link to this heading"></a></h1>
+<p>Functions to create the GDATA table and .inc file for renewable generators.</p>
+<p>GDATA is a Balmorel parameter that holds generator attribute data, including
+technology group, fuel type, investment costs, fixed and variable O&amp;M costs,
+lifetime, capacity variability flags, and unit commitment parameters.</p>
+<p>&#64;author: Polyneikis Kanellas, Development Engineer DTU Wind</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.get_GDATA_func.INVESTMENT_YEARS" title="pybalmorel.weatheryear.get_GDATA_func.INVESTMENT_YEARS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">INVESTMENT_YEARS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.get_GDATA_func.RG_GROUPS" title="pybalmorel.weatheryear.get_GDATA_func.RG_GROUPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RG_GROUPS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.get_GDATA_func._build_cost_columns" title="pybalmorel.weatheryear.get_GDATA_func._build_cost_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_cost_columns</span></code></a>(→ tuple)</p></td>
+<td><p>Look up cost values for <em>name</em> and <em>year</em> and replicate them for <em>n_rows</em> generators.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.get_GDATA_func.add_unit_size_col" title="pybalmorel.weatheryear.get_GDATA_func.add_unit_size_col"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_unit_size_col</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Append a 'Unit_Size' column to <em>dfs</em> from the Standard_Unit_Size sheet.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.get_GDATA_func.build_GDATA" title="pybalmorel.weatheryear.get_GDATA_func.build_GDATA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_GDATA</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Build GDATA table and write the corresponding .inc file for renewable generators.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.get_GDATA_func.INVESTMENT_YEARS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.get_GDATA_func.</span></span><span class="sig-name descname"><span class="pre">INVESTMENT_YEARS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[2020,</span> <span class="pre">2030,</span> <span class="pre">2040,</span> <span class="pre">2050]</span></span><a class="headerlink" href="#pybalmorel.weatheryear.get_GDATA_func.INVESTMENT_YEARS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.get_GDATA_func.RG_GROUPS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.get_GDATA_func.</span></span><span class="sig-name descname"><span class="pre">RG_GROUPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['RG1',</span> <span class="pre">'RG2',</span> <span class="pre">'RG3']</span></span><a class="headerlink" href="#pybalmorel.weatheryear.get_GDATA_func.RG_GROUPS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.get_GDATA_func._build_cost_columns">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.get_GDATA_func.</span></span><span class="sig-name descname"><span class="pre">_build_cost_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">costs_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.get_GDATA_func._build_cost_columns" title="Link to this definition"></a></dt>
+<dd><p>Look up cost values for <em>name</em> and <em>year</em> and replicate them for <em>n_rows</em> generators.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>costs_dict: dict of cost DataFrames keyed by ‘Investment_cost’, ‘Annual_O&amp;M’,</dt><dd><p>and ‘Variable_O&amp;M’.</p>
+</dd>
+</dl>
+<p>name: substring to match against the technology index.
+year: investment year column to read from each cost sheet.
+n_rows: number of generators to replicate costs for.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Tuple of (inv_cost, ann_om, var_om) single-column DataFrames.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.get_GDATA_func.add_unit_size_col">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.get_GDATA_func.</span></span><span class="sig-name descname"><span class="pre">add_unit_size_col</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">techs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">turbines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.get_GDATA_func.add_unit_size_col" title="Link to this definition"></a></dt>
+<dd><p>Append a ‘Unit_Size’ column to <em>dfs</em> from the Standard_Unit_Size sheet.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dfs: generator DataFrame with a ‘G_renewable’ column.
+techs: dict with keys ‘wind’ and ‘solar’ listing active technology names.
+turbines: dict with keys ‘onshore’ and ‘offshore’ listing turbine names.
+config: workflow configuration dict; must contain ‘VRE_tech_costs’ path.</p>
+</dd>
+<dt>Returns:</dt><dd><p><em>dfs</em> with an added ‘Unit_Size’ column.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.get_GDATA_func.build_GDATA">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.get_GDATA_func.</span></span><span class="sig-name descname"><span class="pre">build_GDATA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">GGG_renewable_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">turbines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">techs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.get_GDATA_func.build_GDATA" title="Link to this definition"></a></dt>
+<dd><p>Build GDATA table and write the corresponding .inc file for renewable generators.</p>
+<p>Reads investment cost, fixed O&amp;M, and variable O&amp;M from the VRE cost Excel workbook
+and assembles them with fuel type, technology group, lifetime, and capacity flags
+into a GDATA-formatted DataFrame, then writes a GDATA_renewable.inc file.</p>
+<dl>
+<dt>Args:</dt><dd><p>GGG_renewable_df: DataFrame with a ‘G_renewable’ column listing generator names.
+turbines: dict with keys ‘onshore’ and ‘offshore’ listing turbine names.
+techs: dict with keys ‘wind’ and ‘solar’ listing active technology names.
+config: workflow configuration dict; must contain ‘VRE_tech_costs’ path.
+output_folder: root output directory; the .inc file is written to</p>
+<blockquote>
+<div><p>&lt;output_folder&gt;/to_balmorel/.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>GDATA DataFrame indexed by generator name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../exceptions/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.exceptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../get_GKFX_func/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.get_GKFX_func" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

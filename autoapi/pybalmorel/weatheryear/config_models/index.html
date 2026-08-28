@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.config_models &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.cop_to_btc" href="../cop_to_btc/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.balmorel_converters" href="../balmorel_converters/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.config_models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/config_models/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.config_models">
+<span id="pybalmorel-weatheryear-config-models"></span><h1>pybalmorel.weatheryear.config_models<a class="headerlink" href="#module-pybalmorel.weatheryear.config_models" title="Link to this heading"></a></h1>
+<p>Typed and validated configuration models for the weatheryear module.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._MODULE_KEYS" title="pybalmorel.weatheryear.config_models._MODULE_KEYS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_MODULE_KEYS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._MULTIWEATHER_INPUTS_KEY" title="pybalmorel.weatheryear.config_models._MULTIWEATHER_INPUTS_KEY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_MULTIWEATHER_INPUTS_KEY</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._WEATHERYEAR_INPUTS_KEY" title="pybalmorel.weatheryear.config_models._WEATHERYEAR_INPUTS_KEY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_WEATHERYEAR_INPUTS_KEY</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.ConfigValidationError" title="pybalmorel.weatheryear.config_models.ConfigValidationError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigValidationError</span></code></a></p></td>
+<td><p>Raised when a weather-year configuration is missing required fields.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CapDevTimestepsConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.RegionsConfig" title="pybalmorel.weatheryear.config_models.RegionsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RegionsConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig" title="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnnuityCalculationConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig" title="pybalmorel.weatheryear.config_models.DemandModuleConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DemandModuleConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig" title="pybalmorel.weatheryear.config_models.HydroModuleConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HydroModuleConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CopModuleConfig" title="pybalmorel.weatheryear.config_models.CopModuleConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CopModuleConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.ToBalmorelConfig" title="pybalmorel.weatheryear.config_models.ToBalmorelConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToBalmorelConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeatherYearConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig" title="pybalmorel.weatheryear.config_models.AdditionalIncConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AdditionalIncConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._default_demand_folder" title="pybalmorel.weatheryear.config_models._default_demand_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_default_demand_folder</span></code></a>(→ str)</p></td>
+<td><p>Return the preferred default folder for demand-model CSV inputs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._resolve_root_and_multiweather_folder" title="pybalmorel.weatheryear.config_models._resolve_root_and_multiweather_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_root_and_multiweather_folder</span></code></a>(→ tuple[str, ...)</p></td>
+<td><p>Resolve root and multiweather input folders from supported config keys.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._default_corres_root" title="pybalmorel.weatheryear.config_models._default_corres_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_default_corres_root</span></code></a>(→ str)</p></td>
+<td><p>Return default CorRES runs folder under the weather-year inputs root.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._build_default_corres_results" title="pybalmorel.weatheryear.config_models._build_default_corres_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_default_corres_results</span></code></a>(→ dict[str, list[str]])</p></td>
+<td><p>Build default CorRES run folders from the CorRES root folder.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._apply_multiweather_defaults" title="pybalmorel.weatheryear.config_models._apply_multiweather_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_apply_multiweather_defaults</span></code></a>(→ dict[str, Any])</p></td>
+<td><p>Apply optional path defaults derived from a shared multiweather input folder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._expect_dict" title="pybalmorel.weatheryear.config_models._expect_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_expect_dict</span></code></a>(→ dict[str, Any])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._require" title="pybalmorel.weatheryear.config_models._require"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_require</span></code></a>(→ Any)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._expect_list_of_str" title="pybalmorel.weatheryear.config_models._expect_list_of_str"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_expect_list_of_str</span></code></a>(→ list[str])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._expect_dict_of_list_str" title="pybalmorel.weatheryear.config_models._expect_dict_of_list_str"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_expect_dict_of_list_str</span></code></a>(→ dict[str, list[str]])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models._load_yaml_file" title="pybalmorel.weatheryear.config_models._load_yaml_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_yaml_file</span></code></a>(→ dict[str, Any])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.config_models.load_weatheryear_config" title="pybalmorel.weatheryear.config_models.load_weatheryear_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_weatheryear_config</span></code></a>(→ dict[str, Any])</p></td>
+<td><p>Load weatheryear YAML once and normalize known fields in a central utility.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py exception">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.ConfigValidationError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">ConfigValidationError</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.ConfigValidationError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">ValueError</span></code></p>
+<p>Raised when a weather-year configuration is missing required fields.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._MODULE_KEYS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_MODULE_KEYS</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._MODULE_KEYS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._MULTIWEATHER_INPUTS_KEY">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_MULTIWEATHER_INPUTS_KEY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'multiweather_other_inputs_folder'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._MULTIWEATHER_INPUTS_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._WEATHERYEAR_INPUTS_KEY">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_WEATHERYEAR_INPUTS_KEY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'weatheryear_inputs_folder'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._WEATHERYEAR_INPUTS_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._default_demand_folder">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_default_demand_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weatheryear_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multiweather_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._default_demand_folder" title="Link to this definition"></a></dt>
+<dd><p>Return the preferred default folder for demand-model CSV inputs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._resolve_root_and_multiweather_folder">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_resolve_root_and_multiweather_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._resolve_root_and_multiweather_folder" title="Link to this definition"></a></dt>
+<dd><p>Resolve root and multiweather input folders from supported config keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._default_corres_root">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_default_corres_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weatheryear_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._default_corres_root" title="Link to this definition"></a></dt>
+<dd><p>Return default CorRES runs folder under the weather-year inputs root.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._build_default_corres_results">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_build_default_corres_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corres_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._build_default_corres_results" title="Link to this definition"></a></dt>
+<dd><p>Build default CorRES run folders from the CorRES root folder.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._apply_multiweather_defaults">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_apply_multiweather_defaults</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._apply_multiweather_defaults" title="Link to this definition"></a></dt>
+<dd><p>Apply optional path defaults derived from a shared multiweather input folder.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._expect_dict">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_expect_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._expect_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._require">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_require</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._require" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._expect_list_of_str">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_expect_list_of_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._expect_list_of_str" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._expect_dict_of_list_str">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_expect_dict_of_list_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._expect_dict_of_list_str" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models._load_yaml_file">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">_load_yaml_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models._load_yaml_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.load_weatheryear_config">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">load_weatheryear_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.load_weatheryear_config" title="Link to this definition"></a></dt>
+<dd><p>Load weatheryear YAML once and normalize known fields in a central utility.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config_fn: Path to YAML config.
+required_keys: Optional top-level keys that must exist for the caller.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Normalized config mapping for all known top-level keys present in the file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">CapDevTimestepsConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.s">
+<span class="sig-name descname"><span class="pre">s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.s" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.t">
+<span class="sig-name descname"><span class="pre">t</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.t" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.from_raw">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><span class="pre">CapDevTimestepsConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.from_raw" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.as_legacy_dict">
+<span class="sig-name descname"><span class="pre">as_legacy_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig.as_legacy_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.RegionsConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">RegionsConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.RegionsConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.RegionsConfig.onshore">
+<span class="sig-name descname"><span class="pre">onshore</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.RegionsConfig.onshore" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.RegionsConfig.offshore">
+<span class="sig-name descname"><span class="pre">offshore</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.RegionsConfig.offshore" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.RegionsConfig.from_raw">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.RegionsConfig" title="pybalmorel.weatheryear.config_models.RegionsConfig"><span class="pre">RegionsConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.RegionsConfig.from_raw" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">AnnuityCalculationConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.debt_share">
+<span class="sig-name descname"><span class="pre">debt_share</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.debt_share" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.discount_rate">
+<span class="sig-name descname"><span class="pre">discount_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.discount_rate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.interest_rate">
+<span class="sig-name descname"><span class="pre">interest_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.interest_rate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.from_raw">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig" title="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig"><span class="pre">AnnuityCalculationConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig.from_raw" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">DemandModuleConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig.spaceheat_to_hotwater_ratio">
+<span class="sig-name descname"><span class="pre">spaceheat_to_hotwater_ratio</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig.spaceheat_to_hotwater_ratio" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig.ann_corr_fac_ref_year">
+<span class="sig-name descname"><span class="pre">ann_corr_fac_ref_year</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig.ann_corr_fac_ref_year" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig.demand_model_results">
+<span class="sig-name descname"><span class="pre">demand_model_results</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig.demand_model_results" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig.capdev_timesteps_to_keep">
+<span class="sig-name descname"><span class="pre">capdev_timesteps_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><span class="pre">CapDevTimestepsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig.capdev_timesteps_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.DemandModuleConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig" title="pybalmorel.weatheryear.config_models.DemandModuleConfig"><span class="pre">DemandModuleConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.DemandModuleConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.HydroModuleConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">HydroModuleConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.HydroModuleConfig.hydro_model_results">
+<span class="sig-name descname"><span class="pre">hydro_model_results</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig.hydro_model_results" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.HydroModuleConfig.capdev_timesteps_to_keep">
+<span class="sig-name descname"><span class="pre">capdev_timesteps_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><span class="pre">CapDevTimestepsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig.capdev_timesteps_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.HydroModuleConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig" title="pybalmorel.weatheryear.config_models.HydroModuleConfig"><span class="pre">HydroModuleConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.HydroModuleConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CopModuleConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">CopModuleConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CopModuleConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CopModuleConfig.cop_model_results">
+<span class="sig-name descname"><span class="pre">cop_model_results</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CopModuleConfig.cop_model_results" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CopModuleConfig.capdev_timesteps_to_keep">
+<span class="sig-name descname"><span class="pre">capdev_timesteps_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><span class="pre">CapDevTimestepsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CopModuleConfig.capdev_timesteps_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.CopModuleConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CopModuleConfig" title="pybalmorel.weatheryear.config_models.CopModuleConfig"><span class="pre">CopModuleConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.CopModuleConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.ToBalmorelConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">ToBalmorelConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.ToBalmorelConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.ToBalmorelConfig.capdev_timesteps_to_keep">
+<span class="sig-name descname"><span class="pre">capdev_timesteps_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.CapDevTimestepsConfig" title="pybalmorel.weatheryear.config_models.CapDevTimestepsConfig"><span class="pre">CapDevTimestepsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.ToBalmorelConfig.capdev_timesteps_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.ToBalmorelConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.ToBalmorelConfig" title="pybalmorel.weatheryear.config_models.ToBalmorelConfig"><span class="pre">ToBalmorelConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.ToBalmorelConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">WeatherYearConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.corres_results">
+<span class="sig-name descname"><span class="pre">corres_results</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.corres_results" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.regions_to_keep">
+<span class="sig-name descname"><span class="pre">regions_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.RegionsConfig" title="pybalmorel.weatheryear.config_models.RegionsConfig"><span class="pre">RegionsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.regions_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.rg_to_keep">
+<span class="sig-name descname"><span class="pre">rg_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.rg_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.turbine_to_keep">
+<span class="sig-name descname"><span class="pre">turbine_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.turbine_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.tech_to_keep">
+<span class="sig-name descname"><span class="pre">tech_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.tech_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><span class="pre">WeatherYearConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.WeatherYearConfig.regions_for_source">
+<span class="sig-name descname"><span class="pre">regions_for_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.WeatherYearConfig.regions_for_source" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.config_models.</span></span><span class="sig-name descname"><span class="pre">AdditionalIncConfig</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.regions_to_keep">
+<span class="sig-name descname"><span class="pre">regions_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.RegionsConfig" title="pybalmorel.weatheryear.config_models.RegionsConfig"><span class="pre">RegionsConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.regions_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.rg_to_keep">
+<span class="sig-name descname"><span class="pre">rg_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.rg_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.turbine_to_keep">
+<span class="sig-name descname"><span class="pre">turbine_to_keep</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.turbine_to_keep" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.annuitycg_calculation">
+<span class="sig-name descname"><span class="pre">annuitycg_calculation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.config_models.AnnuityCalculationConfig" title="pybalmorel.weatheryear.config_models.AnnuityCalculationConfig"><span class="pre">AnnuityCalculationConfig</span></a></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.annuitycg_calculation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.vre_potentials">
+<span class="sig-name descname"><span class="pre">vre_potentials</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.vre_potentials" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.vre_tech_costs">
+<span class="sig-name descname"><span class="pre">vre_tech_costs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.vre_tech_costs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.existing_wind_cap">
+<span class="sig-name descname"><span class="pre">existing_wind_cap</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.existing_wind_cap" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.existing_solar_cap">
+<span class="sig-name descname"><span class="pre">existing_solar_cap</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.existing_solar_cap" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.from_file">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig" title="pybalmorel.weatheryear.config_models.AdditionalIncConfig"><span class="pre">AdditionalIncConfig</span></a></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.rgs_for">
+<span class="sig-name descname"><span class="pre">rgs_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.rgs_for" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.config_models.AdditionalIncConfig.as_legacy_dict">
+<span class="sig-name descname"><span class="pre">as_legacy_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.config_models.AdditionalIncConfig.as_legacy_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../balmorel_converters/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.balmorel_converters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cop_to_btc/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.cop_to_btc" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

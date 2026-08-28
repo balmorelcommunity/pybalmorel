@@ -1,0 +1,322 @@
+pybalmorel.weatheryear.config_models
+====================================
+
+.. py:module:: pybalmorel.weatheryear.config_models
+
+.. autoapi-nested-parse::
+
+   Typed and validated configuration models for the weatheryear module.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.config_models._MODULE_KEYS
+   pybalmorel.weatheryear.config_models._MULTIWEATHER_INPUTS_KEY
+   pybalmorel.weatheryear.config_models._WEATHERYEAR_INPUTS_KEY
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.config_models.ConfigValidationError
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.config_models.CapDevTimestepsConfig
+   pybalmorel.weatheryear.config_models.RegionsConfig
+   pybalmorel.weatheryear.config_models.AnnuityCalculationConfig
+   pybalmorel.weatheryear.config_models.DemandModuleConfig
+   pybalmorel.weatheryear.config_models.HydroModuleConfig
+   pybalmorel.weatheryear.config_models.CopModuleConfig
+   pybalmorel.weatheryear.config_models.ToBalmorelConfig
+   pybalmorel.weatheryear.config_models.WeatherYearConfig
+   pybalmorel.weatheryear.config_models.AdditionalIncConfig
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.config_models._default_demand_folder
+   pybalmorel.weatheryear.config_models._resolve_root_and_multiweather_folder
+   pybalmorel.weatheryear.config_models._default_corres_root
+   pybalmorel.weatheryear.config_models._build_default_corres_results
+   pybalmorel.weatheryear.config_models._apply_multiweather_defaults
+   pybalmorel.weatheryear.config_models._expect_dict
+   pybalmorel.weatheryear.config_models._require
+   pybalmorel.weatheryear.config_models._expect_list_of_str
+   pybalmorel.weatheryear.config_models._expect_dict_of_list_str
+   pybalmorel.weatheryear.config_models._load_yaml_file
+   pybalmorel.weatheryear.config_models.load_weatheryear_config
+
+
+Module Contents
+---------------
+
+.. py:exception:: ConfigValidationError
+
+   Bases: :py:obj:`ValueError`
+
+
+   Raised when a weather-year configuration is missing required fields.
+
+
+.. py:data:: _MODULE_KEYS
+
+.. py:data:: _MULTIWEATHER_INPUTS_KEY
+   :value: 'multiweather_other_inputs_folder'
+
+
+.. py:data:: _WEATHERYEAR_INPUTS_KEY
+   :value: 'weatheryear_inputs_folder'
+
+
+.. py:function:: _default_demand_folder(weatheryear_root: str, multiweather_folder: str) -> str
+
+   Return the preferred default folder for demand-model CSV inputs.
+
+
+.. py:function:: _resolve_root_and_multiweather_folder(raw: dict[str, Any]) -> tuple[str, str] | None
+
+   Resolve root and multiweather input folders from supported config keys.
+
+
+.. py:function:: _default_corres_root(weatheryear_root: str) -> str
+
+   Return default CorRES runs folder under the weather-year inputs root.
+
+
+.. py:function:: _build_default_corres_results(corres_root: str) -> dict[str, list[str]]
+
+   Build default CorRES run folders from the CorRES root folder.
+
+
+.. py:function:: _apply_multiweather_defaults(raw: dict[str, Any]) -> dict[str, Any]
+
+   Apply optional path defaults derived from a shared multiweather input folder.
+
+
+.. py:function:: _expect_dict(raw: Any, context: str) -> dict[str, Any]
+
+.. py:function:: _require(raw: dict[str, Any], key: str, context: str) -> Any
+
+.. py:function:: _expect_list_of_str(value: Any, context: str) -> list[str]
+
+.. py:function:: _expect_dict_of_list_str(value: Any, context: str) -> dict[str, list[str]]
+
+.. py:function:: _load_yaml_file(config_fn: str) -> dict[str, Any]
+
+.. py:function:: load_weatheryear_config(config_fn: str, required_keys: set[str] | None = None) -> dict[str, Any]
+
+   Load weatheryear YAML once and normalize known fields in a central utility.
+
+   Args:
+       config_fn: Path to YAML config.
+       required_keys: Optional top-level keys that must exist for the caller.
+
+   Returns:
+       Normalized config mapping for all known top-level keys present in the file.
+
+
+.. py:class:: CapDevTimestepsConfig
+
+   .. py:attribute:: s
+      :type:  list[str]
+
+
+   .. py:attribute:: t
+      :type:  list[str]
+
+
+   .. py:method:: from_raw(raw: Any) -> CapDevTimestepsConfig
+      :classmethod:
+
+
+
+   .. py:method:: as_legacy_dict() -> dict[str, Any]
+
+
+.. py:class:: RegionsConfig
+
+   .. py:attribute:: onshore
+      :type:  list[str]
+
+
+   .. py:attribute:: offshore
+      :type:  list[str]
+
+
+   .. py:method:: from_raw(raw: Any) -> RegionsConfig
+      :classmethod:
+
+
+
+.. py:class:: AnnuityCalculationConfig
+
+   .. py:attribute:: debt_share
+      :type:  float
+
+
+   .. py:attribute:: discount_rate
+      :type:  float
+
+
+   .. py:attribute:: interest_rate
+      :type:  float
+
+
+   .. py:method:: from_raw(raw: Any) -> AnnuityCalculationConfig
+      :classmethod:
+
+
+
+.. py:class:: DemandModuleConfig
+
+   .. py:attribute:: spaceheat_to_hotwater_ratio
+      :type:  float
+
+
+   .. py:attribute:: ann_corr_fac_ref_year
+      :type:  int
+
+
+   .. py:attribute:: demand_model_results
+      :type:  str
+
+
+   .. py:attribute:: capdev_timesteps_to_keep
+      :type:  CapDevTimestepsConfig
+
+
+   .. py:method:: from_file(config_fn: str) -> DemandModuleConfig
+      :classmethod:
+
+
+
+.. py:class:: HydroModuleConfig
+
+   .. py:attribute:: hydro_model_results
+      :type:  str
+
+
+   .. py:attribute:: capdev_timesteps_to_keep
+      :type:  CapDevTimestepsConfig
+
+
+   .. py:method:: from_file(config_fn: str) -> HydroModuleConfig
+      :classmethod:
+
+
+
+.. py:class:: CopModuleConfig
+
+   .. py:attribute:: cop_model_results
+      :type:  str
+
+
+   .. py:attribute:: capdev_timesteps_to_keep
+      :type:  CapDevTimestepsConfig
+
+
+   .. py:method:: from_file(config_fn: str) -> CopModuleConfig
+      :classmethod:
+
+
+
+.. py:class:: ToBalmorelConfig
+
+   .. py:attribute:: capdev_timesteps_to_keep
+      :type:  CapDevTimestepsConfig
+
+
+   .. py:method:: from_file(config_fn: str) -> ToBalmorelConfig
+      :classmethod:
+
+
+
+.. py:class:: WeatherYearConfig
+
+   .. py:attribute:: corres_results
+      :type:  dict[str, list[str]]
+
+
+   .. py:attribute:: regions_to_keep
+      :type:  RegionsConfig
+
+
+   .. py:attribute:: rg_to_keep
+      :type:  dict[str, list[str]]
+
+
+   .. py:attribute:: turbine_to_keep
+      :type:  list[str]
+
+
+   .. py:attribute:: tech_to_keep
+      :type:  list[str]
+
+
+   .. py:method:: from_file(config_fn: str) -> WeatherYearConfig
+      :classmethod:
+
+
+
+   .. py:method:: regions_for_source(source: str) -> list[str]
+
+
+.. py:class:: AdditionalIncConfig
+
+   .. py:attribute:: regions_to_keep
+      :type:  RegionsConfig
+
+
+   .. py:attribute:: rg_to_keep
+      :type:  dict[str, list[str]]
+
+
+   .. py:attribute:: turbine_to_keep
+      :type:  list[str]
+
+
+   .. py:attribute:: annuitycg_calculation
+      :type:  AnnuityCalculationConfig
+
+
+   .. py:attribute:: vre_potentials
+      :type:  str
+
+
+   .. py:attribute:: vre_tech_costs
+      :type:  str
+
+
+   .. py:attribute:: existing_wind_cap
+      :type:  str
+
+
+   .. py:attribute:: existing_solar_cap
+      :type:  str
+
+
+   .. py:method:: from_file(config_fn: str) -> AdditionalIncConfig
+      :classmethod:
+
+
+
+   .. py:method:: rgs_for(tech: str) -> list[str]
+
+
+   .. py:method:: as_legacy_dict() -> dict[str, Any]
+
+

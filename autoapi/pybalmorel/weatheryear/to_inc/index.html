@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.to_inc &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="eel_dashboard" href="../../../eel_dashboard/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.to_balmorel" href="../to_balmorel/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.to_inc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/to_inc/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.to_inc">
+<span id="pybalmorel-weatheryear-to-inc"></span><h1>pybalmorel.weatheryear.to_inc<a class="headerlink" href="#module-pybalmorel.weatheryear.to_inc" title="Link to this heading"></a></h1>
+<p>TITLE</p>
+<p>Description</p>
+<p>&#64;author: Polyneikis Kanellas, Development Engineer DTU Wind</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._INC_PREFIX_MAP" title="pybalmorel.weatheryear.to_inc._INC_PREFIX_MAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_INC_PREFIX_MAP</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._INC_TABLE_SPECS" title="pybalmorel.weatheryear.to_inc._INC_TABLE_SPECS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_INC_TABLE_SPECS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._IncTableSpec" title="pybalmorel.weatheryear.to_inc._IncTableSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_IncTableSpec</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.IncFile_temp" title="pybalmorel.weatheryear.to_inc.IncFile_temp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IncFile_temp</span></code></a></p></td>
+<td><p>A useful class for creating .inc-files for GAMS models</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._copy_table_body" title="pybalmorel.weatheryear.to_inc._copy_table_body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_copy_table_body</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._single_value_parameter_body" title="pybalmorel.weatheryear.to_inc._single_value_parameter_body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_single_value_parameter_body</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_table_style_inc" title="pybalmorel.weatheryear.to_inc.create_table_style_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_table_style_inc</span></code></a>(→ None)</p></td>
+<td><p>Create an .inc file for table or parameter-style data blocks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.append_split_wind_solar_sets" title="pybalmorel.weatheryear.to_inc.append_split_wind_solar_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_split_wind_solar_sets</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.build_inc_file_list_type" title="pybalmorel.weatheryear.to_inc.build_inc_file_list_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_inc_file_list_type</span></code></a>(→ None)</p></td>
+<td><p>Write Balmorel set/parameter assignment lines to a .inc file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_GKFX_inc" title="pybalmorel.weatheryear.to_inc.create_GKFX_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_GKFX_inc</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_Table_inc" title="pybalmorel.weatheryear.to_inc.create_Table_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_Table_inc</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_SSS_TTT_AAA_inc" title="pybalmorel.weatheryear.to_inc.create_SSS_TTT_AAA_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_SSS_TTT_AAA_inc</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_AAA_inc" title="pybalmorel.weatheryear.to_inc.create_AAA_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_AAA_inc</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.to_inc.create_GGG_GDATASET_inc" title="pybalmorel.weatheryear.to_inc.create_GGG_GDATASET_inc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_GGG_GDATASET_inc</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._INC_PREFIX_MAP">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">_INC_PREFIX_MAP</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._INC_PREFIX_MAP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._IncTableSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">_IncTableSpec</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._IncTableSpec" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._IncTableSpec.prefix">
+<span class="sig-name descname"><span class="pre">prefix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._IncTableSpec.prefix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._IncTableSpec.suffix">
+<span class="sig-name descname"><span class="pre">suffix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._IncTableSpec.suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._IncTableSpec.body_builder">
+<span class="sig-name descname"><span class="pre">body_builder</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._IncTableSpec.body_builder" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._copy_table_body">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">_copy_table_body</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._copy_table_body" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._single_value_parameter_body">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">_single_value_parameter_body</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._single_value_parameter_body" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc._INC_TABLE_SPECS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">_INC_TABLE_SPECS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#pybalmorel.weatheryear.to_inc._IncTableSpec" title="pybalmorel.weatheryear.to_inc._IncTableSpec"><span class="pre">_IncTableSpec</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc._INC_TABLE_SPECS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_table_style_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_table_style_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_table_style_inc" title="Link to this definition"></a></dt>
+<dd><p>Create an .inc file for table or parameter-style data blocks.</p>
+<p>The emitted format is driven by the <code class="docutils literal notranslate"><span class="pre">name</span></code>-specific prefix, suffix, and
+body conversion defined in <code class="docutils literal notranslate"><span class="pre">_INC_TABLE_SPECS</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">IncFile_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'name'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Balmorel/base/data/'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp" title="Link to this definition"></a></dt>
+<dd><p>A useful class for creating .inc-files for GAMS models
+Args:
+prefix (str): The first part of the .inc file.
+body (str): The main part of the .inc file.
+suffix (str): The last part of the .inc file.
+name (str): The name of the .inc file.
+path (str): The path to save the file, defaults to ‘Balmorel/base/data’.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.prefix">
+<span class="sig-name descname"><span class="pre">prefix</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.prefix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.body">
+<span class="sig-name descname"><span class="pre">body</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.body" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.suffix">
+<span class="sig-name descname"><span class="pre">suffix</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'name'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.path">
+<span class="sig-name descname"><span class="pre">path</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Balmorel/base/data/'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.body_concat">
+<span class="sig-name descname"><span class="pre">body_concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.body_concat" title="Link to this definition"></a></dt>
+<dd><p>Concatenate a body temporarily being a dataframe to another dataframe</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.body_prepare">
+<span class="sig-name descname"><span class="pre">body_prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Value'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggfunc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'sum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.body_prepare" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.IncFile_temp.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.IncFile_temp.save" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.append_split_wind_solar_sets">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">append_split_wind_solar_sets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">the_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.append_split_wind_solar_sets" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.build_inc_file_list_type">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">build_inc_file_list_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.build_inc_file_list_type" title="Link to this definition"></a></dt>
+<dd><p>Write Balmorel set/parameter assignment lines to a .inc file.</p>
+<dl>
+<dt>Args:</dt><dd><p>df: DataFrame whose column <code class="docutils literal notranslate"><span class="pre">name</span></code> contains the assignment lines to write.
+name: Column key used to look up lines in <code class="docutils literal notranslate"><span class="pre">df</span></code> and to resolve the GAMS</p>
+<blockquote>
+<div><p>prefix/suffix for known renewable-set names.</p>
+</div></blockquote>
+<p>output_folder: Directory where the <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file is written.
+equations: When <em>True</em>, skip the <code class="docutils literal notranslate"><span class="pre">$onMulti</span></code> / <code class="docutils literal notranslate"><span class="pre">/</span> <span class="pre">…</span> <span class="pre">/;</span></code> envelope and</p>
+<blockquote>
+<div><p>write raw assignment lines only (used for INVDATA and ANNUITYCG blocks).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>filename: Output file stem (without <code class="docutils literal notranslate"><span class="pre">.inc</span></code>). Defaults to <code class="docutils literal notranslate"><span class="pre">name</span></code> when</dt><dd><p>not provided, allowing callers to write a different file name while
+still keying into <code class="docutils literal notranslate"><span class="pre">df</span></code> by <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_GKFX_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_GKFX_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">GKFX</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_GKFX_inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_Table_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_Table_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_Table_inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_SSS_TTT_AAA_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_SSS_TTT_AAA_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_SSS_TTT_AAA_inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_AAA_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_AAA_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_AAA_inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.to_inc.create_GGG_GDATASET_inc">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.to_inc.</span></span><span class="sig-name descname"><span class="pre">create_GGG_GDATASET_inc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.to_inc.create_GGG_GDATASET_inc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../to_balmorel/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.to_balmorel" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../../eel_dashboard/index.html" class="btn btn-neutral float-right" title="eel_dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

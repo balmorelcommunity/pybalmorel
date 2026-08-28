@@ -1,0 +1,32 @@
+pybalmorel.weatheryear
+======================
+
+.. py:module:: pybalmorel.weatheryear
+
+.. autoapi-nested-parse::
+
+   Weather year utilities for pybalmorel.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/pybalmorel/weatheryear/additional_inc/index
+   /autoapi/pybalmorel/weatheryear/auxiliary_functions/index
+   /autoapi/pybalmorel/weatheryear/balmorel_converters/index
+   /autoapi/pybalmorel/weatheryear/config_models/index
+   /autoapi/pybalmorel/weatheryear/cop_to_btc/index
+   /autoapi/pybalmorel/weatheryear/corres_to_energy_system_model/index
+   /autoapi/pybalmorel/weatheryear/demand2btc/index
+   /autoapi/pybalmorel/weatheryear/exceptions/index
+   /autoapi/pybalmorel/weatheryear/get_GDATA_func/index
+   /autoapi/pybalmorel/weatheryear/get_GKFX_func/index
+   /autoapi/pybalmorel/weatheryear/hydro_to_btc/index
+   /autoapi/pybalmorel/weatheryear/to_balmorel/index
+   /autoapi/pybalmorel/weatheryear/to_inc/index
+
+

@@ -1,0 +1,315 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Weather-Year Input Generation &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Execution" href="../execution.html" />
+    <link rel="prev" title="Time Series Aggregation" href="timeseriesagg.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Pre-Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timeseriesagg.html">Time Series Aggregation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Multi-Weather-Year Input Generation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-file">Configuration File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#processing-multiple-years">Processing Multiple Years</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#api-reference">API Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../preprocessing.html">Pre-Processing</a></li>
+      <li class="breadcrumb-item active">Multi-Weather-Year Input Generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/preprocessing/multi_weather_year_input.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multi-weather-year-input-generation">
+<h1>Multi-Weather-Year Input Generation<a class="headerlink" href="#multi-weather-year-input-generation" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">weatheryear</span></code> module converts outputs from external models (CorRES, demand, hydro, and COP models) into Balmorel-compatible <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files for a chosen historical weather year (1980–2021). This allows you to run Balmorel with multiple weather-year scenarios to capture annual variability of renewable energy sources and demand.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pyyaml</span></code> and <code class="docutils literal notranslate"><span class="pre">xlsxwriter</span></code> are required by this module but are <strong>not installed by default</strong> with <code class="docutils literal notranslate"><span class="pre">pybalmorel</span></code>. Install them via the <code class="docutils literal notranslate"><span class="pre">weatheryear</span></code> extra:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pybalmorel<span class="o">[</span>weatheryear<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The module produces Balmorel <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files for the following data types:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Data type</p></th>
+<th class="head"><p>Method</p></th>
+<th class="head"><p>Key outputs</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>VRE time series (wind &amp; solar)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">get_vre_data()</span></code></p></td>
+<td><p>Excel review files + <code class="docutils literal notranslate"><span class="pre">*_VAR_T_*.inc</span></code> files</p></td>
+</tr>
+<tr class="row-odd"><td><p>VRE-related investment data</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">get_vre_related_files()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">AAA</span></code>, <code class="docutils literal notranslate"><span class="pre">GGG</span></code>, <code class="docutils literal notranslate"><span class="pre">GDATA</span></code>, <code class="docutils literal notranslate"><span class="pre">GKFX</span></code>, <code class="docutils literal notranslate"><span class="pre">ANNUITYCG</span></code>, <code class="docutils literal notranslate"><span class="pre">INVDATA</span></code> <code class="docutils literal notranslate"><span class="pre">.inc</span></code> files</p></td>
+</tr>
+<tr class="row-even"><td><p>Electricity &amp; heat demand</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">get_demand_data()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DE_VAR_T_*.inc</span></code>, <code class="docutils literal notranslate"><span class="pre">DH_VAR_T_*.inc</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Hydro inflow</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">get_hydro_data()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">HYDRO_ROR_VAR_T_*.inc</span></code>, <code class="docutils literal notranslate"><span class="pre">HYDRO_RES_VAR_T_*.inc</span></code>, <code class="docutils literal notranslate"><span class="pre">FLHO_*.inc</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Heat-pump COP factors</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">get_cop_data()</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SEASONALCOP_COP_VAR_T_*.inc</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Each method generates both Day-Ahead and CapDev time series.</p>
+</section>
+<section id="configuration-file">
+<h2>Configuration File<a class="headerlink" href="#configuration-file" title="Link to this heading"></a></h2>
+<p>All methods are driven by a single YAML configuration file. Below is an annotated template:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Optional convenience key: weather-year input root folder.</span>
+<span class="c1"># If provided, defaults are inferred for:</span>
+<span class="c1"># corres_results, VRE_tech_costs, Existing_wind_cap, Existing_solar_cap,</span>
+<span class="c1"># VRE_potentials, demand_model_results, hydro_model_results, cop_model_results.</span>
+<span class="nt">weatheryear_inputs_folder</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/weatheryear_inputs</span>
+
+<span class="c1"># Backward-compatible alternative key:</span>
+<span class="c1"># multiweather_other_inputs_folder: path/to/weatheryear_inputs/multiweather_other_inputs</span>
+
+<span class="c1"># Wind turbine models (future installations only)</span>
+<span class="nt">turbine_to_keep</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SP335-HH100</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SP277-HH150</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SP199-HH150</span>
+
+<span class="c1"># Resource grades to include per technology (RGA/B/C → RG1/2/3 in Balmorel)</span>
+<span class="nt">RGs_to_keep</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Future_Onshore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">RGA</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">RGB</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">RGC</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">Future_Offshore_bottom_fixed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">RGB</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">PV_Rooftop</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">RGA</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">RGB</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">RGC</span><span class="p p-Indicator">]</span>
+
+<span class="c1"># Geographic regions to include</span>
+<span class="nt">Regions_to_keep</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">onshore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">DK1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">DK2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">FIN</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">DE4-E</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">DE4-N</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">offshore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">DK1_OFF</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">DK2_OFF</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">FIN_OFF</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">DE4-N_OFF</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">]</span>
+
+<span class="c1"># --- VRE investment </span>
+<span class="nt">ANNUITYCG_calculation</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">DEBT_SHARE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">INTEREST_RATE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.04</span>
+<span class="w">  </span><span class="nt">DISCOUNTRATE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.04</span>
+
+<span class="c1"># --- Demand data ---</span>
+<span class="nt">spaceHeat_to_hotWater_ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span><span class="w">   </span><span class="c1"># fraction of heat demand attributed to space heating</span>
+<span class="nt">ann_corr_fac_ref_year</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2012</span><span class="w">        </span><span class="c1"># reference year for annual correction factors</span>
+
+
+<span class="c1"># --- CapDev time-series aggregation ---</span>
+<span class="c1"># Representative seasons (S) and hours (T) used for the aggregated resolution</span>
+<span class="nt">CapDev_timesteps_to_keep</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">S</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">S02</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S08</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S15</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S21</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S28</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S34</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S41</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">S47</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">T</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">T073</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T076</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T079</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T082</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T085</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T088</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T091</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T094</span><span class="p p-Indicator">,</span>
+<span class="w">      </span><span class="nv">T097</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T100</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T103</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T106</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T109</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T112</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T115</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T118</span><span class="p p-Indicator">,</span>
+<span class="w">      </span><span class="nv">T121</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T124</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T127</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T130</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T133</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T136</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T139</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">T142</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">weatheryear_inputs_folder</span></code> is set, the module assumes this structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>weatheryear_inputs/
+├── Corres_runs/
+├── demand_data/
+├── hydro_data/
+├── cop_data/
+└── multiweather_other_inputs/
+</pre></div>
+</div>
+<p>Defaults are resolved as follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">corres_results</span></code> from <code class="docutils literal notranslate"><span class="pre">Corres_runs</span></code> (or <code class="docutils literal notranslate"><span class="pre">CorRES_runs</span></code> if present)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VRE_tech_costs</span></code>, <code class="docutils literal notranslate"><span class="pre">VRE_potentials</span></code>, <code class="docutils literal notranslate"><span class="pre">Existing_wind_cap</span></code>, <code class="docutils literal notranslate"><span class="pre">Existing_solar_cap</span></code> from <code class="docutils literal notranslate"><span class="pre">multiweather_other_inputs</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">demand_model_results</span></code> from <code class="docutils literal notranslate"><span class="pre">demand_data</span></code> (falls back to <code class="docutils literal notranslate"><span class="pre">multiweather_other_inputs/Demand_model_Bal_ready_csv*</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hydro_model_results</span></code> from <code class="docutils literal notranslate"><span class="pre">hydro_data</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cop_model_results</span></code> from <code class="docutils literal notranslate"><span class="pre">cop_data</span></code></p></li>
+</ul>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">WEATHERYEAR</span>
+
+<span class="c1"># Instantiate for a specific weather year</span>
+<span class="n">mly</span> <span class="o">=</span> <span class="n">WEATHERYEAR</span><span class="p">(</span>
+    <span class="n">year</span><span class="o">=</span><span class="mi">2013</span><span class="p">,</span>
+    <span class="n">config_fn</span><span class="o">=</span><span class="s2">"config.yml"</span><span class="p">,</span>
+    <span class="n">output_folder</span><span class="o">=</span><span class="s2">"results/"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 1. Export VRE time series from CorRES to Excel and .inc files</span>
+<span class="n">mly</span><span class="o">.</span><span class="n">get_vre_data</span><span class="p">()</span>
+
+<span class="c1"># 2. Generate VRE-related investment .inc files</span>
+<span class="n">mly</span><span class="o">.</span><span class="n">get_vre_related_files</span><span class="p">()</span>
+
+<span class="c1"># 3. Generate electricity and heat demand .inc files</span>
+<span class="n">mly</span><span class="o">.</span><span class="n">get_demand_data</span><span class="p">()</span>
+
+<span class="c1"># 4. Generate hydro inflow .inc files</span>
+<span class="n">mly</span><span class="o">.</span><span class="n">get_hydro_data</span><span class="p">()</span>
+
+<span class="c1"># 5. Generate heat-pump COP .inc files</span>
+<span class="n">mly</span><span class="o">.</span><span class="n">get_cop_data</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>After running, the output folder will have the structure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>results/
+└── 2013/
+    ├── Future_Onshore/               ← Excel stats files for review
+    ├── Future_Offshore_bottom_fixed/
+    ├── Existing_ERA5_GWA2/
+    ├── PV_Rooftop/
+    ├── ...
+    └── to_balmorel/                  ← .inc files ready for Balmorel
+        ├── WND_VAR_T_Future_Onshore_2013.inc
+        ├── SOL_VAR_T_PV_Rooftop_2013.inc
+        ├── AAA_renewable.inc
+        ├── GDATA_renewable.inc
+        ├── DE_VAR_T_DK1_2013.inc
+        ├── DH_VAR_T_DK1_2013.inc
+        ├── HYDRO_ROR_VAR_T_2013.inc
+        ├── SEASONALCOP_COP_VAR_T_2013.inc
+        └── ...
+</pre></div>
+</div>
+</section>
+<section id="processing-multiple-years">
+<h2>Processing Multiple Years<a class="headerlink" href="#processing-multiple-years" title="Link to this heading"></a></h2>
+<p>Loop over years to build a full multi-weather-year dataset:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel</span><span class="w"> </span><span class="kn">import</span> <span class="n">WEATHERYEAR</span>
+
+<span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1980</span><span class="p">,</span> <span class="mi">2022</span><span class="p">):</span>
+    <span class="n">mly</span> <span class="o">=</span> <span class="n">WEATHERYEAR</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">year</span><span class="p">,</span> <span class="n">config_fn</span><span class="o">=</span><span class="s2">"config.yml"</span><span class="p">,</span> <span class="n">output_folder</span><span class="o">=</span><span class="s2">"results/"</span><span class="p">)</span>
+    <span class="n">mly</span><span class="o">.</span><span class="n">get_vre_data</span><span class="p">()</span>
+    <span class="n">mly</span><span class="o">.</span><span class="n">get_vre_related_files</span><span class="p">()</span>
+    <span class="n">mly</span><span class="o">.</span><span class="n">get_demand_data</span><span class="p">()</span>
+    <span class="n">mly</span><span class="o">.</span><span class="n">get_hydro_data</span><span class="p">()</span>
+    <span class="n">mly</span><span class="o">.</span><span class="n">get_cop_data</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h2>
+<p>See the auto-generated API docs under <strong>Reference → pybalmorel.weatheryear</strong> for the full list of classes and functions exposed by this module.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="timeseriesagg.html" class="btn btn-neutral float-left" title="Time Series Aggregation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../execution.html" class="btn btn-neutral float-right" title="Execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

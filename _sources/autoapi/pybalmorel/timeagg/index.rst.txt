@@ -1,0 +1,149 @@
+pybalmorel.timeagg
+==================
+
+.. py:module:: pybalmorel.timeagg
+
+.. autoapi-nested-parse::
+
+   Created on 26.02.2026
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.timeagg.TimeAgg
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.timeagg.search_in_incfiles
+   pybalmorel.timeagg.doLDC
+   pybalmorel.timeagg.get_resolution
+   pybalmorel.timeagg.compare_curves
+
+
+Module Contents
+---------------
+
+.. py:class:: TimeAgg(parent)
+
+   .. py:attribute:: parent
+
+
+   .. py:attribute:: symbols
+
+
+   .. py:attribute:: incfiles
+
+
+   .. py:attribute:: incfiles_to_save
+
+
+   .. py:attribute:: data
+
+
+   .. py:method:: collect_and_standardise(scenario: str, symbols_to_aggregate: dict | str = 'auto', incfile_symbol_relation: dict = {}, overwrite: bool = False)
+
+
+   .. py:method:: get_weights(scenario: str)
+
+      Will calculate weights per region based on the sum of exogenous electricity, heat and hydrogen demand, and the total potential for technology investments
+
+
+
+   .. py:method:: find_timeseries_input(scenario: str, excluded_symbols: list = ['WEIGHT_S', 'WEIGHT_T', 'CHRONOHOUR', 'SSIZE', 'TWORKDAY', 'TWEEKEND', 'S', 'T', 'DE_VAR_T1', 'DE_VAR_T1_INDIVHEATING', 'DH_VAR_T1', 'DH_VAR_T_IND', 'DH_VAR_T_INDIVHEATING', 'WND_VAR_T1', 'SOLE_VAR_T1', 'SOLH_VAR_T1', 'X3FX_VAR_T1'])
+
+      Locates the timeseries inputs of Balmorel by loading symbols from .inc
+      files, filtering symbols with SSS or TTT domains, and filtering raw
+      data input from processed by matching symbol names to the text of ALL
+      .inc files in base/data and scenario/data. excluded_symbols can be used
+      to exclude temporal resolution input meta data, such as CHRONOHOUR, S
+      or T, or temporary profiles such as DE_VAR_T1.
+
+      Args:
+      scenario (str): scenario timeseries data input to find.
+      excluded_symbols (list): symbols to exclude.
+
+      Returns:
+      str: description.
+
+
+
+   .. py:method:: standardise_timeseries(scenario: str, symbol: str)
+
+      Collect and standardise timeseries
+
+      NOTE: This depends on the balmorel_symbol_columns in pybalmorel/formatting.py!
+              Otherwise, the following symbols will get KeyErrors in .pivot_table
+              because of duplicate columns:
+              XKRATE: Duplicate RRR's instead of IRRRE and IRRRI
+
+
+
+   .. py:method:: cluster(seasons: int = 6, terms: int = 24, method: str = 'contiguous', representation: str = 'distribution_minmax', weights_pr_region: pandas.DataFrame = pd.DataFrame(), weights_pr_area: pandas.DataFrame = pd.DataFrame())
+
+      Cluster collect input data
+
+      Args:
+          scenario (str): The scenario folder to aggregate.
+          seasons (int): Amount of periods / seasons
+          terms (int): Amount of hours / terms
+          method (str, optional): Aggregation method. Defaults to 'contiguous', options are: averaging, kmeans, kmedoids, kmaxoids, hierarchical, contiguous (default) and random choice
+          representation (str, optional): How to represent cluster centers. Options are: mean, medoid, maxoid, distribution, distribution_minmax (default), minmax_mean
+
+
+
+   .. py:method:: prepare_clustered_data(scenario: str, symbol_type: str)
+
+
+   .. py:method:: save_incfiles(scenario: str, excluded_incfiles: list = [])
+
+
+   .. py:method:: plot_clustering(symbol: list, filename: str)
+
+      Compare input data and clustered representation
+
+
+
+.. py:function:: search_in_incfiles(pattern: str, path: str | pathlib.Path)
+
+   Use ripgrep to find a pattern (a string of text) in an .inc file
+
+   Args:
+      pattern (str): the string to find.
+      path (str): the path to the .inc files, e.g. Balmorel/base/data.
+
+
+   Returns:
+      list: a list of .inc files that contain the pattern.
+
+
+
+.. py:function:: doLDC(array, n_bins, plot=False, ax=None, **kwargs)
+
+   Make load duration curve from timeseries
+
+   Args:
+       array (array): A timeseries of load, wind-, solar profiles or other.
+       n-bins (int): Amount of bins in histogram
+
+   Returns:
+       duration (array): ordered hours
+       curve (array): frequency
+
+
+.. py:function:: get_resolution(db)
+
+.. py:function:: compare_curves(scenario1: str, scenario2: str | None, overwrite: bool)
+
+   A draft function for comparing duration curves between a scenario and base at full resolution (by default)
+
+

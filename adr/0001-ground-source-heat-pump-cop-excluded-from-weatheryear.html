@@ -1,0 +1,122 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ground-source heat pump COP is excluded from the weatheryear pipeline &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Ground-source heat pump COP is excluded from the weatheryear pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0001-ground-source-heat-pump-cop-excluded-from-weatheryear.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ground-source-heat-pump-cop-is-excluded-from-the-weatheryear-pipeline">
+<h1>Ground-source heat pump COP is excluded from the weatheryear pipeline<a class="headerlink" href="#ground-source-heat-pump-cop-is-excluded-from-the-weatheryear-pipeline" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">create_cop_inc()</span></code> in <code class="docutils literal notranslate"><span class="pre">weatheryear/cop_to_btc.py</span></code> iterates <code class="docutils literal notranslate"><span class="pre">_COP_TYPES</span></code> (<code class="docutils literal notranslate"><span class="pre">air_air</span></code>, <code class="docutils literal notranslate"><span class="pre">air_water</span></code>, <code class="docutils literal notranslate"><span class="pre">ground_water</span></code>), but no COP model ever produces <code class="docutils literal notranslate"><span class="pre">cop_ground_water_profile.csv</span></code>, and the code has no config-driven opt-out for it (unlike <code class="docutils literal notranslate"><span class="pre">tech_to_keep</span></code>/<code class="docutils literal notranslate"><span class="pre">PV_to_keep</span></code> for VRE). We decided to skip <code class="docutils literal notranslate"><span class="pre">ground_water</span></code> unconditionally in this loop rather than synthesize a per-weather-year <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file for it.</p>
+<p>Ground-source COP doesn’t vary meaningfully by weather year the way air-source COP does — ground temperature is stable year-round, unlike ambient air. <code class="docutils literal notranslate"><span class="pre">Balmorel/base/data/SEASONALCOP_COP.inc</span></code> already carries a fixed, per-area annual-average COP for <code class="docutils literal notranslate"><span class="pre">GNR_HP_ELEC_GROUND-WTR_...</span></code> (and propagates it to future technology vintages via a <code class="docutils literal notranslate"><span class="pre">GDATA(...,'GDFE')</span></code> ratio), so the model already has a working default independent of this pipeline.</p>
+<p><strong>Considered but rejected</strong>: synthesizing a constant-value <code class="docutils literal notranslate"><span class="pre">.inc</span></code> file per weather year from <code class="docutils literal notranslate"><span class="pre">SEASONALCOP_COP.inc</span></code>, to keep output shape consistent with <code class="docutils literal notranslate"><span class="pre">air_air</span></code>/<code class="docutils literal notranslate"><span class="pre">air_water</span></code>. Rejected because it would require mapping GAMS <code class="docutils literal notranslate"><span class="pre">AAA</span></code> area codes to this pipeline’s region columns, and duplicates a value Balmorel already applies by default — added complexity for no modeling benefit.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+pybalmorel.weatheryear.get_GDATA_func
+=====================================
+
+.. py:module:: pybalmorel.weatheryear.get_GDATA_func
+
+.. autoapi-nested-parse::
+
+   Functions to create the GDATA table and .inc file for renewable generators.
+
+   GDATA is a Balmorel parameter that holds generator attribute data, including
+   technology group, fuel type, investment costs, fixed and variable O&M costs,
+   lifetime, capacity variability flags, and unit commitment parameters.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.get_GDATA_func.INVESTMENT_YEARS
+   pybalmorel.weatheryear.get_GDATA_func.RG_GROUPS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.get_GDATA_func._build_cost_columns
+   pybalmorel.weatheryear.get_GDATA_func.add_unit_size_col
+   pybalmorel.weatheryear.get_GDATA_func.build_GDATA
+
+
+Module Contents
+---------------
+
+.. py:data:: INVESTMENT_YEARS
+   :value: [2020, 2030, 2040, 2050]
+
+
+.. py:data:: RG_GROUPS
+   :value: ['RG1', 'RG2', 'RG3']
+
+
+.. py:function:: _build_cost_columns(costs_dict: dict, name: str, year: int, n_rows: int) -> tuple
+
+   Look up cost values for *name* and *year* and replicate them for *n_rows* generators.
+
+   Args:
+       costs_dict: dict of cost DataFrames keyed by 'Investment_cost', 'Annual_O&M',
+           and 'Variable_O&M'.
+       name: substring to match against the technology index.
+       year: investment year column to read from each cost sheet.
+       n_rows: number of generators to replicate costs for.
+
+   Returns:
+       Tuple of (inv_cost, ann_om, var_om) single-column DataFrames.
+
+
+.. py:function:: add_unit_size_col(dfs: pandas.DataFrame, techs: dict, turbines: dict, config: dict) -> pandas.DataFrame
+
+   Append a 'Unit_Size' column to *dfs* from the Standard_Unit_Size sheet.
+
+   Args:
+       dfs: generator DataFrame with a 'G_renewable' column.
+       techs: dict with keys 'wind' and 'solar' listing active technology names.
+       turbines: dict with keys 'onshore' and 'offshore' listing turbine names.
+       config: workflow configuration dict; must contain 'VRE_tech_costs' path.
+
+   Returns:
+       *dfs* with an added 'Unit_Size' column.
+
+
+.. py:function:: build_GDATA(GGG_renewable_df: pandas.DataFrame, turbines: dict, techs: dict, config: dict, output_folder: str) -> pandas.DataFrame
+
+   Build GDATA table and write the corresponding .inc file for renewable generators.
+
+   Reads investment cost, fixed O&M, and variable O&M from the VRE cost Excel workbook
+   and assembles them with fuel type, technology group, lifetime, and capacity flags
+   into a GDATA-formatted DataFrame, then writes a GDATA_renewable.inc file.
+
+   Args:
+       GGG_renewable_df: DataFrame with a 'G_renewable' column listing generator names.
+       turbines: dict with keys 'onshore' and 'offshore' listing turbine names.
+       techs: dict with keys 'wind' and 'solar' listing active technology names.
+       config: workflow configuration dict; must contain 'VRE_tech_costs' path.
+       output_folder: root output directory; the .inc file is written to
+           <output_folder>/to_balmorel/.
+
+   Returns:
+       GDATA DataFrame indexed by generator name.
+
+

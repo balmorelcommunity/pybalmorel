@@ -1,0 +1,42 @@
+pybalmorel.weatheryear.get_GKFX_func
+====================================
+
+.. py:module:: pybalmorel.weatheryear.get_GKFX_func
+
+.. autoapi-nested-parse::
+
+   Functions to create the GKFX table and .inc file for existing renewable generators.
+
+   GKFX holds the exogenous capacity of wind and solar technologies in each area and year,
+   defined by the Balmorel reader file at Balmorelbb4_ReadData.inc line 256 as
+   'Capacity of exogenously given generation technologies (MW...'.
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.get_GKFX_func.build_GKFX
+
+
+Module Contents
+---------------
+
+.. py:function:: build_GKFX(rrraaa_renewable_df: pandas.DataFrame, config: dict, output_folder: str) -> pandas.DataFrame
+
+   Build GKFX table and write the corresponding .inc file for existing renewables.
+
+   Args:
+       rrraaa_renewable_df: DataFrame with 'RRRAAA_renewable' column naming generators.
+       config: Configuration dict with keys 'Existing_wind_cap' and 'Existing_solar_cap'.
+       output_folder: Root output directory; the .inc file is written to
+           <output_folder>/to_balmorel/.
+
+   Returns:
+       GKFX DataFrame indexed by generator names.
+
+

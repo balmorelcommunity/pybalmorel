@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.corres_to_energy_system_model &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.demand2btc" href="../demand2btc/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.cop_to_btc" href="../cop_to_btc/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.corres_to_energy_system_model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/corres_to_energy_system_model/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.corres_to_energy_system_model">
+<span id="pybalmorel-weatheryear-corres-to-energy-system-model"></span><h1>pybalmorel.weatheryear.corres_to_energy_system_model<a class="headerlink" href="#module-pybalmorel.weatheryear.corres_to_energy_system_model" title="Link to this heading"></a></h1>
+<p>Functions for reading CorRES VRE output files and converting them to
+Balmorel inputs (xlsx and Balmorel .inc files).</p>
+<p>Handles wind (onshore, offshore bottom-fixed, offshore floating, existing)
+and solar (rooftop PV, utility-scale PV with/without tracking) technologies.</p>
+<p>&#64;author: Polyneikis Kanellas, Development Engineer DTU Wind</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._xlsxwriter" title="pybalmorel.weatheryear.corres_to_energy_system_model._xlsxwriter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_xlsxwriter</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.logger" title="pybalmorel.weatheryear.corres_to_energy_system_model.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.save_log" title="pybalmorel.weatheryear.corres_to_energy_system_model.save_log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_log</span></code></a>(→ None)</p></td>
+<td><p>Save the configuration details to a log file in the output folder for traceability.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._require_columns" title="pybalmorel.weatheryear.corres_to_energy_system_model._require_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_require_columns</span></code></a>(→ None)</p></td>
+<td><p>Ensure required columns exist in a DataFrame before downstream processing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._source_file_names" title="pybalmorel.weatheryear.corres_to_energy_system_model._source_file_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_source_file_names</span></code></a>(→ list[str])</p></td>
+<td><p>Return input result file stems to read for one CorRES run folder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._select_region_columns" title="pybalmorel.weatheryear.corres_to_energy_system_model._select_region_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_select_region_columns</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Return a filtered dataframe containing only configured Balmorel regions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._write_processed_timeseries" title="pybalmorel.weatheryear.corres_to_energy_system_model._write_processed_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_write_processed_timeseries</span></code></a>(→ None)</p></td>
+<td><p>Write raw and scaled time series for one processed technology file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model._write_stats_excel" title="pybalmorel.weatheryear.corres_to_energy_system_model._write_stats_excel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_write_stats_excel</span></code></a>(→ None)</p></td>
+<td><p>Persist CF/FLH stats with existing and future run-specific formatting.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.extract_technology_folders" title="pybalmorel.weatheryear.corres_to_energy_system_model.extract_technology_folders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_technology_folders</span></code></a>(→ list[str])</p></td>
+<td><p>Get technology folders from a CorRES results directory based on expected naming patterns.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.generate_output_filename_for_technology" title="pybalmorel.weatheryear.corres_to_energy_system_model.generate_output_filename_for_technology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_output_filename_for_technology</span></code></a>(→ str)</p></td>
+<td><p>Generate a standardized file name for output files based on technology and source type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.compute_capacity_factor_and_flh" title="pybalmorel.weatheryear.corres_to_energy_system_model.compute_capacity_factor_and_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_capacity_factor_and_flh</span></code></a>(...)</p></td>
+<td><p>Calculate Capacity Factor (CF) and Full Load Hours (FLH) for a given technology based on its time series data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.is_wind_tech_enabled" title="pybalmorel.weatheryear.corres_to_energy_system_model.is_wind_tech_enabled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_wind_tech_enabled</span></code></a>(→ bool)</p></td>
+<td><p>Determine whether a given wind technology should be read based on the configuration settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.is_solar_tech_enabled" title="pybalmorel.weatheryear.corres_to_energy_system_model.is_solar_tech_enabled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_solar_tech_enabled</span></code></a>(→ bool)</p></td>
+<td><p>Determine whether a given solar technology should be read based on the configuration settings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.corres_to_energy_system_model.export_timeseries_to_xlsx" title="pybalmorel.weatheryear.corres_to_energy_system_model.export_timeseries_to_xlsx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_timeseries_to_xlsx</span></code></a>(→ None)</p></td>
+<td><p>Main function to read CorRES output files, process the time series data, and export it to Excel files for use in Balmorel.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._xlsxwriter">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_xlsxwriter</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._xlsxwriter" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.logger">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.save_log">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">save_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><span class="pre">pybalmorel.weatheryear.config_models.WeatherYearConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.save_log" title="Link to this definition"></a></dt>
+<dd><p>Save the configuration details to a log file in the output folder for traceability.
+Args:</p>
+<blockquote>
+<div><p>config: The WeatherYearConfig object containing the configuration details.
+output_folder: The folder where the log file will be saved.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._require_columns">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_require_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._require_columns" title="Link to this definition"></a></dt>
+<dd><p>Ensure required columns exist in a DataFrame before downstream processing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._source_file_names">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_source_file_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._source_file_names" title="Link to this definition"></a></dt>
+<dd><p>Return input result file stems to read for one CorRES run folder.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._select_region_columns">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_select_region_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><span class="pre">pybalmorel.weatheryear.config_models.WeatherYearConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._select_region_columns" title="Link to this definition"></a></dt>
+<dd><p>Return a filtered dataframe containing only configured Balmorel regions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._write_processed_timeseries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_write_processed_timeseries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_cut</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._write_processed_timeseries" title="Link to this definition"></a></dt>
+<dd><p>Write raw and scaled time series for one processed technology file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model._write_stats_excel">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">_write_stats_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_ts_stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_ts_stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scaled_ts_stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model._write_stats_excel" title="Link to this definition"></a></dt>
+<dd><p>Persist CF/FLH stats with existing and future run-specific formatting.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.extract_technology_folders">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">extract_technology_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.extract_technology_folders" title="Link to this definition"></a></dt>
+<dd><p>Get technology folders from a CorRES results directory based on expected naming patterns.
+Args:</p>
+<blockquote>
+<div><p>path: The path to the CorRES results directory.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>A list of technology folder names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.generate_output_filename_for_technology">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">generate_output_filename_for_technology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.generate_output_filename_for_technology" title="Link to this definition"></a></dt>
+<dd><p>Generate a standardized file name for output files based on technology and source type.
+Args:</p>
+<blockquote>
+<div><p>f_name: The type of file to generate the name for (e.g., “P” for power, “WS” for wind speed).
+tech: The technology name.
+run_folder: The folder where the run is located.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>The standardized file name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.compute_capacity_factor_and_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">compute_capacity_factor_and_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.compute_capacity_factor_and_flh" title="Link to this definition"></a></dt>
+<dd><p>Calculate Capacity Factor (CF) and Full Load Hours (FLH) for a given technology based on its time series data.
+Args:</p>
+<blockquote>
+<div><p>df: The DataFrame containing the time series data for the technology.
+tech: The technology name, used for labeling the output DataFrames.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>A tuple containing two DataFrames: CF (Capacity Factor) and FLH (Full Load Hours).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.is_wind_tech_enabled">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">is_wind_tech_enabled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><span class="pre">pybalmorel.weatheryear.config_models.WeatherYearConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.is_wind_tech_enabled" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Determine whether a given wind technology should be read based on the configuration settings.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>run_folder: The folder where the run is located, used to determine the source type (e.g., “Existing”, “Future_Onshore”, “Future_Offshore”).
+tech: The technology name, used for matching against the configuration settings.
+config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>A boolean indicating whether the technology should be read (True) or skipped (False).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.is_solar_tech_enabled">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">is_solar_tech_enabled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.WeatherYearConfig" title="pybalmorel.weatheryear.config_models.WeatherYearConfig"><span class="pre">pybalmorel.weatheryear.config_models.WeatherYearConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.is_solar_tech_enabled" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Determine whether a given solar technology should be read based on the configuration settings.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>run_folder: The folder where the run is located, used to determine the source type (e.g., “PV”).
+tech: The technology name, used for matching against the configuration settings.
+config: The WeatherYearConfig object containing the configuration details, including which technologies and regions to keep.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>A boolean indicating whether the technology should be read (True) or skipped (False).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.corres_to_energy_system_model.export_timeseries_to_xlsx">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.corres_to_energy_system_model.</span></span><span class="sig-name descname"><span class="pre">export_timeseries_to_xlsx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_monday</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.corres_to_energy_system_model.export_timeseries_to_xlsx" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>Main function to read CorRES output files, process the time series data, and export it to Excel files for use in Balmorel.</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>config_fn: The file path to the configuration file (e.g., YAML) containing settings for which technologies and regions to keep, as well as the paths to the CorRES results.
+start_date: The start year for filtering the time series (‘int’ type).
+output_folder: The folder where the processed Excel files will be saved.
+end_date: The end date for filtering the time series (in ‘YYYY-MM-DD’ format). If False, no end date filtering is applied.
+fix_monday: A boolean indicating whether to fix the first Monday in the time series if it is missing. Defaults to True.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><blockquote>
+<div><p>None. The function saves the processed time series data to Excel files in the specified output folder.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>MissingRequiredColumnsError: If required columns are missing from the input CSV files.
+EmptyMergeResultError: If no region columns remain after filtering for the configured regions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../cop_to_btc/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.cop_to_btc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../demand2btc/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.demand2btc" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

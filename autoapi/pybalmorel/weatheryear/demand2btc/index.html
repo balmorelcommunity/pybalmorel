@@ -1,0 +1,260 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.demand2btc &mdash; pybalmorel 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.exceptions" href="../exceptions/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.corres_to_energy_system_model" href="../corres_to_energy_system_model/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.demand2btc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/demand2btc/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.demand2btc">
+<span id="pybalmorel-weatheryear-demand2btc"></span><h1>pybalmorel.weatheryear.demand2btc<a class="headerlink" href="#module-pybalmorel.weatheryear.demand2btc" title="Link to this heading"></a></h1>
+<p>Create Balmorel demand .inc files from demand-model CSV outputs.</p>
+<p>This module converts electricity and heat demand time series into Balmorel DA and
+CapDev formats and writes annual correction-factor .inc files for DH users.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._load_individual_heat_profiles" title="pybalmorel.weatheryear.demand2btc._load_individual_heat_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_individual_heat_profiles</span></code></a>(...)</p></td>
+<td><p>Load individual-user heat profiles for residential and tertiary demand.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._load_individual_heat_correction_factors" title="pybalmorel.weatheryear.demand2btc._load_individual_heat_correction_factors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_individual_heat_correction_factors</span></code></a>(...)</p></td>
+<td><p>Load annual correction factors for residential and tertiary individual users.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._process_individual_heat_user" title="pybalmorel.weatheryear.demand2btc._process_individual_heat_user"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_process_individual_heat_user</span></code></a>(→ None)</p></td>
+<td><p>Process one individual-user heat profile and export Balmorel files.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._blend_space_heat_and_hotwater" title="pybalmorel.weatheryear.demand2btc._blend_space_heat_and_hotwater"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_blend_space_heat_and_hotwater</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Blend space-heat and hot-water profiles using a fixed annual ratio.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._annual_correction_factor_for_year" title="pybalmorel.weatheryear.demand2btc._annual_correction_factor_for_year"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_annual_correction_factor_for_year</span></code></a>(→ pandas.Series)</p></td>
+<td><p>Compute annual correction factor for one year relative to a reference year.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc._write_demand_timeseries_inc_files" title="pybalmorel.weatheryear.demand2btc._write_demand_timeseries_inc_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_write_demand_timeseries_inc_files</span></code></a>(→ None)</p></td>
+<td><p>Write DA raw/scaled and CapDev .inc files for one demand user group.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.demand2btc.generate_demand_balmorel_inc_files" title="pybalmorel.weatheryear.demand2btc.generate_demand_balmorel_inc_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_demand_balmorel_inc_files</span></code></a>(→ None)</p></td>
+<td><p>Create demand-related Balmorel .inc files for one weather year.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._load_individual_heat_profiles">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_load_individual_heat_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._load_individual_heat_profiles" title="Link to this definition"></a></dt>
+<dd><p>Load individual-user heat profiles for residential and tertiary demand.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._load_individual_heat_correction_factors">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_load_individual_heat_correction_factors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._load_individual_heat_correction_factors" title="Link to this definition"></a></dt>
+<dd><p>Load annual correction factors for residential and tertiary individual users.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._process_individual_heat_user">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_process_individual_heat_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_space_heat_profile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year_output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_raw_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_scaled_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_scaled_long_term_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_scaled_full_year_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_raw_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.DemandModuleConfig" title="pybalmorel.weatheryear.config_models.DemandModuleConfig"><span class="pre">pybalmorel.weatheryear.config_models.DemandModuleConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._process_individual_heat_user" title="Link to this definition"></a></dt>
+<dd><p>Process one individual-user heat profile and export Balmorel files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._blend_space_heat_and_hotwater">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_blend_space_heat_and_hotwater</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">space_heat_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hotwater_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spaceheat_to_hotwater_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._blend_space_heat_and_hotwater" title="Link to this definition"></a></dt>
+<dd><p>Blend space-heat and hot-water profiles using a fixed annual ratio.
+Args:</p>
+<blockquote>
+<div><p>space_heat_df: DataFrame with space-heat time series.
+hotwater_df: DataFrame with hot-water time series.
+spaceheat_to_hotwater_ratio: The ratio of space heat to hot water.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>A DataFrame with the blended time series.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._annual_correction_factor_for_year">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_annual_correction_factor_for_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">correction_factors_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._annual_correction_factor_for_year" title="Link to this definition"></a></dt>
+<dd><p>Compute annual correction factor for one year relative to a reference year.
+Args:</p>
+<blockquote>
+<div><p>correction_factors_df: DataFrame with annual correction factors indexed by year.
+year: The year for which to compute the correction factor.
+reference_year: The reference year for comparison.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>A Series containing the correction factors for the specified year.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc._write_demand_timeseries_inc_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">_write_demand_timeseries_inc_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_raw_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">da_scaled_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_scaled_long_term_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_scaled_full_year_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capdev_raw_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.DemandModuleConfig" title="pybalmorel.weatheryear.config_models.DemandModuleConfig"><span class="pre">pybalmorel.weatheryear.config_models.DemandModuleConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc._write_demand_timeseries_inc_files" title="Link to this definition"></a></dt>
+<dd><p>Write DA raw/scaled and CapDev .inc files for one demand user group.
+Args:</p>
+<blockquote>
+<div><p>df_raw: DataFrame with raw hourly time series.
+df_scaled: DataFrame with scaled hourly time series.
+symbol: Symbol for the demand user group.
+user_name: Name of the demand user group.
+filename: Name of the .inc file to save.
+da_raw_folder: Path to the folder for raw DA files.
+da_scaled_folder: Path to the folder for scaled DA files.
+capdev_scaled_long_term_folder: Path to the scaled long-term CapDev folder.
+capdev_scaled_full_year_folder: Path to the scaled full-year CapDev folder.
+capdev_raw_folder: Path to the raw CapDev folder.
+config: Configuration object for the demand module.
+time_df: DataFrame with Balmorel DA time index.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.demand2btc.generate_demand_balmorel_inc_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.demand2btc.</span></span><span class="sig-name descname"><span class="pre">generate_demand_balmorel_inc_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.demand2btc.generate_demand_balmorel_inc_files" title="Link to this definition"></a></dt>
+<dd><p>Create demand-related Balmorel .inc files for one weather year.
+Args:</p>
+<blockquote>
+<div><p>config_fn: Path to YAML config file.
+year: Weather year to process.
+output_folder: Root output directory.</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../corres_to_energy_system_model/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.corres_to_energy_system_model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../exceptions/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.exceptions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
