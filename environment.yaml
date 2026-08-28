@@ -16,4 +16,4 @@ dependencies:
   - pyyaml
   - pip
   - pip:
-    - pybalmorel==1.2.2
+    - pybalmorel==1.2.3

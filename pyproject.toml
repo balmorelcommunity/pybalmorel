@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "1.2.2"
+version = "1.2.3"
 maintainers = [
   { name="Mathias Berg Rosendal", email="mathiasros@proton.me"},
   { name="Théodore Le Nalinec"},
@@ -75,7 +75,7 @@ pybalmorel = { path = ".", editable = true }
 build = ">=1.2,<2"
 ripgrepy = ">=2.2.0,<3"
 plotly = ">=6.6.0,<7"
-kaleido = ">=1.2.2,<2"
+kaleido = ">=1.2.3,<2"
 tsam = "*"
 
 [tool.pixi.feature.dev.activation.env]
@@ -90,7 +90,7 @@ publish-test = { depends-on = ["_build"], cmd = "python -m twine upload --reposi
 _docs-build = { cmd = "sphinx-build docs docs/_build/html", description = "Build the Sphinx documentation" }
 _docs-serve = { cmd = "python -m http.server 8000", cwd = "docs/_build/html", description = "Serve the built documentation on http://127.0.0.1:8000" }
 docs = { depends-on = ["_docs-build", "_docs-serve"], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
-release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.2.2/1.2.3/g\""
+release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.2.3/1.2.4/g\""
 
 # --- user: test pybalmorel as an end-user (PyPI install only) ---
 [tool.pixi.feature.user.pypi-dependencies]
