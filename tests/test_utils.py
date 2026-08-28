@@ -165,16 +165,13 @@ def test_symbol_to_df_matches_loop_reference(gdx_path):
         read rec.level into the dict), so they're not a valid oracle for
         those four columns.
 
-    A third, unrelated pre-existing bug also surfaces here: some symbols
-    (e.g. EL_PRICE_YCR in MainResults_Example3.gdx) have a stale column
-    mapping in formatting.py that doesn't match the actual domain count in
-    the gdx. Because create_parameter_columns/create_set_columns/
-    create_variable_columns are shared, unmodified helpers, this raises a
-    ValueError for BOTH the old and new implementation identically -- that's
-    a formatting.py data-mapping issue, not a symbol_to_df extraction issue,
-    so it's out of scope for this refactor. The test only requires that when
-    one implementation raises, the other raises too (any exception cause);
-    it never asserts that either succeeds.
+    If a symbol's column mapping in formatting.py ever goes stale again
+    (doesn't match the actual domain count in a gdx), create_parameter_columns/
+    create_set_columns/create_variable_columns -- shared, unmodified helpers --
+    would raise a ValueError for BOTH the old and new implementation
+    identically. The test tolerates that: when one implementation raises,
+    it only requires that the other raises too (any exception cause); it
+    never asserts that either succeeds.
     """
     ws = gams.GamsWorkspace(system_directory=gams_system_directory)
     db = ws.add_database_from_gdx(os.path.abspath(gdx_path))

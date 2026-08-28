@@ -140,11 +140,11 @@ class MainResults:
                 # Save
                 df = pd.concat((df, temp), ignore_index=True)
             
-            except ValueError :
-                print(f'{SC} doesn\'t have any value in the table {symbol}')
-            
-        return df  
-    
+            except ValueError as e:
+                print(f"{SC} raised an error while reading '{symbol}': {e}")
+
+        return df
+
     ## Plotting tools
     # Interactive bar chart plotting
     def interactive_bar_chart(self, plot_style: str = 'light'):
@@ -595,12 +595,12 @@ class Balmorel:
                 # Save
                 df = pd.concat((df, temp), ignore_index=True)
             
-            except ValueError :
-                print(f'{SC} doesn\'t have any value in the table {symbol}')
-            
-        return df  
+            except ValueError as e:
+                print(f"{SC} raised an error while reading '{symbol}': {e}")
 
-    def temporal_aggregation(self, 
+        return df
+
+    def temporal_aggregation(self,
                              scenario: str, 
                              seasons: int, 
                              terms: int, 

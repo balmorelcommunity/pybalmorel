@@ -28,12 +28,16 @@ def create_parameter_columns(df: pd.DataFrame,
         except (ValueError, KeyError):
             try:
                 df.columns = mainresult_symbol_columns[symbol] + ['Value']
-            except KeyError:
-                # If no standard format exists, just use columns from GAMS
+            except (ValueError, KeyError):
+                # No standard format exists, or it doesn't match the gdx's
+                # actual domain count (e.g. a stale entry in formatting.py):
+                # fall back to the raw domain names from GAMS
+                print(f"Warning: pybalmorel's column format for '{symbol}' doesn't "
+                      f"match its domains in this gdx - using raw GAMS domain names instead.")
                 df.columns = db[symbol].domains_as_strings + ['Value']
     else:
-        df.columns = cols          
-        
+        df.columns = cols
+
     return df
 
 def create_variable_columns(df: pd.DataFrame,
@@ -47,12 +51,16 @@ def create_variable_columns(df: pd.DataFrame,
         except (ValueError, KeyError):
             try:
                 df.columns = mainresult_symbol_columns[symbol] + ['Value', 'Marginal', 'Lower', 'Upper', 'Scale']
-            except KeyError:
-                # If no standard format exists, just use columns from GAMS
+            except (ValueError, KeyError):
+                # No standard format exists, or it doesn't match the gdx's
+                # actual domain count (e.g. a stale entry in formatting.py):
+                # fall back to the raw domain names from GAMS
+                print(f"Warning: pybalmorel's column format for '{symbol}' doesn't "
+                      f"match its domains in this gdx - using raw GAMS domain names instead.")
                 df.columns = db[symbol].domains_as_strings + ['Value', 'Marginal', 'Lower', 'Upper', 'Scale']
     else:
-        df.columns = cols          
-        
+        df.columns = cols
+
     return df
 
 def create_set_columns(df: pd.DataFrame,
@@ -64,14 +72,15 @@ def create_set_columns(df: pd.DataFrame,
         try:
             df.columns = mainresult_symbol_columns[symbol]
         except (ValueError, KeyError):
-            try:
-                df.columns = mainresult_symbol_columns[symbol]
-            except KeyError:
-                # If no standard format exists, just use columns from GAMS
-                df.columns = db[symbol].domains_as_strings
+            # No standard format exists, or it doesn't match the gdx's
+            # actual domain count (e.g. a stale entry in formatting.py):
+            # fall back to the raw domain names from GAMS
+            print(f"Warning: pybalmorel's column format for '{symbol}' doesn't "
+                  f"match its domains in this gdx - using raw GAMS domain names instead.")
+            df.columns = db[symbol].domains_as_strings
     else:
-        df.columns = cols  
-        
+        df.columns = cols
+
     return df
 
 ### 1.0 Converting a GDX file to a pandas dataframe
