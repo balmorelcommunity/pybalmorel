@@ -46,13 +46,18 @@ def to_balmorel_timeseries_assignment_lines(
         DataFrame with a single column (symbol) containing GAMS assignment strings.
     """
     output = []
-
+    
     for idx in df.index:
-        sss, ttt = idx.split(".")
+        if "_S" in symbol:
+            sss=idx
+        else:
+            sss, ttt = idx.split(".")
         for region in df.columns:
             value = df.loc[idx, region]
             if user_name:
                 assignment = f"{symbol}('{region}', '{user_name}', '{sss}', '{ttt}') = {value};"
+            elif "_S" in symbol:
+                assignment = f"{symbol}('{region}', '{sss}') = {value};"
             else:
                 assignment = f"{symbol}('{region}', '{sss}', '{ttt}') = {value};"
             output.append(assignment)

@@ -11,6 +11,7 @@ import pandas as pd
 
 from .auxiliary_functions import (
     compute_capdev_timeseries,
+    compute_capdev_timeseries_S,
     create_balmorel_time_mapping,
     create_directory_if_needed,
     process_timeseries_with_scaling,
@@ -59,13 +60,16 @@ def _write_hydro_timeseries_inc_files(
     ]
     capdev_timesteps = config.capdev_timesteps_to_keep.as_legacy_dict()
     for src_df, scale, output_folder in capdev_cases:
-        capdev_df = compute_capdev_timeseries(
-            capdev_timesteps,
-            src_df,
-            time_df,
-            source="hydro",
-            scale=scale,
-        )
+        if symbol=="WTRRSVAR_S":
+            capdev_df=compute_capdev_timeseries_S(src_df)
+        else:
+            capdev_df = compute_capdev_timeseries(
+                capdev_timesteps,
+                src_df,
+                time_df,
+                source="hydro",
+                scale=scale,
+            )
         df = to_balmorel_timeseries_assignment_lines(capdev_df, symbol)
         build_inc_file_list_type(df, symbol, output_folder, filename=f"{symbol}_WY")
         capdev_df.to_csv(os.path.join(output_folder, csv_name))
@@ -105,6 +109,13 @@ def _process_hydro_inflow_series(
     time_df = create_balmorel_time_mapping()
     df_cut = apply_balmorel_da_time_index(df_cut, time_df)
     df_scaled = apply_balmorel_da_time_index(df_scaled, time_df)
+
+    if symbol=="WTRRSVAR_S":
+        df_scaled = df_scaled[df_scaled.index.str.endswith('T01')]
+        df_scaled.index = df_scaled.index.str.replace(r'\.T01$', '', regex=True)
+
+        df_cut = df_cut[df_cut.index.str.endswith('T01')]
+        df_cut.index = df_cut.index.str.replace(r'\.T01$', '', regex=True)
 
     _write_hydro_timeseries_inc_files(
         df_raw=df_cut,
