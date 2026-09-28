@@ -19,10 +19,10 @@ _MODULE_KEYS = {
     "hydro_model_results",
     "cop_model_results",
     "corres_results",
+    "weatheryear_inputs_folder",
     "Regions_to_keep",
     "RGs_to_keep",
     "turbine_to_keep",
-    "tech_to_keep",
     "ANNUITYCG_calculation",
     "VRE_potentials",
     "VRE_tech_costs",
@@ -30,7 +30,6 @@ _MODULE_KEYS = {
     "Existing_solar_cap",
 }
 
-_MULTIWEATHER_INPUTS_KEY = "multiweather_other_inputs_folder"
 _WEATHERYEAR_INPUTS_KEY = "weatheryear_inputs_folder"
 
 
@@ -52,27 +51,17 @@ def _default_demand_folder(weatheryear_root: str, multiweather_folder: str) -> s
 
 
 def _resolve_root_and_multiweather_folder(raw: dict[str, Any]) -> tuple[str, str] | None:
-    """Resolve root and multiweather input folders from supported config keys."""
+    """Resolve the weather-year root and shared multiweather input folder."""
     root_value = raw.get(_WEATHERYEAR_INPUTS_KEY)
-    if root_value is not None:
-        if not isinstance(root_value, str):
-            raise ConfigValidationError(f"{_WEATHERYEAR_INPUTS_KEY} must be a string")
-        normalized_root = os.path.normpath(root_value)
-        if os.path.basename(normalized_root) == "multiweather_other_inputs":
-            return os.path.dirname(normalized_root), normalized_root
-        return normalized_root, os.path.join(normalized_root, "multiweather_other_inputs")
-
-    multiweather_value = raw.get(_MULTIWEATHER_INPUTS_KEY)
-    if multiweather_value is None:
+    if root_value is None:
         return None
-    if not isinstance(multiweather_value, str):
-        raise ConfigValidationError(f"{_MULTIWEATHER_INPUTS_KEY} must be a string")
+    if not isinstance(root_value, str):
+        raise ConfigValidationError(f"{_WEATHERYEAR_INPUTS_KEY} must be a string")
 
-    normalized_path = os.path.normpath(multiweather_value)
-    if os.path.basename(normalized_path) == "multiweather_other_inputs":
-        return os.path.dirname(normalized_path), normalized_path
-
-    return normalized_path, os.path.join(normalized_path, "multiweather_other_inputs")
+    normalized_root = os.path.normpath(root_value)
+    if os.path.basename(normalized_root) == "multiweather_other_inputs":
+        return os.path.dirname(normalized_root), normalized_root
+    return normalized_root, os.path.join(normalized_root, "multiweather_other_inputs")
 
 
 def _default_corres_root(weatheryear_root: str) -> str:
@@ -136,6 +125,13 @@ def _apply_multiweather_defaults(raw: dict[str, Any]) -> dict[str, Any]:
 
     if "corres_results" not in enriched:
         enriched["corres_results"] = _build_default_corres_results(_default_corres_root(weatheryear_root))
+
+    #if "tech_to_keep" not in enriched:
+    #    enriched["tech_to_keep"] = sorted({
+    #        os.path.basename(os.path.normpath(folder))
+    #        for source_folders in enriched["corres_results"].values()
+    #        for folder in source_folders
+    #     })
 
     return enriched
 
@@ -382,19 +378,27 @@ class WeatherYearConfig:
         raw = load_weatheryear_config(
             config_fn,
             required_keys={
-                "corres_results",
+                "weatheryear_inputs_folder",
                 "Regions_to_keep",
                 "RGs_to_keep",
                 "turbine_to_keep",
-                "tech_to_keep",
             },
         )
+
+        tech_to_keep = raw.get("tech_to_keep")
+        if tech_to_keep is None:
+            tech_to_keep = sorted({
+                os.path.basename(os.path.normpath(folder))
+                for source_folders in raw["corres_results"].values()
+                for folder in source_folders
+            })
+
         return cls(
             corres_results=raw["corres_results"],
             regions_to_keep=raw["Regions_to_keep"],
             rg_to_keep=raw["RGs_to_keep"],
             turbine_to_keep=raw["turbine_to_keep"],
-            tech_to_keep=raw["tech_to_keep"],
+            tech_to_keep=tech_to_keep,
         )
 
     def regions_for_source(self, source: str) -> list[str]:

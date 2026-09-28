@@ -196,6 +196,14 @@ def process_timeseries_with_scaling(df: pd.DataFrame, start_date: int, end_date:
     
     return df, df_cut,df_scaled
 
+
+def compute_capdev_timeseries_S(df):
+    
+    df_CapDev = df.groupby(np.arange(len(df)) // 7).mean()
+    df_CapDev.index = [f'S{str(i+1).zfill(2)}' for i in range(len(df_CapDev))]
+    return df_CapDev
+
+    
 def compute_capdev_timeseries(
     config: dict[str, Any],
     combined_scaled_dfs: pd.DataFrame,

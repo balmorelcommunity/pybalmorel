@@ -38,7 +38,9 @@ weatheryear_inputs_folder: path/to/weatheryear_inputs
 # Backward-compatible alternative key:
 # multiweather_other_inputs_folder: path/to/weatheryear_inputs/multiweather_other_inputs
 
-# Wind turbine models (future installations only)
+# Wind turbine models (future installations only) 
+# Onshore Future available turbines: SP199-HH100, SP199-HH150,SP199-HH200, SP277-HH100, SP277-HH150,SP277-HH200 , SP335-HH100, SP335-HH150,SP335-HH200
+# Offshore Future available turbines:  SP316-HH155 , SP370-HH155
 turbine_to_keep:
   - SP335-HH100
   - SP277-HH150
@@ -49,6 +51,8 @@ RGs_to_keep:
   Future_Onshore: [RGA, RGB, RGC]
   Future_Offshore_bottom_fixed: [RGB]
   PV_Rooftop: [RGA, RGB, RGC]
+  
+If no resource grade is selected for a technology, that technology is excluded from the generated input files. Use an empty list (for example, `Future_Onshore: []`) to explicitly exclude it.
 
 # Geographic regions to include
 Regions_to_keep:
