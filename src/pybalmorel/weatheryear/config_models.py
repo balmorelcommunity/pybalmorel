@@ -23,6 +23,7 @@ _MODULE_KEYS = {
     "Regions_to_keep",
     "RGs_to_keep",
     "turbine_to_keep",
+    "tech_to_keep",
     "ANNUITYCG_calculation",
     "VRE_potentials",
     "VRE_tech_costs",

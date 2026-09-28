@@ -27,7 +27,7 @@ from .auxiliary_functions import (
     create_directory_if_needed,
     process_timeseries_with_scaling
 )
-from .config_models import WeatherYearConfig
+from .config_models import ConfigValidationError, WeatherYearConfig
 from .exceptions import MissingRequiredColumnsError, EmptyMergeResultError
 
 
@@ -216,6 +216,17 @@ def compute_capacity_factor_and_flh(df: pd.DataFrame, tech: str) -> tuple[pd.Dat
 
 
 
+def _rgs_for_run_folder(run_folder: str, config: WeatherYearConfig) -> list[str]:
+    """Return the RGs_to_keep entry for a CorRES run folder, with a clear error if it is missing."""
+    folder_name = Path(run_folder).name
+    if folder_name not in config.rg_to_keep:
+        raise ConfigValidationError(
+            f"'{folder_name}' is enabled (via tech_to_keep, or all corres_results folders if tech_to_keep is omitted) "
+            f"but has no RGs_to_keep entry. Add it to RGs_to_keep or remove it from tech_to_keep."
+        )
+    return config.rg_to_keep[folder_name]
+
+
 def is_wind_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig) -> bool:
     """Determine whether a given wind technology should be read based on the configuration settings.
      Args:
@@ -232,7 +243,7 @@ def is_wind_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig) 
 
     if "Future_Onshore" in run_folder or "Future_Offshore" in run_folder:
         found_turbine = next((t for t in turbine_to_keep if fnmatch.fnmatch(str(tech), f"*{t}*")), None)
-        found_rg = next((rg for rg in config.rg_to_keep[Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
+        found_rg = next((rg for rg in _rgs_for_run_folder(run_folder, config) if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
         return bool(found_turbine and found_rg)
 
     return True
@@ -249,7 +260,7 @@ def is_solar_tech_enabled(run_folder: str, tech: str, config: WeatherYearConfig)
     if Path(run_folder).name not in config.tech_to_keep:
         return False
 
-    found_rg = next((rg for rg in config.rg_to_keep[Path(run_folder).name] if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
+    found_rg = next((rg for rg in _rgs_for_run_folder(run_folder, config) if fnmatch.fnmatch(str(tech), f"*{rg}*")), None)
     return bool(found_rg)
 
 
