@@ -50,6 +50,50 @@ def _build_cost_columns(
     )
 
 
+def _read_lifetime_sheet(path: str) -> pd.DataFrame | None:
+    """Read the Lifetime sheet of the VRE cost workbook, if present.
+
+    Args:
+        path: path to the VRE_tech_costs workbook.
+
+    Returns:
+        Lifetime DataFrame indexed by technology, or None if the workbook has no
+        'Lifetime' sheet (older workbooks).
+    """
+    try:
+        return pd.read_excel(path, sheet_name="Lifetime", index_col="Technologies")
+    except ValueError:
+        print(
+            f"Warning: no 'Lifetime' sheet in '{path}'. Falling back to hardcoded "
+            "lifetimes (27 years for 2020 vintages, 30 years otherwise)."
+        )
+        return None
+
+
+def _build_lifetime_column(
+    lifetime_df: pd.DataFrame | None, name: str, year: int, n_rows: int
+) -> pd.DataFrame:
+    """Look up the lifetime for *name* and *year* and replicate it for *n_rows* generators.
+
+    Args:
+        lifetime_df: Lifetime DataFrame from the VRE cost workbook, or None to use
+            the hardcoded fallback (27 years for 2020, 30 otherwise).
+        name: substring to match against the technology index.
+        year: investment year column to read.
+        n_rows: number of generators to replicate the lifetime for.
+
+    Returns:
+        Single-column DataFrame 'life_time'.
+    """
+    if lifetime_df is None:
+        life = [27 if year == 2020 else 30]
+    else:
+        life = lifetime_df[
+            lifetime_df.index.str.contains(name, regex=True)
+        ][year].values[:]
+    return pd.DataFrame([life] * n_rows, columns=["life_time"])
+
+
 def add_unit_size_col(
     dfs: pd.DataFrame,
     techs: dict,
@@ -169,6 +213,7 @@ def build_GDATA(
         costs_dict[cost_type] = pd.read_excel(
             config["VRE_tech_costs"], sheet_name=cost_type, index_col="Technologies"
         )
+    lifetime_df = _read_lifetime_sheet(config["VRE_tech_costs"])
 
     dfs = []
     for tech in techs["wind"]:
@@ -217,8 +262,8 @@ def build_GDATA(
                         costs_dict, tur + cost_name, int(year), len(ggg_y)
                     )
                     from_year = pd.DataFrame([year] * len(ggg_y), columns=["from_year"])
-                    life_time = pd.DataFrame(
-                        [27 if year == "2020" else 30] * len(ggg_y), columns=["life_time"]
+                    life_time = _build_lifetime_column(
+                        lifetime_df, tur + cost_name, int(year), len(ggg_y)
                     )
                     last_year = pd.DataFrame(
                         [int(year) + 9] * len(ggg_y), columns=["last_year"]
@@ -257,9 +302,7 @@ def build_GDATA(
                 costs_dict, cost_name, int(year), len(ggg_y)
             )
             from_year = pd.DataFrame([year] * len(ggg_y), columns=["from_year"])
-            life_time = pd.DataFrame(
-                [27 if year == "2020" else 30] * len(ggg_y), columns=["life_time"]
-            )
+            life_time = _build_lifetime_column(lifetime_df, cost_name, int(year), len(ggg_y))
             last_year = pd.DataFrame([int(year) + 9] * len(ggg_y), columns=["last_year"])
             df_to_add = pd.concat(
                 [ggg_y.reset_index(drop=True), inv_cost, ann_om, var_om,
