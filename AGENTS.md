@@ -118,6 +118,7 @@ python -m pytest tests/test_preprocessing.py
 python -m pytest tests/test_execution.py
 python -m pytest tests/test_weatheryear_naming_and_filtering.py
 python -m pytest tests/test_weatheryear_config.py
+python -m pytest tests/test_weatheryear_scenario_data.py
 ```
 
 When writing new tests, keep GAMS-dependent tests in separate files so CI can

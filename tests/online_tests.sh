@@ -9,6 +9,7 @@ python -m pytest tests/test_preprocessing.py -k "not test_temporal_aggregation"
 python -m pytest tests/test_execution.py
 python -m pytest tests/test_weatheryear_naming_and_filtering.py
 python -m pytest tests/test_weatheryear_config.py
+python -m pytest tests/test_weatheryear_scenario_data.py
 
 echo -e
 echo "NOTE:"
