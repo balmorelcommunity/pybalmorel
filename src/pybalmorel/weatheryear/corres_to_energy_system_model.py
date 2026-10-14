@@ -221,7 +221,7 @@ def _rgs_for_run_folder(run_folder: str, config: WeatherYearConfig) -> list[str]
     folder_name = Path(run_folder).name
     if folder_name not in config.rg_to_keep:
         raise ConfigValidationError(
-            f"'{folder_name}' is enabled (via tech_to_keep, or all corres_results folders if tech_to_keep is omitted) "
+            f"'{folder_name}' is enabled via tech_to_keep "
             f"but has no RGs_to_keep entry. Add it to RGs_to_keep or remove it from tech_to_keep."
         )
     return config.rg_to_keep[folder_name]

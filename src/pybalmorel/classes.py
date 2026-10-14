@@ -691,7 +691,8 @@ class GUI:
 class WEATHERYEAR:
 
     """A class for processing the CorRES database and creating weather year 
-    data CSV and .inc files for the Balmorel model for a specific year (1980–2021).
+    data CSV and .inc files for the Balmorel model for a specific year. The year
+    must be covered by every input time series, or processing raises a ValueError.
 
     Args:
         year (int): The year for which weather data is processed.

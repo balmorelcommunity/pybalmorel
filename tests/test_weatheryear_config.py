@@ -11,10 +11,14 @@ Created on 17.08.2026
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
+import pandas as pd
 import pytest
 
 from pybalmorel import WEATHERYEAR
-from pybalmorel.weatheryear.auxiliary_functions import build_capdev_timesteps_list
+from pybalmorel.weatheryear.auxiliary_functions import (
+    build_capdev_timesteps_list,
+    process_timeseries_with_scaling,
+)
 from pybalmorel.weatheryear.config_models import (
     CapDevTimestepsConfig,
     ConfigValidationError,
@@ -65,9 +69,24 @@ def test_build_capdev_timesteps_list_cross_product():
 ### ------------------------------- ###
 
 
-def test_WEATHERYEAR_rejects_year_outside_corres_range():
-    with pytest.raises(ValueError):
-        WEATHERYEAR(year=2024, config_fn="examples/files/mutli_year_config.yml", output_folder="results/")
+def _hourly_profile(first_year: int, last_year: int) -> pd.DataFrame:
+    index = pd.date_range(f"{first_year}-01-01", f"{last_year}-12-31 23:00", freq="h")
+    return pd.DataFrame({"DK1": 0.5}, index=index.astype(str))
+
+
+def test_process_timeseries_rejects_year_outside_input_range():
+    with pytest.raises(ValueError, match="covers 2020-2021"):
+        process_timeseries_with_scaling(
+            _hourly_profile(2020, 2021), 2024, 2024, "wind", fix_monday=True
+        )
+
+
+def test_process_timeseries_accepts_year_inside_input_range():
+    _, df_cut, _ = process_timeseries_with_scaling(
+        _hourly_profile(2020, 2022), 2021, 2021, "wind", fix_monday=True
+    )
+    assert len(df_cut) == 8736
+    assert df_cut.index[0] == pd.Timestamp("2021-01-04")
 
 
 def test_WEATHERYEAR_accepts_year_inside_corres_range():

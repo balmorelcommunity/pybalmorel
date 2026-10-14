@@ -127,13 +127,6 @@ def _apply_multiweather_defaults(raw: dict[str, Any]) -> dict[str, Any]:
     if "corres_results" not in enriched:
         enriched["corres_results"] = _build_default_corres_results(_default_corres_root(weatheryear_root))
 
-    #if "tech_to_keep" not in enriched:
-    #    enriched["tech_to_keep"] = sorted({
-    #        os.path.basename(os.path.normpath(folder))
-    #        for source_folders in enriched["corres_results"].values()
-    #        for folder in source_folders
-    #     })
-
     return enriched
 
 
@@ -383,23 +376,16 @@ class WeatherYearConfig:
                 "Regions_to_keep",
                 "RGs_to_keep",
                 "turbine_to_keep",
+                "tech_to_keep",
             },
         )
-
-        tech_to_keep = raw.get("tech_to_keep")
-        if tech_to_keep is None:
-            tech_to_keep = sorted({
-                os.path.basename(os.path.normpath(folder))
-                for source_folders in raw["corres_results"].values()
-                for folder in source_folders
-            })
 
         return cls(
             corres_results=raw["corres_results"],
             regions_to_keep=raw["Regions_to_keep"],
             rg_to_keep=raw["RGs_to_keep"],
             turbine_to_keep=raw["turbine_to_keep"],
-            tech_to_keep=tech_to_keep,
+            tech_to_keep=raw["tech_to_keep"],
         )
 
     def regions_for_source(self, source: str) -> list[str]:

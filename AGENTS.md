@@ -116,6 +116,8 @@ only runs the GAMS-free tests via `tests/online_tests.sh`:
 ```bash
 python -m pytest tests/test_preprocessing.py
 python -m pytest tests/test_execution.py
+python -m pytest tests/test_weatheryear_naming_and_filtering.py
+python -m pytest tests/test_weatheryear_config.py
 ```
 
 When writing new tests, keep GAMS-dependent tests in separate files so CI can
@@ -279,7 +281,8 @@ The package's public interface is declared in `src/pybalmorel/__init__.py`:
 
 ```python
 from . import formatting, utils
-from .classes import IncFile, MainResults, Balmorel, GUI, TechData
+from .classes import IncFile, MainResults, Balmorel, GUI, WEATHERYEAR
+from .economics.dea import TechData
 ```
 
 Only add to this list intentionally. Internal helpers (e.g. everything in
@@ -305,8 +308,9 @@ imported in user-facing documentation examples.
 ## CI
 
 `.github/workflows/tests.yml` runs on every push/PR using micromamba and
-`environment.yaml`. It installs `pybalmorel` from PyPI (not an editable install)
-and runs only `tests/online_tests.sh` (GAMS-free tests). Ensure
-`test_preprocessing.py` and `test_execution.py` remain GAMS-free.
+`environment.yaml`, then installs the checked-out `pybalmorel` over the PyPI
+version (`pip install -e .`), so CI tests the branch, not the last release. It
+runs only `tests/online_tests.sh` (GAMS-free tests). Ensure every file listed
+there stays GAMS-free. Use the `user` pixi environment to test what is on PyPI.
 
 `.github/workflows/sphinx.yml` builds and deploys documentation to GitHub Pages.

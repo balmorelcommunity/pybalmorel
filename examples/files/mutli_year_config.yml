@@ -4,6 +4,14 @@ weatheryear_inputs_folder: /path/to/weatheryear_inputs
 
 ###########################################################################################################################    
 
+tech_to_keep:
+  - Future_Onshore
+  - Future_Offshore_bottom_fixed
+  - Future_Offshore_floating
+  - PV_Rooftop
+  - PV_Utility_scale_no_tracking
+  - PV_Utility_scale_tracking
+
 turbine_to_keep:
   - SP335-HH100
   - SP277-HH100

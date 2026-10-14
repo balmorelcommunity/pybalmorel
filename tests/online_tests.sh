@@ -3,8 +3,12 @@
 # Remember to do this command locally:
 # git update-index --chmod=+x tests/online_tests.sh
 
+set -e
+
 python -m pytest tests/test_preprocessing.py -k "not test_temporal_aggregation"
 python -m pytest tests/test_execution.py
+python -m pytest tests/test_weatheryear_naming_and_filtering.py
+python -m pytest tests/test_weatheryear_config.py
 
 echo -e
 echo "NOTE:"

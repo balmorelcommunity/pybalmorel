@@ -15,7 +15,7 @@ The full hourly time series for a weather year, before it is reduced to CapDev t
 _Avoid_: full resolution, raw resolution
 
 **tech_to_keep**:
-The list of technology-run folder names (e.g. `Future_Onshore`, `PV_Rooftop`) that `WEATHERYEAR.get_vre_data()` actually processes when exporting VRE time series from CorRES. Folders present under `weatheryear_inputs_folder` but not listed here are silently skipped; a folder that matches no recognized technology category at all raises instead of being skipped.
+The required list of technology-run folder names (e.g. `Future_Onshore`, `PV_Rooftop`) that `WEATHERYEAR.get_vre_data()` actually processes when exporting VRE time series from CorRES. It is the only switch for including or excluding a technology; `RGs_to_keep` only chooses resource grades within it. Folders present under `weatheryear_inputs_folder` but not listed here are silently skipped; a folder that matches no recognized technology category at all raises instead of being skipped.
 
 **turbine_to_keep**:
 A finer filter within the `Future_Onshore`/`Future_Offshore_*` `tech_to_keep` categories, naming which specific turbine models (e.g. `SP277-HH100`) are processed. PV categories have no equivalent finer level — each PV `tech_to_keep` category is already a single model, varying only by resource grade.
@@ -52,3 +52,17 @@ A shared identifier used to bridge a Balmorel region and an ENTSO-E bidding zone
 **ENTSO-E Zone Code**:
 The raw identifier the ENTSO-E transparency platform API expects for a query (e.g. `10YNO-1--------2`, `DE_LU`) — one layer downstream of a Canonical Region Name, which a code can share (`FR`) or differ from entirely.
 _Avoid_: Region, Zone (when ambiguous with Canonical Region Name)
+
+**Backcast Year**:
+The single historical year a backcast reproduces: its fuel and CO2 prices, its transmission limits, and its weather. In a backcast it is always the same year as the weather year. Chosen only when generating inputs; Balmorel just reads whatever has been generated.
+_Avoid_: Weather year (keep that term for the weatheryear module, which is also used outside backcasting)
+
+**Backcast Calendar**:
+The mapping from a Backcast Year's clock time to Balmorel's 52 seasons (S01–S52) × 168 terms (T001–T168). S01 T001 is 00:00 UTC on the first Monday of the year, so every day has exactly 24 terms. Days outside the 52 full weeks are dropped. Daily prices apply to the UTC calendar day.
+_Avoid_: Local time, Copenhagen time, CET
+
+**Price Year**:
+The currency year all backcast prices are expressed in: €2016. Every series is deflated with the euro-area HICP and converted from USD using the Eurostat annual-average exchange rate.
+
+**Series Fuel**:
+A fuel whose backcast price varies within the year (NATGAS and COAL daily; FUELOIL, HEAVYFUELOIL and LIGHTOIL weekly) rather than taking an annual value from the scenario data. The set of series fuels determines which fuels are dropped from the annual price table and flagged as non-constant.

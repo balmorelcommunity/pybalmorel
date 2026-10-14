@@ -1,6 +1,6 @@
 # Multi-Weather-Year Input Generation
 
-The `weatheryear` module converts outputs from external models (CorRES, demand, hydro, and COP models) into Balmorel-compatible `.inc` files for a chosen historical weather year (1980–2021). This allows you to run Balmorel with multiple weather-year scenarios to capture annual variability of renewable energy sources and demand.
+The `weatheryear` module converts outputs from external models (CorRES, demand, hydro, and COP models) into Balmorel-compatible `.inc` files for a chosen historical weather year. The year must be covered by every input time series. This allows you to run Balmorel with multiple weather-year scenarios to capture annual variability of renewable energy sources and demand.
 
 ## Installation
 
@@ -38,6 +38,13 @@ weatheryear_inputs_folder: path/to/weatheryear_inputs
 # Backward-compatible alternative key:
 # multiweather_other_inputs_folder: path/to/weatheryear_inputs/multiweather_other_inputs
 
+# Technology-run folders to process (required). This is the only switch for
+# including or excluding a technology.
+tech_to_keep:
+  - Future_Onshore
+  - Future_Offshore_bottom_fixed
+  - PV_Rooftop
+
 # Wind turbine models (future installations only) 
 # Onshore Future available turbines: SP199-HH100, SP199-HH150,SP199-HH200, SP277-HH100, SP277-HH150,SP277-HH200 , SP335-HH100, SP335-HH150,SP335-HH200
 # Offshore Future available turbines:  SP316-HH155 , SP370-HH155
@@ -51,8 +58,7 @@ RGs_to_keep:
   Future_Onshore: [RGA, RGB, RGC]
   Future_Offshore_bottom_fixed: [RGB]
   PV_Rooftop: [RGA, RGB, RGC]
-  
-If no resource grade is selected for a technology, that technology is excluded from the generated input files. Use an empty list (for example, `Future_Onshore: []`) to explicitly exclude it.
+  # Every technology in tech_to_keep needs an entry here, or loading fails.
 
 # Geographic regions to include
 Regions_to_keep:
@@ -155,7 +161,7 @@ Loop over years to build a full multi-weather-year dataset:
 ```python
 from pybalmorel import WEATHERYEAR
 
-for year in range(1980, 2022):
+for year in range(1980, 2026):  # the years your inputs cover
     mly = WEATHERYEAR(year=year, config_fn="config.yml", output_folder="results/")
     mly.get_vre_data()
     mly.get_vre_related_files()

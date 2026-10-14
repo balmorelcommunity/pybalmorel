@@ -19,3 +19,5 @@ src/pybalmorel/weatheryear/.ipynb_checkpoints/
 .pixi/*
 !.pixi/config.toml
 .env
+entsoe_data
+weatheryear_input*

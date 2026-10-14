@@ -185,6 +185,11 @@ def process_timeseries_with_scaling(df: pd.DataFrame, start_date: int, end_date:
     df.index = pd.to_datetime(df.index)
     
     df_cut=filter_timeseries_by_dates(df,start_date,end_date)
+    if df_cut.empty:
+        raise ValueError(
+            f"No {source} data for {start_date}-{end_date}: the input covers "
+            f"{df.index.year.min()}-{df.index.year.max()}."
+        )
     if fix_monday:
         df_cut= align_timeseries_to_first_monday(df,df_cut,start_date)
 

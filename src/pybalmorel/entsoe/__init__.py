@@ -19,6 +19,7 @@ Created on 18.06.2026
 # ------------------------------- #
 
 import pandas as pd
+import requests
 from pathlib import Path
 from entsoe.entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
@@ -187,7 +188,7 @@ def get_api_key():
         api_key = config("ENTSOE_API_KEY")
     except UndefinedValueError:
         print(
-            "Couldn't find ENSTOE_API_KEY in environment variables, define it in an .env file in project root to avoid being prompted every time."
+            "Couldn't find ENTSOE_API_KEY in environment variables, define it in an .env file in project root to avoid being prompted every time."
         )
         api_key = getpass("API key for ENTSO-E transparency platform: ")
 
@@ -246,6 +247,10 @@ def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_k
         except NoMatchingDataError as e:
             print(f"Couldn't find any data for link {region_from}-{region_to}")
             print(e)
+        except requests.exceptions.HTTPError as e:
+            # Transient server errors (e.g. 527) shouldn't stop the loop - rerun to retry
+            print(f"Server error for link {region_from}-{region_to}, rerun to retry")
+            print(e)
 
 
 if __name__ == "__main__":
@@ -255,9 +260,15 @@ if __name__ == "__main__":
     # fetch_annual_data("day_ahead_prices", 2024, bidding_zones, ".", api_key)
     # Only query pairs of neighbouring zones, both within bidding_zones.
     # Both directions are added, since NEIGHBOURS isn't symmetric (e.g. no AL key),
-    # and XK is missing from NEIGHBOURS entirely so its borders are added manually
+    # and XK is missing from NEIGHBOURS entirely so its borders are added manually.
+    # GR-IT_SUD (GRITA) and ME-IT_CSUD (MONITA) are also missing from NEIGHBOURS
     zone_names = {lookup_area(bidding_zone).name for bidding_zone in bidding_zones}
-    neighbours = {**NEIGHBOURS, "XK": ["AL", "ME", "MK", "RS"]}
+    neighbours = {
+        **NEIGHBOURS,
+        "XK": ["AL", "ME", "MK", "RS"],
+        "GR": NEIGHBOURS["GR"] + ["IT_SUD"],
+        "ME": NEIGHBOURS["ME"] + ["IT_CSUD"],
+    }
     neighbour_pairs = sorted(
         {
             pair
