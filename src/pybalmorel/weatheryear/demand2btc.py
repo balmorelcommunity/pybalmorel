@@ -219,6 +219,12 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
     df_resh_hotwater_profile = pd.read_csv(
         os.path.join(csv_folder, "hotwater_profile_resh.csv"), index_col=0
     )
+    # The hot-water profile is one generic year, applied by position to the DA time index
+    if len(df_resh_hotwater_profile) != 8736:
+        raise ValueError(
+            f"hotwater_profile_resh.csv in {csv_folder} has {len(df_resh_hotwater_profile)} rows, "
+            "but must have exactly 8736 (one row per Balmorel S/T timestep)."
+        )
     (
         df_heat_corr_factors_indiv_user_residential,
         df_heat_corr_factors_indiv_user_tertiary,
