@@ -192,6 +192,11 @@ def process_timeseries_with_scaling(df: pd.DataFrame, start_date: int, end_date:
         )
     if fix_monday:
         df_cut= align_timeseries_to_first_monday(df,df_cut,start_date)
+        if len(df_cut) < 8736:
+            raise ValueError(
+                f"{source} data runs out at {df_cut.index[-1]}: the 52 weeks from the first "
+                f"Monday of {start_date} need 8736 hourly steps, but only {len(df_cut)} are available."
+            )
 
     
     df_scaled=scale_timeseries_to_full_distribution(df,df_cut,source)

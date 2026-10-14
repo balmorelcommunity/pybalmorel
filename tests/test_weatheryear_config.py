@@ -81,6 +81,12 @@ def test_process_timeseries_rejects_year_outside_input_range():
         )
 
 
+def test_process_timeseries_rejects_input_ending_before_52_weeks():
+    profile = _hourly_profile(2023, 2023).iloc[:-23]
+    with pytest.raises(ValueError, match="only 8713 are available"):
+        process_timeseries_with_scaling(profile, 2023, 2023, "hydro", fix_monday=True)
+
+
 def test_process_timeseries_accepts_year_inside_input_range():
     _, df_cut, _ = process_timeseries_with_scaling(
         _hourly_profile(2020, 2022), 2021, 2021, "wind", fix_monday=True
