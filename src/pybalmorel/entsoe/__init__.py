@@ -22,6 +22,7 @@ import pandas as pd
 from pathlib import Path
 from entsoe.entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
+from entsoe.mappings import NEIGHBOURS, lookup_area
 from getpass import getpass
 from decouple import config, UndefinedValueError
 
@@ -66,7 +67,6 @@ bidding_zones = [
     "10Y1001A1001A47J",
     "10Y1001A1001A45N",
     "10Y1001A1001A46L",
-    "10Y1001A1001A47J",
     "FI",
     "EE",
     "LV",
@@ -253,10 +253,24 @@ if __name__ == "__main__":
     api_key = get_api_key()
     # fetch_annual_data("load", 2024, bidding_zones, ".", api_key)
     # fetch_annual_data("day_ahead_prices", 2024, bidding_zones, ".", api_key)
-    for year in [2020, 2021, 2022, 2023, 2024, 2025]:
+    # Only query pairs of neighbouring zones, both within bidding_zones.
+    # Both directions are added, since NEIGHBOURS isn't symmetric (e.g. no AL key),
+    # and XK is missing from NEIGHBOURS entirely so its borders are added manually
+    zone_names = {lookup_area(bidding_zone).name for bidding_zone in bidding_zones}
+    neighbours = {**NEIGHBOURS, "XK": ["AL", "ME", "MK", "RS"]}
+    neighbour_pairs = sorted(
+        {
+            pair
+            for zone_from in zone_names
+            for zone_to in neighbours.get(zone_from, [])
+            if zone_to in zone_names
+            for pair in [(zone_from, zone_to), (zone_to, zone_from)]
+        }
+    )
+    for year in [2023]:
         fetch_annual_transmission_data(
             "crossborder_flows",
-            [["ES", "FR"], ["FR", "ES"]],
+            neighbour_pairs,
             year,
             "tests/output",
             api_key,
