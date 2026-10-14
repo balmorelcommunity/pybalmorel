@@ -27,6 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 weatheryear = ['xlsxwriter>=3.2.0', 'pyyaml>=6.0']
+entso-e = ['entsoe-py>=0.8.0,<0.9', 'python-decouple>=3.8,<4', 'click>=8']
 
 [project.urls]
 Repository = "https://github.com/Mathias157/pybalmorel"
@@ -75,6 +76,8 @@ sphinx-autoapi = "*"
 sphinx-copybutton = "*"
 python-lsp-server = "*"
 sqlite = "*"
+entsoe-py = ">=0.8.0,<0.9"
+python-decouple = ">=3.8,<4"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 pybalmorel = { path = ".", editable = true }
