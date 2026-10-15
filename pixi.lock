@@ -11222,6 +11222,7 @@ packages:
   - cartopy
   - requests
   - xlsxwriter>=3.2.0 ; extra == 'weatheryear'
+  - openpyxl>=3.1.5 ; extra == 'weatheryear'
   - pyyaml>=6.0 ; extra == 'weatheryear'
   - entsoe-py>=0.8.0,<0.9 ; extra == 'entso-e'
   - python-decouple>=3.8,<4 ; extra == 'entso-e'

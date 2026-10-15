@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-weatheryear = ['xlsxwriter>=3.2.0', 'pyyaml>=6.0']
+weatheryear = ['xlsxwriter>=3.2.0', 'openpyxl>=3.1.5', 'pyyaml>=6.0']
 entso-e = ['entsoe-py>=0.8.0,<0.9', 'python-decouple>=3.8,<4', 'click>=8']
 
 [project.urls]
