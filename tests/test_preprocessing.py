@@ -19,20 +19,6 @@ import os
 ###             1. Utils            ###
 ### ------------------------------- ###
 
-gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
-assert gams_system_directory is not None, (
-    "GAMS system directory not found. "
-    "Set GAMS_SYSTEM_DIR in the pyproject.toml file to point at your GAMS installation, e.g.:\n"
-    "  GAMS_SYSTEM_DIR=/opt/gams/53"
-)
-local_balmorel_dir = os.environ.get("LOCAL_BALMOREL_DIR", None)
-assert local_balmorel_dir is not None, (
-    "Local Balmorel model not found. "
-    "Set LOCAL_BALMOREL_DIR in the pyproject.toml file to point the Balmorel model you want to use for testing, e.g. the following if the model is one directory above this repository:\n"
-    "  LOCAL_BALMOREL_DIR=../Balmorel"
-)
-
-
 ### Create an .inc file
 def test_IncFile():
     # Initiate .inc file class
@@ -73,8 +59,18 @@ def test_IncFile():
 
 def test_temporal_aggregation():
 
-    if local_balmorel_dir is None:
-        raise FileNotFoundError("No path to local Balmorel folder provided")
+    gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
+    assert gams_system_directory is not None, (
+        "GAMS system directory not found. "
+        "Set GAMS_SYSTEM_DIR in the pyproject.toml file to point at your GAMS installation, e.g.:\n"
+        "  GAMS_SYSTEM_DIR=/opt/gams/53"
+    )
+    local_balmorel_dir = os.environ.get("LOCAL_BALMOREL_DIR", None)
+    assert local_balmorel_dir is not None, (
+        "Local Balmorel model not found. "
+        "Set LOCAL_BALMOREL_DIR in the pyproject.toml file to point the Balmorel model you want to use for testing, e.g. the following if the model is one directory above this repository:\n"
+        "  LOCAL_BALMOREL_DIR=../Balmorel"
+    )
 
     m = Balmorel(local_balmorel_dir, gams_system_directory)
 
