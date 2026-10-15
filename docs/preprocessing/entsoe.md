@@ -42,6 +42,9 @@ ENTSOE_API_KEY=your-key-here
 - `entsoe_subzones(canonical_region)` — the ENTSO-E bidding zones that
   collapse to a canonical region (e.g. `'IT'` → the 7 Italian bidding zones).
 - `entsoe_code_to_region(code)` — inverse of `region_to_entsoe_code`.
+- `zone_eic_code(zone)` / `zone_to_region(zone)` — the EIC code / region
+  name of a zone in any spelling: a region name (`DK1`, `UK`), an
+  `entsoe-py` area name (`DK_1`, `GB`) or an EIC code (`10YDK-1--------W`).
 
 ## Fetching data
 
@@ -51,7 +54,13 @@ ENTSOE_API_KEY=your-key-here
   `'day_ahead_prices'`, `'generation'`) for each zone, skipping any already
   downloaded.
 - `fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key)`
-  — same, but for a border-pair query (e.g. `'crossborder_flows'`).
+  — same, but for a border-pair query (e.g. `'crossborder_flows'`). A pair
+  counts as downloaded if a file exists for it under any spelling of its
+  zones, so `2023_DK_1-DE_LU_crossborder_flows.csv` also covers a request
+  for `10YDK-1--------W` → `DE_LU`.
+- `transmission_files(path, year)` / `find_transmission_file(path, year, from, to)`
+  — the downloaded border files, one per directed pair of EIC codes, so a
+  border saved under two spellings is never read twice.
 
 Data is saved as one CSV per zone (or border) and query, named
 `<year>_<zone>_<query>.csv` (or `<year>_<from>-<to>_<query>.csv`), in the

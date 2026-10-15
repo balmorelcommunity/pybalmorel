@@ -27,13 +27,20 @@ from pybalmorel.backcasting.calendar import (
 from pybalmorel.backcasting.co2tax import parse_co2_overrides, write_co2_tax_override
 from pybalmorel.backcasting.flows import (
     align_flows,
+    canonical_region,
     entsoe_flow_limits,
     flow_statistics,
     format_balmorel_flows,
     load_entsoe_flows,
-    parse_flow_filename,
+    observed_max_flow,
 )
 from pybalmorel.backcasting.pricelevel import deflator, eur_per_usd, to_price_year
+from pybalmorel.entsoe import (
+    find_transmission_file,
+    parse_transmission_filename,
+    transmission_files,
+    zone_eic_code,
+)
 from pybalmorel.backcasting.scenariochecks import (
     check_balopt_option,
     check_hardcoded_fuelprices,
@@ -221,11 +228,48 @@ def test_check_hardcoded_fuelprices(tmp_path):
             "2023_10YNO-1--------2-10Y1001A1001A48H_crossborder_flows.csv",
             ("10YNO-1--------2", "10Y1001A1001A48H"),
         ),
+        ("2023_DK_1-NO_2_crossborder_flows.csv", ("DK_1", "NO_2")),
+        ("2023_AT-IT_NORD_crossborder_flows.csv", ("AT", "IT_NORD")),
         ("2024_FR-ES_crossborder_flows.csv", None),
     ],
 )
-def test_parse_flow_filename(file_name, expected):
-    assert parse_flow_filename(file_name, 2023) == expected
+def test_parse_transmission_filename(file_name, expected):
+    assert parse_transmission_filename(file_name, 2023) == expected
+
+
+@pytest.mark.parametrize(
+    "spellings, region",
+    [
+        (["DK1", "DK_1", "10YDK-1--------W"], "DK1"),
+        (["UK", "GB", "10YGB----------A"], "UK"),
+        (["NO2", "NO_2", "10YNO-2--------T"], "NO2"),
+        (["IT-NORD", "IT_NORD", "10Y1001A1001A73I"], "IT"),
+        (["DE", "DE_LU"], "DE"),
+        (["FR"], "FR"),
+    ],
+)
+def test_zone_spellings_agree(spellings, region):
+    assert len({zone_eic_code(zone) for zone in spellings}) == 1
+    assert {canonical_region(zone) for zone in spellings} == {region}
+
+
+def test_transmission_files_found_under_any_spelling(tmp_path):
+    # The same DK1 -> DE border fetched under both spellings
+    _write_flow_csv(tmp_path, "2023_DK_1-DE_LU_crossborder_flows.csv", [100.0] * 4)
+    _write_flow_csv(tmp_path, "2023_10YDK-1--------W-DE_LU_crossborder_flows.csv", [100.0] * 4)
+    _write_flow_csv(tmp_path, "2023_NO_2-DK_1_crossborder_flows.csv", [50.0] * 4)
+
+    assert len(transmission_files(tmp_path, 2023)) == 2
+    assert find_transmission_file(tmp_path, 2023, "10YNO-2--------T", "10YDK-1--------W") == (
+        tmp_path / "2023_NO_2-DK_1_crossborder_flows.csv"
+    )
+    assert find_transmission_file(tmp_path, 2023, "DK_1", "NO_2") is None
+    assert observed_max_flow(2023, "10YNO-2--------T", "10YDK-1--------W", tmp_path) == 50.0
+
+    # Read once, not summed twice
+    flows = load_entsoe_flows(tmp_path, 2023)
+    assert flows.query("From == 'DK1' and To == 'DE'")["Value"].tolist() == [100.0]
+    assert entsoe_flow_limits(tmp_path, 2023)[("DK1", "DE")] == 100.0
 
 
 def _write_flow_csv(path, file_name, values, freq="15min"):

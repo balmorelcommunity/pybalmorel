@@ -18,6 +18,7 @@ Created on 18.06.2026
 #        0. Script Settings       #
 # ------------------------------- #
 
+import re
 import pandas as pd
 import requests
 from pathlib import Path
@@ -152,6 +153,128 @@ def entsoe_code_to_region(code: str) -> str:
     return _code_to_region.get(code, code)
 
 
+def zone_eic_code(zone: str) -> str:
+    """The EIC code of any ENTSO-E zone identifier.
+
+    Accepts a Balmorel/canonical region name ('DK1', 'UK'), an entsoe-py area
+    name ('DK_1', 'GB') or an EIC code ('10YDK-1--------W'), so files fetched
+    under different spellings of the same zone can be recognised as one.
+
+    Args:
+        zone (str): The zone identifier.
+
+    Returns:
+        str: The EIC code, or the query code itself if entsoe-py doesn't know it.
+    """
+    query_code = region_to_entsoe_code(zone)
+    try:
+        return lookup_area(query_code).code
+    except ValueError:
+        return query_code
+
+
+def zone_to_region(zone: str) -> str:
+    """The region name of any ENTSO-E zone identifier (before canonical translation).
+
+    Like entsoe_code_to_region, but also understands entsoe-py area names
+    ('DK_1' -> 'DK1', 'IT_NORD' -> 'IT-NORD', 'GB' -> 'UK') and EIC codes not in
+    bidding_zone_codes.
+
+    Args:
+        zone (str): The zone identifier.
+
+    Returns:
+        str: The region name, falling back to the entsoe-py area name or `zone` itself.
+    """
+    if zone in _code_to_region:
+        return _code_to_region[zone]
+    try:
+        area = lookup_area(zone)
+    except ValueError:
+        return zone
+    for key in (area.code, area.name):
+        if key in _code_to_region:
+            return _code_to_region[key]
+    return area.name
+
+
+# One zone token in a '<year>_<from>-<to>_<query>.csv' file name: a
+# 16-character EIC code (which itself contains '-') or an area name like
+# 'FR', 'DE_LU' or 'DK_1'
+_zone_token = r"(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z0-9]+)*)"
+
+
+def parse_transmission_filename(
+    file_name: str, year: int, entsoe_query: str = "crossborder_flows"
+) -> tuple[str, str] | None:
+    """The (from, to) zones of a '<year>_<from>-<to>_<entsoe_query>.csv' file.
+
+    Args:
+        file_name (str): The file name, without folder.
+        year (int): The year the file must be for.
+        entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+    Returns:
+        tuple[str, str] | None: The zones as spelled in the name, or None if it doesn't match.
+    """
+    match = re.fullmatch(
+        rf"{year}_{_zone_token}-{_zone_token}_{re.escape(entsoe_query)}\.csv", file_name
+    )
+    return (match.group(1), match.group(2)) if match else None
+
+
+def transmission_files(
+    path: str | Path, year: int, entsoe_query: str = "crossborder_flows"
+) -> dict[tuple[str, str], Path]:
+    """The fetched transmission files in `path`, one per directed pair of EIC codes.
+
+    A pair fetched under several spellings (e.g. 'DK_1-DE_LU' and
+    '10YDK-1--------W-DE_LU') appears once, so it is never read twice.
+
+    Args:
+        path (str | Path): Folder with the fetched csv's.
+        year (int): The year to look for.
+        entsoe_query (str, optional): The query in the file names. Defaults to 'crossborder_flows'.
+
+    Returns:
+        dict[tuple[str, str], Path]: {(from EIC code, to EIC code): file}.
+    """
+    files = {}
+    for csv_path in sorted(Path(path).glob(f"{year}_*_{entsoe_query}.csv")):
+        zones = parse_transmission_filename(csv_path.name, year, entsoe_query)
+        if zones is None:
+            continue
+        files.setdefault(tuple(zone_eic_code(zone) for zone in zones), csv_path)
+    return files
+
+
+def find_transmission_file(
+    path: str | Path,
+    year: int,
+    zone_from: str,
+    zone_to: str,
+    entsoe_query: str = "crossborder_flows",
+) -> Path | None:
+    """The fetched file for one directed pair, whichever spelling it was saved under.
+
+    Args:
+        path (str | Path): Folder with the fetched csv's.
+        year (int): The year to look for.
+        zone_from (str): Zone the flow originates from, in any spelling.
+        zone_to (str): Zone the flow arrives at, in any spelling.
+        entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+    Returns:
+        Path | None: The file, or None if the pair hasn't been fetched.
+    """
+    exact = Path(path) / f"{year}_{zone_from}-{zone_to}_{entsoe_query}.csv"
+    if exact.exists():
+        return exact
+    return transmission_files(path, year, entsoe_query).get(
+        (zone_eic_code(zone_from), zone_eic_code(zone_to))
+    )
+
+
 def entsoe_subzones(canonical_region: str) -> list[str]:
     """The ENTSO-E bidding zones that collapse to `canonical_region`.
 
@@ -226,11 +349,11 @@ def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_k
     client = EntsoePandasClient(api_key=api_key)
     start_date, end_date = get_full_year(year)
     p = Path(path)
+    # Pairs already fetched under any spelling of their zones are skipped
+    fetched = set(transmission_files(p, year, entsoe_query))
     for region_from, region_to in from_to_list:
         try:
-            if not p.joinpath(
-                f"{year}_{region_from}-{region_to}_{entsoe_query}.csv"
-            ).exists():
+            if (zone_eic_code(region_from), zone_eic_code(region_to)) not in fetched:
                 df = getattr(client, f"query_{entsoe_query}")(
                     region_from,
                     region_to,
@@ -269,13 +392,15 @@ if __name__ == "__main__":
         "GR": NEIGHBOURS["GR"] + ["IT_SUD"],
         "ME": NEIGHBOURS["ME"] + ["IT_CSUD"],
     }
+    # Saved under the same zone spelling transmission-max-flow uses
+    query_code = lambda name: region_to_entsoe_code(zone_to_region(name))
     neighbour_pairs = sorted(
         {
-            pair
+            (query_code(pair_from), query_code(pair_to))
             for zone_from in zone_names
             for zone_to in neighbours.get(zone_from, [])
             if zone_to in zone_names
-            for pair in [(zone_from, zone_to), (zone_to, zone_from)]
+            for pair_from, pair_to in [(zone_from, zone_to), (zone_to, zone_from)]
         }
     )
     for year in [2023]:

@@ -13,7 +13,6 @@ Created on 09.07.2026
 #        0. Script Settings       #
 # ------------------------------- #
 
-import re
 import click
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,10 +23,12 @@ from itertools import product
 from matplotlib.figure import Figure
 from ..entsoe import (
     bidding_zone_translation,
-    entsoe_code_to_region,
     entsoe_subzones,
     fetch_annual_transmission_data,
+    find_transmission_file,
     region_to_entsoe_code,
+    transmission_files,
+    zone_to_region,
 )
 from ..classes import Balmorel, IncFile
 from .calendar import backcast_hours, from_backcast_grid
@@ -39,16 +40,35 @@ from .calendar import backcast_hours, from_backcast_grid
 path = Path("tests/output")
 
 
+def read_flow_csv(csv_path: str | Path) -> pd.Series:
+    """Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.
+
+    Args:
+        csv_path (str | Path): The csv.
+
+    Returns:
+        pd.Series: Hourly flows.
+    """
+    temp = pd.read_csv(csv_path)
+    temp.columns = ["Time", "Value"]
+    temp.Time = pd.to_datetime(temp.Time, utc=True)
+    return temp.set_index("Time")["Value"].resample("1h").mean()
+
+
 def get_data(year, from_to_list, path: Path | str = path):
     path = Path(path)
     df = pd.DataFrame()
     for region_from, region_to in from_to_list:
-        temp = pd.read_csv(
-            path.joinpath(f"{year}_{region_from}-{region_to}_crossborder_flows.csv")
+        csv_path = find_transmission_file(path, year, region_from, region_to)
+        if csv_path is None:
+            raise FileNotFoundError(
+                f"No {year} crossborder_flows csv for {region_from}-{region_to} in {path}"
+            )
+        temp = (
+            read_flow_csv(csv_path)
+            .rename(f"{region_from}-{region_to}")
+            .reset_index()
         )
-        temp.columns = ["Time", f"{region_from}-{region_to}"]
-        temp.Time = pd.to_datetime(temp.Time, utc=True)
-        temp = temp.set_index("Time").resample("1h").aggregate("mean").reset_index()
 
         if len(df) == 0:
             df = temp
@@ -70,20 +90,18 @@ def observed_max_flow(
 
     Args:
         year (int): The year to read.
-        region_from (str): ENTSO-E zone code/name flow originates from.
-        region_to (str): ENTSO-E zone code/name flow arrives at.
+        region_from (str): ENTSO-E zone code/name flow originates from (any spelling).
+        region_to (str): ENTSO-E zone code/name flow arrives at (any spelling).
         path (Path | str): Folder containing the fetched crossborder_flows csv's.
 
     Returns:
         float | None: The observed max flow in MW, or None if the csv wasn't fetched.
     """
-    path = Path(path)
-    csv_path = path / f"{year}_{region_from}-{region_to}_crossborder_flows.csv"
-    if not csv_path.exists():
+    csv_path = find_transmission_file(path, year, region_from, region_to)
+    if csv_path is None:
         return None
 
-    df = get_data(year, [[region_from, region_to]], path=path)
-    return df[f"{region_from}-{region_to}"].max()
+    return read_flow_csv(csv_path).max()
 
 
 # ------------------------------- #
@@ -314,31 +332,10 @@ def generate_transmission_max_flow_overrides(
 #      3. Flow validation         #
 # ------------------------------- #
 
-# An ENTSO-E zone token in a crossborder_flows filename: a 16-character EIC
-# code (which itself contains '-') or a short name like 'FR' or 'DE_LU'
-_zone_token = r"(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z]+)?)"
-
-
 def canonical_region(name: str) -> str:
-    """The Canonical Region Name of a Balmorel region or ENTSO-E zone code/name."""
-    region = entsoe_code_to_region(name)
+    """The Canonical Region Name of a Balmorel region or any ENTSO-E zone spelling."""
+    region = zone_to_region(name)
     return bidding_zone_translation.get(region, region)
-
-
-def parse_flow_filename(file_name: str, year: int) -> tuple[str, str] | None:
-    """The (from, to) ENTSO-E zones of a '<year>_<from>-<to>_crossborder_flows.csv' file.
-
-    Args:
-        file_name (str): The file name, without folder.
-        year (int): The year the file must be for.
-
-    Returns:
-        tuple[str, str] | None: The zones, or None if the name doesn't match.
-    """
-    match = re.fullmatch(
-        rf"{year}_{_zone_token}-{_zone_token}_crossborder_flows\.csv", file_name
-    )
-    return (match.group(1), match.group(2)) if match else None
 
 
 def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
@@ -347,7 +344,8 @@ def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
     Each file is resampled to hourly means (MW, i.e. MWh per hour), then
     summed over every ENTSO-E zone pair that collapses to the same canonical
     border (e.g. the Italian sub-zones). Internal links, where both sides
-    share a canonical name, are dropped.
+    share a canonical name, are dropped. A pair fetched under several zone
+    spellings (e.g. 'DK_1' and '10YDK-1--------W') is read once.
 
     Args:
         entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
@@ -359,18 +357,12 @@ def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
     """
     hours = backcast_hours(year)
     flows = []
-    for csv_path in sorted(Path(entsoe_data_path).glob(f"{year}_*_crossborder_flows.csv")):
-        zones = parse_flow_filename(csv_path.name, year)
-        if zones is None:
-            warn(f"{csv_path.name} was not loaded as its zones could not be parsed.")
-            continue
-
+    for zones, csv_path in transmission_files(entsoe_data_path, year).items():
         region_from, region_to = (canonical_region(zone) for zone in zones)
         if region_from == region_to:
             continue
 
-        temp = get_data(year, [list(zones)], path=csv_path.parent)
-        temp = temp.rename(columns={temp.columns[1]: "Value"})
+        temp = read_flow_csv(csv_path).reset_index()
         temp = temp[temp.Time.isin(hours)]
         temp["From"], temp["To"] = region_from, region_to
         flows.append(temp)
@@ -399,15 +391,12 @@ def entsoe_flow_limits(entsoe_data_path: str | Path, year: int) -> pd.Series:
         pd.Series: Limit in MW, indexed by ('From', 'To').
     """
     limits = {}
-    for csv_path in sorted(Path(entsoe_data_path).glob(f"{year}_*_crossborder_flows.csv")):
-        zones = parse_flow_filename(csv_path.name, year)
-        if zones is None:
-            continue
+    for zones, csv_path in transmission_files(entsoe_data_path, year).items():
         border = tuple(canonical_region(zone) for zone in zones)
         if border[0] == border[1]:
             continue
-        value = observed_max_flow(year, zones[0], zones[1], csv_path.parent)
-        if value is not None and not np.isnan(value):
+        value = read_flow_csv(csv_path).max()
+        if not np.isnan(value):
             limits[border] = limits.get(border, 0.0) + value
 
     return pd.Series(limits, name="Limit", dtype=float).rename_axis(["From", "To"])
