@@ -29,6 +29,29 @@ DE.body.index += ' . RESE'
 DE.save()
 ```
 
+### Building the body from long-format data
+Data often comes in long format, with one column per set and a value column. `IncFile.body_prepare` pivots such a DataFrame into the table layout of an .inc file, joining multiple index or column levels with " . " as GAMS expects:
+
+```python
+DE = IncFile(name='DE',
+            prefix="TABLE   DE1(RRR,DEUSER,YYY)   'Annual electricity consumption (MWh)'\n",
+            suffix="\n;\nDE(YYY,RRR,DEUSER) = DE1(RRR,DEUSER,YYY);",
+            path='Balmorel/sc1/data')
+
+DE.body = pd.DataFrame({
+    'R': ['DK1', 'DK1', 'DK2', 'DK2'],
+    'DEUSER': ['RESE', 'RESE', 'RESE', 'RESE'],
+    'Y': [2030, 2050, 2030, 2050],
+    'Value': [17e6, 25e6, 14e6, 20e6],
+})
+
+# Rows become 'DK1 . RESE' and 'DK2 . RESE', columns become the years
+DE.body_prepare(index=['R', 'DEUSER'], columns=['Y'])
+DE.save()
+```
+
+`body_prepare` also takes `values` (the value column, defaults to 'Value'), `aggfunc` (how duplicates are aggregated, defaults to 'sum') and `fill_value` (what empty cells become, defaults to an empty string). Use `IncFile.body_concat(df)` to append another long-format DataFrame to the body before calling `body_prepare`.
+
 ## Loading all .inc Files
 The 'Balmorel' class can be used to load all .inc files into python. Note that it will also create a .gdx called 'scenario_input_data.gdx' in the model folder. The function 'symbol_to_df' can then be used to create dataframes from elements in the .gdx file.
 ```python
@@ -81,5 +104,5 @@ print('Available technology catalogues: ', list(TD.files.keys()))
 TD.download_catalogue('el_and_dh')
 ```
 
-Note that [TechData.download_all_catalogues](https://balmorelcommunity.github.io/pybalmorel/autoapi/pybalmorel/classes/index.html#pybalmorel.classes.TechData.download_all_catalogues) will look for or try to download all catalogues.
+Note that `TechData.download_all_catalogues` will look for or try to download all catalogues. Downloaded catalogues can be loaded into a DataFrame with `TechData.load`, e.g. `TD.load('el_and_dh')`, which requires `openpyxl` (see [installation](../get_started/installation.md#optional-features)).
 

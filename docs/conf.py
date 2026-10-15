@@ -23,6 +23,9 @@ autoapi_dirs = ["../src/pybalmorel"]
 # ignore this file when generating API documentation
 autoapi_ignore = ["*/conf.py"]
 
+# generate anchors for headings down to ###, so links like page.md#heading work
+myst_heading_anchors = 3
+
 myst_enable_extensions = [
     "colon_fence",  # ::: can be used instead of ``` for better rendering    
 ]

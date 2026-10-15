@@ -4,7 +4,7 @@ The `weatheryear` module converts outputs from external models (CorRES, demand, 
 
 ## Installation
 
-`pyyaml` and `xlsxwriter` are required by this module but are **not installed by default** with `pybalmorel`. Install them via the `weatheryear` extra:
+`pyyaml`, `xlsxwriter` and `openpyxl` are required by this module but are **not installed by default** with `pybalmorel`. Install them via the `weatheryear` extra:
 
 ```bash
 pip install pybalmorel[weatheryear]
@@ -143,16 +143,50 @@ results/
     ├── PV_Rooftop/
     ├── ...
     └── to_balmorel/                  ← .inc files ready for Balmorel
-        ├── WND_VAR_T_Future_Onshore_2013.inc
-        ├── SOL_VAR_T_PV_Rooftop_2013.inc
-        ├── AAA_renewable.inc
+        ├── AAA_renewable.inc         ← investment data (get_vre_related_files)
         ├── GDATA_renewable.inc
-        ├── DE_VAR_T_DK1_2013.inc
-        ├── DH_VAR_T_DK1_2013.inc
-        ├── HYDRO_ROR_VAR_T_2013.inc
-        ├── SEASONALCOP_COP_VAR_T_2013.inc
-        └── ...
+        ├── ...
+        ├── HourlyDispatch/           ← Day-Ahead (full hourly) time series
+        │   ├── raw/
+        │   └── scaled_long_term/
+        └── CapDev/                   ← time series at the CapDev timesteps
+            ├── raw/                  ← the actual weather of the year
+            ├── scaled_long_term/
+            └── scaled_full_year/
 ```
+
+Each time series folder holds the wind, solar, demand, hydro and COP files, e.g. `WND_VAR_T.inc`, `SOLE_VAR_T.inc`, `WNDFLH.inc`, `DE_VAR_T_RESE.inc` and `WTRRRVAR_T_WY.inc`.
+
+## Writing a Balmorel Scenario
+
+Some of the WEATHERYEAR output can't be dropped straight into a Balmorel scenario: Balmorel only reads a scenario's own `data/<NAME>.inc` when the filename matches exactly, and some output is split across several files or holds scaling factors rather than values. `write_scenario_data` turns one year's CapDev output into the files a scenario's `data/` folder needs:
+
+```python
+from pybalmorel.weatheryear.scenario_data import write_scenario_data
+
+written = write_scenario_data(
+    capdev_dir="results/2013/to_balmorel/CapDev/raw",
+    to_balmorel_dir="results/2013/to_balmorel",
+    dest_dir="path/to/Balmorel/WY2013/data",
+)
+print(f"Wrote {len(written)} files")
+```
+
+What it does:
+
+- **Wind and solar** profiles and full-load hours keep their names. Wind gets a fallback profile for existing areas CorRES has no profile for.
+- **Hydro** files lose the `_WY` suffix. The full-load-hour files are scaling factors, so the base values are loaded first and multiplied.
+- **Demand** is split by user in the WEATHERYEAR output, but Balmorel reads one `DE_VAR_T.inc` and one `DH_VAR_T.inc`. The files are concatenated on top of the base defaults, since the weather year only sets its own users' values.
+- **Individual-user heat** is loaded inside `DH.inc` and `DH_VAR_T.inc`, and empty `INDIVUSERS_DH*.inc` overrides are written so it isn't applied twice.
+- **Investment files** at the top of `to_balmorel/` are copied, except `GKFX_renewable.inc` (the existing fleet comes from base) and `SUBTECHGROUPKPOT.inc`.
+- **Heat-pump COP** files are not written; models that use them need their own wrapper.
+
+Optional arguments:
+
+- `base_data_dir` — GAMS path, relative to the scenario's `model/` folder, of the base data the weather year is applied on top of. Defaults to `'../../base/data'`.
+- `drop_areas` — areas your model doesn't have, removed wherever they appear (matched as substrings), e.g. `drop_areas=('AL_', 'IT_OFF1')`.
+
+Existing files in `dest_dir` with the same names are overwritten.
 
 ## Processing Multiple Years
 

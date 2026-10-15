@@ -70,3 +70,27 @@ print(f"Then, convert this to USD2016: {in_usd}")
 ```
 
 Official Eurostat links above describe file formats and variables in detail.
+
+## Average Fuel Prices CLI
+
+`pybalmorel.economics.get_average_prices` is a small command-line tool that prints annual average fuel prices from downloaded market data, for use as static fuel prices in Balmorel backcasting. It requires the `entso-e` extra (`pip install pybalmorel[entso-e]`) for `click`, and `openpyxl` for the oil bulletin.
+
+```bash
+python -m pybalmorel.economics.get_average_prices naturalgas
+python -m pybalmorel.economics.get_average_prices coal
+python -m pybalmorel.economics.get_average_prices fueloil
+```
+
+Each command reads a fixed file name from the current working directory:
+
+| Command | Input file | Source | Output |
+|---|---|---|---|
+| `naturalgas` | `natural_gas_TTF_2024.csv` | [TTF futures, Yahoo Finance](https://finance.yahoo.com/quote/TTF%3DF/history/) | Average price in €/MWh |
+| `coal` | `Rotterdam Coal Futures Historical Data.csv` | [Rotterdam coal futures, investing.com](https://www.investing.com/commodities/rotterdam-coal-futures) | Average price in USD/t and USD/GJ (bituminous coal, 30.2 GJ/t) |
+| `fueloil` | `Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx` | [EU Weekly Oil Bulletin](https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en) | Average heavy fuel oil price per country in €/GJ (39 GJ/t) |
+
+To convert the USD coal price to euros, or a price to another year's money, use the functions above. For season- and hour-resolved fuel prices in a backcasting scenario, see the [backcasting `fuelprices` command](backcasting.md#fuel-prices).
+
+## Technology Catalogues
+
+The `TechData` class, also in `pybalmorel.economics`, downloads and loads the Danish Energy Agency's technology catalogues. See [Downloading Technology Catalogues](overview.md#downloading-technology-catalogues).

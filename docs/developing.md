@@ -21,3 +21,14 @@ developing/testing.md
 developing/publishing.md
 developing/building_docs.md
 ```
+
+## Architecture Decisions
+
+Design decisions that are hard to see from the code alone are recorded as architecture decision records (ADRs) below. Add a new one, numbered in sequence, when you make such a decision.
+
+```{toctree}
+:maxdepth: 1
+:glob:
+
+adr/*
+```

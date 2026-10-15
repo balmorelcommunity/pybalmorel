@@ -54,10 +54,14 @@ The documentation source lives in the `docs/` directory:
 | `conf.py` | Sphinx configuration |
 | `index.md` | Landing page and top-level toctree |
 | `get_started/` | Installation instructions |
-| `preprocessing.md` | Pre-processing examples |
+| `preprocessing.md`, `preprocessing/` | Pre-processing: .inc files, time series aggregation, weather years, economics, ENTSO-E and backcasting |
 | `execution.md` | Execution examples |
-| `postprocessing/` | Post-processing and map plotting |
-| `developing/` | Developer documentation (this section) |
+| `postprocessing.md`, `postprocessing/` | Post-processing and map plotting |
+| `developing.md`, `developing/` | Developer documentation (this section) |
+| `adr/` | Architecture decision records |
+| `img/`, `css/` | Images and custom CSS |
 | `about.md` | About page |
+
+The API reference is generated from the docstrings in `src/pybalmorel` by [sphinx-autoapi](https://sphinx-autoapi.readthedocs.io/). Only folders with an `__init__.py` file are included.
 
 Pages are written in [MyST Markdown](https://myst-parser.readthedocs.io/), which extends standard Markdown with Sphinx directives.

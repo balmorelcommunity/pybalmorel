@@ -9,7 +9,7 @@ res = MainResults(files=['MainResults_Example1.gdx', 'MainResults_Example2.gdx',
 
 ## Basic map plotting
 
-The map plotting tool only needs 2 arguments to work. One has to select the **scenario** (see scenarios importation in [this section](postprocessing.md)), and the **year**. \
+The map plotting tool only needs 2 arguments to work. One has to select the **scenario** (see scenarios importation in [this section](overview.md#getting-specific-results)), and the **year**. \
 With those two arguments, the map of Europe is plotted with the countries inside the model in beige and the countries outside of the model in grey. \
 To plot the transmission lines and the generation information, one has to set the parameters **lines**, **generation**, and **commodity** (*Electricity* or *Hydrogen*). \
 Please note that lines and generation can also be plotted alone but that **commodity is always necessary if one of them is used.**

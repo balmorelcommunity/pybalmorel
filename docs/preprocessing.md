@@ -1,6 +1,6 @@
 # Pre-Processing
 
-The package includes many plotting tools. Go to the next page to get an overview and the [map plotting page](postprocessing/map_plotting.md) for details on the map plotting tool.
+Tools for preparing Balmorel input data. The [overview](preprocessing/overview.md) shows how to create and load .inc files, define geography and download technology catalogues. The remaining pages cover time series aggregation, multi-weather-year input, economic adjustments, ENTSO-E data and backcasting.
 
 ```{toctree}
 :maxdepth: 1
