@@ -11227,6 +11227,7 @@ packages:
   - entsoe-py>=0.8.0,<0.9 ; extra == 'entso-e'
   - python-decouple>=3.8,<4 ; extra == 'entso-e'
   - click>=8 ; extra == 'entso-e'
+  - openpyxl>=3.1.5 ; extra == 'entso-e'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/00/04/c6f72daca5092e3117840a1b1e88dfc809cc1470cf0734890d0366b684a1/orjson-3.11.7-cp313-cp313-win_amd64.whl
   name: orjson
