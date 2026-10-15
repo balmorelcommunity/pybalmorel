@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "1.3.0"
+version = "1.3.1"
 maintainers = [
   { name = "Mathias Berg Rosendal", email = "mathiasros@proton.me" },
   { name = "Théodore Le Nalinec" },
@@ -27,7 +27,12 @@ dependencies = [
 
 [project.optional-dependencies]
 weatheryear = ['xlsxwriter>=3.2.0', 'openpyxl>=3.1.5', 'pyyaml>=6.0']
-entso-e = ['entsoe-py>=0.8.0,<0.9', 'python-decouple>=3.8,<4', 'click>=8', 'openpyxl>=3.1.5']
+entso-e = [
+  'entsoe-py>=0.8.0,<0.9',
+  'python-decouple>=3.8,<4',
+  'click>=8',
+  'openpyxl>=3.1.5',
+]
 
 [project.urls]
 Repository = "https://github.com/Mathias157/pybalmorel"
@@ -106,7 +111,7 @@ docs = { depends-on = [
   "_docs-build",
   "_docs-serve",
 ], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
-release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.3.0/1.3.1/g\""
+release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.3.1/1.3.2/g\""
 
 # --- user: test pybalmorel as an end-user (PyPI install only) ---
 [tool.pixi.feature.user.pypi-dependencies]
