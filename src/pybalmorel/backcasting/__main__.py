@@ -823,6 +823,22 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
     )
 
 
+@main.command(name="ttf-csv")
+@click.argument("html-path", type=str)
+@click.argument("historicalprices-path", type=str)
+def ttf_csv(html_path, historicalprices_path):
+    """Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_<year>.csv.
+
+    HTML_PATH is the page https://finance.yahoo.com/quote/TTF%3DF/history/
+    saved from a browser, covering any number of years. One CSV per year is
+    written to HISTORICALPRICES_PATH in the format the fuelprices command reads.
+    """
+    from .fuelprices import split_yahoo_ttf_html
+
+    for csv_path in split_yahoo_ttf_html(html_path, historicalprices_path):
+        print(f"Wrote {csv_path}")
+
+
 @main.command(name="fuelprices")
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("historicalprices-path", type=str)

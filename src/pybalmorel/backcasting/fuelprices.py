@@ -19,6 +19,7 @@ Created on 13.08.2026
 #        0. Script Settings       #
 # ------------------------------- #
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -90,6 +91,52 @@ def load_rotterdam_coal_prices(
     prices_per_gj = prices_per_tonne_usd / lhv_gj_per_tonne
     series = pd.Series(prices_per_gj.to_numpy(), index=dates)
     return series.dropna().sort_index()
+
+
+TTF_CSV_COLUMNS = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
+
+
+def split_yahoo_ttf_html(
+    html_path: str | Path, output_dir: str | Path
+) -> list[Path]:
+    """Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_<year>.csv files.
+
+    Yahoo Finance only offers its CSV download to paying users, but a saved
+    copy of https://finance.yahoo.com/quote/TTF%3DF/history/ (any date range,
+    e.g. several years) holds the same table. Each calendar year in it is
+    written as one CSV in the format load_ttf_gas_prices reads: 'Date' without
+    the year (e.g. 'Dec 30') and Volume without thousands separators.
+
+    Args:
+        html_path (str | Path): The saved Yahoo Finance history page (.html).
+        output_dir (str | Path): Folder to write natural_gas_TTF_<year>.csv to,
+            typically Balmorel's backcast/historicalprices/. Existing files are
+            overwritten.
+
+    Returns:
+        list[Path]: The written CSV files, one per year.
+    """
+    html = Path(html_path).read_text()
+    # Price rows are the only <tr>s with exactly seven plain-text cells -
+    # dividend/split rows use a colspan cell and are skipped
+    rows = re.findall(r"<tr[^>]*>((?:\s*<td[^>]*>[^<]*</td>){7})\s*</tr>", html)
+    if not rows:
+        raise Exception(f"No 7-column price rows found in '{html_path}'")
+    df = pd.DataFrame(
+        [re.findall(r">([^<]*)</td>", row) for row in rows], columns=TTF_CSV_COLUMNS
+    )
+
+    dates = pd.to_datetime(df["Date"], format="%b %d, %Y")
+    df["Date"] = dates.dt.strftime("%b ") + dates.dt.day.astype(str)
+    df["Volume"] = df["Volume"].str.replace(",", "")
+
+    output_dir = Path(output_dir)
+    written = []
+    for year, year_df in df.groupby(dates.dt.year):
+        csv_path = output_dir / f"natural_gas_TTF_{year}.csv"
+        year_df.to_csv(csv_path, index=False)
+        written.append(csv_path)
+    return written
 
 
 # ------------------------------- #

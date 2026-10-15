@@ -47,6 +47,9 @@ python -m pybalmorel.backcasting transmission-max-flow \
     <entsoe-data-path> \
     <year>
 
+# Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
+python -m pybalmorel.backcasting ttf-csv <html-path> <historicalprices-path>
+
 # Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: historical NATGAS/COAL prices
 python -m pybalmorel.backcasting fuelprices \
     <balmorel-scenario-path> \
@@ -120,8 +123,27 @@ from `<historicalprices-path>`:
 
 | Fuel | File | Unit |
 |---|---|---|
-| `NATGAS` | `natural_gas_TTF_<year>.csv` (TTF futures) | €/MWh, converted to €/GJ |
+| `NATGAS` | `natural_gas_TTF_<year>.csv` (TTF futures, see [below](#getting-the-ttf-price-files)) | €/MWh, converted to €/GJ |
 | `COAL` | `Rotterdam Coal Futures Historical Data.csv` (must cover the year) | USD/t, converted to €/GJ with 30.2 GJ/t |
+
+### Getting the TTF price files
+
+Yahoo Finance only lets paying users download its history as CSV. Instead,
+open <https://finance.yahoo.com/quote/TTF%3DF/history/>, choose a date range
+(it can span several years), and save the page from the browser as HTML.
+Then run `ttf-csv` on it:
+
+```bash
+python -m pybalmorel.backcasting ttf-csv \
+    "2020-2025 Dutch TTF Natural Gas Calendar (TTF=F) Stock Historical Prices & Data - Yahoo Finance.html" \
+    <historicalprices-path>
+```
+
+This writes one `natural_gas_TTF_<year>.csv` per calendar year on the page,
+overwriting any that already exist. Each file has the columns
+`Date,Open,High,Low,Close,Adj Close,Volume`. `Date` has no year (`Dec 30`),
+and `Volume` has no thousands separators, so the file is valid CSV. The
+`fuelprices` command uses `Adj Close`.
 
 Daily prices apply to the UTC calendar day on the Backcast Calendar,
 carrying the last price forward over weekends and holidays. Two files are

@@ -25,6 +25,7 @@ from pybalmorel.backcasting.calendar import (
     to_backcast_grid,
 )
 from pybalmorel.backcasting.co2tax import parse_co2_overrides, write_co2_tax_override
+from pybalmorel.backcasting.fuelprices import load_ttf_gas_prices, split_yahoo_ttf_html
 from pybalmorel.backcasting.flows import (
     align_flows,
     canonical_region,
@@ -153,6 +154,36 @@ def test_price_year_applies_to_grids():
 # %% ------------------------------- ###
 ###        3. CO2 tax               ###
 ### ------------------------------- ###
+
+
+def test_split_yahoo_ttf_html_round_trips_through_loader(tmp_path):
+    def row(*cells):
+        tds = "".join(f'<td class="yf">{cell}</td>' for cell in cells)
+        return f'<tr class="yf">{tds}  </tr>'
+
+    html = (
+        "<tbody>"
+        + row("Jan 2, 2025", "50.0", "51.0", "49.0", "50.4", "50.4", "1,153")
+        + row("Dec 31, 2024", "48.0", "48.5", "47.0", "36.0", "36.0", "-")
+        + row("Dec 30, 2024", "48.3", "48.3", "47.2", "47.6", "47.6", "212")
+        + '<tr><td>Jan 2, 2024</td><td colspan="6">0.5 Dividend</td></tr>'
+        + "</tbody>"
+    )
+    html_path = tmp_path / "ttf.html"
+    html_path.write_text(html)
+
+    written = split_yahoo_ttf_html(html_path, tmp_path)
+
+    assert [path.name for path in written] == [
+        "natural_gas_TTF_2024.csv",
+        "natural_gas_TTF_2025.csv",
+    ]
+    df = pd.read_csv(tmp_path / "natural_gas_TTF_2024.csv")
+    assert list(df["Date"]) == ["Dec 31", "Dec 30"]
+    assert pd.read_csv(tmp_path / "natural_gas_TTF_2025.csv")["Volume"].item() == 1153
+
+    prices = load_ttf_gas_prices(tmp_path / "natural_gas_TTF_2024.csv", 2024)
+    assert prices[pd.Timestamp("2024-12-31")] == pytest.approx(36.0 / 3.6)
 
 
 def test_parse_co2_overrides():
