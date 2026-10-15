@@ -2,8 +2,9 @@
 Backcasting
 
 Validate simulated Balmorel behaviour against historical ENTSO-E data:
-load/price/generation comparison and the Observed Max Flow XKFX overrides
-(see CONTEXT.md and docs/adr/0005, 0006, 0007). Depends on pybalmorel.entsoe
+load/price/generation/flow comparison, the Observed Max Flow XKFX overrides,
+and historical fuel prices and CO2 tax on the UTC Backcast Calendar
+(see CONTEXT.md and docs/adr/0005-0009). Depends on pybalmorel.entsoe
 for raw data access; pybalmorel.entsoe never depends on this package.
 
 Created on 07.08.2026

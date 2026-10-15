@@ -14,12 +14,20 @@ Created on 24.06.2026
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from zoneinfo import ZoneInfo
 from pathlib import Path
 import click
 from decouple import config
 from .. import MainResults
 from ..entsoe import bidding_zone_translation, entsoe_code_to_region
+from .calendar import from_backcast_grid
+from .flows import (
+    align_flows,
+    entsoe_flow_limits,
+    flow_statistics,
+    format_balmorel_flows,
+    load_entsoe_flows,
+    plot_flow_duration_curves,
+)
 from warnings import warn
 
 balmorel_to_category = {
@@ -192,9 +200,7 @@ def format_entsoe_data(df, resampling: str, filepath: Path, year: int, parameter
             aggregation = {col: "mean" for col in df.columns[:-1]}
 
     # Get time and resample to hours
-    df.Time = pd.to_datetime(df.Time, utc=True).dt.tz_convert(
-        "Europe/Copenhagen",
-    )
+    df.Time = pd.to_datetime(df.Time, utc=True)
     df = (
         df.resample(
             resampling,
@@ -232,7 +238,8 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
             else:
                 tries += 1
 
-        if tries == len(data_items):
+        # Cross-border flows are loaded separately, see flows.load_entsoe_flows
+        if tries == len(data_items) and not item.match("*_crossborder_flows.csv"):
             warn(
                 f"{item} was not loaded as it did not match naming pattern.",
                 Warning,
@@ -241,50 +248,24 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
     return [getattr(data, data_item) for data_item in data_items]
 
 
-def format_balmorel_df(df: pd.DataFrame, year: int):
-    if not (df.Season.unique().shape[0] == 52 and df.Time.unique().shape[0] == 168):
-        raise ValueError("Temporal structure not recognised!")
+def format_balmorel_df(df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.
 
-    new_timeindex = (
-        pd.date_range(
-            f"{year}-01-01 00:00",
-            f"{year}-12-31 23:00",
-            freq="h",
-            tz=ZoneInfo("Europe/Copenhagen"),
-        )
-        .isocalendar()
-        .reset_index()
-    )
+    Args:
+        df (pd.DataFrame): MainResults symbol with 'Region', 'Season', 'Time'
+            and 'Value' columns, optionally 'Technology'.
+        year (int): The Backcast Year.
 
-    # Get index of first monday and last sunday
-    first_monday_hour = new_timeindex.iloc[:168, :].query("day == 1").index[0]
-    last_sunday_hour = new_timeindex.query("day == 7").index[-1]
-    new_timeindex = new_timeindex.loc[first_monday_hour:last_sunday_hour, "index"]
+    Returns:
+        pd.DataFrame: Columns 'Time' (UTC timestamps), 'Region', optionally
+            'Technology', and 'Value'.
+    """
+    group_columns = ["Region", "Technology"] if "Technology" in df.columns else ["Region"]
+    df_out = df.groupby(group_columns + ["Season", "Time"], as_index=False)[
+        "Value"
+    ].sum()
 
-    # Insert to Balmorel df
-    if "Technology" in df.columns:
-        columns_in = ["Region", "Technology"]
-        columns_out = columns_in[::-1]
-    else:
-        columns_in = ["Region"]
-        columns_out = columns_in
-
-    df_out = df.pivot_table(
-        index=["Season", "Time"],
-        columns=columns_in,
-        values="Value",
-        aggfunc="sum",
-    )
-
-    df_out.index = new_timeindex
-
-    if type(df_out.columns) is pd.Index:
-        df_out = df_out.stack().reset_index()
-    elif type(df_out.columns) is pd.MultiIndex:
-        df_out = df_out.stack().stack().reset_index()
-    df_out.columns = ["Time"] + columns_out + ["Value"]
-
-    return df_out
+    return from_backcast_grid(df_out, year)
 
 
 def load_balmorel_data(
@@ -293,10 +274,15 @@ def load_balmorel_data(
     "Load df from MainResults"
 
     path = Path(scenario_folder_path).joinpath("backcastoutput")
+    path.mkdir(exist_ok=True)
+    cached_files = [
+        "balmorel_prices.csv",
+        "balmorel_load.csv",
+        "balmorel_generation.csv",
+        "balmorel_flows.csv",
+    ]
     if (
-        not path.joinpath("balmorel_prices.csv").exists()
-        or not path.joinpath("balmorel_load.csv").exists()
-        or not path.joinpath("balmorel_generation.csv").exists()
+        not all(path.joinpath(file).exists() for file in cached_files)
     ) or overwrite:
         print(
             "Loading Balmorel timeseries results from .gdx file (may take a while - will be cached afterwards)"
@@ -311,9 +297,11 @@ def load_balmorel_data(
         generation = results.get_result("PRO_YCRAGFST").query(
             f"Year == '{year}' and Commodity == 'ELECTRICITY'"
         )
+        flows = results.get_result("X_FLOW_YCRST").query(f"Year == '{year}'")
         load.to_csv(path.joinpath("balmorel_load.csv"), index=False)
         elprices.to_csv(path.joinpath("balmorel_prices.csv"), index=False)
         generation.to_csv(path.joinpath("balmorel_generation.csv"), index=False)
+        flows.to_csv(path.joinpath("balmorel_flows.csv"), index=False)
     else:
         print(
             "Loading cached Balmorel results (set overwrite=True to reload MainResults)"
@@ -321,8 +309,9 @@ def load_balmorel_data(
         load = pd.read_csv(path.joinpath("balmorel_load.csv"))
         elprices = pd.read_csv(path.joinpath("balmorel_prices.csv"))
         generation = pd.read_csv(path.joinpath("balmorel_generation.csv"))
+        flows = pd.read_csv(path.joinpath("balmorel_flows.csv"))
 
-    return load, elprices, generation
+    return load, elprices, generation, flows
 
 
 def calculate_statistics(
@@ -339,11 +328,11 @@ def calculate_statistics(
         for region in df.index.get_level_values(0).unique():
             temp = df.loc[region]
             print(
-                f"\nStatistics for {region}:\nStd. dev:\n{temp.std().round()}\nMean:\n{temp.mean().round()}\nMin:\n{temp.mean().round()}\nMax:\n{temp.max().round()}"
+                f"\nStatistics for {region}:\nStd. dev:\n{temp.std().round()}\nMean:\n{temp.mean().round()}\nMin:\n{temp.min().round()}\nMax:\n{temp.max().round()}"
             )
     else:
         print(
-            f"\nStd. dev:\n{df.std().round()}\nMean:\n{df.mean().round()}\nMin:\n{df.mean().round()}\nMax:\n{df.max().round()}"
+            f"\nStd. dev:\n{df.std().round()}\nMean:\n{df.mean().round()}\nMin:\n{df.min().round()}\nMax:\n{df.max().round()}"
         )
 
 
@@ -379,9 +368,10 @@ def aggregate_regions(df: pd.DataFrame, aggfunc: str, time_columns: list):
 def get_and_format_balmorel(
     balmorel_scenario, balmorel_scenario_path, year, elpriceaggfunc, overwrite
 ):
-    balmorel_load, balmorel_elprices, balmorel_generation = load_balmorel_data(
-        balmorel_scenario, balmorel_scenario_path, year, overwrite
+    balmorel_load, balmorel_elprices, balmorel_generation, balmorel_flows = (
+        load_balmorel_data(balmorel_scenario, balmorel_scenario_path, year, overwrite)
     )
+    balmorel_flows = format_balmorel_flows(balmorel_flows, year)
     balmorel_load = format_balmorel_df(
         aggregate_regions(balmorel_load, "sum", ["Season", "Time"]), year
     )
@@ -422,6 +412,7 @@ def get_and_format_balmorel(
         balmorel_load,
         balmorel_elprices,
         balmorel_generation,
+        balmorel_flows,
         balmorel_load_unique_regions,
         balmorel_elprices_unique_regions,
         balmorel_generation_unique_regions,
@@ -502,6 +493,7 @@ def load_and_align(
         balmorel_load,
         balmorel_elprices,
         balmorel_generation,
+        balmorel_flows,
         balmorel_load_unique_regions,
         balmorel_elprices_unique_regions,
         balmorel_generation_unique_regions,
@@ -558,7 +550,13 @@ def load_and_align(
         )
     )
 
-    return prices, loads, generation
+    flows = align_flows(
+        load_entsoe_flows(entsoe_data_path, year),
+        balmorel_flows,
+        entsoe_flow_limits(entsoe_data_path, year),
+    )
+
+    return prices, loads, generation, flows
 
 
 def plot_bar_chart(
@@ -664,17 +662,14 @@ def format(
     overwrite,
 ):
 
-    load_file, price_file, generation_file = (
+    load_file, price_file, generation_file, flow_file = (
         Path(balmorel_scenario_path).joinpath("backcastoutput/loads.csv"),
         Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv"),
         Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv"),
     )
 
-    # TODO: Include cross-border flows
-    # 2024_ES-FR_crossborder_flows.csv
-    # 2024_FR-ES_crossborder_flows.csv
-
-    prices, loads, generation = load_and_align(
+    prices, loads, generation, flows = load_and_align(
         balmorel_scenario,
         balmorel_scenario_path,
         entsoe_data_path,
@@ -685,6 +680,7 @@ def format(
     loads.to_csv(load_file)
     prices.to_csv(price_file)
     generation.to_csv(generation_file)
+    flows.to_csv(flow_file)
 
 
 @main.command()
@@ -725,6 +721,19 @@ def statistics(balmorel_scenario_path):
         calculate_statistics(generation.loc[(slice(None), technology, slice(None))])
     print("-" * 100)
 
+    flow_file = Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv")
+    if flow_file.exists():
+        flows = pd.read_csv(flow_file, index_col=[0, 1, 2])
+        print("\n\n")
+        print("-" * 100)
+        print("Statistics on cross-border flows per directed border")
+        print("(AtLimit: share of hours within 1% of the ENTSO-E Observed Max Flow)")
+        with pd.option_context("display.max_rows", None, "display.width", 200):
+            print(flow_statistics(flows).round(2))
+        print("-" * 100)
+    else:
+        warn(f"No {flow_file} - rerun `format` to include cross-border flows.")
+
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
@@ -763,6 +772,25 @@ def prices(balmorel_scenario_path):
     plot_price_profile(prices)
 
 
+@main.command()
+@click.argument("balmorel-scenario-path", type=str)
+def flows(balmorel_scenario_path):
+    """Plot duration curves of Balmorel vs ENTSO-E flows per directed border."""
+
+    flow_file = Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv")
+
+    if not (flow_file.exists()):
+        raise FileNotFoundError(
+            "Couldn't find flow data and/or results.\nRun `python -m pybalmorel.backcasting format`"
+        )
+    else:
+        print("Load csv's from last loading")
+        flows = pd.read_csv(flow_file, index_col=[0, 1, 2])
+
+    fig, _ = plot_flow_duration_curves(flows)
+    fig.savefig("flow_duration_curves.png", bbox_inches="tight")
+
+
 @main.command(name="transmission-max-flow")
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("entsoe-data-path", type=str)
@@ -799,27 +827,50 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("historicalprices-path", type=str)
 @click.argument("year", type=int)
-@click.option(
-    "--eur-per-usd",
-    type=float,
-    required=True,
-    help="EUR/USD exchange rate for converting the USD-quoted Rotterdam coal price.",
-)
-def fuelprices(balmorel_scenario_path, historicalprices_path, year, eur_per_usd):
+def fuelprices(balmorel_scenario_path, historicalprices_path, year):
     """Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical
     NATGAS/COAL prices for backcasting.
 
-    Reads HISTORICALPRICES_PATH's CSVs, maps them onto Balmorel's S01-S52 x
-    T001-T168 grid, and writes <balmorel-scenario-path>/data/FUELPRICE.inc and
+    Reads HISTORICALPRICES_PATH's CSVs, converts them to the Price Year
+    (EUR2016, bundled HICP and EUR/USD tables), maps them onto the UTC Backcast
+    Calendar and writes <balmorel-scenario-path>/data/FUELPRICE.inc and
     FUELPRICE_CONSTANT.inc. See docs/adr/0001-fuelprice-season-term-resolution.md
-    in the Balmorel repo. Requires FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT to be set
-    in the scenario's balopt.opt (not done by this command) - see that ADR's
-    open issue 4.
+    in the Balmorel repo. Warns if balopt.opt doesn't set
+    FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT (it is never edited).
     """
     from .fuelprices import generate_fuelprice_overrides
 
-    generate_fuelprice_overrides(
-        historicalprices_path, year, eur_per_usd, balmorel_scenario_path
+    generate_fuelprice_overrides(historicalprices_path, year, balmorel_scenario_path)
+
+
+@main.command(name="co2-tax")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("historicalprices-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--co2-override",
+    "co2_overrides",
+    multiple=True,
+    metavar="COUNTRY=VALUE",
+    help="Flat nominal EUR/tCO2 for a Balmorel CCC country instead of the EUA "
+    "price, e.g. UNITED_KINGDOM=85 or SERBIA=0. Repeatable.",
+)
+def co2_tax(balmorel_scenario_path, historicalprices_path, year, co2_overrides):
+    """Write TAX_CO2_ST.inc: (S,T)-resolved historical CO2 tax for backcasting.
+
+    Reads the EEX EUA primary-auction report for YEAR under
+    HISTORICALPRICES_PATH, converts it to the Price Year (EUR2016), maps it onto
+    the UTC Backcast Calendar and writes <balmorel-scenario-path>/data/TAX_CO2_ST.inc.
+    See docs/adr/0002-co2-tax-season-term-resolution.md in the Balmorel repo.
+    Warns if balopt.opt doesn't set TAX_CO2_DOL=YYY_CCC_SSS_TTT (it is never edited).
+    """
+    from .co2tax import generate_co2_tax_override, parse_co2_overrides
+
+    generate_co2_tax_override(
+        historicalprices_path,
+        year,
+        balmorel_scenario_path,
+        parse_co2_overrides(co2_overrides),
     )
 
 

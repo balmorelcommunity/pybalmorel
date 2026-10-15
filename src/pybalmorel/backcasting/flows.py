@@ -1,7 +1,9 @@
 """
 Flows
 
-Analyse transmission flows in ENTSO-E data
+Analyse transmission flows in ENTSO-E data: the Observed Max Flow XKFX
+overrides (docs/adr/0005, 0006) and the validation of Balmorel's flows
+against ENTSO-E's, both aggregated to Canonical Region Names (see CONTEXT.md)
 
 Created on 09.07.2026
 @author: Mathias Berg Rosendal
@@ -11,6 +13,7 @@ Created on 09.07.2026
 #        0. Script Settings       #
 # ------------------------------- #
 
+import re
 import click
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,13 +21,16 @@ import pandas as pd
 from pathlib import Path
 from warnings import warn
 from itertools import product
+from matplotlib.figure import Figure
 from ..entsoe import (
     bidding_zone_translation,
+    entsoe_code_to_region,
     entsoe_subzones,
     fetch_annual_transmission_data,
     region_to_entsoe_code,
 )
 from ..classes import Balmorel, IncFile
+from .calendar import backcast_hours, from_backcast_grid
 
 # ------------------------------- #
 #          1. Functions           #
@@ -41,9 +47,7 @@ def get_data(year, from_to_list, path: Path | str = path):
             path.joinpath(f"{year}_{region_from}-{region_to}_crossborder_flows.csv")
         )
         temp.columns = ["Time", f"{region_from}-{region_to}"]
-        temp.Time = pd.to_datetime(temp.Time, utc=True).dt.tz_convert(
-            "Europe/Copenhagen",
-        )
+        temp.Time = pd.to_datetime(temp.Time, utc=True)
         temp = temp.set_index("Time").resample("1h").aggregate("mean").reset_index()
 
         if len(df) == 0:
@@ -307,7 +311,259 @@ def generate_transmission_max_flow_overrides(
 
 
 # ------------------------------- #
-#            3. Main              #
+#      3. Flow validation         #
+# ------------------------------- #
+
+# An ENTSO-E zone token in a crossborder_flows filename: a 16-character EIC
+# code (which itself contains '-') or a short name like 'FR' or 'DE_LU'
+_zone_token = r"(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z]+)?)"
+
+
+def canonical_region(name: str) -> str:
+    """The Canonical Region Name of a Balmorel region or ENTSO-E zone code/name."""
+    region = entsoe_code_to_region(name)
+    return bidding_zone_translation.get(region, region)
+
+
+def parse_flow_filename(file_name: str, year: int) -> tuple[str, str] | None:
+    """The (from, to) ENTSO-E zones of a '<year>_<from>-<to>_crossborder_flows.csv' file.
+
+    Args:
+        file_name (str): The file name, without folder.
+        year (int): The year the file must be for.
+
+    Returns:
+        tuple[str, str] | None: The zones, or None if the name doesn't match.
+    """
+    match = re.fullmatch(
+        rf"{year}_{_zone_token}-{_zone_token}_crossborder_flows\.csv", file_name
+    )
+    return (match.group(1), match.group(2)) if match else None
+
+
+def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
+    """Hourly ENTSO-E physical flows per directed canonical border.
+
+    Each file is resampled to hourly means (MW, i.e. MWh per hour), then
+    summed over every ENTSO-E zone pair that collapses to the same canonical
+    border (e.g. the Italian sub-zones). Internal links, where both sides
+    share a canonical name, are dropped.
+
+    Args:
+        entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
+        year (int): The Backcast Year.
+
+    Returns:
+        pd.DataFrame: Columns 'From', 'To', 'Time' (UTC) and 'Value', restricted
+            to the Backcast Calendar.
+    """
+    hours = backcast_hours(year)
+    flows = []
+    for csv_path in sorted(Path(entsoe_data_path).glob(f"{year}_*_crossborder_flows.csv")):
+        zones = parse_flow_filename(csv_path.name, year)
+        if zones is None:
+            warn(f"{csv_path.name} was not loaded as its zones could not be parsed.")
+            continue
+
+        region_from, region_to = (canonical_region(zone) for zone in zones)
+        if region_from == region_to:
+            continue
+
+        temp = get_data(year, [list(zones)], path=csv_path.parent)
+        temp = temp.rename(columns={temp.columns[1]: "Value"})
+        temp = temp[temp.Time.isin(hours)]
+        temp["From"], temp["To"] = region_from, region_to
+        flows.append(temp)
+
+    if not flows:
+        return pd.DataFrame(columns=["From", "To", "Time", "Value"])
+
+    return (
+        pd.concat(flows, ignore_index=True)
+        .groupby(["From", "To", "Time"], as_index=False)["Value"]
+        .sum(min_count=1)
+    )
+
+
+def entsoe_flow_limits(entsoe_data_path: str | Path, year: int) -> pd.Series:
+    """The Observed Max Flow per directed canonical border.
+
+    Same totals as XKFX_ENTSOE.inc: the per-file maxima summed over every
+    ENTSO-E zone pair collapsing to the border (see compute_entsoe_transmission_overrides).
+
+    Args:
+        entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
+        year (int): The Backcast Year.
+
+    Returns:
+        pd.Series: Limit in MW, indexed by ('From', 'To').
+    """
+    limits = {}
+    for csv_path in sorted(Path(entsoe_data_path).glob(f"{year}_*_crossborder_flows.csv")):
+        zones = parse_flow_filename(csv_path.name, year)
+        if zones is None:
+            continue
+        border = tuple(canonical_region(zone) for zone in zones)
+        if border[0] == border[1]:
+            continue
+        value = observed_max_flow(year, zones[0], zones[1], csv_path.parent)
+        if value is not None and not np.isnan(value):
+            limits[border] = limits.get(border, 0.0) + value
+
+    return pd.Series(limits, name="Limit", dtype=float).rename_axis(["From", "To"])
+
+
+def format_balmorel_flows(df: pd.DataFrame, year: int) -> pd.DataFrame:
+    """Hourly Balmorel flows per directed canonical border.
+
+    Args:
+        df (pd.DataFrame): X_FLOW_YCRST from MainResults ('From', 'To',
+            'Season', 'Time', 'Value').
+        year (int): The Backcast Year.
+
+    Returns:
+        pd.DataFrame: Columns 'Time' (UTC), 'From', 'To' and 'Value'.
+    """
+    df = df.copy()
+    df["From"] = df["From"].map(canonical_region)
+    df["To"] = df["To"].map(canonical_region)
+    df = df[df["From"] != df["To"]]
+    df = df.groupby(["From", "To", "Season", "Time"], as_index=False)["Value"].sum()
+
+    return from_backcast_grid(df, year)
+
+
+def align_flows(
+    entsoe_flows: pd.DataFrame,
+    balmorel_flows: pd.DataFrame,
+    limits: pd.Series | None = None,
+) -> pd.DataFrame:
+    """Join ENTSO-E and Balmorel flows on every border both datasets know.
+
+    A border counts as known to Balmorel if it appears in either direction in
+    its results. Hours Balmorel leaves out of the GDX are zero flow, so they
+    are filled with 0 rather than dropped - dropping them would bias every
+    statistic towards the hours Balmorel used the border.
+
+    Args:
+        entsoe_flows (pd.DataFrame): Output of load_entsoe_flows.
+        balmorel_flows (pd.DataFrame): Output of format_balmorel_flows.
+        limits (pd.Series | None, optional): Observed Max Flow per border (see
+            entsoe_flow_limits), added as a 'Limit' column. Defaults to None.
+
+    Returns:
+        pd.DataFrame: Index ('From', 'To', 'Time'), columns 'ENTSOE', 'BALMOREL'
+            and, if limits are given, 'Limit'.
+    """
+    balmorel_links = {
+        frozenset(border)
+        for border in balmorel_flows[["From", "To"]].itertuples(index=False)
+    }
+    entsoe_flows = entsoe_flows[
+        [
+            frozenset(border) in balmorel_links
+            for border in entsoe_flows[["From", "To"]].itertuples(index=False)
+        ]
+    ]
+    missing = balmorel_links.difference(
+        frozenset(border) for border in entsoe_flows[["From", "To"]].itertuples(index=False)
+    )
+    if missing:
+        warn(
+            f"These Balmorel borders have no ENTSO-E flow data and are left out: "
+            f"{sorted('-'.join(sorted(link)) for link in missing)}"
+        )
+
+    index = ["From", "To", "Time"]
+    flows = (
+        entsoe_flows.set_index(index)
+        .rename(columns={"Value": "ENTSOE"})
+        .join(
+            balmorel_flows.set_index(index).rename(columns={"Value": "BALMOREL"}),
+            how="left",
+        )
+    )
+    flows["BALMOREL"] = flows["BALMOREL"].fillna(0.0)
+    if limits is not None:
+        flows = flows.join(limits, on=["From", "To"])
+
+    return flows.dropna(subset=["ENTSOE"])
+
+
+def flow_statistics(flows: pd.DataFrame, tolerance: float = 0.01) -> pd.DataFrame:
+    """Per-border comparison of Balmorel and ENTSO-E flows.
+
+    Args:
+        flows (pd.DataFrame): Output of align_flows, optionally with a 'Limit'
+            column (Observed Max Flow, see entsoe_flow_limits).
+        tolerance (float, optional): Relative distance to the limit that still
+            counts as 'at the limit'. Defaults to 0.01.
+
+    Returns:
+        pd.DataFrame: Indexed by ('From', 'To'), with annual energy (TWh),
+            correlation, RMSE (MW) and, if 'Limit' is given, the share of
+            hours at the limit in each dataset.
+    """
+    grouped = flows.groupby(level=["From", "To"])
+    stats = pd.DataFrame(
+        {
+            "ENTSOE_TWh": grouped["ENTSOE"].sum() / 1e6,
+            "BALMOREL_TWh": grouped["BALMOREL"].sum() / 1e6,
+            "Correlation": grouped.apply(lambda df: df["ENTSOE"].corr(df["BALMOREL"])),
+            "RMSE_MW": grouped.apply(
+                lambda df: np.sqrt(((df["BALMOREL"] - df["ENTSOE"]) ** 2).mean())
+            ),
+        }
+    )
+
+    if "Limit" in flows.columns:
+        limited = flows[flows["Limit"].gt(0)]
+        at_limit = limited[["ENTSOE", "BALMOREL"]].ge(
+            limited["Limit"] * (1 - tolerance), axis=0
+        )
+        shares = at_limit.groupby(level=["From", "To"]).mean()
+        stats["Limit_MW"] = limited.groupby(level=["From", "To"])["Limit"].first()
+        stats["ENTSOE_AtLimit"] = shares["ENTSOE"]
+        stats["BALMOREL_AtLimit"] = shares["BALMOREL"]
+
+    return stats
+
+
+def plot_flow_duration_curves(flows: pd.DataFrame, ncols: int = 6) -> tuple[Figure, np.ndarray]:
+    """Duration curves of ENTSO-E and Balmorel flows, one subplot per directed border.
+
+    Args:
+        flows (pd.DataFrame): Output of align_flows.
+        ncols (int, optional): Subplot columns. Defaults to 6.
+
+    Returns:
+        tuple[Figure, np.ndarray]: The figure and its axes.
+    """
+    borders = flows.index.droplevel("Time").unique()
+    nrows = int(np.ceil(len(borders) / ncols))
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(3 * ncols, 2.2 * nrows), squeeze=False, sharex=True
+    )
+
+    for ax, (region_from, region_to) in zip(axes.flat, borders):
+        border = flows.loc[(region_from, region_to)]
+        for source in ["ENTSOE", "BALMOREL"]:
+            curve = np.sort(border[source].to_numpy())[::-1]
+            ax.plot(np.linspace(0, 100, len(curve)), curve, label=source)
+        ax.set_title(f"{region_from} → {region_to}", fontsize=9)
+    for ax in axes.flat[len(borders) :]:
+        ax.set_visible(False)
+
+    axes[0, 0].legend(fontsize=8)
+    fig.supxlabel("Share of hours (%)")
+    fig.supylabel("Flow (MW)")
+    fig.tight_layout()
+
+    return fig, axes
+
+
+# ------------------------------- #
+#            4. Main              #
 # ------------------------------- #
 
 

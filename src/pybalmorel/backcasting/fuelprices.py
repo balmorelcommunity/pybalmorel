@@ -6,8 +6,10 @@ backcast/historicalprices/) into Balmorel's season/term-resolved
 FUELPRICE(YYY,AAA,FFF,SSS,TTT) input (see the Balmorel repo's
 docs/adr/0001-fuelprice-season-term-resolution.md).
 
-Only NATGAS and COAL are converted here - CO2 belongs to EMI_POL, not
-FUELPRICE, and oil is not covered yet.
+Only NATGAS and COAL are converted here - CO2 belongs to TAX_CO2_ST (see
+co2tax.py), and oil is not covered yet. Prices are expressed in the
+backcast Price Year (see pricelevel.py) and mapped onto the UTC Backcast
+Calendar (see calendar.py).
 
 Created on 13.08.2026
 @author: Mathias Berg Rosendal
@@ -22,6 +24,9 @@ from pathlib import Path
 import pandas as pd
 
 from ..classes import IncFile
+from .calendar import daily_to_backcast_grid
+from .pricelevel import PRICE_YEAR, to_price_year
+from .scenariochecks import check_balopt_option, check_hardcoded_fuelprices
 
 # ------------------------------- #
 #          1. Loading             #
@@ -39,7 +44,7 @@ def _clean_numeric(series: pd.Series) -> pd.Series:
 
 
 def load_ttf_gas_prices(csv_path: str | Path, year: int) -> pd.Series:
-    """Load daily TTF natural gas prices, converted to Money/GJ.
+    """Load daily TTF natural gas prices, converted to nominal EUR/GJ.
 
     Args:
         csv_path (str | Path): Path to the Yahoo Finance TTF=F export
@@ -48,7 +53,7 @@ def load_ttf_gas_prices(csv_path: str | Path, year: int) -> pd.Series:
         year (int): Calendar year the file covers, used to complete 'Date'.
 
     Returns:
-        pd.Series: Daily price in Money/GJ, indexed by calendar date.
+        pd.Series: Daily nominal price in EUR/GJ, indexed by calendar date.
     """
     # Volume has unquoted thousands separators (e.g. "1,119"), so a plain
     # pd.read_csv mis-tokenizes those rows - split each line to the header's
@@ -66,84 +71,29 @@ def load_ttf_gas_prices(csv_path: str | Path, year: int) -> pd.Series:
 
 def load_rotterdam_coal_prices(
     csv_path: str | Path,
-    eur_per_usd: float,
     lhv_gj_per_tonne: float = COAL_LHV_GJ_PER_TONNE,
 ) -> pd.Series:
-    """Load daily Rotterdam coal futures prices, converted to Money/GJ.
+    """Load daily Rotterdam coal futures prices, converted to nominal USD/GJ.
 
     Args:
         csv_path (str | Path): Path to the investing.com Rotterdam Coal Futures
             export (columns include 'Date' as MM/DD/YYYY and 'Price' in USD/t).
-        eur_per_usd (float): EUR/USD exchange rate to apply - the source data is
-            quoted in USD, while Balmorel's FUELPRICE convention is Money/GJ in
-            the model's own currency (EUR). No default is provided; pick a rate
-            deliberately rather than have one silently baked in.
         lhv_gj_per_tonne (float, optional): Lower heating value used to convert
             USD/t to USD/GJ. Defaults to 30.2 (bituminous coal).
 
     Returns:
-        pd.Series: Daily price in Money/GJ, indexed by calendar date.
+        pd.Series: Daily nominal price in USD/GJ, indexed by calendar date.
     """
     df = pd.read_csv(csv_path)
     dates = pd.to_datetime(df["Date"], format="%m/%d/%Y")
     prices_per_tonne_usd = _clean_numeric(df["Price"])
-    prices_per_gj = prices_per_tonne_usd * eur_per_usd / lhv_gj_per_tonne
+    prices_per_gj = prices_per_tonne_usd / lhv_gj_per_tonne
     series = pd.Series(prices_per_gj.to_numpy(), index=dates)
     return series.dropna().sort_index()
 
 
 # ------------------------------- #
-#      2. Calendar -> (S,T)       #
-# ------------------------------- #
-
-
-def daily_prices_to_st_grid(prices: pd.Series, year: int) -> pd.DataFrame:
-    """Map a daily price series onto Balmorel's S01-S52 x T001-T168 backcast grid.
-
-    Missing calendar days (weekends/holidays with no trading data) carry the
-    last available price forward (or backward, for gaps before the first
-    observation). Uses the same first-Monday-to-last-Sunday 52-week window as
-    pybalmorel.backcasting.__main__.format_balmorel_df, so the resulting
-    (Season,Time) grid lines up with ENTSO-E-derived backcast data.
-
-    Args:
-        prices (pd.Series): Daily prices indexed by calendar date.
-        year (int): The backcast year.
-
-    Returns:
-        pd.DataFrame: Index 'S01'..'S52', columns 'T001'..'T168'.
-    """
-    prices = prices.copy()
-    prices.index = pd.to_datetime(prices.index).normalize()
-    prices = prices[~prices.index.duplicated(keep="last")].sort_index()
-
-    hourly_index = pd.date_range(
-        f"{year}-01-01 00:00", f"{year}-12-31 23:00", freq="h", tz="Europe/Copenhagen"
-    )
-    daily_lookup = prices.reindex(hourly_index.tz_localize(None).normalize())
-    daily_lookup = daily_lookup.ffill().bfill()
-    daily_lookup.index = hourly_index
-
-    iso = hourly_index.isocalendar().reset_index(drop=True)
-    first_monday_hour = iso.query("day == 1").index[0]
-    last_sunday_hour = iso.query("day == 7").index[-1]
-
-    values = daily_lookup.to_numpy()[first_monday_hour : last_sunday_hour + 1]
-    if len(values) != 52 * 168:
-        raise ValueError(
-            f"Expected {52 * 168} hours in the first-Monday-to-last-Sunday window "
-            f"for {year}, got {len(values)}."
-        )
-
-    return pd.DataFrame(
-        values.reshape(52, 168),
-        index=[f"S{s:02d}" for s in range(1, 53)],
-        columns=[f"T{t:03d}" for t in range(1, 169)],
-    )
-
-
-# ------------------------------- #
-#  3. FUELPRICE.inc (backcast)    #
+#  2. FUELPRICE.inc (backcast)    #
 # ------------------------------- #
 
 
@@ -164,7 +114,7 @@ def write_fuelprice_override(
 
     Args:
         fuel_grids (dict[str, pd.DataFrame]): {FFF fuel name: (S,T) grid},
-            e.g. {'NATGAS': ..., 'COAL': ...} as returned by daily_prices_to_st_grid.
+            e.g. {'NATGAS': ..., 'COAL': ...} as returned by daily_to_backcast_grid.
         year (int): The backcast year these prices apply to.
         scenario_data_path (str | Path): The scenario's 'data' folder.
 
@@ -176,7 +126,7 @@ def write_fuelprice_override(
     for fuel, grid in fuel_grids.items():
         table_name = f"FUELPRICE_ST_{fuel}"
         body_parts.append(
-            f"TABLE {table_name}(SSS,TTT) 'Historical {fuel} price, backcast {year} (Money/GJ)'\n"
+            f"TABLE {table_name}(SSS,TTT) 'Historical {fuel} price, backcast {year} (EUR{PRICE_YEAR}/GJ)'\n"
         )
         body_parts.append(grid.to_string())
         body_parts.append("\n;\n\n")
@@ -238,27 +188,22 @@ def write_fuelprice_constant_override(
 def generate_fuelprice_overrides(
     historicalprices_path: str | Path,
     year: int,
-    eur_per_usd: float,
     balmorel_scenario_path: str | Path,
 ) -> None:
     """Convert backcast/historicalprices/ into FUELPRICE.inc + FUELPRICE_CONSTANT.inc.
 
     Only NATGAS and COAL get real (S,T)-resolved prices - CO2 belongs to
-    EMI_POL, not FUELPRICE, and oil is not covered yet. Every other fuel is
-    flagged constant (see docs/adr/0001 in the Balmorel repo).
+    TAX_CO2_ST (see co2tax.py), and oil is not covered yet. Every other fuel is
+    flagged constant (see docs/adr/0001 in the Balmorel repo). Prices are
+    converted to the Price Year with the bundled HICP and EUR/USD tables.
 
-    Note: requires 'FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT' to be set in the
-    scenario's balopt.opt - currently NOT set for backcast/model/balopt.opt
-    (open issue 4 in the ADR). Also note base/data/HYDROGEN_FUELPRICE.inc
-    currently hardcodes its own flat 2024 COAL/NATGAS prices into
-    FUELPRICE_HYDROGEN, which overrides IFUELPRICE unconditionally whenever
-    it is nonzero - those lines need removing, or this override is silently
-    ignored for COAL/NATGAS.
+    Warns (without changing anything) if the scenario's balopt.opt doesn't set
+    FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT, or if HYDROGEN_FUELPRICE.inc hardcodes
+    NATGAS/COAL prices - in both cases Balmorel would ignore this override.
 
     Args:
         historicalprices_path (str | Path): Path to backcast/historicalprices/.
-        year (int): The backcast year.
-        eur_per_usd (float): EUR/USD exchange rate for the (USD-quoted) coal price.
+        year (int): The Backcast Year.
         balmorel_scenario_path (str | Path): The scenario folder (e.g. .../backcast).
     """
     historicalprices_path = Path(historicalprices_path)
@@ -267,15 +212,19 @@ def generate_fuelprice_overrides(
         historicalprices_path / f"natural_gas_TTF_{year}.csv", year
     )
     coal_prices = load_rotterdam_coal_prices(
-        historicalprices_path / "Rotterdam Coal Futures Historical Data.csv",
-        eur_per_usd,
+        historicalprices_path / "Rotterdam Coal Futures Historical Data.csv"
     )
 
     fuel_grids = {
-        "NATGAS": daily_prices_to_st_grid(gas_prices, year),
-        "COAL": daily_prices_to_st_grid(coal_prices, year),
+        "NATGAS": to_price_year(daily_to_backcast_grid(gas_prices, year), year),
+        "COAL": to_price_year(
+            daily_to_backcast_grid(coal_prices, year), year, currency="USD"
+        ),
     }
 
     scenario_data_path = Path(balmorel_scenario_path) / "data"
     write_fuelprice_override(fuel_grids, year, scenario_data_path)
     write_fuelprice_constant_override(list(fuel_grids), scenario_data_path)
+
+    check_balopt_option(balmorel_scenario_path, "FUELPRICE_DOL", "YYY_AAA_FFF_SSS_TTT")
+    check_hardcoded_fuelprices(balmorel_scenario_path, list(fuel_grids))
