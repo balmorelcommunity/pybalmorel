@@ -1,7 +1,7 @@
 project = "pybalmorel"
 copyright = "2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas"
 author = "Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas"
-release = "1.2.4"
+release = "1.3.0"
 
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".testenv", ".testenv/**"]
@@ -27,10 +27,11 @@ autoapi_ignore = ["*/conf.py"]
 myst_heading_anchors = 3
 
 myst_enable_extensions = [
-    "colon_fence",  # ::: can be used instead of ``` for better rendering    
+    "colon_fence",  # ::: can be used instead of ``` for better rendering
 ]
 
 html_theme = "sphinx_rtd_theme"
 
+
 def setup(app):
-    app.add_css_file('css_options.css')  # may also be an URL
+    app.add_css_file("css_options.css")  # may also be an URL

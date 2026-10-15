@@ -1,4 +1,5 @@
 # Installation
+
 Install into your virtual python environment with [conda](https://www.anaconda.com/) or [pixi](https://pixi.prefix.dev/latest/).
 For more information on how to manage and install virtual environments check out [this resource](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) if you are a conda user.
 
@@ -9,7 +10,9 @@ pip install pybalmorel
 ```
 
 ## Requirements
+
 pybalmorel has the following requirements - here illustrated in an environment.yml file that can be used to create the necessary conda environment (note that it will also install pybalmorel itself, including the dependencies of all optional features listed below):
+
 ```yaml
 name: pybalmorel
 channels:
@@ -32,7 +35,7 @@ dependencies:
   - click>=8
   - pip
   - pip:
-    - pybalmorel==1.2.4
+    - pybalmorel==1.3.0
 ```
 
 ## GAMS
@@ -44,7 +47,7 @@ Loading `.gdx` files, reading .inc files and running Balmorel requires a [GAMS](
 Some features need additional packages that are not installed by default:
 
 | Feature | Install |
-|---|---|
+| --- | --- |
 | [Multi-weather-year input](../preprocessing/multi_weather_year_input.md) | `pip install pybalmorel[weatheryear]` |
 | [ENTSO-E data fetching](../preprocessing/entsoe.md), [backcasting](../preprocessing/backcasting.md) and the [average fuel price CLI](../preprocessing/economics.md#average-fuel-prices-cli) | `pip install pybalmorel[entso-e]` |
 | [Time series aggregation](../preprocessing/timeseriesagg.md) | `pip install tsam ripgrepy` |
