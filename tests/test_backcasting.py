@@ -345,3 +345,34 @@ def test_flow_validation(tmp_path):
     assert stats.loc[("IT", "CH"), "ENTSOE_TWh"] == pytest.approx(260 / 1e6)
     assert stats.loc[("IT", "CH"), "BALMOREL_AtLimit"] == 0.5
     assert stats.loc[("IT", "CH"), "ENTSOE_AtLimit"] == 0.5
+
+
+def test_fetch_transmission_remembers_no_data_and_survives_timeouts(tmp_path, monkeypatch):
+    import requests
+    from entsoe.exceptions import NoMatchingDataError
+    import pybalmorel.entsoe as entsoe_module
+
+    calls = []
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        def query_crossborder_flows(self, region_from, region_to, start, end):
+            calls.append((region_from, region_to))
+            if region_from == "FR":
+                raise NoMatchingDataError
+            if region_from == "DK_1":
+                raise requests.exceptions.ReadTimeout
+            return pd.Series([1.0], index=[start])
+
+    monkeypatch.setattr(entsoe_module, "EntsoePandasClient", FakeClient)
+    pairs = [("FR", "LU"), ("DK_1", "NO_2"), ("NO_2", "DK_1")]
+
+    entsoe_module.fetch_annual_transmission_data("crossborder_flows", pairs, 2023, tmp_path, "key")
+    assert len(calls) == 3
+
+    # Second run: the no-data pair and the fetched pair are skipped, the timed out one retried
+    calls.clear()
+    entsoe_module.fetch_annual_transmission_data("crossborder_flows", pairs, 2023, tmp_path, "key")
+    assert calls == [("DK_1", "NO_2")]

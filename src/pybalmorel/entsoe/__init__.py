@@ -345,34 +345,64 @@ def fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key):
             print(e)
 
 
-def fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key):
-    client = EntsoePandasClient(api_key=api_key)
+def no_data_file(path: str | Path, year: int, entsoe_query: str) -> Path:
+    """The file remembering pairs ENTSO-E has no data for, so reruns skip them.
+
+    Delete it to query those pairs again.
+    """
+    return Path(path) / f"{year}_{entsoe_query}_nodata.txt"
+
+
+def read_no_data_pairs(
+    path: str | Path, year: int, entsoe_query: str = "crossborder_flows"
+) -> set[tuple[str, str]]:
+    """The (from EIC code, to EIC code) pairs ENTSO-E previously had no data for."""
+    f = no_data_file(path, year, entsoe_query)
+    if not f.exists():
+        return set()
+    return {
+        tuple(line.split("\t"))  # pyright: ignore
+        for line in f.read_text().splitlines()
+        if line.count("\t") == 1
+    }
+
+
+def fetch_annual_transmission_data(
+    entsoe_query, from_to_list, year, path, api_key, timeout: int = 120
+):
+    client = EntsoePandasClient(api_key=api_key, timeout=timeout)
     start_date, end_date = get_full_year(year)
     p = Path(path)
-    # Pairs already fetched under any spelling of their zones are skipped
+    # Pairs already fetched under any spelling of their zones are skipped,
+    # as are pairs ENTSO-E had no data for on an earlier run
     fetched = set(transmission_files(p, year, entsoe_query))
+    no_data = read_no_data_pairs(p, year, entsoe_query)
     for region_from, region_to in from_to_list:
+        eic_pair = (zone_eic_code(region_from), zone_eic_code(region_to))
+        if eic_pair in fetched or eic_pair in no_data:
+            continue
         try:
-            if (zone_eic_code(region_from), zone_eic_code(region_to)) not in fetched:
-                df = getattr(client, f"query_{entsoe_query}")(
-                    region_from,
-                    region_to,
-                    start=start_date,  # pyright: ignore
-                    end=end_date,  # pyright: ignore
-                )
+            df = getattr(client, f"query_{entsoe_query}")(
+                region_from,
+                region_to,
+                start=start_date,  # pyright: ignore
+                end=end_date,  # pyright: ignore
+            )
 
-                df.to_csv(
-                    p.joinpath(f"{year}_{region_from}-{region_to}_{entsoe_query}.csv")
-                )
+            df.to_csv(
+                p.joinpath(f"{year}_{region_from}-{region_to}_{entsoe_query}.csv")
+            )
         except ValueError as e:
             print(f"Couldn't fetch link {region_from}-{region_to}")
             print(e)
-        except NoMatchingDataError as e:
+        except NoMatchingDataError:
             print(f"Couldn't find any data for link {region_from}-{region_to}")
-            print(e)
-        except requests.exceptions.HTTPError as e:
-            # Transient server errors (e.g. 527) shouldn't stop the loop - rerun to retry
-            print(f"Server error for link {region_from}-{region_to}, rerun to retry")
+            with open(no_data_file(p, year, entsoe_query), "a") as f:
+                f.write("\t".join(eic_pair) + "\n")
+        except requests.exceptions.RequestException as e:
+            # Timeouts, dropped connections and server errors (e.g. 527)
+            # shouldn't stop the loop - rerun to retry
+            print(f"Request failed for link {region_from}-{region_to}, rerun to retry")
             print(e)
 
 
