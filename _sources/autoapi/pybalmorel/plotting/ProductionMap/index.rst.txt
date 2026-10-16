@@ -1,0 +1,87 @@
+pybalmorel.plotting.ProductionMap
+=================================
+
+.. py:module:: pybalmorel.plotting.ProductionMap
+
+.. autoapi-nested-parse::
+
+   Created on 11.04.2024
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.ProductionMap.style
+   pybalmorel.plotting.ProductionMap.fc
+   pybalmorel.plotting.ProductionMap.paths
+   pybalmorel.plotting.ProductionMap.SC
+   pybalmorel.plotting.ProductionMap.geofile
+   pybalmorel.plotting.ProductionMap.gfidx
+   pybalmorel.plotting.ProductionMap.ws
+   pybalmorel.plotting.ProductionMap.db
+   pybalmorel.plotting.ProductionMap.pro
+   pybalmorel.plotting.ProductionMap.gf
+   pybalmorel.plotting.ProductionMap.gf
+   pybalmorel.plotting.ProductionMap.temp
+   pybalmorel.plotting.ProductionMap.maxprod
+   pybalmorel.plotting.ProductionMap.delta_t
+   pybalmorel.plotting.ProductionMap.images
+   pybalmorel.plotting.ProductionMap.gf0
+
+
+Module Contents
+---------------
+
+.. py:data:: style
+   :value: 'report'
+
+
+.. py:data:: fc
+   :value: 'white'
+
+
+.. py:data:: paths
+   :value: 'C:\\Users\\mberos\\gitRepos\\Balmorel\\base\\model'
+
+
+.. py:data:: SC
+   :value: 'DK_BZ'
+
+
+.. py:data:: geofile
+   :value: '2024 BalmorelMapDK_.geojson'
+
+
+.. py:data:: gfidx
+   :value: 'id'
+
+
+.. py:data:: ws
+
+.. py:data:: db
+
+.. py:data:: pro
+
+.. py:data:: gf
+
+.. py:data:: gf
+
+.. py:data:: temp
+
+.. py:data:: maxprod
+
+.. py:data:: delta_t
+   :value: 120
+
+
+.. py:data:: images
+   :value: []
+
+
+.. py:data:: gf0
+

@@ -1,0 +1,146 @@
+pybalmorel.backcasting.calendar
+===============================
+
+.. py:module:: pybalmorel.backcasting.calendar
+
+.. autoapi-nested-parse::
+
+   Backcast Calendar
+
+   The single mapping between a Backcast Year's clock time and Balmorel's
+   52 seasons (S01-S52) x 168 terms (T001-T168), see CONTEXT.md and
+   docs/adr/0008. S01 T001 is 00:00 UTC on the first Monday of the year, every
+   day has exactly 24 terms, and the days outside the 52 full weeks are dropped.
+
+   Every conversion between timestamps and (Season, Time) labels goes through
+   this module - nowhere else should build its own hourly index or assign by
+   position.
+
+   Created on 15.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.calendar.N_SEASONS
+   pybalmorel.backcasting.calendar.N_TERMS
+   pybalmorel.backcasting.calendar.SEASONS
+   pybalmorel.backcasting.calendar.TERMS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.calendar.first_monday
+   pybalmorel.backcasting.calendar.backcast_hours
+   pybalmorel.backcasting.calendar.backcast_calendar
+   pybalmorel.backcasting.calendar.from_backcast_grid
+   pybalmorel.backcasting.calendar.to_backcast_grid
+   pybalmorel.backcasting.calendar.daily_to_backcast_grid
+
+
+Module Contents
+---------------
+
+.. py:data:: N_SEASONS
+   :value: 52
+
+
+.. py:data:: N_TERMS
+   :value: 168
+
+
+.. py:data:: SEASONS
+
+.. py:data:: TERMS
+
+.. py:function:: first_monday(year: int) -> pandas.Timestamp
+
+   00:00 UTC on the first Monday of `year` - the timestamp of S01 T001.
+
+   Args:
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.Timestamp: Timezone-aware (UTC) timestamp.
+
+
+.. py:function:: backcast_hours(year: int) -> pandas.DatetimeIndex
+
+   The 52 x 168 = 8736 UTC hours of the Backcast Calendar, in (S,T) order.
+
+   Args:
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DatetimeIndex: Hourly UTC timestamps, S01 T001 first.
+
+
+.. py:function:: backcast_calendar(year: int) -> pandas.DataFrame
+
+   Lookup table between (Season, Term) labels and their UTC timestamp.
+
+   Args:
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Columns 'Season', 'Term' and 'Timestamp', one row per hour.
+
+
+.. py:function:: from_backcast_grid(df: pandas.DataFrame, year: int, season_col: str = 'Season', term_col: str = 'Time') -> pandas.DataFrame
+
+   Replace (Season, Term) label columns with a UTC 'Time' timestamp column.
+
+   Rows are matched by label, never by position, so missing or reordered
+   (S,T) rows can't shift the rest of the year.
+
+   Args:
+       df (pd.DataFrame): Long-format data with season and term label columns,
+           e.g. a MainResults symbol with 'Season' and 'Time'.
+       year (int): The Backcast Year.
+       season_col (str, optional): Name of the season column. Defaults to 'Season'.
+       term_col (str, optional): Name of the term column. Defaults to 'Time'.
+
+   Returns:
+       pd.DataFrame: `df` without the label columns and with a 'Time' column
+           of UTC timestamps first.
+
+
+.. py:function:: to_backcast_grid(hourly: pandas.Series, year: int) -> pandas.DataFrame
+
+   Reshape an hourly, timezone-aware series onto the 52 x 168 (S,T) grid.
+
+   Args:
+       hourly (pd.Series): Values indexed by timezone-aware hourly timestamps.
+           Converted to UTC before matching; hours outside the Backcast
+           Calendar are dropped.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index 'S01'..'S52', columns 'T001'..'T168'. Hours
+           missing from `hourly` are NaN.
+
+
+.. py:function:: daily_to_backcast_grid(daily: pandas.Series, year: int) -> pandas.DataFrame
+
+   Map a daily series onto the (S,T) grid, each value covering its UTC day.
+
+   Days missing from `daily` (weekends/holidays without trading data) carry
+   the last available value forward, or the first one backward for gaps
+   before the first observation.
+
+   Args:
+       daily (pd.Series): Values indexed by calendar date (timezone-naive).
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index 'S01'..'S52', columns 'T001'..'T168'.
+
+

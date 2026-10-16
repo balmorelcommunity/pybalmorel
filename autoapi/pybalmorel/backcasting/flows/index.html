@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.flows &mdash; pybalmorel 1.3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=e358f374"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.fuelprices" href="../fuelprices/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.co2tax" href="../co2tax/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.flows</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/flows/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.flows">
+<span id="pybalmorel-backcasting-flows"></span><h1>pybalmorel.backcasting.flows<a class="headerlink" href="#module-pybalmorel.backcasting.flows" title="Link to this heading"></a></h1>
+<p>Flows</p>
+<p>Analyse transmission flows in ENTSO-E data: the Observed Max Flow XKFX
+overrides (docs/adr/0005, 0006) and the validation of Balmorel’s flows
+against ENTSO-E’s, both aggregated to Canonical Region Names (see CONTEXT.md)</p>
+<p>Created on 09.07.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.path" title="pybalmorel.backcasting.flows.path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">path</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.read_flow_csv" title="pybalmorel.backcasting.flows.read_flow_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_flow_csv</span></code></a>(→ pandas.Series)</p></td>
+<td><p>Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.get_data" title="pybalmorel.backcasting.flows.get_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_data</span></code></a>(year, from_to_list[, path])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.capacity_max" title="pybalmorel.backcasting.flows.capacity_max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capacity_max</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Annual maximum hourly flow per border ('Observed Max Flow', see CONTEXT.md)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.observed_max_flow" title="pybalmorel.backcasting.flows.observed_max_flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">observed_max_flow</span></code></a>(→ float | None)</p></td>
+<td><p>The Observed Max Flow for one border, one direction, one year.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.get_current_borders" title="pybalmorel.backcasting.flows.get_current_borders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_current_borders</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>The non-zero XKFX borders currently defined for a Balmorel scenario.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.compute_entsoe_transmission_overrides" title="pybalmorel.backcasting.flows.compute_entsoe_transmission_overrides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_entsoe_transmission_overrides</span></code></a>(...)</p></td>
+<td><p>Compute Observed Max Flow XKFX overrides for a Balmorel scenario's borders.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.write_xkfx_override" title="pybalmorel.backcasting.flows.write_xkfx_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_xkfx_override</span></code></a>(→ pybalmorel.classes.IncFile)</p></td>
+<td><p>Write XKFX_ENTSOE.inc with the ENTSO-E-derived transmission overrides.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.append_xkfx_include" title="pybalmorel.backcasting.flows.append_xkfx_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_xkfx_include</span></code></a>(→ None)</p></td>
+<td><p>Idempotently append the scenario-fallback $include for XKFX_ENTSOE.inc.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.generate_transmission_max_flow_overrides" title="pybalmorel.backcasting.flows.generate_transmission_max_flow_overrides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_transmission_max_flow_overrides</span></code></a>(→ None)</p></td>
+<td><p>Fetch ENTSO-E flows and write the XKFX_ENTSOE.inc backcast overrides.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.canonical_region" title="pybalmorel.backcasting.flows.canonical_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">canonical_region</span></code></a>(→ str)</p></td>
+<td><p>The Canonical Region Name of a Balmorel region or any ENTSO-E zone spelling.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.load_entsoe_flows" title="pybalmorel.backcasting.flows.load_entsoe_flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_entsoe_flows</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Hourly ENTSO-E physical flows per directed canonical border.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.entsoe_flow_limits" title="pybalmorel.backcasting.flows.entsoe_flow_limits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_flow_limits</span></code></a>(→ pandas.Series)</p></td>
+<td><p>The Observed Max Flow per directed canonical border.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.format_balmorel_flows" title="pybalmorel.backcasting.flows.format_balmorel_flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_balmorel_flows</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Hourly Balmorel flows per directed canonical border.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.align_flows" title="pybalmorel.backcasting.flows.align_flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_flows</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Join ENTSO-E and Balmorel flows on every border both datasets know.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.flow_statistics" title="pybalmorel.backcasting.flows.flow_statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flow_statistics</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Per-border comparison of Balmorel and ENTSO-E flows.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.plot_flow_duration_curves" title="pybalmorel.backcasting.flows.plot_flow_duration_curves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_flow_duration_curves</span></code></a>(...)</p></td>
+<td><p>Duration curves of ENTSO-E and Balmorel flows, one subplot per directed border.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.flows.main" title="pybalmorel.backcasting.flows.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.path">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">path</span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.path" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.read_flow_csv">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">read_flow_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.read_flow_csv" title="Link to this definition"></a></dt>
+<dd><p>Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>csv_path (str | Path): The csv.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Hourly flows.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.get_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_to_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.flows.get_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.capacity_max">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">capacity_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.capacity_max" title="Link to this definition"></a></dt>
+<dd><p>Annual maximum hourly flow per border (‘Observed Max Flow’, see CONTEXT.md)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.observed_max_flow">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">observed_max_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.observed_max_flow" title="Link to this definition"></a></dt>
+<dd><p>The Observed Max Flow for one border, one direction, one year.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>year (int): The year to read.
+region_from (str): ENTSO-E zone code/name flow originates from (any spelling).
+region_to (str): ENTSO-E zone code/name flow arrives at (any spelling).
+path (Path | str): Folder containing the fetched crossborder_flows csv’s.</p>
+</dd>
+<dt>Returns:</dt><dd><p>float | None: The observed max flow in MW, or None if the csv wasn’t fetched.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.get_current_borders">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">get_current_borders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.get_current_borders" title="Link to this definition"></a></dt>
+<dd><p>The non-zero XKFX borders currently defined for a Balmorel scenario.</p>
+<p>Reads XKFX through GAMS (via Balmorel.load_incfiles/.get_input) rather than
+parsing XKFX.inc, since it is a hand-formatted GAMS TABLE not safe to parse
+with a text-based parser (see docs/adr/0006).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to read XKFX from.
+gams_system_directory (str | None, optional): GAMS system directory.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘RegionFrom’, ‘RegionTo’ for every non-zero border.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.compute_entsoe_transmission_overrides">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">compute_entsoe_transmission_overrides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.compute_entsoe_transmission_overrides" title="Link to this definition"></a></dt>
+<dd><p>Compute Observed Max Flow XKFX overrides for a Balmorel scenario’s borders.</p>
+<p>Borders are read from the scenario’s current XKFX (see get_current_borders).
+Internal links that ENTSO-E can’t distinguish (both sides sharing a canonical
+name, e.g. DE4-N &lt;-&gt; DE4-W) are left out untouched, per docs/adr/0006. Where
+several ENTSO-E zones collapse to one Balmorel region, their observed flows
+are summed; where several Balmorel regions collapse to one ENTSO-E zone, the
+observed flow is split evenly across them.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to read/derive borders for.
+year (int): The backcast target year.
+entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv’s from.
+api_key (str): ENTSO-E transparency platform API key.
+gams_system_directory (str | None, optional): GAMS system directory.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[pd.DataFrame, list[tuple[str, str]]]: Overrides (Year, RegionFrom,</dt><dd><p>RegionTo, Value) and the ENTSO-E zone pairs that could not be fetched.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.write_xkfx_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">write_xkfx_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overrides</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.write_xkfx_override" title="Link to this definition"></a></dt>
+<dd><p>Write XKFX_ENTSOE.inc with the ENTSO-E-derived transmission overrides.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>overrides (pd.DataFrame): Output of compute_entsoe_transmission_overrides.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.append_xkfx_include">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">append_xkfx_include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xkfx_inc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.append_xkfx_include" title="Link to this definition"></a></dt>
+<dd><p>Idempotently append the scenario-fallback $include for XKFX_ENTSOE.inc.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>xkfx_inc_path (str | Path): Path to the scenario’s XKFX.inc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.generate_transmission_max_flow_overrides">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">generate_transmission_max_flow_overrides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.generate_transmission_max_flow_overrides" title="Link to this definition"></a></dt>
+<dd><p>Fetch ENTSO-E flows and write the XKFX_ENTSOE.inc backcast overrides.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to generate overrides for.
+year (int): The backcast target year.
+entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv’s from.
+api_key (str): ENTSO-E transparency platform API key.
+gams_system_directory (str | None, optional): GAMS system directory.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.canonical_region">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">canonical_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.canonical_region" title="Link to this definition"></a></dt>
+<dd><p>The Canonical Region Name of a Balmorel region or any ENTSO-E zone spelling.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.load_entsoe_flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">load_entsoe_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.load_entsoe_flows" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E physical flows per directed canonical border.</p>
+<p>Each file is resampled to hourly means (MW, i.e. MWh per hour), then
+summed over every ENTSO-E zone pair that collapses to the same canonical
+border (e.g. the Italian sub-zones). Internal links, where both sides
+share a canonical name, are dropped. A pair fetched under several zone
+spellings (e.g. ‘DK_1’ and ‘10YDK-1——–W’) is read once.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘From’, ‘To’, ‘Time’ (UTC) and ‘Value’, restricted</dt><dd><p>to the Backcast Calendar.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.entsoe_flow_limits">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">entsoe_flow_limits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.entsoe_flow_limits" title="Link to this definition"></a></dt>
+<dd><p>The Observed Max Flow per directed canonical border.</p>
+<p>Same totals as XKFX_ENTSOE.inc: the per-file maxima summed over every
+ENTSO-E zone pair collapsing to the border (see compute_entsoe_transmission_overrides).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Limit in MW, indexed by (‘From’, ‘To’).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.format_balmorel_flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">format_balmorel_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.format_balmorel_flows" title="Link to this definition"></a></dt>
+<dd><p>Hourly Balmorel flows per directed canonical border.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>df (pd.DataFrame): X_FLOW_YCRST from MainResults (‘From’, ‘To’,</dt><dd><p>‘Season’, ‘Time’, ‘Value’).</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘Time’ (UTC), ‘From’, ‘To’ and ‘Value’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.align_flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">align_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_flows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_flows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.align_flows" title="Link to this definition"></a></dt>
+<dd><p>Join ENTSO-E and Balmorel flows on every border both datasets know.</p>
+<p>A border counts as known to Balmorel if it appears in either direction in
+its results. Hours Balmorel leaves out of the GDX are zero flow, so they
+are filled with 0 rather than dropped - dropping them would bias every
+statistic towards the hours Balmorel used the border.</p>
+<dl>
+<dt>Args:</dt><dd><p>entsoe_flows (pd.DataFrame): Output of load_entsoe_flows.
+balmorel_flows (pd.DataFrame): Output of format_balmorel_flows.
+limits (pd.Series | None, optional): Observed Max Flow per border (see</p>
+<blockquote>
+<div><p>entsoe_flow_limits), added as a ‘Limit’ column. Defaults to None.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index (‘From’, ‘To’, ‘Time’), columns ‘ENTSOE’, ‘BALMOREL’</dt><dd><p>and, if limits are given, ‘Limit’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.flow_statistics">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">flow_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.flow_statistics" title="Link to this definition"></a></dt>
+<dd><p>Per-border comparison of Balmorel and ENTSO-E flows.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>flows (pd.DataFrame): Output of align_flows, optionally with a ‘Limit’</dt><dd><p>column (Observed Max Flow, see entsoe_flow_limits).</p>
+</dd>
+<dt>tolerance (float, optional): Relative distance to the limit that still</dt><dd><p>counts as ‘at the limit’. Defaults to 0.01.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Indexed by (‘From’, ‘To’), with annual energy (TWh),</dt><dd><p>correlation, RMSE (MW) and, if ‘Limit’ is given, the share of
+hours at the limit in each dataset.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.plot_flow_duration_curves">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">plot_flow_duration_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.flows.plot_flow_duration_curves" title="Link to this definition"></a></dt>
+<dd><p>Duration curves of ENTSO-E and Balmorel flows, one subplot per directed border.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>flows (pd.DataFrame): Output of align_flows.
+ncols (int, optional): Subplot columns. Defaults to 6.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, np.ndarray]: The figure and its axes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.flows.main">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.flows.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.flows.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../co2tax/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.co2tax" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../fuelprices/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.fuelprices" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

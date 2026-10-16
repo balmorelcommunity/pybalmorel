@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.calendar &mdash; pybalmorel 1.3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=e358f374"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.co2tax" href="../co2tax/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.__main__" href="../__main__/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.calendar</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/calendar/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.calendar">
+<span id="pybalmorel-backcasting-calendar"></span><h1>pybalmorel.backcasting.calendar<a class="headerlink" href="#module-pybalmorel.backcasting.calendar" title="Link to this heading"></a></h1>
+<p>Backcast Calendar</p>
+<p>The single mapping between a Backcast Year’s clock time and Balmorel’s
+52 seasons (S01-S52) x 168 terms (T001-T168), see CONTEXT.md and
+docs/adr/0008. S01 T001 is 00:00 UTC on the first Monday of the year, every
+day has exactly 24 terms, and the days outside the 52 full weeks are dropped.</p>
+<p>Every conversion between timestamps and (Season, Time) labels goes through
+this module - nowhere else should build its own hourly index or assign by
+position.</p>
+<p>Created on 15.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.N_SEASONS" title="pybalmorel.backcasting.calendar.N_SEASONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">N_SEASONS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.N_TERMS" title="pybalmorel.backcasting.calendar.N_TERMS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">N_TERMS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.SEASONS" title="pybalmorel.backcasting.calendar.SEASONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SEASONS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.TERMS" title="pybalmorel.backcasting.calendar.TERMS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TERMS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.first_monday" title="pybalmorel.backcasting.calendar.first_monday"><code class="xref py py-obj docutils literal notranslate"><span class="pre">first_monday</span></code></a>(→ pandas.Timestamp)</p></td>
+<td><p>00:00 UTC on the first Monday of <cite>year</cite> - the timestamp of S01 T001.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.backcast_hours" title="pybalmorel.backcasting.calendar.backcast_hours"><code class="xref py py-obj docutils literal notranslate"><span class="pre">backcast_hours</span></code></a>(→ pandas.DatetimeIndex)</p></td>
+<td><p>The 52 x 168 = 8736 UTC hours of the Backcast Calendar, in (S,T) order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.backcast_calendar" title="pybalmorel.backcasting.calendar.backcast_calendar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">backcast_calendar</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Lookup table between (Season, Term) labels and their UTC timestamp.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.from_backcast_grid" title="pybalmorel.backcasting.calendar.from_backcast_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_backcast_grid</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Replace (Season, Term) label columns with a UTC 'Time' timestamp column.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.to_backcast_grid" title="pybalmorel.backcasting.calendar.to_backcast_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_backcast_grid</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Reshape an hourly, timezone-aware series onto the 52 x 168 (S,T) grid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.calendar.daily_to_backcast_grid" title="pybalmorel.backcasting.calendar.daily_to_backcast_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">daily_to_backcast_grid</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>Map a daily series onto the (S,T) grid, each value covering its UTC day.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.N_SEASONS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">N_SEASONS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">52</span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.N_SEASONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.N_TERMS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">N_TERMS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">168</span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.N_TERMS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.SEASONS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">SEASONS</span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.SEASONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.TERMS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">TERMS</span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.TERMS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.first_monday">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">first_monday</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Timestamp</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.first_monday" title="Link to this definition"></a></dt>
+<dd><p>00:00 UTC on the first Monday of <cite>year</cite> - the timestamp of S01 T001.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Timestamp: Timezone-aware (UTC) timestamp.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.backcast_hours">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">backcast_hours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DatetimeIndex</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.backcast_hours" title="Link to this definition"></a></dt>
+<dd><p>The 52 x 168 = 8736 UTC hours of the Backcast Calendar, in (S,T) order.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DatetimeIndex: Hourly UTC timestamps, S01 T001 first.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.backcast_calendar">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">backcast_calendar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.backcast_calendar" title="Link to this definition"></a></dt>
+<dd><p>Lookup table between (Season, Term) labels and their UTC timestamp.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘Season’, ‘Term’ and ‘Timestamp’, one row per hour.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.from_backcast_grid">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">from_backcast_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">season_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Season'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">term_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Time'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.from_backcast_grid" title="Link to this definition"></a></dt>
+<dd><p>Replace (Season, Term) label columns with a UTC ‘Time’ timestamp column.</p>
+<p>Rows are matched by label, never by position, so missing or reordered
+(S,T) rows can’t shift the rest of the year.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>df (pd.DataFrame): Long-format data with season and term label columns,</dt><dd><p>e.g. a MainResults symbol with ‘Season’ and ‘Time’.</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.
+season_col (str, optional): Name of the season column. Defaults to ‘Season’.
+term_col (str, optional): Name of the term column. Defaults to ‘Time’.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: <cite>df</cite> without the label columns and with a ‘Time’ column</dt><dd><p>of UTC timestamps first.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.to_backcast_grid">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">to_backcast_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hourly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.to_backcast_grid" title="Link to this definition"></a></dt>
+<dd><p>Reshape an hourly, timezone-aware series onto the 52 x 168 (S,T) grid.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>hourly (pd.Series): Values indexed by timezone-aware hourly timestamps.</dt><dd><p>Converted to UTC before matching; hours outside the Backcast
+Calendar are dropped.</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index ‘S01’..’S52’, columns ‘T001’..’T168’. Hours</dt><dd><p>missing from <cite>hourly</cite> are NaN.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.calendar.daily_to_backcast_grid">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.calendar.</span></span><span class="sig-name descname"><span class="pre">daily_to_backcast_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.calendar.daily_to_backcast_grid" title="Link to this definition"></a></dt>
+<dd><p>Map a daily series onto the (S,T) grid, each value covering its UTC day.</p>
+<p>Days missing from <cite>daily</cite> (weekends/holidays without trading data) carry
+the last available value forward, or the first one backward for gaps
+before the first observation.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>daily (pd.Series): Values indexed by calendar date (timezone-naive).
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index ‘S01’..’S52’, columns ‘T001’..’T168’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../__main__/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.__main__" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../co2tax/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.co2tax" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

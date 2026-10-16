@@ -1,0 +1,95 @@
+pybalmorel.weatheryear.demand2btc
+=================================
+
+.. py:module:: pybalmorel.weatheryear.demand2btc
+
+.. autoapi-nested-parse::
+
+   Create Balmorel demand .inc files from demand-model CSV outputs.
+
+   This module converts electricity and heat demand time series into Balmorel DA and
+   CapDev formats and writes annual correction-factor .inc files for DH users.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.demand2btc._load_individual_heat_profiles
+   pybalmorel.weatheryear.demand2btc._load_individual_heat_correction_factors
+   pybalmorel.weatheryear.demand2btc._process_individual_heat_user
+   pybalmorel.weatheryear.demand2btc._blend_space_heat_and_hotwater
+   pybalmorel.weatheryear.demand2btc._annual_correction_factor_for_year
+   pybalmorel.weatheryear.demand2btc._write_demand_timeseries_inc_files
+   pybalmorel.weatheryear.demand2btc.generate_demand_balmorel_inc_files
+
+
+Module Contents
+---------------
+
+.. py:function:: _load_individual_heat_profiles(csv_folder: str) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   Load individual-user heat profiles for residential and tertiary demand.
+
+
+.. py:function:: _load_individual_heat_correction_factors(csv_folder: str) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   Load annual correction factors for residential and tertiary individual users.
+
+
+.. py:function:: _process_individual_heat_user(df_space_heat_profile: pandas.DataFrame, year: int, user_name: str, subfolder_name: str, filename: str, year_output_folder: str, da_raw_folder: str, da_scaled_folder: str, capdev_scaled_long_term_folder: str, capdev_scaled_full_year_folder: str, capdev_raw_folder: str, config: pybalmorel.weatheryear.config_models.DemandModuleConfig) -> None
+
+   Process one individual-user heat profile and export Balmorel files.
+
+
+.. py:function:: _blend_space_heat_and_hotwater(space_heat_df: pandas.DataFrame, hotwater_df: pandas.DataFrame, spaceheat_to_hotwater_ratio: float) -> pandas.DataFrame
+
+   Blend space-heat and hot-water profiles using a fixed annual ratio.
+   Args:
+       space_heat_df: DataFrame with space-heat time series.
+       hotwater_df: DataFrame with hot-water time series.
+       spaceheat_to_hotwater_ratio: The ratio of space heat to hot water.
+   Returns:
+       A DataFrame with the blended time series.
+
+
+.. py:function:: _annual_correction_factor_for_year(correction_factors_df: pandas.DataFrame, year: int, reference_year: int) -> pandas.Series
+
+   Compute annual correction factor for one year relative to a reference year.
+   Args:
+       correction_factors_df: DataFrame with annual correction factors indexed by year.
+       year: The year for which to compute the correction factor.
+       reference_year: The reference year for comparison.
+   Returns:
+       A Series containing the correction factors for the specified year.
+
+
+.. py:function:: _write_demand_timeseries_inc_files(df_raw: pandas.DataFrame, df_scaled: pandas.DataFrame, symbol: str, user_name: str, filename: str, da_raw_folder: str, da_scaled_folder: str, capdev_scaled_long_term_folder: str, capdev_scaled_full_year_folder: str, capdev_raw_folder: str, config: pybalmorel.weatheryear.config_models.DemandModuleConfig, time_df: pandas.DataFrame) -> None
+
+   Write DA raw/scaled and CapDev .inc files for one demand user group.
+   Args:
+       df_raw: DataFrame with raw hourly time series.
+       df_scaled: DataFrame with scaled hourly time series.
+       symbol: Symbol for the demand user group.
+       user_name: Name of the demand user group.
+       filename: Name of the .inc file to save.
+       da_raw_folder: Path to the folder for raw DA files.
+       da_scaled_folder: Path to the folder for scaled DA files.
+       capdev_scaled_long_term_folder: Path to the scaled long-term CapDev folder.
+       capdev_scaled_full_year_folder: Path to the scaled full-year CapDev folder.
+       capdev_raw_folder: Path to the raw CapDev folder.
+       config: Configuration object for the demand module.
+       time_df: DataFrame with Balmorel DA time index.
+
+
+.. py:function:: generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder: str) -> None
+
+   Create demand-related Balmorel .inc files for one weather year.
+   Args:
+       config_fn: Path to YAML config file.
+       year: Weather year to process.
+       output_folder: Root output directory.
+
+

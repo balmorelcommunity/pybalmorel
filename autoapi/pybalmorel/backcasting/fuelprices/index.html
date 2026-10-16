@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.fuelprices &mdash; pybalmorel 1.3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=e358f374"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.pricelevel" href="../pricelevel/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.flows" href="../flows/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.fuelprices</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/fuelprices/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.fuelprices">
+<span id="pybalmorel-backcasting-fuelprices"></span><h1>pybalmorel.backcasting.fuelprices<a class="headerlink" href="#module-pybalmorel.backcasting.fuelprices" title="Link to this heading"></a></h1>
+<p>Fuel Prices</p>
+<p>Convert collected historical fuel price series (Balmorel’s
+backcast/historicalprices/) into Balmorel’s season/term-resolved
+FUELPRICE(YYY,AAA,FFF,SSS,TTT) input (see the Balmorel repo’s
+docs/adr/0001-fuelprice-season-term-resolution.md).</p>
+<p>Only NATGAS and COAL are converted here - CO2 belongs to TAX_CO2_ST (see
+co2tax.py), and oil is not covered yet. Prices are expressed in the
+backcast Price Year (see pricelevel.py) and mapped onto the UTC Backcast
+Calendar (see calendar.py).</p>
+<p>Created on 13.08.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.GAS_MWH_TO_GJ" title="pybalmorel.backcasting.fuelprices.GAS_MWH_TO_GJ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GAS_MWH_TO_GJ</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.COAL_LHV_GJ_PER_TONNE" title="pybalmorel.backcasting.fuelprices.COAL_LHV_GJ_PER_TONNE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COAL_LHV_GJ_PER_TONNE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.TTF_CSV_COLUMNS" title="pybalmorel.backcasting.fuelprices.TTF_CSV_COLUMNS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TTF_CSV_COLUMNS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices._clean_numeric" title="pybalmorel.backcasting.fuelprices._clean_numeric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_clean_numeric</span></code></a>(→ pandas.Series)</p></td>
+<td><p>Strip thousands separators/quotes from a numeric-looking string column.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.load_ttf_gas_prices" title="pybalmorel.backcasting.fuelprices.load_ttf_gas_prices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_ttf_gas_prices</span></code></a>(→ pandas.Series)</p></td>
+<td><p>Load daily TTF natural gas prices, converted to nominal EUR/GJ.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.load_rotterdam_coal_prices" title="pybalmorel.backcasting.fuelprices.load_rotterdam_coal_prices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_rotterdam_coal_prices</span></code></a>(→ pandas.Series)</p></td>
+<td><p>Load daily Rotterdam coal futures prices, converted to nominal USD/GJ.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.split_yahoo_ttf_html" title="pybalmorel.backcasting.fuelprices.split_yahoo_ttf_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_yahoo_ttf_html</span></code></a>(→ list[pathlib.Path])</p></td>
+<td><p>Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_&lt;year&gt;.csv files.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.write_fuelprice_override" title="pybalmorel.backcasting.fuelprices.write_fuelprice_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_fuelprice_override</span></code></a>(→ pybalmorel.classes.IncFile)</p></td>
+<td><p>Write FUELPRICE.inc with (S,T)-resolved historical fuel prices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.write_fuelprice_constant_override" title="pybalmorel.backcasting.fuelprices.write_fuelprice_constant_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_fuelprice_constant_override</span></code></a>(...)</p></td>
+<td><p>Write FUELPRICE_CONSTANT.inc flagging every fuel except resolved_fuels as annual-only.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.fuelprices.generate_fuelprice_overrides" title="pybalmorel.backcasting.fuelprices.generate_fuelprice_overrides"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_fuelprice_overrides</span></code></a>(→ None)</p></td>
+<td><p>Convert backcast/historicalprices/ into FUELPRICE.inc + FUELPRICE_CONSTANT.inc.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.GAS_MWH_TO_GJ">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">GAS_MWH_TO_GJ</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.6</span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.GAS_MWH_TO_GJ" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.COAL_LHV_GJ_PER_TONNE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">COAL_LHV_GJ_PER_TONNE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30.2</span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.COAL_LHV_GJ_PER_TONNE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices._clean_numeric">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">_clean_numeric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices._clean_numeric" title="Link to this definition"></a></dt>
+<dd><p>Strip thousands separators/quotes from a numeric-looking string column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.load_ttf_gas_prices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">load_ttf_gas_prices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.load_ttf_gas_prices" title="Link to this definition"></a></dt>
+<dd><p>Load daily TTF natural gas prices, converted to nominal EUR/GJ.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>csv_path (str | Path): Path to the Yahoo Finance TTF=F export</dt><dd><p>(columns include ‘Date’ with no year, e.g. ‘Dec 30’, and ‘Adj Close’
+in EUR/MWh).</p>
+</dd>
+</dl>
+<p>year (int): Calendar year the file covers, used to complete ‘Date’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Daily nominal price in EUR/GJ, indexed by calendar date.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.load_rotterdam_coal_prices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">load_rotterdam_coal_prices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lhv_gj_per_tonne</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">COAL_LHV_GJ_PER_TONNE</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.load_rotterdam_coal_prices" title="Link to this definition"></a></dt>
+<dd><p>Load daily Rotterdam coal futures prices, converted to nominal USD/GJ.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>csv_path (str | Path): Path to the investing.com Rotterdam Coal Futures</dt><dd><p>export (columns include ‘Date’ as MM/DD/YYYY and ‘Price’ in USD/t).</p>
+</dd>
+<dt>lhv_gj_per_tonne (float, optional): Lower heating value used to convert</dt><dd><p>USD/t to USD/GJ. Defaults to 30.2 (bituminous coal).</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Daily nominal price in USD/GJ, indexed by calendar date.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.TTF_CSV_COLUMNS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">TTF_CSV_COLUMNS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Date',</span> <span class="pre">'Open',</span> <span class="pre">'High',</span> <span class="pre">'Low',</span> <span class="pre">'Close',</span> <span class="pre">'Adj</span> <span class="pre">Close',</span> <span class="pre">'Volume']</span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.TTF_CSV_COLUMNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.split_yahoo_ttf_html">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">split_yahoo_ttf_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.split_yahoo_ttf_html" title="Link to this definition"></a></dt>
+<dd><p>Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_&lt;year&gt;.csv files.</p>
+<p>Yahoo Finance only offers its CSV download to paying users, but a saved
+copy of <a class="reference external" href="https://finance.yahoo.com/quote/TTF%3DF/history/">https://finance.yahoo.com/quote/TTF%3DF/history/</a> (any date range,
+e.g. several years) holds the same table. Each calendar year in it is
+written as one CSV in the format load_ttf_gas_prices reads: ‘Date’ without
+the year (e.g. ‘Dec 30’) and Volume without thousands separators.</p>
+<dl>
+<dt>Args:</dt><dd><p>html_path (str | Path): The saved Yahoo Finance history page (.html).
+output_dir (str | Path): Folder to write natural_gas_TTF_&lt;year&gt;.csv to,</p>
+<blockquote>
+<div><p>typically Balmorel’s backcast/historicalprices/. Existing files are
+overwritten.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>list[Path]: The written CSV files, one per year.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.write_fuelprice_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">write_fuelprice_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fuel_grids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.write_fuelprice_override" title="Link to this definition"></a></dt>
+<dd><p>Write FUELPRICE.inc with (S,T)-resolved historical fuel prices.</p>
+<p>Written as scenario-local ‘data/FUELPRICE.inc’, which bb4datainc.inc reads
+ahead of base/data/FUELPRICE.inc (and that fallback’s own separate
+FUELPRICE_%SCNAME%.inc indirection) - see docs/adr/0001 in the Balmorel
+repo. Requires FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT to be set in the
+scenario’s balopt.opt (not done here), and FUELPRICE_CONSTANT.inc (see
+write_fuelprice_constant_override) to list every other fuel, or the model
+densely populates IFUELPRICE for every fuel in FFF.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>fuel_grids (dict[str, pd.DataFrame]): {FFF fuel name: (S,T) grid},</dt><dd><p>e.g. {‘NATGAS’: …, ‘COAL’: …} as returned by daily_to_backcast_grid.</p>
+</dd>
+</dl>
+<p>year (int): The backcast year these prices apply to.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.write_fuelprice_constant_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">write_fuelprice_constant_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolved_fuels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.write_fuelprice_constant_override" title="Link to this definition"></a></dt>
+<dd><p>Write FUELPRICE_CONSTANT.inc flagging every fuel except resolved_fuels as annual-only.</p>
+<p>Keeps IFUELPRICE’s dense (S,T) broadcast limited to the fuels that actually
+have historical daily data - required for FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT
+to be affordable (see docs/adr/0001, ‘FUELPRICE_CONSTANT’ section).</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>resolved_fuels (list[str]): FFF fuel names with real (S,T) data, e.g.</dt><dd><p>[‘NATGAS’, ‘COAL’] - excluded from the constant set.</p>
+</dd>
+</dl>
+<p>scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.fuelprices.generate_fuelprice_overrides">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.fuelprices.</span></span><span class="sig-name descname"><span class="pre">generate_fuelprice_overrides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">historicalprices_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.fuelprices.generate_fuelprice_overrides" title="Link to this definition"></a></dt>
+<dd><p>Convert backcast/historicalprices/ into FUELPRICE.inc + FUELPRICE_CONSTANT.inc.</p>
+<p>Only NATGAS and COAL get real (S,T)-resolved prices - CO2 belongs to
+TAX_CO2_ST (see co2tax.py), and oil is not covered yet. Every other fuel is
+flagged constant (see docs/adr/0001 in the Balmorel repo). Prices are
+converted to the Price Year with the bundled HICP and EUR/USD tables.</p>
+<p>Warns (without changing anything) if the scenario’s balopt.opt doesn’t set
+FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT, or if HYDROGEN_FUELPRICE.inc hardcodes
+NATGAS/COAL prices - in both cases Balmorel would ignore this override.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>historicalprices_path (str | Path): Path to backcast/historicalprices/.
+year (int): The Backcast Year.
+balmorel_scenario_path (str | Path): The scenario folder (e.g. …/backcast).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../flows/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.flows" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../pricelevel/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.pricelevel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

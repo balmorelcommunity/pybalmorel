@@ -1,0 +1,64 @@
+pybalmorel.economics.prices
+===========================
+
+.. py:module:: pybalmorel.economics.prices
+
+.. autoapi-nested-parse::
+
+   Conversion rates and Inflation
+
+   Download and get conversion rates and inflation correction
+
+   Created on 10.07.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.economics.prices.currency_table
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.economics.prices.get_conversion_rate
+   pybalmorel.economics.prices.get_harmonised_price_index
+   pybalmorel.economics.prices.inflation_correction
+   pybalmorel.economics.prices.euro_conversion_rate
+   pybalmorel.economics.prices.main
+
+
+Module Contents
+---------------
+
+.. py:function:: get_conversion_rate(path: str, filename: str = 'estat_tec00033.tsv')
+
+   Get conversion rates from other currencies to Euro
+
+
+.. py:function:: get_harmonised_price_index(path: str, filename: str = 'estat_prc_hicp_aind$defaultview_filtered.tsv', index_choice: str = 'CP00')
+
+   Get the harmonised index for consumer prices (HICP)
+
+
+.. py:function:: inflation_correction(value: float, year_to: int, year_from: int, inflation_table: pandas.DataFrame, region: str = 'EU')
+
+   Inflation corrects a value based on an input inflation table
+
+
+.. py:function:: euro_conversion_rate(year: int, currency: str, currency_table: pandas.DataFrame)
+
+   Outputs conversion rate in currency / euro for a specific year
+
+
+.. py:function:: main()
+
+.. py:data:: currency_table
+

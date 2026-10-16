@@ -1,0 +1,175 @@
+pybalmorel.weatheryear.scenario_data
+====================================
+
+.. py:module:: pybalmorel.weatheryear.scenario_data
+
+.. autoapi-nested-parse::
+
+   Weather-Year Scenario Data
+
+   Turns WEATHERYEAR's CapDev output for one year into the .inc files a Balmorel
+   scenario's data/ folder needs. Balmorel's bb4datainc.inc only reads a
+   scenario's own data/<NAME>.inc when the filename matches exactly, and some
+   WEATHERYEAR output has a different name, is split across several files, or
+   holds scaling factors rather than values. Each rule below was verified against
+   Balmorel's override mechanism in the GREAT project
+   (mbrpdoc-great/scripts/preprocessing/clean_weather_year_inputs.py, its ADRs
+   0015, 0021, 0022, 0034 and 0036), where this logic comes from.
+
+   - Wind and solar profiles and FLH keep their names. Wind gets one fallback line
+     per existing area CorRES has no profile for, and its catch-all borrows a wind
+     area instead of DK2_NoDH.
+   - Hydro files lose WEATHERYEAR's _WY suffix. The FLH files are scaling factors,
+     so the base values load first (under $onMulti) and are multiplied. The hydro
+     profiles get base's catch-all for areas without a weather-year profile.
+   - Demand is split by user in WEATHERYEAR but read as one DE_VAR_T.inc and one
+     DH_VAR_T.inc. Each loads the base default first, since the weather year only
+     sets its own users' cells.
+   - Individual-user heat (INDIVUSERS_DH*.inc) assigns straight into DH and
+     DH_VAR_T, so it is loaded inside DH.inc and DH_VAR_T.inc, and the addon's own
+     override files are written empty so it isn't applied twice.
+   - Top-level to_balmorel/*.inc files are copied, except GKFX_renewable.inc (the
+     existing fleet comes from base) and SUBTECHGROUPKPOT.inc.
+   - Heat-pump COP files are not written; models that use them need their own
+     wrapper.
+
+   Created on 14.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.scenario_data.PASSTHROUGH_FILES
+   pybalmorel.weatheryear.scenario_data.RENAME_FILES
+   pybalmorel.weatheryear.scenario_data.CONCAT_FILES
+   pybalmorel.weatheryear.scenario_data.FLH_FACTOR_FILES
+   pybalmorel.weatheryear.scenario_data.WIDE_TABLE_FILES
+   pybalmorel.weatheryear.scenario_data.STATIC_FILE_EXCLUDE
+   pybalmorel.weatheryear.scenario_data.WIND_AREA_FALLBACKS
+   pybalmorel.weatheryear.scenario_data._WND_CATCHALL_FROM
+   pybalmorel.weatheryear.scenario_data._WND_CATCHALL_TO
+   pybalmorel.weatheryear.scenario_data.HYDRO_PROFILE_FALLBACKS
+   pybalmorel.weatheryear.scenario_data._INDIVUSERS_EMPTY
+   pybalmorel.weatheryear.scenario_data._RG_OFF_TO_BARE
+   pybalmorel.weatheryear.scenario_data._FLH_ASSIGNMENT
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.scenario_data._drop_area_lines
+   pybalmorel.weatheryear.scenario_data._drop_wide_table_columns
+   pybalmorel.weatheryear.scenario_data._finalize
+   pybalmorel.weatheryear.scenario_data._make_flh_multiplicative
+   pybalmorel.weatheryear.scenario_data._append
+   pybalmorel.weatheryear.scenario_data.write_scenario_data
+
+
+Module Contents
+---------------
+
+.. py:data:: PASSTHROUGH_FILES
+   :value: ['WND_VAR_T.inc', 'SOLE_VAR_T.inc', 'WNDFLH.inc', 'SOLEFLH.inc']
+
+
+.. py:data:: RENAME_FILES
+
+.. py:data:: CONCAT_FILES
+
+.. py:data:: FLH_FACTOR_FILES
+
+.. py:data:: WIDE_TABLE_FILES
+
+.. py:data:: STATIC_FILE_EXCLUDE
+
+.. py:data:: WIND_AREA_FALLBACKS
+
+.. py:data:: _WND_CATCHALL_FROM
+   :value: "WND_VAR_T('DK2_NoDH',SSS,TTT)"
+
+
+.. py:data:: _WND_CATCHALL_TO
+   :value: "WND_VAR_T('DK1_OFF_OFF_Existing_RG2',SSS,TTT)"
+
+
+.. py:data:: HYDRO_PROFILE_FALLBACKS
+
+.. py:data:: _INDIVUSERS_EMPTY
+   :value: Multiline-String
+
+   .. raw:: html
+
+      <details><summary>Show Value</summary>
+
+   .. code-block:: python
+
+      """* Deliberately empty: DH.inc and DH_VAR_T.inc already load base's
+      * individual-user heat data, so the indivusers addon must not apply it again.
+      """
+
+   .. raw:: html
+
+      </details>
+
+
+
+.. py:data:: _RG_OFF_TO_BARE
+
+.. py:data:: _FLH_ASSIGNMENT
+
+.. py:function:: _drop_area_lines(text: str, drop_areas: tuple[str, ...]) -> str
+
+   Drop every line naming a dropped area, for files with one area per line.
+
+
+.. py:function:: _drop_wide_table_columns(text: str, drop_areas: tuple[str, ...]) -> str
+
+   Cut dropped areas' columns out of a TABLE header and every data row.
+
+   The exact character span is removed, because re-joining a GAMS TABLE row
+   with normalised whitespace breaks its column alignment.
+
+
+.. py:function:: _finalize(text: str, filename: str, drop_areas: tuple[str, ...]) -> str
+
+   Drop excluded areas and normalise offshore resource-grade labels.
+
+
+.. py:function:: _make_flh_multiplicative(text: str) -> str
+
+   Rewrite FLH factors as scalings of the loaded value; leave ones that already are.
+
+
+.. py:function:: _append(text: str, extra: str) -> str
+
+.. py:function:: write_scenario_data(capdev_dir: str | pathlib.Path, to_balmorel_dir: str | pathlib.Path, dest_dir: str | pathlib.Path, base_data_dir: str = '../../base/data', drop_areas: tuple[str, ...] = ()) -> list[pathlib.Path]
+
+   Write one weather year's Balmorel scenario data files.
+
+   Args:
+       capdev_dir (str | Path): A CapDev variant folder from WEATHERYEAR, e.g.
+           '<output>/<year>/to_balmorel/CapDev/raw' for the actual weather.
+       to_balmorel_dir (str | Path): The '<output>/<year>/to_balmorel' folder,
+           whose top-level .inc files are copied too.
+       dest_dir (str | Path): The scenario's data/ folder. Created if needed;
+           existing files with the same names are overwritten.
+       base_data_dir (str, optional): GAMS path, relative to the scenario's
+           model/ folder, of the base data the weather year is applied on top
+           of. Defaults to '../../base/data'.
+       drop_areas (tuple[str, ...], optional): Areas the model doesn't have,
+           removed wherever they appear (matched as substrings). Defaults to ().
+
+   Raises:
+       FileNotFoundError: If capdev_dir doesn't exist.
+
+   Returns:
+       list[Path]: The files written.
+
+

@@ -1,0 +1,158 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones &mdash; pybalmorel 1.3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e358f374"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use observed max flow, not NTC, as the transmission constraint for backcasting" href="0005-observed-max-flow-not-ntc-for-backcasting.html" />
+    <link rel="prev" title="Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity" href="0003-canonical-technology-identity-for-weatheryear-name-building.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../developing.html">Developing pybalmorel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../developing.html#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../developing.html#architecture-decisions">Architecture Decisions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-ground-source-heat-pump-cop-excluded-from-weatheryear.html">Ground-source heat pump COP is excluded from the weatheryear pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-vectorize-symbol-to-df-with-gams-transfer.html">Vectorize symbol_to_df via gams.transfer instead of per-record iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0003-canonical-technology-identity-for-weatheryear-name-building.html">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#considered-options">Considered options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="0005-observed-max-flow-not-ntc-for-backcasting.html">Use observed max flow, not NTC, as the transmission constraint for backcasting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0006-xkfx-override-file-not-regeneration.html">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0007-split-entsoe-and-backcasting-packages.html">Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0008-backcast-calendar-utc.html">Backcast calendar uses UTC, not local time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0009-price-year-bundled-deflator-table.html">Bundle the Price Year deflator and exchange-rate tables instead of fetching or passing them</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developing.html">Developing pybalmorel</a></li>
+      <li class="breadcrumb-item active">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0004-strict-validation-for-unrecognized-weatheryear-technologies.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fail-loudly-on-unrecognized-technologies-keep-silently-dropping-known-excluded-ones">
+<h1>Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones<a class="headerlink" href="#fail-loudly-on-unrecognized-technologies-keep-silently-dropping-known-excluded-ones" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">tech_to_keep</span></code>/<code class="docutils literal notranslate"><span class="pre">turbine_to_keep</span></code> are meant to silently exclude known-but-unwanted technologies from Balmorel’s inputs. But <code class="docutils literal notranslate"><span class="pre">to_balmorel.py</span></code>’s two <code class="docutils literal notranslate"><span class="pre">os.listdir()</span></code>-based scans in <code class="docutils literal notranslate"><span class="pre">export_timeseries_to_balmorel_format</span></code> never checked either list — any technology folder or file present on disk, including stale output left over from a prior run under a different <code class="docutils literal notranslate"><span class="pre">config/weatheryear.yml</span></code>, silently became part of the model’s Balmorel inputs regardless of the current config.</p>
+<p>We decided the fix distinguishes two failure categories: a technology present but excluded by config keeps being silently dropped — that’s the whole point of <code class="docutils literal notranslate"><span class="pre">tech_to_keep</span></code>/<code class="docutils literal notranslate"><span class="pre">turbine_to_keep</span></code> — but a technology that doesn’t match <em>any</em> recognized category at all now raises immediately instead of passing through unfiltered, since that indicates either a real upstream data change (e.g. CorRES shipping a new turbine class) or leftover cruft the keep-lists were never told to consider.</p>
+<section id="considered-options">
+<h2>Considered options<a class="headerlink" href="#considered-options" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Log a warning instead of raising.</strong> Rejected — a warning is exactly the kind of signal that already failed to prevent this bug from going unnoticed in a Snakemake-driven pipeline nobody watches interactively.</p></li>
+</ul>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">data/weatheryear_raw/&lt;year&gt;/</span></code> in the consuming GREAT repo is still deliberately never auto-cleaned between runs (see that repo’s ADR 0014) — this fix doesn’t change that retention policy, it only ensures stale or unexpected folders are correctly excluded (or flagged) rather than silently reprocessed regardless of the current config.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="0003-canonical-technology-identity-for-weatheryear-name-building.html" class="btn btn-neutral float-left" title="Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="0005-observed-max-flow-not-ntc-for-backcasting.html" class="btn btn-neutral float-right" title="Use observed max flow, not NTC, as the transmission constraint for backcasting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
