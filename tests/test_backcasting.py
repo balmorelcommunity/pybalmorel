@@ -38,6 +38,7 @@ from pybalmorel.backcasting.flows import (
 from pybalmorel.backcasting.pricelevel import deflator, eur_per_usd, to_price_year
 from pybalmorel.entsoe import (
     find_transmission_file,
+    neighbour_pairs,
     parse_transmission_filename,
     transmission_files,
     zone_eic_code,
@@ -376,3 +377,78 @@ def test_fetch_transmission_remembers_no_data_and_survives_timeouts(tmp_path, mo
     calls.clear()
     entsoe_module.fetch_annual_transmission_data("crossborder_flows", pairs, 2023, tmp_path, "key")
     assert calls == [("DK_1", "NO_2")]
+
+
+# %% ------------------------------- ###
+###        6. ENTSO-E Download      ###
+### ------------------------------- ###
+
+
+def _write_series_csv(path, file_name, year, values):
+    index = pd.date_range(f"{year}-01-02 00:00", periods=len(values), freq="h", tz="Europe/Brussels")
+    pd.Series(values, index=index).to_csv(path / file_name)
+
+
+def test_load_entsoe_data_reads_only_requested_year(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_entsoe_data
+
+    _write_series_csv(tmp_path, "2023_FR_load.csv", 2023, [1.0, 2.0])
+    _write_series_csv(tmp_path, "2023_10YDK-1--------W_load.csv", 2023, [3.0, 4.0])
+    # Another year's file, which used to be read and mangled to region '4_FR'
+    _write_series_csv(tmp_path, "2024_FR_load.csv", 2024, [9.0, 9.0])
+    _write_series_csv(tmp_path, "2023_FR_day_ahead_prices.csv", 2023, [50.0, 60.0])
+
+    with pytest.warns(Warning, match="No ENTSO-E generation files for 2023"):
+        load, prices, generation = load_entsoe_data(str(tmp_path), 2023)
+
+    assert set(load.Region) == {"FR", "DK1"}
+    assert load.Time.dt.year.unique().tolist() == [2023]
+    assert prices.Value.tolist() == [50.0, 60.0]
+    assert generation.empty
+
+
+def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
+    pairs = neighbour_pairs(["FR", "BE", "10YDK-1--------W", "DE_LU", "GR", "10Y1001A1001A788", "XK", "AL"])
+
+    assert all((to, frm) in pairs for frm, to in pairs)
+    assert ("FR", "BE") in pairs
+    # Saved under the spelling transmission-max-flow looks up
+    assert ("10YDK-1--------W", "DE_LU") in pairs
+    # Missing from entsoe-py's NEIGHBOURS
+    assert ("GR", "10Y1001A1001A788") in pairs
+    assert ("XK", "AL") in pairs
+    # Not neighbours
+    assert ("FR", "GR") not in pairs
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    [
+        ([], ["load", "day_ahead_prices", "generation", "crossborder_flows"]),
+        (["--query", "load", "--query", "crossborder_flows"], ["load", "crossborder_flows"]),
+    ],
+)
+def test_download_command(tmp_path, monkeypatch, args, expected):
+    from click.testing import CliRunner
+    import pybalmorel.entsoe as entsoe_module
+    from pybalmorel.backcasting.__main__ import main
+
+    calls = []
+    monkeypatch.setattr(entsoe_module, "get_api_key", lambda: "key")
+    monkeypatch.setattr(
+        entsoe_module,
+        "fetch_annual_data",
+        lambda query, year, zones, path, api_key: calls.append((query, year)),
+    )
+    monkeypatch.setattr(
+        entsoe_module,
+        "fetch_annual_transmission_data",
+        lambda query, pairs, year, path, api_key: calls.append((query, year)),
+    )
+
+    data_path = tmp_path / "entsoedata"
+    result = CliRunner().invoke(main, ["download", str(data_path), "2023", *args])
+
+    assert result.exit_code == 0, result.output
+    assert calls == [(query, 2023) for query in expected]
+    assert data_path.is_dir()

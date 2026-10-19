@@ -148,6 +148,9 @@ entsoe_to_category = {
     "Other": "Storage & Flexibility",
 }
 
+# ENTSO-E queries the download command fetches
+entsoe_queries = ["load", "day_ahead_prices", "generation", "crossborder_flows"]
+
 colors = {
     "Wind": "#4ECDC4",
     "Solar": "#FFE66D",
@@ -177,7 +180,9 @@ class DataContainer:
 
 
 def format_entsoe_region_name(path, year, parameter):
-    raw_region_name = path.name.lstrip(f"{year}_").rstrip(f"_{parameter}.csv")
+    raw_region_name = path.name.removeprefix(f"{year}_").removesuffix(
+        f"_{parameter}.csv"
+    )
     return entsoe_code_to_region(raw_region_name)
 
 
@@ -217,29 +222,34 @@ def format_entsoe_data(df, resampling: str, filepath: Path, year: int, parameter
 
 
 def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
-    "Load csvs"
+    "Load the csvs for `year`"
     path = Path(entsoe_data_path)
     data_items = ["load", "day_ahead_prices", "generation"]
     data = DataContainer(data_items)
 
-    for item in path.iterdir():
-        # Load data for a specific region
-        tries = 0
-        for data_item in data_items:
-            if item.match(f"*_{data_item}.csv"):
-                temp = format_entsoe_data(
-                    pd.read_csv(item), resampling, item, year, data_item
-                )
-                setattr(
-                    data,
-                    data_item,
-                    pd.concat((getattr(data, data_item), temp), ignore_index=True),
-                )
-            else:
-                tries += 1
+    for data_item in data_items:
+        files = sorted(path.glob(f"{year}_*_{data_item}.csv"))
+        if not files:
+            warn(
+                f"No ENTSO-E {data_item} files for {year} in {path}, so its comparison will be empty. "
+                f"Run `python -m pybalmorel.backcasting download {path} {year} --query {data_item}`",
+                Warning,
+            )
+        for item in files:
+            # Load data for a specific region
+            temp = format_entsoe_data(pd.read_csv(item), resampling, item, year, data_item)
+            setattr(
+                data,
+                data_item,
+                pd.concat((getattr(data, data_item), temp), ignore_index=True),
+            )
 
-        # Cross-border flows are loaded separately, see flows.load_entsoe_flows
-        if tries == len(data_items) and not item.match("*_crossborder_flows.csv"):
+    # Cross-border flows are loaded separately, see flows.load_entsoe_flows
+    known_suffixes = tuple(
+        f"_{data_item}.csv" for data_item in data_items + ["crossborder_flows"]
+    ) + ("_nodata.txt",)
+    for item in path.glob(f"{year}_*"):
+        if not item.name.endswith(known_suffixes):
             warn(
                 f"{item} was not loaded as it did not match naming pattern.",
                 Warning,
@@ -821,6 +831,46 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
         api_key,
         gams_system_directory=gams_system_directory,
     )
+
+
+@main.command()
+@click.argument("entsoe-data-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--query",
+    "queries",
+    multiple=True,
+    type=click.Choice(entsoe_queries),
+    help="ENTSO-E data to download. Repeatable. Defaults to all.",
+)
+def download(entsoe_data_path, year, queries):
+    """Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-max-flow`.
+
+    Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
+    every neighbouring pair of them. Files already downloaded, and pairs
+    ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
+    failed requests.
+    """
+    from ..entsoe import (
+        bidding_zones,
+        fetch_annual_data,
+        fetch_annual_transmission_data,
+        get_api_key,
+        neighbour_pairs,
+    )
+
+    path = Path(entsoe_data_path)
+    path.mkdir(parents=True, exist_ok=True)
+    api_key = get_api_key()
+
+    for query in queries or entsoe_queries:
+        print(f"Downloading {year} {query} to {path}")
+        if query == "crossborder_flows":
+            fetch_annual_transmission_data(
+                query, neighbour_pairs(bidding_zones), year, path, api_key
+            )
+        else:
+            fetch_annual_data(query, year, bidding_zones, path, api_key)
 
 
 @main.command(name="ttf-csv")

@@ -6,9 +6,7 @@ including the zone-code vocabulary bridging ENTSO-E bidding zones and
 Balmorel regions (see CONTEXT.md). Independent of Balmorel backcasting -
 see pybalmorel.backcasting for that.
 
-TODO: consider a standalone CLI here (e.g. `python -m pybalmorel.entsoe`)
-for downloading raw ENTSO-E data scoped to Balmorel bidding zones, separate
-from the backcasting validation workflow.
+Raw data is downloaded with `python -m pybalmorel.backcasting download`.
 
 Created on 18.06.2026
 @author: Mathias Berg Rosendal
@@ -290,6 +288,44 @@ def entsoe_subzones(canonical_region: str) -> list[str]:
     return subzones if subzones else [canonical_region]
 
 
+# Neighbouring zones missing from entsoe-py's NEIGHBOURS: XK is absent
+# entirely, as are GR-IT_SUD (GRITA) and ME-IT_CSUD (MONITA)
+_extra_neighbours = {
+    "XK": ["AL", "ME", "MK", "RS"],
+    "GR": NEIGHBOURS["GR"] + ["IT_SUD"],
+    "ME": NEIGHBOURS["ME"] + ["IT_CSUD"],
+}
+
+
+def neighbour_pairs(zones: list[str]) -> list[tuple[str, str]]:
+    """The directed pairs of neighbouring zones, both within `zones`, to query flows for.
+
+    Both directions are included, since NEIGHBOURS isn't symmetric (e.g. no AL
+    key). Zones are spelled as transmission-max-flow looks them up.
+
+    Args:
+        zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.
+
+    Returns:
+        list[tuple[str, str]]: Sorted (from, to) query codes.
+    """
+    zone_names = {lookup_area(zone).name for zone in zones}
+    neighbours = {**NEIGHBOURS, **_extra_neighbours}
+
+    def query_code(name: str) -> str:
+        return region_to_entsoe_code(zone_to_region(name))
+
+    return sorted(
+        {
+            (query_code(pair_from), query_code(pair_to))
+            for zone_from in zone_names
+            for zone_to in neighbours.get(zone_from, [])
+            if zone_to in zone_names
+            for pair_from, pair_to in [(zone_from, zone_to), (zone_to, zone_from)]
+        }
+    )
+
+
 def date_format(date):
     if type(date) is not pd.Timestamp:
         proper_date = pd.Timestamp(date, tz="Europe/Brussels")
@@ -342,6 +378,10 @@ def fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key):
             print(e)
         except NoMatchingDataError as e:
             print(f"Couldn't find any data for bidding zone {bidding_zone}")
+            print(e)
+        except requests.exceptions.RequestException as e:
+            # Don't stop the loop - rerun to retry, fetched zones are skipped
+            print(f"Request failed for bidding zone {bidding_zone}, rerun to retry")
             print(e)
 
 
@@ -404,40 +444,3 @@ def fetch_annual_transmission_data(
             # shouldn't stop the loop - rerun to retry
             print(f"Request failed for link {region_from}-{region_to}, rerun to retry")
             print(e)
-
-
-if __name__ == "__main__":
-    # Example use of functions
-    api_key = get_api_key()
-    # fetch_annual_data("load", 2024, bidding_zones, ".", api_key)
-    # fetch_annual_data("day_ahead_prices", 2024, bidding_zones, ".", api_key)
-    # Only query pairs of neighbouring zones, both within bidding_zones.
-    # Both directions are added, since NEIGHBOURS isn't symmetric (e.g. no AL key),
-    # and XK is missing from NEIGHBOURS entirely so its borders are added manually.
-    # GR-IT_SUD (GRITA) and ME-IT_CSUD (MONITA) are also missing from NEIGHBOURS
-    zone_names = {lookup_area(bidding_zone).name for bidding_zone in bidding_zones}
-    neighbours = {
-        **NEIGHBOURS,
-        "XK": ["AL", "ME", "MK", "RS"],
-        "GR": NEIGHBOURS["GR"] + ["IT_SUD"],
-        "ME": NEIGHBOURS["ME"] + ["IT_CSUD"],
-    }
-    # Saved under the same zone spelling transmission-max-flow uses
-    query_code = lambda name: region_to_entsoe_code(zone_to_region(name))
-    neighbour_pairs = sorted(
-        {
-            (query_code(pair_from), query_code(pair_to))
-            for zone_from in zone_names
-            for zone_to in neighbours.get(zone_from, [])
-            if zone_to in zone_names
-            for pair_from, pair_to in [(zone_from, zone_to), (zone_to, zone_from)]
-        }
-    )
-    for year in [2023]:
-        fetch_annual_transmission_data(
-            "crossborder_flows",
-            neighbour_pairs,
-            year,
-            "tests/output",
-            api_key,
-        )

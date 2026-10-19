@@ -49,7 +49,7 @@ Some features need additional packages that are not installed by default:
 | Feature | Install |
 | --- | --- |
 | [Multi-weather-year input](../preprocessing/multi_weather_year_input.md) | `pip install pybalmorel[weatheryear]` |
-| [ENTSO-E data fetching](../preprocessing/entsoe.md), [backcasting](../preprocessing/backcasting.md) and the [average fuel price CLI](../preprocessing/economics.md#average-fuel-prices-cli) | `pip install pybalmorel[entso-e]` |
+| [ENTSO-E data fetching](../preprocessing/entsoe.md), [backcasting](../preprocessing/preparing_backcast.md) and the [average fuel price CLI](../preprocessing/economics.md#average-fuel-prices-cli) | `pip install pybalmorel[entso-e]` |
 | [Time series aggregation](../preprocessing/timeseriesagg.md) | `pip install tsam ripgrepy` |
 | [Geography GUI](../preprocessing/overview.md#defining-geography) | `pip install eel` |
 | Reading the [technology catalogues](../preprocessing/overview.md#downloading-technology-catalogues) | `pip install openpyxl` (included in the `weatheryear` extra) |

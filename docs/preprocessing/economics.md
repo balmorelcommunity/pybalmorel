@@ -89,7 +89,7 @@ Each command reads a fixed file name from the current working directory:
 | `coal` | `Rotterdam Coal Futures Historical Data.csv` | [Rotterdam coal futures, investing.com](https://www.investing.com/commodities/rotterdam-coal-futures) | Average price in USD/t and USD/GJ (bituminous coal, 30.2 GJ/t) |
 | `fueloil` | `Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx` | [EU Weekly Oil Bulletin](https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en) | Average heavy fuel oil price per country in €/GJ (39 GJ/t) |
 
-To convert the USD coal price to euros, or a price to another year's money, use the functions above. For season- and hour-resolved fuel prices in a backcasting scenario, see the [backcasting `fuelprices` command](backcasting.md#fuel-prices).
+To convert the USD coal price to euros, or a price to another year's money, use the functions above. For season- and hour-resolved fuel prices in a backcasting scenario, see the [backcasting `fuelprices` command](preparing_backcast.md#fuel-prices).
 
 ## Technology Catalogues
 

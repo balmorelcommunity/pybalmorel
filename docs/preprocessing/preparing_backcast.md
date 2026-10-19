@@ -1,45 +1,46 @@
-# Backcasting: Validating Balmorel Against ENTSO-E
+# Preparing a Backcast
 
-`pybalmorel.backcasting` compares simulated Balmorel behaviour for a
-historical year against ENTSO-E observations, and derives the `XKFX`
-(exogenous transmission capacity) backcast override from ENTSO-E's Observed
-Max Flow (see [`CONTEXT.md`](https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md) and ADRs
+A Backcast is a Balmorel scenario run for one historical Backcast Year,
+so its results can be compared with what actually happened (see
+[`CONTEXT.md`](https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md)).
+`pybalmorel.backcasting` covers the whole workflow:
+
+1. **Prepare** the Backcast's inputs: download ENTSO-E data, derive the
+   `XKFX` transmission override from ENTSO-E's Observed Max Flow, and write
+   season- and hour-resolved historical [fuel prices](#fuel-prices) and a
+   [CO2 tax](#co2-tax) for the Backcast Year. This page.
+2. **Run** the Balmorel scenario as usual.
+3. **Validate** the Backcast's results against ENTSO-E observations. See
+   [Validating a Backcast](../postprocessing/validating_backcast.md).
+
+The transmission override follows ADRs
 [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md),
 [0006](../adr/0006-xkfx-override-file-not-regeneration.md) and
-[0007](../adr/0007-split-entsoe-and-backcasting-packages.md)). It also
-writes season- and hour-resolved historical [fuel prices](#fuel-prices) and
-a [CO2 tax](#co2-tax) for the Backcast Year.
-It depends on [`pybalmorel.entsoe`](entsoe.md) for raw data access and on
-`pybalmorel.MainResults` for Balmorel results — never the other way round.
+[0007](../adr/0007-split-entsoe-and-backcasting-packages.md).
+`pybalmorel.backcasting` depends on [`pybalmorel.entsoe`](entsoe.md) for raw
+data access and on `pybalmorel.MainResults` for Balmorel results — never the
+other way round.
 
 ## Installation
 
-Backcasting needs the `entso-e` extra and a GAMS installation (for reading
-Balmorel results):
+Backcasting needs the `entso-e` extra:
 
 ```bash
 pip install pybalmorel[entso-e]
 ```
 
+A GAMS installation is also needed for reading Balmorel results, i.e. for
+`transmission-max-flow` (which reads the scenario's `XKFX` borders) and for
+[validating a Backcast](../postprocessing/validating_backcast.md).
+
 ## CLI
 
 ```bash
-# Fetch and format data for validation
-python -m pybalmorel.backcasting format \
-    <balmorel-scenario> \
-    <balmorel-scenario-path> \
+# Download ENTSO-E load, prices, generation and cross-border flows
+python -m pybalmorel.backcasting download \
     <entsoe-data-path> \
     <year> \
-    [--elpriceaggfunc mean] \
-    [--overwrite]
-
-# Generate statistics
-python -m pybalmorel.backcasting statistics <balmorel-scenario-path>
-
-# Generate plots
-python -m pybalmorel.backcasting generation <balmorel-scenario-path>
-python -m pybalmorel.backcasting prices <balmorel-scenario-path>
-python -m pybalmorel.backcasting flows <balmorel-scenario-path>
+    [--query load --query crossborder_flows]
 
 # Write XKFX_ENTSOE.inc: transmission overrides from ENTSO-E Observed Max Flow
 python -m pybalmorel.backcasting transmission-max-flow \
@@ -64,22 +65,28 @@ python -m pybalmorel.backcasting co2-tax \
     [--co2-override UNITED_KINGDOM=85 --co2-override SERBIA=0]
 ```
 
-`format` options:
-
-- `--elpriceaggfunc` — how electricity prices are aggregated across the
-  sub-regions of a canonical zone (any pandas aggregation, e.g. `mean`,
-  `max`). Defaults to `mean`.
-- `--overwrite` — regenerate the cached `.csv` files in
-  `<scenario-path>/backcastoutput/` instead of reusing them.
-
-:::{important}
-Caches in `backcastoutput/` made before the switch to the UTC Backcast
-Calendar ([ADR 0008](../adr/0008-backcast-calendar-utc.md)) are one hour
-off after the March DST change. Rerun `format` with `--overwrite` once.
-:::
-
 Run `python -m pybalmorel.backcasting <command> --help` for details on each
 command.
+
+## Downloading ENTSO-E data
+
+`download` fetches the Backcast Year's ENTSO-E data into `<entsoe-data-path>`,
+for every zone in `pybalmorel.entsoe.bidding_zones`:
+
+| `--query` | Files | Used by |
+|---|---|---|
+| `load` | `<year>_<zone>_load.csv` | `format` |
+| `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format` |
+| `generation` | `<year>_<zone>_generation.csv` | `format` |
+| `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-max-flow`, `format` |
+
+Without `--query`, all four are downloaded. `--query` is repeatable.
+
+Flows are fetched for every directed pair of neighbouring zones. Files that
+already exist are skipped, and so are pairs ENTSO-E had no data for on an
+earlier run (listed in `<year>_crossborder_flows_nodata.txt`; delete it to
+query them again). Failed requests don't stop the download, so rerun the
+command to retry them.
 
 ## Key features
 
@@ -91,19 +98,11 @@ command.
   series in local time, must be converted before they are mapped onto it.
 - **Bidding Zone Mapping**: uses `bidding_zone_codes`/`bidding_zone_translation`
   from `pybalmorel.entsoe` to bridge ENTSO-E bidding zones and Balmorel regions.
-- **Technology Categorisation**: `balmorel_to_category`/`entsoe_to_category`
-  standardise generation technologies between Balmorel and ENTSO-E so they can
-  be compared.
-- **Spatial Aggregation**: sums sub-regions to their canonical zone
-  (`DE4-*` → `DE`, `IT-*` → `IT`) before comparing.
 - **Transmission overrides**: `flows.py` computes the Observed Max Flow per
   border and writes it to `XKFX_ENTSOE.inc` (see ADRs
   [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md) and
   [0006](../adr/0006-xkfx-override-file-not-regeneration.md)) — a
   non-destructive override file, never a rewrite of the base `XKFX.inc`.
-- **Flow validation**: compares Balmorel's hourly flows with ENTSO-E's per
-  directed border, using the same ENTSO-E flow files as the transmission
-  overrides (see [Flow validation](#flow-validation)).
 
 ## Price Year
 
@@ -118,7 +117,7 @@ Eurostat dataset codes next to them; extend them when a new year is needed.
 
 The `fuelprices` command converts historical daily fuel prices into Balmorel's
 season- and hour-resolved `FUELPRICE(YYY,AAA,FFF,SSS,TTT)` input, so a
-backcast sees the fuel prices of the actual year. It reads two CSV files
+Backcast sees the fuel prices of the actual year. It reads two CSV files
 from `<historicalprices-path>`:
 
 | Fuel | File | Unit |
@@ -184,49 +183,22 @@ when Balmorel would ignore what they wrote:
   `FUELPRICE_HYDROGEN` overrides `IFUELPRICE` wherever it is nonzero.
 :::
 
-## Flow validation
-
-`format` also writes `backcastoutput/flows.csv`: Balmorel's `X_FLOW_YCRST`
-next to the ENTSO-E physical flows, per directed border and hour. Both sides
-are summed up to Canonical Region Names (`DE4-*` → `DE`, the Italian
-sub-zones → `IT`), and internal links are dropped. Hours Balmorel leaves out
-of its results count as zero flow. Each border's Observed Max Flow (the
-same total written to `XKFX_ENTSOE.inc`) is stored as `Limit`.
-
-`statistics` then prints, per border, the annual energy of both datasets,
-their correlation, the RMSE, and the share of hours each spends within 1%
-of the limit. If Balmorel sits at the limit far more often than ENTSO-E
-does, the Observed Max Flow is binding more than it did in reality. The
-`flows` command plots duration curves per border.
-
-ENTSO-E flows are physical, including loop flows, while Balmorel's are
-commercial. Some borders will therefore mismatch for reasons the model
-cannot reproduce.
-
 ## Configuration
 
 - **API Key**: set `ENTSOE_API_KEY` in `.env`, or provide it when prompted.
 - **GAMS Path**: set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing.
-- **Output**: processed comparison data cached in
-  `<scenario-path>/backcastoutput/`; XKFX, fuel price and CO2 tax overrides
-  written to `<scenario-path>/data/`.
+- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, fuel price
+  and CO2 tax overrides written to `<scenario-path>/data/`; validation
+  data cached in `<scenario-path>/backcastoutput/`.
 
 ## Data flow
 
-1. Raw ENTSO-E data fetched via `pybalmorel.entsoe` and saved as CSV.
-2. Balmorel model results extracted from GDX files via `MainResults`.
-3. Both datasets mapped onto the UTC Backcast Calendar and canonical regions.
-4. Datasets aligned and joined for comparison (`format`), or the XKFX
-   override is computed directly from ENTSO-E flows
-   (`transmission-max-flow`), or historical prices are written
+1. Raw ENTSO-E data fetched via `pybalmorel.entsoe` (`download`) and saved
+   as CSV.
+2. The XKFX override is computed from the ENTSO-E flows
+   (`transmission-max-flow`).
+3. Historical prices are mapped onto the UTC Backcast Calendar and written
    (`fuelprices`, `co2-tax`).
-5. Statistics calculated and visualisations generated.
 
-## Limitations
-
-- No data available for Cyprus (CY) or Turkey (TR) in ENTSO-E.
-- Some bidding zones may lack complete data coverage.
-- Cross-border flow data requires explicit region pairs.
-- ENTSO-E data is fetched for the Brussels calendar year, so the last UTC
-  hour of a Backcast Calendar that ends on 31 December may be missing; it is
-  left out of the comparison.
+The Backcast is then run in Balmorel and
+[validated](../postprocessing/validating_backcast.md).

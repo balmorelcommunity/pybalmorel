@@ -5,8 +5,8 @@ Transparency Platform. It fetches raw load, day-ahead price, generation, and
 cross-border flow data, and it owns the zone-code vocabulary that bridges
 Balmorel region names and ENTSO-E bidding zones (see [`CONTEXT.md`](https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md)). It has no
 dependency on Balmorel results — `pybalmorel.backcasting` builds on top of it
-for validating Balmorel against these observations (see
-[backcasting](backcasting.md)).
+for [preparing](preparing_backcast.md) and
+[validating](../postprocessing/validating_backcast.md) a Backcast.
 
 ## Installation
 
@@ -78,8 +78,14 @@ api_key = get_api_key()
 fetch_annual_data("load", 2024, bidding_zones, "entsoe_data", api_key)
 ```
 
-## TODO
+## Command line
 
-A standalone CLI (`python -m pybalmorel.entsoe`) for downloading raw ENTSO-E
-data scoped to Balmorel bidding zones, independent of the backcasting
-validation workflow, is planned but not yet built.
+To download every zone in `bidding_zones`, and the flows between
+neighbouring zones, without writing Python, use the backcasting
+[`download` command](preparing_backcast.md#downloading-entso-e-data):
+
+```bash
+python -m pybalmorel.backcasting download <entsoe-data-path> <year>
+```
+
+`neighbour_pairs(zones)` gives the directed border pairs it queries.

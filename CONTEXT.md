@@ -53,6 +53,10 @@ A shared identifier used to bridge a Balmorel region and an ENTSO-E bidding zone
 The raw identifier the ENTSO-E transparency platform API expects for a query (e.g. `10YNO-1--------2`, `DE_LU`) — one layer downstream of a Canonical Region Name, which a code can share (`FR`) or differ from entirely.
 _Avoid_: Region, Zone (when ambiguous with Canonical Region Name)
 
+**Backcast**:
+A Balmorel scenario run for one Backcast Year from backcast inputs (Observed Max Flow, historical fuel prices, CO2 tax), so its results can be compared with what actually happened. Preparing a Backcast means generating those inputs; validating a Backcast means comparing its results with ENTSO-E observations.
+_Avoid_: Backcasting run, backcast scenario (when the run's results are meant)
+
 **Backcast Year**:
 The single historical year a backcast reproduces: its fuel and CO2 prices, its transmission limits, and its weather. In a backcast it is always the same year as the weather year. Chosen only when generating inputs; Balmorel just reads whatever has been generated.
 _Avoid_: Weather year (keep that term for the weatheryear module, which is also used outside backcasting)
