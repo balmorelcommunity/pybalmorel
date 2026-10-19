@@ -82,11 +82,21 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 
 Without `--query`, all four are downloaded. `--query` is repeatable.
 
-Flows are fetched for every directed pair of neighbouring zones. Files that
-already exist are skipped, and so are zones and pairs ENTSO-E had no data
-for on an earlier run (listed in `<year>_<query>_nodata.txt`; delete it to
-query them again). Failed requests don't stop the download, so rerun the
-command to retry them.
+Flows are fetched for every directed pair of neighbouring zones.
+
+The download can be stopped and rerun at any time. On a rerun:
+
+- Files that already exist are skipped.
+- Zones and pairs ENTSO-E answered "no matching data" for on an earlier
+  run are skipped. They are listed in `<year>_<query>_nodata.txt` in
+  `<entsoe-data-path>`, one zone per line (or, for flows, two EIC codes
+  separated by a tab). Delete a line to query that zone or pair again, or
+  the whole file to query them all again, e.g. if ENTSO-E has since
+  published the data.
+- Failed requests are retried. Timeouts, dropped connections and server
+  errors are never written to the `_nodata.txt` files, and don't stop the
+  download. Requests time out after 120 seconds, so a connection lost
+  mid-request, e.g. when switching networks, doesn't hang the download.
 
 ## Key features
 

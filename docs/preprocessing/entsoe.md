@@ -49,12 +49,11 @@ ENTSOE_API_KEY=your-key-here
 ## Fetching data
 
 - `get_api_key()` — reads `ENTSOE_API_KEY` from `.env`, or prompts for it.
-- `fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key)` —
+- `fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key, timeout=120)` —
   fetch a full calendar year of a single-zone query (e.g. `'load'`,
   `'day_ahead_prices'`, `'generation'`) for each zone, skipping any already
-  downloaded and any ENTSO-E had no data for on an earlier run (listed in
-  `<year>_<query>_nodata.txt`).
-- `fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key)`
+  downloaded and any ENTSO-E had no data for on an earlier run.
+- `fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key, timeout=120)`
   — same, but for a border-pair query (e.g. `'crossborder_flows'`). A pair
   counts as downloaded if a file exists for it under any spelling of its
   zones, so `2023_DK_1-DE_LU_crossborder_flows.csv` also covers a request
@@ -65,8 +64,14 @@ ENTSOE_API_KEY=your-key-here
 
 Data is saved as one CSV per zone (or border) and query, named
 `<year>_<zone>_<query>.csv` (or `<year>_<from>-<to>_<query>.csv`), in the
-`path` folder, which must already exist. Zones with no data are reported and
-skipped.
+`path` folder, which must already exist.
+
+Zones and pairs ENTSO-E answers "no matching data" for are written to
+`<year>_<query>_nodata.txt` in `path` (one zone, or two tab-separated EIC
+codes, per line) and skipped on later calls; delete a line or the file to
+query them again. Timeouts, dropped connections and server errors are
+reported but not remembered, so the next call retries them. `timeout` is in
+seconds; without one, a connection lost mid-request would hang forever.
 
 ## Example
 
