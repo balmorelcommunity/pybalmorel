@@ -52,7 +52,8 @@ ENTSOE_API_KEY=your-key-here
 - `fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key)` —
   fetch a full calendar year of a single-zone query (e.g. `'load'`,
   `'day_ahead_prices'`, `'generation'`) for each zone, skipping any already
-  downloaded.
+  downloaded and any ENTSO-E had no data for on an earlier run (listed in
+  `<year>_<query>_nodata.txt`).
 - `fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key)`
   — same, but for a border-pair query (e.g. `'crossborder_flows'`). A pair
   counts as downloaded if a file exists for it under any spelling of its

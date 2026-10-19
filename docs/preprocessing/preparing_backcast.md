@@ -83,8 +83,8 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 Without `--query`, all four are downloaded. `--query` is repeatable.
 
 Flows are fetched for every directed pair of neighbouring zones. Files that
-already exist are skipped, and so are pairs ENTSO-E had no data for on an
-earlier run (listed in `<year>_crossborder_flows_nodata.txt`; delete it to
+already exist are skipped, and so are zones and pairs ENTSO-E had no data
+for on an earlier run (listed in `<year>_<query>_nodata.txt`; delete it to
 query them again). Failed requests don't stop the download, so rerun the
 command to retry them.
 

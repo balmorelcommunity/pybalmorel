@@ -452,3 +452,35 @@ def test_download_command(tmp_path, monkeypatch, args, expected):
     assert result.exit_code == 0, result.output
     assert calls == [(query, 2023) for query in expected]
     assert data_path.is_dir()
+
+
+def test_fetch_annual_data_remembers_no_data_and_survives_timeouts(tmp_path, monkeypatch):
+    import requests
+    from entsoe.exceptions import NoMatchingDataError
+    import pybalmorel.entsoe as entsoe_module
+
+    calls = []
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        def query_load(self, zone, start, end):
+            calls.append(zone)
+            if zone == "XK":
+                raise NoMatchingDataError
+            if zone == "AL":
+                raise requests.exceptions.ReadTimeout
+            return pd.Series([1.0], index=[start])
+
+    monkeypatch.setattr(entsoe_module, "EntsoePandasClient", FakeClient)
+    zones = ["FR", "XK", "AL"]
+
+    entsoe_module.fetch_annual_data("load", 2023, zones, tmp_path, "key")
+    assert calls == zones
+    assert (tmp_path / "2023_load_nodata.txt").read_text() == "XK\n"
+
+    # Second run: the no-data zone and the fetched zone are skipped, the timed out one retried
+    calls.clear()
+    entsoe_module.fetch_annual_data("load", 2023, zones, tmp_path, "key")
+    assert calls == ["AL"]

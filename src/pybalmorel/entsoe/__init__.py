@@ -359,26 +359,37 @@ def get_api_key():
 # ------------------------------- #
 
 
-def fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key):
-    client = EntsoePandasClient(api_key=api_key)
+def fetch_annual_data(
+    entsoe_query, year, bidding_zones, path, api_key, timeout: int = 120
+):
+    # Without a timeout, a connection dropped mid-request hangs forever
+    client = EntsoePandasClient(api_key=api_key, timeout=timeout)
     start_date, end_date = get_full_year(year)
     p = Path(path)
+    # Zones ENTSO-E had no data for on an earlier run are skipped
+    no_data = read_no_data_zones(p, year, entsoe_query)
     for bidding_zone in bidding_zones:
+        if (
+            p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv").exists()
+            or bidding_zone in no_data
+        ):
+            continue
         try:
-            if not p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv").exists():
-                df = getattr(client, f"query_{entsoe_query}")(
-                    bidding_zone,
-                    start=start_date,  # pyright: ignore
-                    end=end_date,  # pyright: ignore
-                )
+            df = getattr(client, f"query_{entsoe_query}")(
+                bidding_zone,
+                start=start_date,  # pyright: ignore
+                end=end_date,  # pyright: ignore
+            )
 
-                df.to_csv(p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv"))
+            df.to_csv(p.joinpath(f"{year}_{bidding_zone}_{entsoe_query}.csv"))
         except ValueError as e:
             print(f"Couldn't fetch bidding zone {bidding_zone}")
             print(e)
         except NoMatchingDataError as e:
             print(f"Couldn't find any data for bidding zone {bidding_zone}")
             print(e)
+            with open(no_data_file(p, year, entsoe_query), "a") as f:
+                f.write(bidding_zone + "\n")
         except requests.exceptions.RequestException as e:
             # Don't stop the loop - rerun to retry, fetched zones are skipped
             print(f"Request failed for bidding zone {bidding_zone}, rerun to retry")
@@ -386,7 +397,7 @@ def fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key):
 
 
 def no_data_file(path: str | Path, year: int, entsoe_query: str) -> Path:
-    """The file remembering pairs ENTSO-E has no data for, so reruns skip them.
+    """The file remembering zones or pairs ENTSO-E has no data for, so reruns skip them.
 
     Delete it to query those pairs again.
     """
@@ -405,6 +416,14 @@ def read_no_data_pairs(
         for line in f.read_text().splitlines()
         if line.count("\t") == 1
     }
+
+
+def read_no_data_zones(path: str | Path, year: int, entsoe_query: str) -> set[str]:
+    """The zones ENTSO-E previously had no data for in a single-zone query."""
+    f = no_data_file(path, year, entsoe_query)
+    if not f.exists():
+        return set()
+    return {line for line in f.read_text().splitlines() if line}
 
 
 def fetch_annual_transmission_data(
