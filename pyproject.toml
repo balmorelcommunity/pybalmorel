@@ -1,6 +1,6 @@
 [project]
 name = "pybalmorel"
-version = "1.3.5"
+version = "1.3.6"
 maintainers = [
   { name = "Mathias Berg Rosendal", email = "mathiasros@proton.me" },
   { name = "Théodore Le Nalinec" },
@@ -111,7 +111,7 @@ docs = { depends-on = [
   "_docs-build",
   "_docs-serve",
 ], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
-release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.3.5/1.3.6/g\""
+release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.3.6/1.3.7/g\""
 
 # --- user: test pybalmorel as an end-user (PyPI install only) ---
 [tool.pixi.feature.user.pypi-dependencies]
