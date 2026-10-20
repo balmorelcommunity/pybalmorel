@@ -17,6 +17,7 @@ from pybalmorel.utils import (
 )
 import pandas as pd
 import gams
+import gams.transfer as gt
 import math
 import os
 import pytest
@@ -41,6 +42,25 @@ def test_symbol_to_df_mainresults():
 
     f = symbol_to_df(db, "EL_PRICE_YCRST")
     assert type(f) == pd.DataFrame
+
+
+def test_symbol_to_df_raises_when_wrong_symbol_is_read(monkeypatch):
+    # Mimics a gamsapi package incompatible with the GAMS system directory,
+    # which reads the neighbouring symbol instead of the requested one
+    ws = gams.GamsWorkspace(system_directory=gams_system_directory)
+    db = ws.add_database_from_gdx(
+        os.path.abspath("examples/files/MainResults_Example1.gdx")
+    )
+
+    original_read = gt.Container.read
+
+    def read_neighbouring_symbol(self, load_from, symbols=None, **kwargs):
+        return original_read(self, load_from, symbols=["EL_PRICE_YCR"], **kwargs)
+
+    monkeypatch.setattr(gt.Container, "read", read_neighbouring_symbol)
+
+    with pytest.raises(RuntimeError, match="returned \\['EL_PRICE_YCR'\\] instead"):
+        symbol_to_df(db, "EL_PRICE_YCRST")
 
 
 # test_symbol_to_df_optiflow()

@@ -12,6 +12,7 @@ Created on 03.10.2024
 
 from pybalmorel import MainResults
 import os
+import pytest
 
 
 # %% ------------------------------- ###
@@ -118,3 +119,29 @@ def test_MainResults():
     assert "electricity_map.png" in os.listdir(
         "tests/output"
     ) and "hydrogen_map.png" in os.listdir("tests/output")
+
+
+def test_get_result_skips_scenarios_that_fail():
+    res = MainResults(
+        files=["MainResults_Example1.gdx", "MainResults_Example2.gdx"],
+        paths="examples/files",
+        system_directory=gams_system_directory,
+    )
+    # An empty database stands in for a result file missing the symbol
+    res.db["Example2"] = res.db["Example1"].workspace.add_database()
+
+    df = res.get_result("G_CAP_YCRAF")
+    assert list(df.Scenario.unique()) == ["Example1"]
+
+
+def test_get_result_raises_when_all_scenarios_fail():
+    res = MainResults(
+        files=["MainResults_Example1.gdx", "MainResults_Example2.gdx"],
+        paths="examples/files",
+        system_directory=gams_system_directory,
+    )
+    for scenario in res.sc:
+        res.db[scenario] = res.db[scenario].workspace.add_database()
+
+    with pytest.raises(Exception, match="failed for all 2 scenarios"):
+        res.get_result("G_CAP_YCRAF")

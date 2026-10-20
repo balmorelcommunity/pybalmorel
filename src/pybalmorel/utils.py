@@ -101,6 +101,15 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
     if not db[symbol].get_number_records() == 0:
         container = gt.Container(system_directory=db.workspace.system_directory)
         container.read(db, symbols=[symbol])
+        if symbol not in container:
+            # A gamsapi package incompatible with the GAMS libraries in
+            # system_directory can silently read a neighbouring symbol instead
+            raise RuntimeError(
+                f"Reading '{symbol}' returned {container.listSymbols()} instead. "
+                f"The gamsapi Python package ({gams.__version__}) is likely incompatible with "
+                f"GAMS {db.workspace.version} at '{db.workspace.system_directory}' - "
+                "use a GAMS system directory matching the gamsapi version."
+            )
         df = container[symbol].records
 
         if type(db[symbol]) == gams.GamsParameter:

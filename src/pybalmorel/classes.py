@@ -126,19 +126,29 @@ class MainResults:
         """
         # Placeholder
         df = pd.DataFrame()
-        
+        failed = {}
+
         for SC in self.sc:
             # Get results from each scenario
             try :
                 temp = symbol_to_df(self.db[SC], symbol, cols, result_type=self.type)
-                temp['Scenario'] = SC 
+                temp['Scenario'] = SC
                 # Put scenario in first column
                 temp = temp.loc[:, ['Scenario'] + list(temp.columns[:-1])]
                 # Save
                 df = pd.concat((df, temp), ignore_index=True)
-            
-            except ValueError as e:
+
+            except (ValueError, gams.GamsException) as e:
+                # One broken or incomplete result file shouldn't stop the rest from loading
                 print(f"{SC} raised an error while reading '{symbol}': {e}")
+                failed[SC] = e
+
+        # Skipping every scenario would hide a systematic problem behind an empty DataFrame
+        if failed and len(failed) == len(self.sc):
+            first_sc, first_error = next(iter(failed.items()))
+            raise Exception(
+                f"Reading '{symbol}' failed for all {len(self.sc)} scenarios, e.g. {first_sc}: {first_error}"
+            )
 
         return df
 
