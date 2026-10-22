@@ -1,0 +1,7 @@
+# Backcast calendar uses UTC, not local time
+
+The backcast maps 52 seasons × 168 terms onto the first 52 full weeks of the Backcast Year, starting on the first Monday. The original `format_balmorel_df` built that mapping from an hourly `Europe/Copenhagen` index and assigned Balmorel's rows to it by position. A local-time year has 8783 or 8785 wall-clock hours, so after the March DST change every term was off by one hour. It also gave the DST days 23 or 25 hours, which breaks the "24 identical terms per day" rule for daily prices.
+
+We chose UTC for the single shared calendar in `pybalmorel.backcasting.calendar`: S01 T001 is 00:00 UTC on the first Monday of the year. The CorRES weather profiles are already in UTC (the 2023 PV profiles peak at 12:00 in ES, 11:00 in DK1 and 10:00–11:00 in PL, matching solar noon in UTC), so `WEATHERYEAR` output needs no conversion, for backcasts or any other use. ENTSO-E data comes with time zones attached and converts to UTC in one step. Daily prices (gas, coal, CO2) apply to the UTC calendar day, which moves each price change 1–2 hours from the European trading day; that is negligible for these series.
+
+We rejected fixed CET (UTC+1), which was chosen first, because it would require converting every CorRES profile. We rejected local time because of the DST drift. Any input not in UTC, such as a demand series in local time, must be converted before it is mapped onto the calendar. Changing this later would shift every backcast result and validation comparison made against it.

@@ -1,0 +1,154 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages" href="0007-split-entsoe-and-backcasting-packages.html" />
+    <link rel="prev" title="Use observed max flow, not NTC, as the transmission constraint for backcasting" href="0005-observed-max-flow-not-ntc-for-backcasting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../developing.html">Developing pybalmorel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../developing.html#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../developing.html#architecture-decisions">Architecture Decisions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-ground-source-heat-pump-cop-excluded-from-weatheryear.html">Ground-source heat pump COP is excluded from the weatheryear pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-vectorize-symbol-to-df-with-gams-transfer.html">Vectorize symbol_to_df via gams.transfer instead of per-record iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0003-canonical-technology-identity-for-weatheryear-name-building.html">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0005-observed-max-flow-not-ntc-for-backcasting.html">Use observed max flow, not NTC, as the transmission constraint for backcasting</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0007-split-entsoe-and-backcasting-packages.html">Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0008-backcast-calendar-utc.html">Backcast calendar uses UTC, not local time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0009-price-year-bundled-deflator-table.html">Bundle the Price Year deflator and exchange-rate tables instead of fetching or passing them</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developing.html">Developing pybalmorel</a></li>
+      <li class="breadcrumb-item active">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0006-xkfx-override-file-not-regeneration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="generate-xkfx-overrides-as-a-separate-non-destructive-include-file-rather-than-regenerating-xkfx-inc">
+<h1>Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc<a class="headerlink" href="#generate-xkfx-overrides-as-a-separate-non-destructive-include-file-rather-than-regenerating-xkfx-inc" title="Link to this heading"></a></h1>
+<p>The backcast pipeline only computes Observed Max Flow ([[0005]]) for borders with a clean 1:1 (or aggregatable) mapping between a Balmorel region and an ENTSO-E bidding zone, for a single target year. Every other entry in <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code> — inter-<code class="docutils literal notranslate"><span class="pre">DE4-*</span></code> internal links, and any border ENTSO-E has no usable data for — must keep its current value untouched.</p>
+<p>Rather than parsing and regenerating the entire <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code> (its existing symmetric base <code class="docutils literal notranslate"><span class="pre">TABLE</span></code> plus hand-tuned asymmetric overrides), the pipeline writes a separate <code class="docutils literal notranslate"><span class="pre">XKFX_ENTSOE.inc</span></code> containing only <code class="docutils literal notranslate"><span class="pre">XKFX('&lt;year&gt;','A','B')=value;</span></code> assignment lines for the borders it computed — the same style already used for the hand-written NO1/NO2/NO5 corrections. This file is pulled in via Balmorel’s standard scenario-fallback <code class="docutils literal notranslate"><span class="pre">$INCLUDE</span></code> pattern (checking <code class="docutils literal notranslate"><span class="pre">&lt;scenario&gt;/data/</span></code> first, falling back to <code class="docutils literal notranslate"><span class="pre">base/data/</span></code>), which the script appends to the end of the base <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code> itself (idempotently — it checks whether the block is already present before appending, so re-running the command doesn’t duplicate it):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$if     EXIST '../data/XKFX_ENTSOE.inc' $INCLUDE         '../data/XKFX_ENTSOE.inc';
+$if not EXIST '../data/XKFX_ENTSOE.inc' $INCLUDE '../../base/data/XKFX_ENTSOE.inc';
+</pre></div>
+</div>
+<p>Because GAMS assignments execute in file order, anything the override file doesn’t mention is left exactly as the base table set it. The script only ever <em>appends</em> this fixed two-line block to <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code> — it never parses or rewrites the base table — so it cannot corrupt or silently drop a link it doesn’t understand, which a full-file regeneration could.</p>
+<p>Two aggregation rules apply when writing the override file, needed because Balmorel and ENTSO-E don’t always share the same regional resolution:</p>
+<ul class="simple">
+<li><p><strong>Many ENTSO-E zones → one Balmorel region</strong> (e.g. Italian sub-zones → <code class="docutils literal notranslate"><span class="pre">IT</span></code>): sum the observed flows.</p></li>
+<li><p><strong>One ENTSO-E zone → many Balmorel regions</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">DE_LU</span></code> → <code class="docutils literal notranslate"><span class="pre">DE4-S</span></code>/<code class="docutils literal notranslate"><span class="pre">DE4-W</span></code>): split the observed flow evenly across the matching Balmorel sub-links.</p></li>
+</ul>
+<p>The set of borders to fetch ENTSO-E data for is derived from the non-zero entries already present in the target <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code>, translated to ENTSO-E zone codes and de-duplicated, rather than a hand-maintained list — this keeps the fetch scope automatically in sync with whatever interconnections the Balmorel model actually defines, and pairs that translate to the same zone on both sides (the internal <code class="docutils literal notranslate"><span class="pre">DE4-*</span></code> links) are naturally excluded. <code class="docutils literal notranslate"><span class="pre">fetch_annual_transmission_data</span></code> already skips a pair if its CSV was already downloaded. Any pair that still fails to fetch is surfaced as a warning at the end of the run, rather than silently dropped, so the user can decide whether to fix a zone-code mapping or proceed with the borders that were available.</p>
+<p>Cleaning up <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code>’s ad-hoc hand-formatting is a separate, later concern and out of scope for this pipeline.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="0005-observed-max-flow-not-ntc-for-backcasting.html" class="btn btn-neutral float-left" title="Use observed max flow, not NTC, as the transmission constraint for backcasting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="0007-split-entsoe-and-backcasting-packages.html" class="btn btn-neutral float-right" title="Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

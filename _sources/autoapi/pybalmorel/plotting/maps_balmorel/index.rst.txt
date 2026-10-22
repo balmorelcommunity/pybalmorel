@@ -1,0 +1,115 @@
+pybalmorel.plotting.maps_balmorel
+=================================
+
+.. py:module:: pybalmorel.plotting.maps_balmorel
+
+.. autoapi-nested-parse::
+
+   This script has many options for designing maps of 
+   Balmorel results
+
+   It depends on a geofile, that should contain the exact name
+   of the region names in Balmorel - otherwise, results from
+   regions that are NOT in the geofile will not be shown! 
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.maps_balmorel.plot_map
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_map(path_to_result: str, scenario: str, year: int, commodity: str | None = None, lines: str | None = None, generation: str | None = None, background: str | None = None, save_fig: bool = False, path_to_geofile: str | None = None, geo_file_region_column: str = 'id', system_directory: str | None = None, **kwargs) -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes] | None
+
+   Plots the transmission capacities or flow in a scenario, of a certain commodity and the generation capacities or production of the regions.
+
+   Args:
+       path_to_result (str): Path to the .gdx file
+       scenario (str): The scenario name       
+       year (int): The year of the results
+       commodity (str, optional): Commodity to be shown in the map. Choose from ['Electricity', 'Hydrogen'].
+       lines (str, optional): Information plots with the lines. Choose from ['Capacity', 'FlowYear', 'FlowTime', 'UtilizationYear', 'UtilizationTime].
+       generation (str, optional): Generation information plots on the countries. Choose from ['Capacity', 'Production', 'ProductionTime].
+       background (str, optional): Background information to be shown on the map. Choose from ['H2 Storage', 'Elec Storage']. Defaults to 'None'.
+       save_fig (bool, optional): Save the figure or not. Defaults to False.
+       system_directory (str, optional): GAMS system directory. Default does NOT WORK! Need to make some if statements so it's not specified if not specified
+       path_to_geofile (str, optional): Path to a personalized geofile. Defaults to None.
+       geo_file_region_column (str, optional): Column name of the region names in the geofile. Defaults to 'id'.
+       Structural additional options:
+           **generation_commodity (str, optional): Commodity to be shown in the generation map, if not specified, same as line commodity. Defaults to commodity.
+           **S (str, optional): Season for FlowTime or UtilizationTime. Will pick one random if not specified.
+           **T (str, optional): Hour for FlowTime or UtilizationTime. Will pick one random if not specified.
+           **exo_end (str, optional): Show only exogenous or endogenous capacities. Choose from ['Both', 'Endogenous', 'Exogenous']. Defaults to 'Both'.
+           **generation_exclude_Import_Cap_H2 (bool, optional): Do not plot the capacities and production related to H2 Import (will be shown as line). Defaults to True.
+           **generation_exclude_H2Storage (bool, optional): Do not plot capacity or production of the H2 storage. Defaults to True.
+           **generation_exclude_ElectricStorage (bool, optional): Do not plot capacity or production of Electric storage. Defaults to True.
+           **generation_exclude_Geothermal (bool, optional): Do not plot the production of Geothermal. Defaults to True.
+           **coordinates_geofile_offset (float, optional): Geofile coordinates offset from the min and max of the geofile. Defaults to 0.5.
+           **filename (str, optional): The name of the file to save, if save_fig = True. Defaults to .png if no extension is included.
+       Visual additional options:
+           **title_show (bool, optional): Show title or not. Defaults to True.
+           **legend_show (bool, optional): Show legend_show or not. Defaults to True.
+           **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
+           **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
+           **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
+           Lines options :
+               **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+               **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
+               **line_width_min (float, optional): Minimum width of lines, used if cat is linear or log. Defaults to 0.5. Value in point.
+               **line_width_max (float, optional): Maximum width of lines, used if cat is linear or log. Defaults to 12. Value in point.
+               **line_cluster_values (list, optional): The capacity grouping necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+               **line_cluster_widths (list, optional): The widths for the corresponding capacity group if cat is cluster (has to be same size as line_cluster_values). Used for the legend if defined. Values in point.
+               **line_value_max (float, optional): Maximum value of lines, used if cat is linear or log to set the value corresponding to the maximum width.
+               **line_legend_cluster_values (list, optional): The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'.
+               **line_opacity (float, optional): Opacity of lines. Defaults to 1.
+               **line_label_show (bool, optional): Showing or not the value of the lines. Defaults to False.
+               **line_label_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map in text. Defaults to 0.
+               **line_label_decimals (int, optional): Number of decimals shown for line capacities. Defaults to 1.
+               **line_label_fontsize (int, optional): Font size of transmission line labels. Defaults to 10.
+               **line_flow_show (bool, optional): Showing or not the arrows on the lines. Defaults to True.
+           Generation options :
+               **generation_show_min (float, optional): Minimum generation capacity (GW) or production (TWh) shown on map. Defaults to 0.001.
+               **generation_display_type (str, optional): Type of display on regions. Choose from ['Pie']. Defaults to 'Pie'.
+               **generation_var (str, optional): Variable to be shown in the pie chart. Choose from ['TECH_TYPE', 'FFF']. Defaults to 'TECH_TYPE'.
+               **pie_radius_cat (str, optional): Way of determining pie size. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
+               **pie_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0. Value in data unit.
+               **pie_radius_min (float, optional): Minimum radius of pie, used if cat is linear or log. Defaults to 0.2. Value in data unit.
+               **pie_radius_max (float, optional): Maximum radius of pie, used if cat is linear or log. Defaults to 1.4. Value in data unit.
+               **pie_cluster_values (list, optional) = The capacity groupings necessary if cat is 'cluster'. Defaults values depends on commodity. Used for the legend if defined.
+               **pie_cluster_radius (list, optional) = The radius for the corresponding capacity group if cat is cluster (has to be same size as pie_cluster_values). Used for the legend if defined. Values in data unit.
+               **pie_value_max (float, optional): Maximum value of pie, used if cat is linear or log to set the value corresponding to the maximum radius.
+               **pie_legend_cluster_values (list, optional) = The legend capacity grouping if a specific legend is needed. Is handled automatically if not defined. Not used if cat is 'cluster'. 
+           Background options :
+               **background_name (str, optional): Personalized name of the background (mostly useful for Custom).
+               **background_unit (str, optional): Personalized unit of the background (mostly useful for Custom).
+               **background_scale (list, optional) : Scale used for the background coloring. Defaults to (0, Max value found in results).
+               **background_scale_tick (int, optional) : A tick every x units in the background legend. Defaults to 2.
+               **background_label_show (bool, optional): Showing or not the background label on the countries. Defaults to False.
+               **background_label_fontsize (int, optional): Font size of the background labels. Defaults to 10.
+       Colors additional options:
+           **background_color (str, optional): Background color of the map. Defaults to 'white'.
+           **regions_ext_color (str, optional): Color of regions outside the model. Defaults to '#d3d3d3'.
+           **regions_model_color (str, optional): Color of regions inside the model. Defaults to 'linen'.
+           **line_color (str, optional): Color of lines network. Defaults to 'green' for electricity and '#13EAC9' for hydrogen.
+           **line_label_color (str, optional): Color of line labels. Defaults to 'black'.
+           **generation_tech_color (dict, optional): Dictionnary of colors for each technology. Defaults to colors for electricity and hydrogen.
+           **generation_fuel_color (dict, optional): Dictionnary of colors for each fuel. Defaults to colors for electricity and hydrogen.
+           **background_colormap (str, optional): Personalized background colormap on the countries.
+           **background_label_color (str, optional): Color of the background labels. Defaults to 'black'.
+       Geography additional options:
+           **coordinates_RRR_path = Path to the csv file containing the coordinates of the regions centers.
+           **bypass_path = Path to the csv file containing the coordinates of 'hooks' in indirect lines, to avoid going trespassing third regions.
+           **hydrogen_third_nations_path = Path to the csv file containing the coordinates of h2 import lines from third nations.
+           **countries_color_path = Path to the csv file containing the personnalized colors of the countries
+           **countries_background_path = Path to the csv file containing the personnalized background of the countries
+
+   Returns:
+       Tuple[Figure, Axes]: The figure and axes objects of the plot
+
+

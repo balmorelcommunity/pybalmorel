@@ -1,0 +1,438 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.entsoe &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="pybalmorel.formatting" href="../formatting/index.html" />
+    <link rel="prev" title="pybalmorel.economics.prices" href="../economics/prices/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel</a></li>
+      <li class="breadcrumb-item active">pybalmorel.entsoe</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/pybalmorel/entsoe/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.entsoe">
+<span id="pybalmorel-entsoe"></span><h1>pybalmorel.entsoe<a class="headerlink" href="#module-pybalmorel.entsoe" title="Link to this heading"></a></h1>
+<p>ENTSO-E API</p>
+<p>Generic client for fetching data from the ENTSO-E transparency platform,
+including the zone-code vocabulary bridging ENTSO-E bidding zones and
+Balmorel regions (see CONTEXT.md). Independent of Balmorel backcasting -
+see pybalmorel.backcasting for that.</p>
+<p>Raw data is downloaded with <cite>python -m pybalmorel.backcasting download</cite>.</p>
+<p>Created on 18.06.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.bidding_zone_codes" title="pybalmorel.entsoe.bidding_zone_codes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bidding_zone_codes</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.bidding_zones" title="pybalmorel.entsoe.bidding_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bidding_zones</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.bidding_zone_translation" title="pybalmorel.entsoe.bidding_zone_translation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bidding_zone_translation</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe._extra_entsoe_codes" title="pybalmorel.entsoe._extra_entsoe_codes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_extra_entsoe_codes</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe._code_to_region" title="pybalmorel.entsoe._code_to_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_code_to_region</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe._zone_token" title="pybalmorel.entsoe._zone_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zone_token</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe._extra_neighbours" title="pybalmorel.entsoe._extra_neighbours"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_extra_neighbours</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.region_to_entsoe_code" title="pybalmorel.entsoe.region_to_entsoe_code"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region_to_entsoe_code</span></code></a>(→ str)</p></td>
+<td><p>Map a canonical region name to the code entsoe-py expects for querying it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.entsoe_code_to_region" title="pybalmorel.entsoe.entsoe_code_to_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_code_to_region</span></code></a>(→ str)</p></td>
+<td><p>Map an ENTSO-E query code back to its region name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.zone_eic_code" title="pybalmorel.entsoe.zone_eic_code"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zone_eic_code</span></code></a>(→ str)</p></td>
+<td><p>The EIC code of any ENTSO-E zone identifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.zone_to_region" title="pybalmorel.entsoe.zone_to_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zone_to_region</span></code></a>(→ str)</p></td>
+<td><p>The region name of any ENTSO-E zone identifier (before canonical translation).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.parse_transmission_filename" title="pybalmorel.entsoe.parse_transmission_filename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_transmission_filename</span></code></a>(→ tuple[str, str] | None)</p></td>
+<td><p>The (from, to) zones of a '&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_&lt;entsoe_query&gt;.csv' file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.transmission_files" title="pybalmorel.entsoe.transmission_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transmission_files</span></code></a>(→ dict[tuple[str, str], pathlib.Path])</p></td>
+<td><p>The fetched transmission files in <cite>path</cite>, one per directed pair of EIC codes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.find_transmission_file" title="pybalmorel.entsoe.find_transmission_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_transmission_file</span></code></a>(→ pathlib.Path | None)</p></td>
+<td><p>The fetched file for one directed pair, whichever spelling it was saved under.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.entsoe_subzones" title="pybalmorel.entsoe.entsoe_subzones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_subzones</span></code></a>(→ list[str])</p></td>
+<td><p>The ENTSO-E bidding zones that collapse to <cite>canonical_region</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.neighbour_pairs" title="pybalmorel.entsoe.neighbour_pairs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neighbour_pairs</span></code></a>(→ list[tuple[str, str]])</p></td>
+<td><p>The directed pairs of neighbouring zones, both within <cite>zones</cite>, to query flows for.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.date_format" title="pybalmorel.entsoe.date_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">date_format</span></code></a>(date)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.get_full_year" title="pybalmorel.entsoe.get_full_year"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_full_year</span></code></a>(year)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.get_api_key" title="pybalmorel.entsoe.get_api_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_api_key</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.fetch_annual_data" title="pybalmorel.entsoe.fetch_annual_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_annual_data</span></code></a>(entsoe_query, year, bidding_zones, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.no_data_file" title="pybalmorel.entsoe.no_data_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">no_data_file</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>The file remembering zones or pairs ENTSO-E has no data for, so reruns skip them.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.read_no_data_pairs" title="pybalmorel.entsoe.read_no_data_pairs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_no_data_pairs</span></code></a>(→ set[tuple[str, str]])</p></td>
+<td><p>The (from EIC code, to EIC code) pairs ENTSO-E previously had no data for.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.read_no_data_zones" title="pybalmorel.entsoe.read_no_data_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_no_data_zones</span></code></a>(→ set[str])</p></td>
+<td><p>The zones ENTSO-E previously had no data for in a single-zone query.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.fetch_annual_transmission_data" title="pybalmorel.entsoe.fetch_annual_transmission_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_annual_transmission_data</span></code></a>(entsoe_query, ...[, ...])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="package-contents">
+<h2>Package Contents<a class="headerlink" href="#package-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.bidding_zone_codes">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">bidding_zone_codes</span></span><a class="headerlink" href="#pybalmorel.entsoe.bidding_zone_codes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.bidding_zones">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">bidding_zones</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['IE_SEM',</span> <span class="pre">'10YGB----------A',</span> <span class="pre">'PT',</span> <span class="pre">'ES',</span> <span class="pre">'FR',</span> <span class="pre">'BE',</span> <span class="pre">'NL',</span> <span class="pre">'DE_LU',</span> <span class="pre">'10YDK-1--------W',...</span></span><a class="headerlink" href="#pybalmorel.entsoe.bidding_zones" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.bidding_zone_translation">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">bidding_zone_translation</span></span><a class="headerlink" href="#pybalmorel.entsoe.bidding_zone_translation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe._extra_entsoe_codes">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">_extra_entsoe_codes</span></span><a class="headerlink" href="#pybalmorel.entsoe._extra_entsoe_codes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.region_to_entsoe_code">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">region_to_entsoe_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canonical_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.region_to_entsoe_code" title="Link to this definition"></a></dt>
+<dd><p>Map a canonical region name to the code entsoe-py expects for querying it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe._code_to_region">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">_code_to_region</span></span><a class="headerlink" href="#pybalmorel.entsoe._code_to_region" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.entsoe_code_to_region">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">entsoe_code_to_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.entsoe_code_to_region" title="Link to this definition"></a></dt>
+<dd><p>Map an ENTSO-E query code back to its region name.</p>
+<p>Inverse of region_to_entsoe_code. Falls back to the code itself if unmapped.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.zone_eic_code">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">zone_eic_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.zone_eic_code" title="Link to this definition"></a></dt>
+<dd><p>The EIC code of any ENTSO-E zone identifier.</p>
+<p>Accepts a Balmorel/canonical region name (‘DK1’, ‘UK’), an entsoe-py area
+name (‘DK_1’, ‘GB’) or an EIC code (‘10YDK-1——–W’), so files fetched
+under different spellings of the same zone can be recognised as one.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>zone (str): The zone identifier.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The EIC code, or the query code itself if entsoe-py doesn’t know it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.zone_to_region">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">zone_to_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.zone_to_region" title="Link to this definition"></a></dt>
+<dd><p>The region name of any ENTSO-E zone identifier (before canonical translation).</p>
+<p>Like entsoe_code_to_region, but also understands entsoe-py area names
+(‘DK_1’ -&gt; ‘DK1’, ‘IT_NORD’ -&gt; ‘IT-NORD’, ‘GB’ -&gt; ‘UK’) and EIC codes not in
+bidding_zone_codes.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>zone (str): The zone identifier.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The region name, falling back to the entsoe-py area name or <cite>zone</cite> itself.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe._zone_token">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">_zone_token</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z0-9]+)*)'</span></span><a class="headerlink" href="#pybalmorel.entsoe._zone_token" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.parse_transmission_filename">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">parse_transmission_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'crossborder_flows'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.parse_transmission_filename" title="Link to this definition"></a></dt>
+<dd><p>The (from, to) zones of a ‘&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_&lt;entsoe_query&gt;.csv’ file.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>file_name (str): The file name, without folder.
+year (int): The year the file must be for.
+entsoe_query (str, optional): The query in the file name. Defaults to ‘crossborder_flows’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[str, str] | None: The zones as spelled in the name, or None if it doesn’t match.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.transmission_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">transmission_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'crossborder_flows'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.transmission_files" title="Link to this definition"></a></dt>
+<dd><p>The fetched transmission files in <cite>path</cite>, one per directed pair of EIC codes.</p>
+<p>A pair fetched under several spellings (e.g. ‘DK_1-DE_LU’ and
+‘10YDK-1——–W-DE_LU’) appears once, so it is never read twice.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched csv’s.
+year (int): The year to look for.
+entsoe_query (str, optional): The query in the file names. Defaults to ‘crossborder_flows’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict[tuple[str, str], Path]: {(from EIC code, to EIC code): file}.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.find_transmission_file">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">find_transmission_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'crossborder_flows'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.find_transmission_file" title="Link to this definition"></a></dt>
+<dd><p>The fetched file for one directed pair, whichever spelling it was saved under.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched csv’s.
+year (int): The year to look for.
+zone_from (str): Zone the flow originates from, in any spelling.
+zone_to (str): Zone the flow arrives at, in any spelling.
+entsoe_query (str, optional): The query in the file name. Defaults to ‘crossborder_flows’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Path | None: The file, or None if the pair hasn’t been fetched.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.entsoe_subzones">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">entsoe_subzones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canonical_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.entsoe_subzones" title="Link to this definition"></a></dt>
+<dd><p>The ENTSO-E bidding zones that collapse to <cite>canonical_region</cite>.</p>
+<p>Returns multiple zones only when ENTSO-E’s resolution is finer than Balmorel’s
+for this region (e.g. ‘IT’ -&gt; the 7 Italian bidding zones). Otherwise returns
+a single-item list of the canonical name itself.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe._extra_neighbours">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">_extra_neighbours</span></span><a class="headerlink" href="#pybalmorel.entsoe._extra_neighbours" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.neighbour_pairs">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">neighbour_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.neighbour_pairs" title="Link to this definition"></a></dt>
+<dd><p>The directed pairs of neighbouring zones, both within <cite>zones</cite>, to query flows for.</p>
+<p>Both directions are included, since NEIGHBOURS isn’t symmetric (e.g. no AL
+key). Zones are spelled as transmission-max-flow looks them up.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[tuple[str, str]]: Sorted (from, to) query codes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.date_format">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">date_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.entsoe.date_format" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.get_full_year">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">get_full_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.entsoe.get_full_year" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.get_api_key">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">get_api_key</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.entsoe.get_api_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.fetch_annual_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">fetch_annual_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bidding_zones</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.entsoe.fetch_annual_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.no_data_file">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">no_data_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.no_data_file" title="Link to this definition"></a></dt>
+<dd><p>The file remembering zones or pairs ENTSO-E has no data for, so reruns skip them.</p>
+<p>Delete it to query those pairs again.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.read_no_data_pairs">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">read_no_data_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'crossborder_flows'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.read_no_data_pairs" title="Link to this definition"></a></dt>
+<dd><p>The (from EIC code, to EIC code) pairs ENTSO-E previously had no data for.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.read_no_data_zones">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">read_no_data_zones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.read_no_data_zones" title="Link to this definition"></a></dt>
+<dd><p>The zones ENTSO-E previously had no data for in a single-zone query.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.fetch_annual_transmission_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.</span></span><span class="sig-name descname"><span class="pre">fetch_annual_transmission_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_to_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.entsoe.fetch_annual_transmission_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../economics/prices/index.html" class="btn btn-neutral float-left" title="pybalmorel.economics.prices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../formatting/index.html" class="btn btn-neutral float-right" title="pybalmorel.formatting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

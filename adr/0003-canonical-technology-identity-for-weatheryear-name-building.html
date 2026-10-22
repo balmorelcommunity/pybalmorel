@@ -1,0 +1,160 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones" href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html" />
+    <link rel="prev" title="Vectorize symbol_to_df via gams.transfer instead of per-record iteration" href="0002-vectorize-symbol-to-df-with-gams-transfer.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../developing.html">Developing pybalmorel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../developing.html#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../developing.html#architecture-decisions">Architecture Decisions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-ground-source-heat-pump-cop-excluded-from-weatheryear.html">Ground-source heat pump COP is excluded from the weatheryear pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-vectorize-symbol-to-df-with-gams-transfer.html">Vectorize symbol_to_df via gams.transfer instead of per-record iteration</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#considered-options">Considered options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0005-observed-max-flow-not-ntc-for-backcasting.html">Use observed max flow, not NTC, as the transmission constraint for backcasting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0006-xkfx-override-file-not-regeneration.html">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0007-split-entsoe-and-backcasting-packages.html">Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0008-backcast-calendar-utc.html">Backcast calendar uses UTC, not local time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0009-price-year-bundled-deflator-table.html">Bundle the Price Year deflator and exchange-rate tables instead of fetching or passing them</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developing.html">Developing pybalmorel</a></li>
+      <li class="breadcrumb-item active">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0003-canonical-technology-identity-for-weatheryear-name-building.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="derive-ggg-renewable-invdataset-renewable-aaa-renewable-names-from-one-shared-technology-identity">
+<h1>Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity<a class="headerlink" href="#derive-ggg-renewable-invdataset-renewable-aaa-renewable-names-from-one-shared-technology-identity" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">GGG_renewable</span></code>, <code class="docutils literal notranslate"><span class="pre">INVDATASET_renewable</span></code>, and <code class="docutils literal notranslate"><span class="pre">AAA_renewable</span></code> are three different Balmorel set domains (per-vintage generators, investment-option groups, and region-technology pairs) that legitimately need different string spellings for the same underlying technology — but <code class="docutils literal notranslate"><span class="pre">build_GGG</span></code>, <code class="docutils literal notranslate"><span class="pre">build_INVDATASET</span></code>, and <code class="docutils literal notranslate"><span class="pre">build_AAA</span></code> in <code class="docutils literal notranslate"><span class="pre">additional_inc.py</span></code> each independently hardcoded their own f-string template for that same <code class="docutils literal notranslate"><span class="pre">(turbine/PV</span> <span class="pre">model,</span> <span class="pre">resource</span> <span class="pre">grade,</span> <span class="pre">onshore/offshore,</span> <span class="pre">region)</span></code> tuple, with no shared source of truth. This already caused one real bug (a <code class="docutils literal notranslate"><span class="pre">SP316-HHHH155</span></code> vs <code class="docutils literal notranslate"><span class="pre">SP316-HH155</span></code> spelling divergence), and is the direct cause of <code class="docutils literal notranslate"><span class="pre">INVDATA</span></code> linking an area computed under one spelling (<code class="docutils literal notranslate"><span class="pre">IE_VRE-ONS_SP335-HH100_RG1</span></code>) to an investment option built under another (<code class="docutils literal notranslate"><span class="pre">GNR_WT-SP335-HH100_ONS_RG1_Y-2020</span></code>) for what is meant to be the same technology.</p>
+<p>We decided to extract a single per-technology identity helper (<code class="docutils literal notranslate"><span class="pre">_template_for</span></code> plus the <code class="docutils literal notranslate"><span class="pre">_WIND_TEMPLATES</span></code>/<code class="docutils literal notranslate"><span class="pre">_SOLAR_TEMPLATES</span></code> tables) that each of the three builders calls to produce their (deliberately different) name strings, rather than accept the risk of three independently hand-maintained templates drifting apart again.</p>
+<p>We initially also planned to consolidate <code class="docutils literal notranslate"><span class="pre">build_INVDATA_renewable</span></code>’s <code class="docutils literal notranslate"><span class="pre">AAA_renewable</span></code>-based regex-substring bridge to <code class="docutils literal notranslate"><span class="pre">INVDATASET_renewable</span></code> onto <code class="docutils literal notranslate"><span class="pre">build_ALLOWEDINV</span></code>’s <code class="docutils literal notranslate"><span class="pre">GGG_renewable</span></code>-based matching, on the assumption that it duplicated the same linking task. Reading the actual implementation showed this assumption was wrong: <code class="docutils literal notranslate"><span class="pre">build_AAA</span></code>’s templates always nest the <code class="docutils literal notranslate"><span class="pre">INVDATASET_renewable</span></code> string directly inside the corresponding <code class="docutils literal notranslate"><span class="pre">AAA_renewable</span></code> string by construction (region + “_” + that string for wind, region + “_VRE-” + that string for solar), so <code class="docutils literal notranslate"><span class="pre">build_INVDATA_renewable</span></code>’s plain containment check is already exact and correct — it isn’t duplicating <code class="docutils literal notranslate"><span class="pre">build_ALLOWEDINV</span></code>’s logic, it’s solving a different problem (linking every real region to an investment option, vs. <code class="docutils literal notranslate"><span class="pre">build_ALLOWEDINV</span></code> finding which literal generator members belong to one representative region). We left this matching mechanism as-is and only removed the dead, always-no-op <code class="docutils literal notranslate"><span class="pre">.replace(&quot;ONSVRE_&quot;,</span> <span class="pre">&quot;&quot;).replace(&quot;OFFSVRE_&quot;,</span> <span class="pre">&quot;&quot;)</span></code> call and switched <code class="docutils literal notranslate"><span class="pre">str.contains</span></code> from <code class="docutils literal notranslate"><span class="pre">regex=True</span></code> to <code class="docutils literal notranslate"><span class="pre">regex=False</span></code>, since no metacharacter-sensitive matching was ever needed.</p>
+<section id="considered-options">
+<h2>Considered options<a class="headerlink" href="#considered-options" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Keep three independent templates, add a cross-consistency test asserting they stay in sync.</strong> Rejected — this treats a structural duplication as a testing problem rather than removing the duplication itself; a test only catches drift after the fact instead of making it impossible.</p></li>
+<li><p><strong>Rebuild <code class="docutils literal notranslate"><span class="pre">build_INVDATA_renewable</span></code> on <code class="docutils literal notranslate"><span class="pre">build_ALLOWEDINV</span></code>’s GGG-based matching.</strong> Rejected after reading the actual code — the two functions solve genuinely different linking problems (see above), and forcing them onto one mechanism would only add complexity without fixing anything that was actually broken.</p></li>
+</ul>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">GGG_renewable</span></code>, <code class="docutils literal notranslate"><span class="pre">INVDATASET_renewable</span></code>, and <code class="docutils literal notranslate"><span class="pre">AAA_renewable</span></code> keep their distinct spellings (<code class="docutils literal notranslate"><span class="pre">GNR_WT-...</span></code>, <code class="docutils literal notranslate"><span class="pre">VRE-ONS_...</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;_VRE-ONS_...</span></code>) — this is not a move toward one shared string across all three sets, only toward one shared source of truth for the parts of those strings that should never disagree.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="0002-vectorize-symbol-to-df-with-gams-transfer.html" class="btn btn-neutral float-left" title="Vectorize symbol_to_df via gams.transfer instead of per-record iteration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html" class="btn btn-neutral float-right" title="Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

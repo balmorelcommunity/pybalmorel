@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.scenario_data &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.to_balmorel" href="../to_balmorel/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.hydro_to_btc" href="../hydro_to_btc/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.scenario_data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/scenario_data/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.scenario_data">
+<span id="pybalmorel-weatheryear-scenario-data"></span><h1>pybalmorel.weatheryear.scenario_data<a class="headerlink" href="#module-pybalmorel.weatheryear.scenario_data" title="Link to this heading"></a></h1>
+<p>Weather-Year Scenario Data</p>
+<p>Turns WEATHERYEAR’s CapDev output for one year into the .inc files a Balmorel
+scenario’s data/ folder needs. Balmorel’s bb4datainc.inc only reads a
+scenario’s own data/&lt;NAME&gt;.inc when the filename matches exactly, and some
+WEATHERYEAR output has a different name, is split across several files, or
+holds scaling factors rather than values. Each rule below was verified against
+Balmorel’s override mechanism in the GREAT project
+(mbrpdoc-great/scripts/preprocessing/clean_weather_year_inputs.py, its ADRs
+0015, 0021, 0022, 0034 and 0036), where this logic comes from.</p>
+<ul class="simple">
+<li><p>Wind and solar profiles and FLH keep their names. Wind gets one fallback line
+per existing area CorRES has no profile for, and its catch-all borrows a wind
+area instead of DK2_NoDH.</p></li>
+<li><p>Hydro files lose WEATHERYEAR’s _WY suffix. The FLH files are scaling factors,
+so the base values load first (under $onMulti) and are multiplied. The hydro
+profiles get base’s catch-all for areas without a weather-year profile.</p></li>
+<li><p>Demand is split by user in WEATHERYEAR but read as one DE_VAR_T.inc and one
+DH_VAR_T.inc. Each loads the base default first, since the weather year only
+sets its own users’ cells.</p></li>
+<li><p>Individual-user heat (INDIVUSERS_DH*.inc) assigns straight into DH and
+DH_VAR_T, so it is loaded inside DH.inc and DH_VAR_T.inc, and the addon’s own
+override files are written empty so it isn’t applied twice.</p></li>
+<li><p>Top-level to_balmorel/<a href="#id1"><span class="problematic" id="id2">*</span></a>.inc files are copied, except GKFX_renewable.inc (the
+existing fleet comes from base) and SUBTECHGROUPKPOT.inc.</p></li>
+<li><p>Heat-pump COP files are not written; models that use them need their own
+wrapper.</p></li>
+</ul>
+<p>Created on 14.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.PASSTHROUGH_FILES" title="pybalmorel.weatheryear.scenario_data.PASSTHROUGH_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PASSTHROUGH_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.RENAME_FILES" title="pybalmorel.weatheryear.scenario_data.RENAME_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RENAME_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.CONCAT_FILES" title="pybalmorel.weatheryear.scenario_data.CONCAT_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CONCAT_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.FLH_FACTOR_FILES" title="pybalmorel.weatheryear.scenario_data.FLH_FACTOR_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FLH_FACTOR_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.WIDE_TABLE_FILES" title="pybalmorel.weatheryear.scenario_data.WIDE_TABLE_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WIDE_TABLE_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.STATIC_FILE_EXCLUDE" title="pybalmorel.weatheryear.scenario_data.STATIC_FILE_EXCLUDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATIC_FILE_EXCLUDE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.WIND_AREA_FALLBACKS" title="pybalmorel.weatheryear.scenario_data.WIND_AREA_FALLBACKS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WIND_AREA_FALLBACKS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._WND_CATCHALL_FROM" title="pybalmorel.weatheryear.scenario_data._WND_CATCHALL_FROM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_WND_CATCHALL_FROM</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._WND_CATCHALL_TO" title="pybalmorel.weatheryear.scenario_data._WND_CATCHALL_TO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_WND_CATCHALL_TO</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.HYDRO_PROFILE_FALLBACKS" title="pybalmorel.weatheryear.scenario_data.HYDRO_PROFILE_FALLBACKS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HYDRO_PROFILE_FALLBACKS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._INDIVUSERS_EMPTY" title="pybalmorel.weatheryear.scenario_data._INDIVUSERS_EMPTY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_INDIVUSERS_EMPTY</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._RG_OFF_TO_BARE" title="pybalmorel.weatheryear.scenario_data._RG_OFF_TO_BARE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_RG_OFF_TO_BARE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._FLH_ASSIGNMENT" title="pybalmorel.weatheryear.scenario_data._FLH_ASSIGNMENT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_FLH_ASSIGNMENT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._drop_area_lines" title="pybalmorel.weatheryear.scenario_data._drop_area_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_drop_area_lines</span></code></a>(→ str)</p></td>
+<td><p>Drop every line naming a dropped area, for files with one area per line.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._drop_wide_table_columns" title="pybalmorel.weatheryear.scenario_data._drop_wide_table_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_drop_wide_table_columns</span></code></a>(→ str)</p></td>
+<td><p>Cut dropped areas' columns out of a TABLE header and every data row.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._finalize" title="pybalmorel.weatheryear.scenario_data._finalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_finalize</span></code></a>(→ str)</p></td>
+<td><p>Drop excluded areas and normalise offshore resource-grade labels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._make_flh_multiplicative" title="pybalmorel.weatheryear.scenario_data._make_flh_multiplicative"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_make_flh_multiplicative</span></code></a>(→ str)</p></td>
+<td><p>Rewrite FLH factors as scalings of the loaded value; leave ones that already are.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data._append" title="pybalmorel.weatheryear.scenario_data._append"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_append</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.scenario_data.write_scenario_data" title="pybalmorel.weatheryear.scenario_data.write_scenario_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_scenario_data</span></code></a>() → list[pathlib.Path])</p></td>
+<td><p>Write one weather year's Balmorel scenario data files.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.PASSTHROUGH_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">PASSTHROUGH_FILES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['WND_VAR_T.inc',</span> <span class="pre">'SOLE_VAR_T.inc',</span> <span class="pre">'WNDFLH.inc',</span> <span class="pre">'SOLEFLH.inc']</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.PASSTHROUGH_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.RENAME_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">RENAME_FILES</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.RENAME_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.CONCAT_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">CONCAT_FILES</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.CONCAT_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.FLH_FACTOR_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">FLH_FACTOR_FILES</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.FLH_FACTOR_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.WIDE_TABLE_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">WIDE_TABLE_FILES</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.WIDE_TABLE_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.STATIC_FILE_EXCLUDE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">STATIC_FILE_EXCLUDE</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.STATIC_FILE_EXCLUDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.WIND_AREA_FALLBACKS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">WIND_AREA_FALLBACKS</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.WIND_AREA_FALLBACKS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._WND_CATCHALL_FROM">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_WND_CATCHALL_FROM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;WND_VAR_T('DK2_NoDH',SSS,TTT)&quot;</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._WND_CATCHALL_FROM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._WND_CATCHALL_TO">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_WND_CATCHALL_TO</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;WND_VAR_T('DK1_OFF_OFF_Existing_RG2',SSS,TTT)&quot;</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._WND_CATCHALL_TO" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.HYDRO_PROFILE_FALLBACKS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">HYDRO_PROFILE_FALLBACKS</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.HYDRO_PROFILE_FALLBACKS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._INDIVUSERS_EMPTY">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_INDIVUSERS_EMPTY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Multiline-String</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._INDIVUSERS_EMPTY" title="Link to this definition"></a></dt>
+<dd><details><summary>Show Value</summary><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""* Deliberately empty: DH.inc and DH_VAR_T.inc already load base's</span>
+<span class="sd">* individual-user heat data, so the indivusers addon must not apply it again.</span>
+<span class="sd">"""</span>
+</pre></div>
+</div>
+</details></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._RG_OFF_TO_BARE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_RG_OFF_TO_BARE</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._RG_OFF_TO_BARE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._FLH_ASSIGNMENT">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_FLH_ASSIGNMENT</span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._FLH_ASSIGNMENT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._drop_area_lines">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_drop_area_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._drop_area_lines" title="Link to this definition"></a></dt>
+<dd><p>Drop every line naming a dropped area, for files with one area per line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._drop_wide_table_columns">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_drop_wide_table_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._drop_wide_table_columns" title="Link to this definition"></a></dt>
+<dd><p>Cut dropped areas’ columns out of a TABLE header and every data row.</p>
+<p>The exact character span is removed, because re-joining a GAMS TABLE row
+with normalised whitespace breaks its column alignment.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._finalize">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._finalize" title="Link to this definition"></a></dt>
+<dd><p>Drop excluded areas and normalise offshore resource-grade labels.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._make_flh_multiplicative">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_make_flh_multiplicative</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._make_flh_multiplicative" title="Link to this definition"></a></dt>
+<dd><p>Rewrite FLH factors as scalings of the loaded value; leave ones that already are.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data._append">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">_append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data._append" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.scenario_data.write_scenario_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.scenario_data.</span></span><span class="sig-name descname"><span class="pre">write_scenario_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capdev_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_balmorel_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'../../base/data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.scenario_data.write_scenario_data" title="Link to this definition"></a></dt>
+<dd><p>Write one weather year’s Balmorel scenario data files.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>capdev_dir (str | Path): A CapDev variant folder from WEATHERYEAR, e.g.</dt><dd><p>‘&lt;output&gt;/&lt;year&gt;/to_balmorel/CapDev/raw’ for the actual weather.</p>
+</dd>
+<dt>to_balmorel_dir (str | Path): The ‘&lt;output&gt;/&lt;year&gt;/to_balmorel’ folder,</dt><dd><p>whose top-level .inc files are copied too.</p>
+</dd>
+<dt>dest_dir (str | Path): The scenario’s data/ folder. Created if needed;</dt><dd><p>existing files with the same names are overwritten.</p>
+</dd>
+<dt>base_data_dir (str, optional): GAMS path, relative to the scenario’s</dt><dd><p>model/ folder, of the base data the weather year is applied on top
+of. Defaults to ‘../../base/data’.</p>
+</dd>
+<dt>drop_areas (tuple[str, …], optional): Areas the model doesn’t have,</dt><dd><p>removed wherever they appear (matched as substrings). Defaults to ().</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>FileNotFoundError: If capdev_dir doesn’t exist.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[Path]: The files written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../hydro_to_btc/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.hydro_to_btc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../to_balmorel/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.to_balmorel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
