@@ -407,6 +407,25 @@ def test_load_entsoe_data_reads_only_requested_year(tmp_path):
     assert generation.empty
 
 
+def test_generation_ignores_actual_consumption(tmp_path):
+    from pybalmorel.backcasting.__main__ import entsoe_to_category, format_entsoe_data
+
+    # ENTSO-E two-row header; in the second hour pumped storage only reports pumping
+    (tmp_path / "2023_FR_generation.csv").write_text(
+        ",Hydro Pumped Storage,Hydro Pumped Storage,Nuclear\n"
+        ",Actual Aggregated,Actual Consumption,Actual Aggregated\n"
+        "2023-01-02 00:00:00+01:00,100.0,0.0,500.0\n"
+        "2023-01-02 01:00:00+01:00,,80.0,500.0\n"
+    )
+    file_path = tmp_path / "2023_FR_generation.csv"
+
+    generation = format_entsoe_data(pd.read_csv(file_path), "h", file_path, 2023, "generation")
+
+    assert generation["Hydro Pumped Storage"].fillna(0).tolist() == [100.0, 0.0]
+    assert generation["Nuclear"].tolist() == [500.0, 500.0]
+    assert entsoe_to_category["Hydro Pumped Storage"] == "Storage & Flexibility"
+
+
 def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
     pairs = neighbour_pairs(["FR", "BE", "10YDK-1--------W", "DE_LU", "GR", "10Y1001A1001A788", "XK", "AL"])
 

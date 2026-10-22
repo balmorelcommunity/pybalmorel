@@ -124,7 +124,6 @@ entsoe_to_category = {
     # Hydro
     "Hydro Run-of-river and poundage": "Hydro",
     "Hydro Water Reservoir": "Hydro",
-    "Hydro Pumped Storage": "Hydro",
     # Nuclear
     "Nuclear": "Nuclear",
     # Biomass & Bioenergy
@@ -142,6 +141,9 @@ entsoe_to_category = {
     # Waste & Heat Recovery
     "Waste": "Waste & Heat Recovery",
     # Storage & Flexibility
+    # Pumped storage is storage on the Balmorel side too (INTRASEASONAL-ELECT-STORAGE),
+    # so Hydro means natural-inflow hydro on both sides
+    "Hydro Pumped Storage": "Storage & Flexibility",
     "Geothermal": "Storage & Flexibility",
     "Marine": "Storage & Flexibility",
     "Other renewable": "Storage & Flexibility",
@@ -199,7 +201,11 @@ def format_entsoe_data(df, resampling: str, filepath: Path, year: int, parameter
         # Multi-columned data
         if any([type(val) is str for val in df.iloc[0, 1:]]):
             df = pd.read_csv(filepath, header=[0, 1])
-            temp = df.iloc[:, 1:].T.groupby(level=0).first().T
+            # Keep only 'Actual Aggregated', so pumping and other 'Actual Consumption'
+            # is never counted as generation, even where 'Actual Aggregated' is empty
+            temp = df.iloc[:, 1:]
+            temp = temp.loc[:, temp.columns.get_level_values(1) == "Actual Aggregated"]
+            temp.columns = temp.columns.get_level_values(0)
             temp["Time"] = df.iloc[:, 0]
             df = temp
             aggregation = {col: "mean" for col in df.columns[:-1]}
