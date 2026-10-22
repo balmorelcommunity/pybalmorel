@@ -36,15 +36,19 @@ Region-qualified technology identifiers, one per technology identity per region,
 **INVDATA**:
 The GAMS parameter linking an `AAA_renewable` member to the `INVDATASET_renewable` member it can invest in.
 
+**Absolute Hydro FLH**:
+Hydro full-load hours computed as CorRES inflow energy divided by the Balmorel capacity that receives it (`hydro_flh: mode: absolute`), instead of a factor on Balmorel's base FLH (the default, relative mode).
+_Avoid_: Hydro factor (that is the relative mode)
+
 ### Backcasting
 
-**Observed Max Flow**:
-The maximum hourly cross-border electricity flow recorded by ENTSO-E on a given directed border-pair within a year. Used as an exogenous transmission constraint in backcasting runs, standing in for whatever combination of technical, market, maintenance, and social/political constraints actually limited flow that year.
-_Avoid_: Capacity, Transmission Capacity, NTC
+**Observed Flow Limit**:
+The 99th percentile of the hourly cross-border flow recorded by ENTSO-E in one direction of a canonical border within the Backcast Year, taken over the hours with flow in that direction, after summing every ENTSO-E zone pair of the border hour by hour. A direction without flow gets 0. Used as the exogenous transmission limit (`XKFX`) in a Backcast and as the `Limit` in Flow Validation. The percentile can be set; 100 gives the maximum (see ADR 0010).
+_Avoid_: Observed Max Flow (the earlier yearly maximum), Capacity, Transmission Capacity, NTC
 
 **Transmission Capacity (NTC)**:
-The grid operator's rated/commercial cross-border transfer capability, independent of whether it was ever fully utilised. Deliberately _not_ used for backcasting — Observed Max Flow is used instead, since backcasting aims to reproduce what actually happened in a given historical year, not what was technically possible.
-_Avoid_: Capacity (when ambiguous with Observed Max Flow)
+The grid operator's rated/commercial cross-border transfer capability, independent of whether it was ever fully utilised. Deliberately _not_ used for backcasting — Observed Flow Limit is used instead, since backcasting aims to reproduce what actually happened in a given historical year, not what was technically possible.
+_Avoid_: Capacity (when ambiguous with Observed Flow Limit)
 
 **Canonical Region Name**:
 A shared identifier used to bridge a Balmorel region and an ENTSO-E bidding zone when the two disagree on spelling or resolution (e.g. Balmorel's `DE4-E`/`DE4-N`/`DE4-S`/`DE4-W` and ENTSO-E's `IT-NORD`, `IT-CNOR`, etc. all canonicalize to `DE`/`IT`). Defined by `bidding_zone_translation`; a name absent from it is already canonical.
@@ -54,7 +58,7 @@ The raw identifier the ENTSO-E transparency platform API expects for a query (e.
 _Avoid_: Region, Zone (when ambiguous with Canonical Region Name)
 
 **Backcast**:
-A Balmorel scenario run for one Backcast Year from backcast inputs (Observed Max Flow, historical fuel prices, CO2 tax), so its results can be compared with what actually happened. Preparing a Backcast means generating those inputs; validating a Backcast means comparing its results with ENTSO-E observations.
+A Balmorel scenario run for one Backcast Year from backcast inputs (Observed Flow Limit, historical fuel prices, CO2 tax), so its results can be compared with what actually happened. Preparing a Backcast means generating those inputs; validating a Backcast means comparing its results with ENTSO-E observations.
 _Avoid_: Backcasting run, backcast scenario (when the run's results are meant)
 
 **Backcast Year**:
@@ -72,8 +76,28 @@ The currency year all backcast prices are expressed in: €2016. Every series is
 A flat, nominal €/tCO2 price for one Balmorel country (`CCC`) that replaces the EUA price in `TAX_CO2_ST`, e.g. the UK's own carbon price or 0 for a country without one. Every country without an override gets the EUA primary-auction price, so no list of ETS members is kept.
 _Avoid_: ETS country list
 
+**Nuclear Availability**:
+The share of a country's nuclear `GKFX` that could run in one week of the Backcast Year: the highest hourly nuclear output ENTSO-E reports for that week, divided by the country's nuclear `GKFX`, clipped at 1. It includes outages, maintenance and closures: weeks after the country's observed series ends are rated zero. Written as weekly `GKRATE` overrides to `GKRATE_ENTSOE.inc`; a zero is written as `eps`, since Balmorel reads 0 as full capacity. A calibration input, not a validation result.
+_Avoid_: Capacity factor, load factor (those describe output, not availability)
+
+**Natural-Inflow Hydro**:
+Run-of-river and reservoir hydro fed by natural water inflow. It excludes pumped-storage output, which is electricity storage.
+_Avoid_: Hydro (ambiguous about pumped storage)
+
+**Hydro Inflow Fallback**:
+For a country whose CorRES inflow fails the plausibility check, or that CorRES covers only partly or not at all, the inflow level comes from observed long-term Natural-Inflow Hydro instead; CorRES still provides that year's variation where it has data, and a country without CorRES data gets none. A stopgap until CorRES fixes and completes its inflow series (see ADR 0011).
+_Avoid_: Hydro calibration (the Backcast Year's own generation is never the reference)
+
+**Calibration Input**:
+A Backcast input derived from observed data for the Backcast Year that says what was available that year (nuclear outages, the usable interconnector capacity), not what the model should decide. Results that a calibration input fixes by construction are not evidence in Backcast validation.
+_Avoid_: Tuning, fitting
+
+**Validation Metric**:
+A result the model must reproduce on its own to pass Backcast validation: prices, cross-border flows, the fossil mix, and the timing of nuclear and hydro output within the year. Never derived from the same data as a Calibration Input.
+_Avoid_: Target (ambiguous between the two)
+
 **Flow Validation**:
-The comparison of Balmorel's hourly cross-border flows (`X_FLOW_YCRST`) with ENTSO-E's physical flows, per directed border between Canonical Region Names. Unlike the XKFX overrides, nothing is split: both sides are summed up to the canonical border and internal links are dropped. Hours Balmorel leaves out of its results count as zero flow. ENTSO-E flows are physical (including loop flows) while Balmorel's are commercial, so some mismatch is expected and not a model error.
+The comparison of Balmorel's hourly cross-border flows (`X_FLOW_YCRST`) with ENTSO-E's physical flows, per directed border between Canonical Region Names. Unlike the XKFX overrides, nothing is split: both sides are summed up to the canonical border and internal links are dropped. Hours Balmorel leaves out of its results count as zero flow. `Limit` is the Observed Flow Limit, which ENTSO-E exceeds in about 1% of its flowing hours by construction. ENTSO-E flows are physical (including loop flows) while Balmorel's are commercial, so some mismatch is expected and not a model error.
 
 **Series Fuel**:
 A fuel whose backcast price varies within the year (NATGAS and COAL daily; FUELOIL, HEAVYFUELOIL and LIGHTOIL weekly) rather than taking an annual value from the scenario data. The set of series fuels determines which fuels are dropped from the annual price table and flagged as non-constant.

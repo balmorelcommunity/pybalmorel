@@ -301,7 +301,7 @@ def neighbour_pairs(zones: list[str]) -> list[tuple[str, str]]:
     """The directed pairs of neighbouring zones, both within `zones`, to query flows for.
 
     Both directions are included, since NEIGHBOURS isn't symmetric (e.g. no AL
-    key). Zones are spelled as transmission-max-flow looks them up.
+    key). Zones are spelled as transmission-flow-limit looks them up.
 
     Args:
         zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.

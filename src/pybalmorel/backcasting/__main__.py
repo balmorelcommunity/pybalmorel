@@ -21,11 +21,13 @@ from .. import MainResults
 from ..entsoe import bidding_zone_translation, entsoe_code_to_region
 from .calendar import from_backcast_grid
 from .flows import (
+    OBSERVED_FLOW_PERCENTILE,
     align_flows,
-    entsoe_flow_limits,
+    canonical_region,
     flow_statistics,
     format_balmorel_flows,
     load_entsoe_flows,
+    observed_flow_limits,
     plot_flow_duration_curves,
 )
 from warnings import warn
@@ -264,6 +266,36 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
     return [getattr(data, data_item) for data_item in data_items]
 
 
+def load_observed_nuclear(entsoe_data_path: str, year: int) -> dict[str, pd.Series]:
+    """Hourly ENTSO-E nuclear output per canonical region, from the generation csv's.
+
+    Files of several zones in one canonical region are summed hour by hour. A
+    file without a 'Nuclear' column, or with only NaN or zeros in it, has no
+    nuclear.
+
+    Args:
+        entsoe_data_path (str): Folder with the fetched generation csv's.
+        year (int): The Backcast Year.
+
+    Returns:
+        dict[str, pd.Series]: Nuclear output (MW) indexed by UTC hour, per region.
+    """
+    nuclear = {}
+    for item in sorted(Path(entsoe_data_path).glob(f"{year}_*_generation.csv")):
+        df = format_entsoe_data(pd.read_csv(item, low_memory=False), "h", item, year, "generation")
+        if "Nuclear" not in df.columns or not df["Nuclear"].fillna(0).gt(0).any():
+            continue
+        region = canonical_region(df["Region"].iloc[0])
+        series = df.set_index("Time")["Nuclear"]
+        nuclear[region] = (
+            series
+            if region not in nuclear
+            else pd.concat([nuclear[region], series], axis=1).sum(axis=1, min_count=1)
+        )
+
+    return nuclear
+
+
 def format_balmorel_df(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.
 
@@ -493,6 +525,7 @@ def load_and_align(
     year: int,
     elpriceaggfunc: str,
     overwrite: bool,
+    percentile: float = OBSERVED_FLOW_PERCENTILE,
 ):
 
     # Load and format data
@@ -569,7 +602,7 @@ def load_and_align(
     flows = align_flows(
         load_entsoe_flows(entsoe_data_path, year),
         balmorel_flows,
-        entsoe_flow_limits(entsoe_data_path, year),
+        observed_flow_limits(entsoe_data_path, year, percentile),
     )
 
     return prices, loads, generation, flows
@@ -669,6 +702,14 @@ def main():
     default=False,
     help="Overwrite last generated .csv files?",
 )
+@click.option(
+    "--percentile",
+    type=float,
+    default=OBSERVED_FLOW_PERCENTILE,
+    show_default=True,
+    help="Percentile (in percent) of the hourly flow used as the Observed Flow Limit "
+    "in flows.csv; use the same value as transmission-flow-limit. 100 gives the maximum.",
+)
 def format(
     balmorel_scenario,
     balmorel_scenario_path,
@@ -676,6 +717,7 @@ def format(
     year,
     elpriceaggfunc,
     overwrite,
+    percentile,
 ):
 
     load_file, price_file, generation_file, flow_file = (
@@ -692,6 +734,7 @@ def format(
         year,
         elpriceaggfunc,
         overwrite,
+        percentile,
     )
     loads.to_csv(load_file)
     prices.to_csv(price_file)
@@ -743,7 +786,10 @@ def statistics(balmorel_scenario_path):
         print("\n\n")
         print("-" * 100)
         print("Statistics on cross-border flows per directed border")
-        print("(AtLimit: share of hours within 1% of the ENTSO-E Observed Max Flow)")
+        print(
+            "(AtLimit: share of hours within 1% of the Observed Flow Limit; "
+            "ENTSO-E exceeds it in about 1% of its flowing hours, Balmorel cannot)"
+        )
         with pd.option_context("display.max_rows", None, "display.width", 200):
             print(flow_statistics(flows).round(2))
         print("-" * 100)
@@ -807,19 +853,27 @@ def flows(balmorel_scenario_path):
     fig.savefig("flow_duration_curves.png", bbox_inches="tight")
 
 
-@main.command(name="transmission-max-flow")
+@main.command(name="transmission-flow-limit")
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("entsoe-data-path", type=str)
 @click.argument("year", type=int)
-def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
-    """Write XKFX_ENTSOE.inc: backcast transmission overrides from ENTSO-E Observed Max Flow.
+@click.option(
+    "--percentile",
+    type=float,
+    default=OBSERVED_FLOW_PERCENTILE,
+    show_default=True,
+    help="Percentile (in percent) of the hourly flow over the hours with flow. "
+    "100 gives the maximum.",
+)
+def transmission_flow_limit(balmorel_scenario_path, entsoe_data_path, year, percentile):
+    """Write XKFX_ENTSOE.inc: backcast transmission overrides from the ENTSO-E Observed Flow Limit.
 
     Reads the scenario's current XKFX borders, fetches matching ENTSO-E
     cross-border flows for YEAR, and writes/updates
     <balmorel-scenario-path>/data/XKFX_ENTSOE.inc plus the $include in XKFX.inc.
-    See CONTEXT.md and docs/adr/0005, 0006.
+    See CONTEXT.md and docs/adr/0005, 0006, 0010.
     """
-    from .flows import generate_transmission_max_flow_overrides
+    from .flows import generate_transmission_flow_limit_overrides
     from ..entsoe import get_api_key
 
     balmorel_scenario_path = Path(balmorel_scenario_path)
@@ -829,13 +883,52 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
     api_key = get_api_key()
     gams_system_directory = config("GAMS_SYSTEM_DIR", None)
 
-    generate_transmission_max_flow_overrides(
+    generate_transmission_flow_limit_overrides(
         balmorel_model_folder,
         scenario,
         year,
         entsoe_data_path,
         api_key,
         gams_system_directory=gams_system_directory,
+        percentile=percentile,
+    )
+
+
+@main.command(name="nuclear-availability")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("entsoe-data-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--reload-input",
+    is_flag=True,
+    help="Run ReadData again instead of reusing the cached <scenario>_input_data.gdx (takes a while).",
+)
+def nuclear_availability(balmorel_scenario_path, entsoe_data_path, year, reload_input):
+    """Write GKRATE_ENTSOE.inc: weekly Nuclear Availability from ENTSO-E nuclear output.
+
+    Per country and Backcast Calendar week: the highest hourly nuclear output
+    in the generation csv's under ENTSOE_DATA_PATH (from `download --query
+    generation`), divided by the country's nuclear GKFX in YEAR, clipped at 1.
+    Writes <balmorel-scenario-path>/data/GKRATE_ENTSOE.inc, which the scenario's
+    GKRATE.inc must include. See CONTEXT.md.
+    """
+    from .nuclear import generate_nuclear_availability
+
+    balmorel_scenario_path = Path(balmorel_scenario_path)
+    observed = load_observed_nuclear(entsoe_data_path, year)
+    if not observed:
+        warn(
+            f"No ENTSO-E nuclear output for {year} in {entsoe_data_path}. "
+            f"Run `python -m pybalmorel.backcasting download {entsoe_data_path} {year} --query generation`"
+        )
+
+    generate_nuclear_availability(
+        balmorel_scenario_path.parent,
+        balmorel_scenario_path.name,
+        year,
+        observed,
+        gams_system_directory=config("GAMS_SYSTEM_DIR", None),
+        reload_input=reload_input,
     )
 
 
@@ -850,7 +943,7 @@ def transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year):
     help="ENTSO-E data to download. Repeatable. Defaults to all.",
 )
 def download(entsoe_data_path, year, queries):
-    """Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-max-flow`.
+    """Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-flow-limit`.
 
     Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
     every neighbouring pair of them. Files already downloaded, and pairs

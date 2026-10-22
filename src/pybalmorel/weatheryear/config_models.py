@@ -17,6 +17,7 @@ _MODULE_KEYS = {
     "ann_corr_fac_ref_year",
     "demand_model_results",
     "hydro_model_results",
+    "hydro_flh",
     "cop_model_results",
     "corres_results",
     "weatheryear_inputs_folder",
@@ -196,6 +197,8 @@ def load_weatheryear_config(config_fn: str, required_keys: set[str] | None = Non
             normalized[key] = RegionsConfig.from_raw(value)
         elif key == "ANNUITYCG_calculation":
             normalized[key] = AnnuityCalculationConfig.from_raw(value)
+        elif key == "hydro_flh":
+            normalized[key] = HydroFlhConfig.from_raw(value, os.path.dirname(config_fn))
         elif key in {"RGs_to_keep", "corres_results"}:
             normalized[key] = _expect_dict_of_list_str(value, key)
         elif key in {"turbine_to_keep", "tech_to_keep"}:
@@ -314,9 +317,51 @@ class DemandModuleConfig:
 
 
 @dataclass(frozen=True)
+class HydroFlhConfig:
+    """How hydro full-load hours are written (see CONTEXT.md, Absolute Hydro FLH).
+
+    'relative' (default) writes a factor on Balmorel's base FLH; 'absolute'
+    writes CorRES inflow energy / the GKFX of `scenario` in `capacity_year`,
+    read from the Balmorel model at `balmorel_path`.
+    """
+
+    mode: str = "relative"
+    balmorel_path: str | None = None
+    scenario: str | None = None
+    capacity_year: int | None = None
+
+    @classmethod
+    def from_raw(cls, raw: Any, config_dir: str = "") -> "HydroFlhConfig":
+        raw = _expect_dict(raw, "hydro_flh")
+        mode = raw.get("mode", "relative")
+        if mode not in ("relative", "absolute"):
+            raise ConfigValidationError(f"hydro_flh['mode'] must be 'relative' or 'absolute', got {mode!r}")
+        if mode == "relative":
+            return cls()
+
+        balmorel_path = _require(raw, "balmorel_path", "hydro_flh (mode: absolute)")
+        scenario = _require(raw, "scenario", "hydro_flh (mode: absolute)")
+        capacity_year = _require(raw, "capacity_year", "hydro_flh (mode: absolute)")
+        if not isinstance(balmorel_path, str) or not isinstance(scenario, str):
+            raise ConfigValidationError("hydro_flh['balmorel_path'] and hydro_flh['scenario'] must be strings")
+        try:
+            capacity_year = int(capacity_year)
+        except (TypeError, ValueError) as exc:
+            raise ConfigValidationError("hydro_flh['capacity_year'] must be an integer") from exc
+
+        return cls(
+            mode=mode,
+            balmorel_path=os.path.normpath(os.path.join(config_dir, balmorel_path)),
+            scenario=scenario,
+            capacity_year=capacity_year,
+        )
+
+
+@dataclass(frozen=True)
 class HydroModuleConfig:
     hydro_model_results: str
     capdev_timesteps_to_keep: CapDevTimestepsConfig
+    hydro_flh: HydroFlhConfig = HydroFlhConfig()
 
     @classmethod
     def from_file(cls, config_fn: str) -> "HydroModuleConfig":
@@ -327,6 +372,7 @@ class HydroModuleConfig:
         return cls(
             hydro_model_results=raw["hydro_model_results"],
             capdev_timesteps_to_keep=raw["CapDev_timesteps_to_keep"],
+            hydro_flh=raw.get("hydro_flh", HydroFlhConfig()),
         )
 
 

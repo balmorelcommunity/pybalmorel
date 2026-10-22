@@ -6,7 +6,8 @@ so its results can be compared with what actually happened (see
 `pybalmorel.backcasting` covers the whole workflow:
 
 1. **Prepare** the Backcast's inputs: download ENTSO-E data, derive the
-   `XKFX` transmission override from ENTSO-E's Observed Max Flow, and write
+   `XKFX` transmission override from ENTSO-E's Observed Flow Limit, the
+   weekly [nuclear availability](#nuclear-availability), and write
    season- and hour-resolved historical [fuel prices](#fuel-prices) and a
    [CO2 tax](#co2-tax) for the Backcast Year. This page.
 2. **Run** the Balmorel scenario as usual.
@@ -15,8 +16,9 @@ so its results can be compared with what actually happened (see
 
 The transmission override follows ADRs
 [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md),
-[0006](../adr/0006-xkfx-override-file-not-regeneration.md) and
-[0007](../adr/0007-split-entsoe-and-backcasting-packages.md).
+[0006](../adr/0006-xkfx-override-file-not-regeneration.md),
+[0007](../adr/0007-split-entsoe-and-backcasting-packages.md) and
+[0010](../adr/0010-observed-flow-limit-percentile.md).
 `pybalmorel.backcasting` depends on [`pybalmorel.entsoe`](entsoe.md) for raw
 data access and on `pybalmorel.MainResults` for Balmorel results — never the
 other way round.
@@ -30,7 +32,7 @@ pip install pybalmorel[entso-e]
 ```
 
 A GAMS installation is also needed for reading Balmorel results, i.e. for
-`transmission-max-flow` (which reads the scenario's `XKFX` borders) and for
+`transmission-flow-limit` (which reads the scenario's `XKFX` borders) and for
 [validating a Backcast](../postprocessing/validating_backcast.md).
 
 ## CLI
@@ -42,11 +44,19 @@ python -m pybalmorel.backcasting download \
     <year> \
     [--query load --query crossborder_flows]
 
-# Write XKFX_ENTSOE.inc: transmission overrides from ENTSO-E Observed Max Flow
-python -m pybalmorel.backcasting transmission-max-flow \
+# Write XKFX_ENTSOE.inc: transmission overrides from the ENTSO-E Observed Flow Limit
+python -m pybalmorel.backcasting transmission-flow-limit \
     <balmorel-scenario-path> \
     <entsoe-data-path> \
-    <year>
+    <year> \
+    [--percentile 99]
+
+# Write GKRATE_ENTSOE.inc: weekly nuclear availability from ENTSO-E nuclear output
+python -m pybalmorel.backcasting nuclear-availability \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--reload-input]
 
 # Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
 python -m pybalmorel.backcasting ttf-csv <html-path> <historicalprices-path>
@@ -77,8 +87,8 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 |---|---|---|
 | `load` | `<year>_<zone>_load.csv` | `format` |
 | `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format` |
-| `generation` | `<year>_<zone>_generation.csv` | `format` |
-| `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-max-flow`, `format` |
+| `generation` | `<year>_<zone>_generation.csv` | `format`, `nuclear-availability` |
+| `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-flow-limit`, `format` |
 
 Without `--query`, all four are downloaded. `--query` is repeatable.
 
@@ -108,11 +118,56 @@ The download can be stopped and rerun at any time. On a rerun:
   series in local time, must be converted before they are mapped onto it.
 - **Bidding Zone Mapping**: uses `bidding_zone_codes`/`bidding_zone_translation`
   from `pybalmorel.entsoe` to bridge ENTSO-E bidding zones and Balmorel regions.
-- **Transmission overrides**: `flows.py` computes the Observed Max Flow per
-  border and writes it to `XKFX_ENTSOE.inc` (see ADRs
-  [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md) and
-  [0006](../adr/0006-xkfx-override-file-not-regeneration.md)) — a
+- **Transmission overrides**: `flows.py` computes the Observed Flow Limit
+  per border and writes it to `XKFX_ENTSOE.inc` (see ADRs
+  [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md),
+  [0006](../adr/0006-xkfx-override-file-not-regeneration.md) and
+  [0010](../adr/0010-observed-flow-limit-percentile.md)) — a
   non-destructive override file, never a rewrite of the base `XKFX.inc`.
+  The limit is a percentile (`--percentile`, default 99) of the hourly flow
+  in one direction, over the hours with flow in that direction, after
+  summing every ENTSO-E zone pair of the border hour by hour. A direction
+  without flow gets 0, and `--percentile 100` gives the maximum. The
+  `transmission-flow-limit` command replaces `transmission-max-flow`, which
+  took the yearly maximum; there is no alias for the old name.
+
+## Nuclear availability
+
+The `nuclear-availability` command writes `<scenario-path>/data/GKRATE_ENTSOE.inc`:
+one `GKRATE` per nuclear (area, technology) and Backcast Calendar week. The
+rating is the country's Nuclear Availability: the highest hourly nuclear
+output ENTSO-E reports for that week, divided by the country's nuclear
+`GKFX` in the Backcast Year, clipped at 1. It reads the generation files
+`download --query generation` fetched; it does not fetch.
+
+- Nuclear technologies are those whose `GDATA(G,'GDFUEL')` is
+  `FDATA('NUCLEAR','FDACRONYM')`. `GKFX` is read through GAMS from the
+  scenario's cached `<scenario>_input_data.gdx`, or by running ReadData if
+  it isn't cached. The command warns if a file in `<scenario>/data` is newer
+  than the cache, which then misses it; `--reload-input` runs ReadData again
+  (more than 20 minutes on the backcast).
+- Every nuclear technology in a country gets the same rating, since ENTSO-E
+  only reports nuclear output per bidding zone. Areas are grouped by
+  Canonical Region Name (`FIN` → `FI`, `DE4-*` → `DE`).
+- A rating of 0 is written as `eps`, since Balmorel reads a literal 0 as
+  "no rating" and uses full capacity.
+- Weeks without data after a country's last week with data are a closure:
+  ENTSO-E stops reporting a closed fleet instead of reporting zeros (Germany
+  in 2023 after 15 April). They are written as `eps`, with a loud warning,
+  since a feed that simply stops looks the same.
+- Any other week without data gets no line and keeps the base rating. Countries with
+  nuclear `GKFX` but no ENTSO-E nuclear output, or the other way round, are
+  reported and left out.
+
+The scenario's `data/GKRATE.inc` must include the file after the base
+ratings (the command warns if it doesn't):
+
+```gams
+$if EXIST '../data/GKRATE_ENTSOE.inc' $INCLUDE '../data/GKRATE_ENTSOE.inc';
+```
+
+The nuclear availability is a Calibration Input: nuclear output that it
+fixes by construction is not evidence in Backcast validation.
 
 ## Price Year
 
@@ -197,7 +252,7 @@ when Balmorel would ignore what they wrote:
 
 - **API Key**: set `ENTSOE_API_KEY` in `.env`, or provide it when prompted.
 - **GAMS Path**: set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing.
-- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, fuel price
+- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, GKRATE, fuel price
   and CO2 tax overrides written to `<scenario-path>/data/`; validation
   data cached in `<scenario-path>/backcastoutput/`.
 
@@ -206,7 +261,8 @@ when Balmorel would ignore what they wrote:
 1. Raw ENTSO-E data fetched via `pybalmorel.entsoe` (`download`) and saved
    as CSV.
 2. The XKFX override is computed from the ENTSO-E flows
-   (`transmission-max-flow`).
+   (`transmission-flow-limit`), and the GKRATE override from the ENTSO-E
+   nuclear output (`nuclear-availability`).
 3. Historical prices are mapped onto the UTC Backcast Calendar and written
    (`fuelprices`, `co2-tax`).
 

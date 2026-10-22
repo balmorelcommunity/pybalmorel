@@ -1,8 +1,8 @@
 """
 Flows
 
-Analyse transmission flows in ENTSO-E data: the Observed Max Flow XKFX
-overrides (docs/adr/0005, 0006) and the validation of Balmorel's flows
+Analyse transmission flows in ENTSO-E data: the Observed Flow Limit XKFX
+overrides (docs/adr/0005, 0006, 0010) and the validation of Balmorel's flows
 against ENTSO-E's, both aggregated to Canonical Region Names (see CONTEXT.md)
 
 Created on 09.07.2026
@@ -13,7 +13,6 @@ Created on 09.07.2026
 #        0. Script Settings       #
 # ------------------------------- #
 
-import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -37,7 +36,7 @@ from .calendar import backcast_hours, from_backcast_grid
 #          1. Functions           #
 # ------------------------------- #
 
-path = Path("tests/output")
+OBSERVED_FLOW_PERCENTILE = 99.0
 
 
 def read_flow_csv(csv_path: str | Path) -> pd.Series:
@@ -53,55 +52,6 @@ def read_flow_csv(csv_path: str | Path) -> pd.Series:
     temp.columns = ["Time", "Value"]
     temp.Time = pd.to_datetime(temp.Time, utc=True)
     return temp.set_index("Time")["Value"].resample("1h").mean()
-
-
-def get_data(year, from_to_list, path: Path | str = path):
-    path = Path(path)
-    df = pd.DataFrame()
-    for region_from, region_to in from_to_list:
-        csv_path = find_transmission_file(path, year, region_from, region_to)
-        if csv_path is None:
-            raise FileNotFoundError(
-                f"No {year} crossborder_flows csv for {region_from}-{region_to} in {path}"
-            )
-        temp = (
-            read_flow_csv(csv_path)
-            .rename(f"{region_from}-{region_to}")
-            .reset_index()
-        )
-
-        if len(df) == 0:
-            df = temp
-        else:
-            df = df.merge(temp, on="Time")
-
-    return df
-
-
-def capacity_max(df: pd.DataFrame) -> pd.DataFrame:
-    """Annual maximum hourly flow per border ('Observed Max Flow', see CONTEXT.md)"""
-    return df.set_index("Time").resample("1YE").aggregate("max")
-
-
-def observed_max_flow(
-    year: int, region_from: str, region_to: str, path: Path | str
-) -> float | None:
-    """The Observed Max Flow for one border, one direction, one year.
-
-    Args:
-        year (int): The year to read.
-        region_from (str): ENTSO-E zone code/name flow originates from (any spelling).
-        region_to (str): ENTSO-E zone code/name flow arrives at (any spelling).
-        path (Path | str): Folder containing the fetched crossborder_flows csv's.
-
-    Returns:
-        float | None: The observed max flow in MW, or None if the csv wasn't fetched.
-    """
-    csv_path = find_transmission_file(path, year, region_from, region_to)
-    if csv_path is None:
-        return None
-
-    return read_flow_csv(csv_path).max()
 
 
 # ------------------------------- #
@@ -149,15 +99,17 @@ def compute_entsoe_transmission_overrides(
     entsoe_data_path: str | Path,
     api_key: str,
     gams_system_directory: str | None = None,
+    percentile: float = OBSERVED_FLOW_PERCENTILE,
 ) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
-    """Compute Observed Max Flow XKFX overrides for a Balmorel scenario's borders.
+    """Compute Observed Flow Limit XKFX overrides for a Balmorel scenario's borders.
 
     Borders are read from the scenario's current XKFX (see get_current_borders).
     Internal links that ENTSO-E can't distinguish (both sides sharing a canonical
     name, e.g. DE4-N <-> DE4-W) are left out untouched, per docs/adr/0006. Where
-    several ENTSO-E zones collapse to one Balmorel region, their observed flows
-    are summed; where several Balmorel regions collapse to one ENTSO-E zone, the
-    observed flow is split evenly across them.
+    several ENTSO-E zones collapse to one Balmorel region, their flows are summed
+    hour by hour before the percentile is taken (see observed_flow_limits); where
+    several Balmorel regions collapse to one ENTSO-E zone, the limit is split
+    evenly across them.
 
     Args:
         balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
@@ -166,6 +118,8 @@ def compute_entsoe_transmission_overrides(
         entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv's from.
         api_key (str): ENTSO-E transparency platform API key.
         gams_system_directory (str | None, optional): GAMS system directory.
+        percentile (float, optional): Percentile of the hourly flow, in percent.
+            100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
 
     Returns:
         tuple[pd.DataFrame, list[tuple[str, str]]]: Overrides (Year, RegionFrom,
@@ -199,6 +153,8 @@ def compute_entsoe_transmission_overrides(
         "crossborder_flows", fetch_pairs, year, str(entsoe_data_path), api_key
     )
 
+    limits = observed_flow_limits(entsoe_data_path, year, percentile)
+
     failed_pairs = []
     results = []
     for (canon_from, canon_to), group in borders.groupby(
@@ -207,18 +163,17 @@ def compute_entsoe_transmission_overrides(
         from_codes = [region_to_entsoe_code(sz) for sz in entsoe_subzones(canon_from)]
         to_codes = [region_to_entsoe_code(sz) for sz in entsoe_subzones(canon_to)]
 
-        total = 0.0
         any_succeeded = False
         for region_from, region_to in product(from_codes, to_codes):
-            value = observed_max_flow(year, region_from, region_to, entsoe_data_path)
-            if value is None:
+            if find_transmission_file(entsoe_data_path, year, region_from, region_to) is None:
                 failed_pairs.append((region_from, region_to))
             else:
-                total += value
                 any_succeeded = True
 
         if not any_succeeded:
             continue
+
+        total = limits.get((canon_from, canon_to), 0.0)
 
         split_factor = len(group)
         value_per_border = total / split_factor
@@ -236,13 +191,17 @@ def compute_entsoe_transmission_overrides(
 
 
 def write_xkfx_override(
-    overrides: pd.DataFrame, scenario_data_path: str | Path
+    overrides: pd.DataFrame,
+    scenario_data_path: str | Path,
+    percentile: float = OBSERVED_FLOW_PERCENTILE,
 ) -> IncFile:
     """Write XKFX_ENTSOE.inc with the ENTSO-E-derived transmission overrides.
 
     Args:
         overrides (pd.DataFrame): Output of compute_entsoe_transmission_overrides.
         scenario_data_path (str | Path): The scenario's 'data' folder.
+        percentile (float, optional): The percentile the overrides were computed
+            with, written in the file header. Defaults to OBSERVED_FLOW_PERCENTILE.
 
     Returns:
         IncFile: The saved IncFile instance.
@@ -254,8 +213,9 @@ def write_xkfx_override(
 
     inc_file = IncFile(
         prefix=(
-            "* Transmission capacities derived from ENTSO-E Observed Max Flow\n"
-            "* (see CONTEXT.md and docs/adr/0005, 0006) - generated, do not hand-edit\n"
+            f"* Transmission limits: ENTSO-E Observed Flow Limit, the {percentile:g}th percentile "
+            "of hourly flow over the hours with flow, summed per canonical border\n"
+            "* (see CONTEXT.md and docs/adr/0005, 0006, 0010) - generated, do not hand-edit\n"
         ),
         body=body,
         suffix="",
@@ -289,13 +249,14 @@ def append_xkfx_include(xkfx_inc_path: str | Path) -> None:
         f.write(include_block)
 
 
-def generate_transmission_max_flow_overrides(
+def generate_transmission_flow_limit_overrides(
     balmorel_model_folder: str | Path,
     scenario: str,
     year: int,
     entsoe_data_path: str | Path,
     api_key: str,
     gams_system_directory: str | None = None,
+    percentile: float = OBSERVED_FLOW_PERCENTILE,
 ) -> None:
     """Fetch ENTSO-E flows and write the XKFX_ENTSOE.inc backcast overrides.
 
@@ -306,6 +267,8 @@ def generate_transmission_max_flow_overrides(
         entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv's from.
         api_key (str): ENTSO-E transparency platform API key.
         gams_system_directory (str | None, optional): GAMS system directory.
+        percentile (float, optional): Percentile of the hourly flow, in percent.
+            100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
     """
     overrides, failed_pairs = compute_entsoe_transmission_overrides(
         balmorel_model_folder,
@@ -314,6 +277,7 @@ def generate_transmission_max_flow_overrides(
         entsoe_data_path,
         api_key,
         gams_system_directory,
+        percentile,
     )
 
     if failed_pairs:
@@ -324,7 +288,7 @@ def generate_transmission_max_flow_overrides(
         )
 
     scenario_data_path = Path(balmorel_model_folder) / scenario / "data"
-    write_xkfx_override(overrides, scenario_data_path)
+    write_xkfx_override(overrides, scenario_data_path, percentile)
     append_xkfx_include(scenario_data_path / "XKFX.inc")
 
 
@@ -377,29 +341,36 @@ def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
     )
 
 
-def entsoe_flow_limits(entsoe_data_path: str | Path, year: int) -> pd.Series:
-    """The Observed Max Flow per directed canonical border.
+def observed_flow_limits(
+    entsoe_data_path: str | Path, year: int, percentile: float = OBSERVED_FLOW_PERCENTILE
+) -> pd.Series:
+    """The Observed Flow Limit per directed canonical border (see CONTEXT.md, ADR 0010).
 
-    Same totals as XKFX_ENTSOE.inc: the per-file maxima summed over every
-    ENTSO-E zone pair collapsing to the border (see compute_entsoe_transmission_overrides).
+    The percentile is taken over the hours with flow in that direction, on the
+    hourly series summed over every ENTSO-E zone pair of the border (see
+    load_entsoe_flows). Over all hours, a rarely used direction would get a
+    limit near 0. A direction without any flowing hour gets 0.
 
     Args:
         entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
         year (int): The Backcast Year.
+        percentile (float, optional): Percentile of the hourly flow, in percent.
+            100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
 
     Returns:
         pd.Series: Limit in MW, indexed by ('From', 'To').
     """
-    limits = {}
-    for zones, csv_path in transmission_files(entsoe_data_path, year).items():
-        border = tuple(canonical_region(zone) for zone in zones)
-        if border[0] == border[1]:
-            continue
-        value = read_flow_csv(csv_path).max()
-        if not np.isnan(value):
-            limits[border] = limits.get(border, 0.0) + value
+    flows = load_entsoe_flows(entsoe_data_path, year)
+    borders = pd.MultiIndex.from_frame(
+        flows[["From", "To"]].drop_duplicates(), names=["From", "To"]
+    )
+    limits = (
+        flows[flows["Value"] > 0]
+        .groupby(["From", "To"])["Value"]
+        .quantile(percentile / 100)
+    )
 
-    return pd.Series(limits, name="Limit", dtype=float).rename_axis(["From", "To"])
+    return limits.reindex(borders, fill_value=0.0).astype(float).rename("Limit")
 
 
 def format_balmorel_flows(df: pd.DataFrame, year: int) -> pd.DataFrame:
@@ -437,8 +408,8 @@ def align_flows(
     Args:
         entsoe_flows (pd.DataFrame): Output of load_entsoe_flows.
         balmorel_flows (pd.DataFrame): Output of format_balmorel_flows.
-        limits (pd.Series | None, optional): Observed Max Flow per border (see
-            entsoe_flow_limits), added as a 'Limit' column. Defaults to None.
+        limits (pd.Series | None, optional): Observed Flow Limit per border (see
+            observed_flow_limits), added as a 'Limit' column. Defaults to None.
 
     Returns:
         pd.DataFrame: Index ('From', 'To', 'Time'), columns 'ENTSOE', 'BALMOREL'
@@ -484,7 +455,7 @@ def flow_statistics(flows: pd.DataFrame, tolerance: float = 0.01) -> pd.DataFram
 
     Args:
         flows (pd.DataFrame): Output of align_flows, optionally with a 'Limit'
-            column (Observed Max Flow, see entsoe_flow_limits).
+            column (Observed Flow Limit, see observed_flow_limits).
         tolerance (float, optional): Relative distance to the limit that still
             counts as 'at the limit'. Defaults to 0.01.
 
@@ -549,32 +520,3 @@ def plot_flow_duration_curves(flows: pd.DataFrame, ncols: int = 6) -> tuple[Figu
     fig.tight_layout()
 
     return fig, axes
-
-
-# ------------------------------- #
-#            4. Main              #
-# ------------------------------- #
-
-
-def main():
-    df = pd.DataFrame()
-    for year in [2024]:
-        temp = get_data(year, [["FR", "ES"], ["ES", "FR"]])
-
-        if len(df) == 0:
-            df = temp
-        else:
-            df = pd.concat((df, temp))
-
-    annual = (
-        df.set_index("Time")
-        .resample("1YE")
-        .aggregate(lambda x: np.round(np.sum(x) / 1e6))
-    )
-    print(annual)
-
-    print(capacity_max(df))
-
-
-if __name__ == "__main__":
-    main()

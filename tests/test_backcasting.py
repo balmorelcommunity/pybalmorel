@@ -29,11 +29,11 @@ from pybalmorel.backcasting.fuelprices import load_ttf_gas_prices, split_yahoo_t
 from pybalmorel.backcasting.flows import (
     align_flows,
     canonical_region,
-    entsoe_flow_limits,
+    compute_entsoe_transmission_overrides,
     flow_statistics,
     format_balmorel_flows,
     load_entsoe_flows,
-    observed_max_flow,
+    observed_flow_limits,
 )
 from pybalmorel.backcasting.pricelevel import deflator, eur_per_usd, to_price_year
 from pybalmorel.entsoe import (
@@ -296,12 +296,12 @@ def test_transmission_files_found_under_any_spelling(tmp_path):
         tmp_path / "2023_NO_2-DK_1_crossborder_flows.csv"
     )
     assert find_transmission_file(tmp_path, 2023, "DK_1", "NO_2") is None
-    assert observed_max_flow(2023, "10YNO-2--------T", "10YDK-1--------W", tmp_path) == 50.0
 
     # Read once, not summed twice
     flows = load_entsoe_flows(tmp_path, 2023)
     assert flows.query("From == 'DK1' and To == 'DE'")["Value"].tolist() == [100.0]
-    assert entsoe_flow_limits(tmp_path, 2023)[("DK1", "DE")] == 100.0
+    # A constant series, so every percentile is 100
+    assert observed_flow_limits(tmp_path, 2023)[("DK1", "DE")] == 100.0
 
 
 def _write_flow_csv(path, file_name, values, freq="15min"):
@@ -322,8 +322,9 @@ def test_flow_validation(tmp_path):
     it_ch = entsoe.query("From == 'IT'").set_index("Time")["Value"]
     assert it_ch.tolist() == [150.0, 110.0]  # hourly means of 15-min data, summed
 
-    limits = entsoe_flow_limits(tmp_path, 2023)
-    assert limits[("IT", "CH")] == 150.0
+    limits = observed_flow_limits(tmp_path, 2023)
+    assert limits[("IT", "CH")] == pytest.approx(149.6)  # 99th percentile of [150, 110]
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("IT", "CH")] == 150.0
 
     # Balmorel only reports the first hour IT-NORD -> CH; the rest is zero flow
     balmorel = format_balmorel_flows(
@@ -346,6 +347,60 @@ def test_flow_validation(tmp_path):
     assert stats.loc[("IT", "CH"), "ENTSOE_TWh"] == pytest.approx(260 / 1e6)
     assert stats.loc[("IT", "CH"), "BALMOREL_AtLimit"] == 0.5
     assert stats.loc[("IT", "CH"), "ENTSOE_AtLimit"] == 0.5
+
+
+def test_flow_limit_sums_pairs_before_the_percentile(tmp_path):
+    # Two Italian sub-zones into CH peaking in different hours
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A73I-CH_crossborder_flows.csv", [100.0, 0.0], freq="h")
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A70O-CH_crossborder_flows.csv", [0.0, 100.0], freq="h")
+
+    # The old sum of per-file maxima gave 200
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("IT", "CH")] == 100.0
+
+
+def test_flow_limit_percentile_100_is_the_maximum(tmp_path):
+    values = list(np.linspace(0.0, 500.0, 50))
+    _write_flow_csv(tmp_path, "2023_FR-ES_crossborder_flows.csv", values, freq="h")
+
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("FR", "ES")] == 500.0
+    assert observed_flow_limits(tmp_path, 2023)[("FR", "ES")] < 500.0
+
+
+def test_flow_limit_of_rare_and_absent_directions(tmp_path):
+    # Flows in 3 hours out of 200 in one direction, never in the other
+    _write_flow_csv(tmp_path, "2023_SE_3-SE_2_crossborder_flows.csv", [0.0] * 197 + [1000.0, 1200.0, 1500.0], freq="h")
+    _write_flow_csv(tmp_path, "2023_SE_2-SE_3_crossborder_flows.csv", [0.0] * 200, freq="h")
+
+    limits = observed_flow_limits(tmp_path, 2023)
+    assert limits[("SE3", "SE2")] == pytest.approx(1494.0)  # not closed
+    assert limits[("SE2", "SE3")] == 0.0
+
+
+def test_overrides_split_the_canonical_limit(tmp_path, monkeypatch):
+    import pybalmorel.backcasting.flows as flows_module
+
+    monkeypatch.setattr(
+        flows_module,
+        "get_current_borders",
+        lambda *args: pd.DataFrame(
+            {
+                "RegionFrom": ["BE", "BE", "IT-NORD"],
+                "RegionTo": ["DE4-S", "DE4-W", "CH"],
+            }
+        ),
+    )
+    monkeypatch.setattr(flows_module, "fetch_annual_transmission_data", lambda *args: None)
+    _write_flow_csv(tmp_path, "2023_BE-DE_LU_crossborder_flows.csv", [800.0] * 4, freq="h")
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A73I-CH_crossborder_flows.csv", [300.0] * 4, freq="h")
+
+    overrides, failed_pairs = compute_entsoe_transmission_overrides("balmorel", "backcast", 2023, tmp_path, "key")
+
+    values = overrides.set_index(["RegionFrom", "RegionTo"])["Value"]
+    assert values[("BE", "DE4-S")] == 400.0
+    assert values[("BE", "DE4-W")] == 400.0
+    assert values[("IT-NORD", "CH")] == 300.0
+    assert ("10Y1001A1001A70O", "CH") in failed_pairs
+    assert ("BE", "DE_LU") not in failed_pairs
 
 
 def test_fetch_transmission_remembers_no_data_and_survives_timeouts(tmp_path, monkeypatch):
@@ -431,7 +486,7 @@ def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
 
     assert all((to, frm) in pairs for frm, to in pairs)
     assert ("FR", "BE") in pairs
-    # Saved under the spelling transmission-max-flow looks up
+    # Saved under the spelling transmission-flow-limit looks up
     assert ("10YDK-1--------W", "DE_LU") in pairs
     # Missing from entsoe-py's NEIGHBOURS
     assert ("GR", "10Y1001A1001A788") in pairs
@@ -503,3 +558,128 @@ def test_fetch_annual_data_remembers_no_data_and_survives_timeouts(tmp_path, mon
     calls.clear()
     entsoe_module.fetch_annual_data("load", 2023, zones, tmp_path, "key")
     assert calls == ["AL"]
+
+
+# %% ------------------------------- ###
+###     7. Nuclear Availability     ###
+### ------------------------------- ###
+
+NUCLEAR, NATGAS = 3.94e303, 3.95e303
+
+
+def _nuclear_inputs():
+    gkfx = pd.DataFrame(
+        {
+            "YYY": ["2023", "2023", "2023", "2023", "2022"],
+            "AAA": ["DE4-S_A", "DE4-W_A", "DE4-S_A", "FR_A", "FR_A"],
+            "GGG": ["NUCL_1", "NUCL_1", "GAS_NUCL_NAMED", "NUCL_1", "NUCL_1"],
+            "Value": [600.0, 400.0, 999.0, 100.0, 5000.0],
+        }
+    )
+    gdata = pd.DataFrame(
+        {
+            "GGG": ["NUCL_1", "NUCL_1", "GAS_NUCL_NAMED"],
+            "GDATASET": ["GDFUEL", "GDTYPE", "GDFUEL"],
+            "Value": [NUCLEAR, 2.2e303, NATGAS],
+        }
+    )
+    fdata = pd.DataFrame(
+        {
+            "FFF": ["NUCLEAR", "NATGAS"],
+            "FDATASET": ["FDACRONYM", "FDACRONYM"],
+            "Value": [NUCLEAR, NATGAS],
+        }
+    )
+    rrraaa = pd.DataFrame({"RRR": ["DE4-S", "DE4-W", "FR"], "AAA": ["DE4-S_A", "DE4-W_A", "FR_A"]})
+    return gkfx, gdata, fdata, rrraaa
+
+
+def _weekly_series(weekly_values: list[float], year: int = 2023) -> pd.Series:
+    hours = backcast_hours(year)
+    return pd.Series(np.repeat(weekly_values, 168), index=hours)
+
+
+def test_nuclear_capacity_found_by_fuel_acronym():
+    from pybalmorel.backcasting.nuclear import nuclear_capacity
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+
+    # The gas technology named like nuclear and the 2022 capacity are ignored
+    assert set(capacity.Technology) == {"NUCL_1"}
+    assert capacity.groupby("Region").Capacity.sum().to_dict() == {"DE": 1000.0, "FR": 100.0}
+
+
+def test_nuclear_ratings_and_override(tmp_path):
+    from pybalmorel.backcasting.nuclear import nuclear_capacity, nuclear_ratings, write_gkrate_override
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+    # DE: at capacity, above it, zero, then no data; the rest at half
+    de = _weekly_series([1000.0, 1200.0, 0.0, np.nan] + [500.0] * 48)
+    observed = {"DE": de, "BE": _weekly_series([100.0] * 52)}
+
+    with pytest.warns(Warning) as record:
+        ratings = nuclear_ratings(observed, capacity, 2023)
+    messages = " ".join(str(warning.message) for warning in record)
+    assert "FR has 100 MW of nuclear GKFX but no ENTSO-E nuclear output" in messages
+    assert "BE has 0.87 TWh of ENTSO-E nuclear output" in messages
+    assert "above its GKFX of 1000 MW in 1 week(s)" in messages
+    assert "week(s) ['S04']" in messages
+
+    assert list(ratings.columns) == ["DE"]
+    assert ratings.loc[["S01", "S02", "S03", "S05"], "DE"].tolist() == [1.0, 1.0, 0.0, 0.5]
+
+    # Both DE areas share the rating, computed against their summed GKFX
+    content = write_gkrate_override(ratings, capacity, tmp_path).body
+    assert "GKRATE('DE4-S_A','NUCL_1','S03')=eps;" in content
+    assert "GKRATE('DE4-W_A','NUCL_1','S05')=0.5000;" in content
+    assert "=0;" not in content
+    assert "'S04'" not in content
+    assert "FR_A" not in content
+    assert (tmp_path / "GKRATE_ENTSOE.inc").exists()
+
+
+def test_nuclear_weeks_after_the_series_ends_are_a_closure(tmp_path):
+    from pybalmorel.backcasting.nuclear import nuclear_capacity, nuclear_ratings, write_gkrate_override
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+    # DE: a gap in S02, data until S15, then nothing
+    de = _weekly_series([600.0, np.nan] + [700.0] * 13 + [np.nan] * 37)
+    fr = _weekly_series([50.0] * 52)
+
+    with pytest.warns(Warning) as record:
+        ratings = nuclear_ratings({"DE": de, "FR": fr}, capacity, 2023)
+    messages = " ".join(str(warning.message) for warning in record)
+    assert "CLOSURE: DE" in messages and "S16-S52" in messages
+    assert "6.22 TWh" in messages  # 1000 MW x 168 h x 37 weeks
+    assert "week(s) ['S02']" in messages
+
+    content = write_gkrate_override(ratings, capacity, tmp_path).body
+    assert "GKRATE('DE4-S_A','NUCL_1','S16')=eps;" in content
+    assert "GKRATE('DE4-W_A','NUCL_1','S52')=eps;" in content
+    assert "GKRATE('DE4-S_A','NUCL_1','S02')" not in content
+
+
+def test_stale_input_cache_warns(tmp_path):
+    import os
+
+    from pybalmorel.backcasting.nuclear import check_input_cache
+
+    input_gdx = tmp_path / "backcast_input_data.gdx"
+    input_gdx.write_text("")
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "GKFX.inc").write_text("")
+    (data / "OLD.inc").write_text("")
+    os.utime(input_gdx, (1_000_000, 1_000_000))
+    os.utime(data / "OLD.inc", (0, 0))
+
+    with pytest.warns(Warning, match="older than GKFX.inc in") as record:
+        check_input_cache(input_gdx, data)
+    assert "OLD.inc" not in str(record[0].message)
+
+
+def test_tiny_nuclear_rating_is_eps():
+    from pybalmorel.backcasting.nuclear import format_rating
+
+    assert format_rating(0.00001) == "eps"
+    assert format_rating(1.0) == "1.0000"

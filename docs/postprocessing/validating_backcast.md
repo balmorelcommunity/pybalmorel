@@ -71,13 +71,18 @@ command.
 next to the ENTSO-E physical flows, per directed border and hour. Both sides
 are summed up to Canonical Region Names (`DE4-*` → `DE`, the Italian
 sub-zones → `IT`), and internal links are dropped. Hours Balmorel leaves out
-of its results count as zero flow. Each border's Observed Max Flow (the
-same total written to `XKFX_ENTSOE.inc`) is stored as `Limit`.
+of its results count as zero flow. Each border's Observed Flow Limit (the
+same total written to `XKFX_ENTSOE.inc`, see
+[ADR 0010](../adr/0010-observed-flow-limit-percentile.md)) is stored as
+`Limit`. Pass `format` the same `--percentile` as `transmission-flow-limit`
+(default 99 for both) so the two agree.
 
 `statistics` then prints, per border, the annual energy of both datasets,
 their correlation, the RMSE, and the share of hours each spends within 1%
-of the limit. If Balmorel sits at the limit far more often than ENTSO-E
-does, the Observed Max Flow is binding more than it did in reality. The
+of the limit. ENTSO-E exceeds the limit in about 1% of its flowing hours by
+construction, while Balmorel cannot. If Balmorel sits at the limit far more
+often than ENTSO-E does, the Observed Flow Limit is binding more than it did
+in reality. The
 `flows` command plots duration curves per border.
 
 ENTSO-E flows are physical, including loop flows, while Balmorel's are
