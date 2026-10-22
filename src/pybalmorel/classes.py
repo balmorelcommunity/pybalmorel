@@ -511,6 +511,7 @@ class Balmorel:
         
     def load_incfiles(self, 
                       scenario: str = 'base', 
+                      cmd_line_options: dict = {},
                       use_provided_read_files: bool = True,
                       read_file: str = 'Balmorel_ReadData',
                       overwrite: bool = False):
@@ -569,6 +570,10 @@ class Balmorel:
             # Set options
             opt = ws.add_options()
             opt.gdx = '%s_input_data.gdx'%scenario # Setting the output gdx name (note, could be overwritten by the cmd line options, which is intended)        
+
+            # Add user cmd-line options
+            for key in cmd_line_options.keys():
+                opt.defines[key] = cmd_line_options[key]
             
             # Load the GAMS model
             model_db = ws.add_job_from_file(str((model_folder / read_file).absolute()), job_name=scenario)
