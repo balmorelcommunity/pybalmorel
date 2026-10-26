@@ -2,6 +2,8 @@
 
 This module converts electricity and heat demand time series into Balmorel DA and
 CapDev formats and writes annual correction-factor .inc files for DH users.
+Electricity demand profiles that fail a plausibility check are left out, so
+their regions keep base's DE_VAR_T (see CONTEXT.md, Demand Profile Fallback).
 """
 
 import os
@@ -9,6 +11,7 @@ import os
 import pandas as pd
 
 from .auxiliary_functions import (
+    column_digest,
     compute_capdev_timeseries,
     create_directory_if_needed,
     create_balmorel_time_mapping,
@@ -24,6 +27,90 @@ from .balmorel_converters import (
 )
 from .config_models import DemandModuleConfig
 from .to_inc import build_inc_file_list_type
+
+# Largest plausible ratio of a region's peak electricity demand to its median
+PLAUSIBLE_PEAK_TO_MEDIAN = 3.0
+
+
+def demand_plausibility_failures(df: pd.DataFrame) -> dict[str, str]:
+    """The regions whose electricity demand profile fails the plausibility check, with the reason.
+
+    A region fails if any value is 0 or below, if its peak is more than
+    PLAUSIBLE_PEAK_TO_MEDIAN times its median, or if its profile is identical
+    to another region's.
+
+    Args:
+        df (pd.DataFrame): Hourly demand, one column per region.
+
+    Returns:
+        dict[str, str]: Failing region -> reason.
+    """
+    failures = {}
+    for region in df.columns:
+        profile = df[region]
+        non_positive = int((profile <= 0).sum())
+        if non_positive:
+            failures[region] = f"{non_positive} hours at or below 0 (down to {profile.min():.3g})"
+        elif profile.isna().any():
+            failures[region] = f"{int(profile.isna().sum())} missing hours"
+        elif profile.max() > PLAUSIBLE_PEAK_TO_MEDIAN * profile.median():
+            failures[region] = (
+                f"a peak of {profile.max() / profile.median():.1f} times its median "
+                f"at {profile.idxmax()}"
+            )
+
+    columns = {}
+    for region in df.columns:
+        columns.setdefault(column_digest(df[region]), []).append(region)
+    for duplicates in columns.values():
+        if len(duplicates) > 1:
+            for region in duplicates:
+                others = ", ".join(other for other in duplicates if other != region)
+                failures.setdefault(region, f"its profile is identical to {others}")
+
+    return failures
+
+
+def drop_implausible_demand(
+    df_raw: pd.DataFrame, df_scaled: pd.DataFrame, year: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Leave out the regions whose raw or scaled demand profile fails the plausibility check.
+
+    The weather-year DE_VAR_T only sets its own regions' cells, so a region
+    left out keeps base's profile. The scaled profile is checked too, since
+    it maps the year onto the distribution of every year in the input, where
+    corrupt years can lie.
+
+    Args:
+        df_raw (pd.DataFrame): The year's hourly demand, one column per region.
+        df_scaled (pd.DataFrame): The same, scaled to the full distribution.
+        year (int): The weather year, for the warnings.
+
+    Raises:
+        Exception: If every region fails, which points to wrong units or a
+            broken input file rather than to the data.
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: df_raw and df_scaled without the
+            failing regions.
+    """
+    failures = {
+        region: f"in its scaled profile: {reason}"
+        for region, reason in demand_plausibility_failures(df_scaled).items()
+    }
+    failures.update(demand_plausibility_failures(df_raw))
+    if failures and set(failures) >= set(df_raw.columns):
+        raise Exception(
+            f"Every region's {year} electricity demand profile fails the plausibility check "
+            f"({failures}). That points to wrong units or a broken classic_demand.csv."
+        )
+    for region, reason in sorted(failures.items()):
+        print(
+            f"Warning: {region}'s {year} electricity demand profile fails the plausibility "
+            f"check ({reason}), so it keeps base's DE_VAR_T."
+        )
+
+    return df_raw.drop(columns=list(failures)), df_scaled.drop(columns=list(failures))
 
 
 def _load_individual_heat_profiles(csv_folder: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -244,6 +331,7 @@ def generate_demand_balmorel_inc_files(config_fn: str, year: int, output_folder:
 
     # Electricity demand: individual users
     _, df_cut, df_scaled = process_timeseries_with_scaling(df_classic, year, year, "demand", fix_monday=True)
+    df_cut, df_scaled = drop_implausible_demand(df_cut, df_scaled, year)
 
     write_raw_and_scaled_csv(
         df_raw=df_cut,

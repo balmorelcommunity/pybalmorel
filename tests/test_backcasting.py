@@ -683,3 +683,242 @@ def test_tiny_nuclear_rating_is_eps():
 
     assert format_rating(0.00001) == "eps"
     assert format_rating(1.0) == "1.0000"
+
+
+# %% ------------------------------- ###
+###     8. Generation categories    ###
+### ------------------------------- ###
+
+# PSR types that are grid assets, not production types
+GRID_ASSET_TYPES = {"AC Link", "DC Link", "Substation", "Transformer"}
+
+
+def test_every_entsoe_production_type_has_a_category():
+    from entsoe.mappings import PSRTYPE_MAPPINGS
+
+    from pybalmorel.backcasting.__main__ import entsoe_to_category
+
+    production_types = {
+        name for code, name in PSRTYPE_MAPPINGS.items() if code.startswith("B")
+    } - GRID_ASSET_TYPES
+
+    assert "Hydro Run-of-river and pondage" in production_types
+    assert production_types - entsoe_to_category.keys() == set()
+
+
+def test_older_run_of_river_spelling_is_still_hydro():
+    # Files fetched with older entsoe-py versions spell it "poundage"
+    from pybalmorel.backcasting.__main__ import entsoe_to_category
+
+    assert entsoe_to_category["Hydro Run-of-river and poundage"] == "Hydro"
+    assert entsoe_to_category["Hydro Run-of-river and pondage"] == "Hydro"
+
+
+def test_oil_shale_has_the_same_category_on_both_sides():
+    from pybalmorel.backcasting.__main__ import balmorel_to_category, entsoe_to_category
+
+    assert entsoe_to_category["Fossil Oil shale"] == "Fossil Solid"
+    assert balmorel_to_category["CHP-EXTRACTION - SHALE"] == "Fossil Solid"
+    assert balmorel_to_category["CONDENSING - SHALE"] == "Fossil Solid"
+
+
+def _generation_frame():
+    time = pd.date_range("2023-01-02", periods=2, freq="h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "Region": ["EE"] * 4,
+            "Technology": ["Wind Onshore", "Wind Onshore", "Fossil Mystery", "Fossil Mystery"],
+            "Time": list(time) * 2,
+            "Value": [100.0, 200.0, 1.5e6, 0.5e6],
+        }
+    )
+
+
+def test_unmapped_technology_raises_with_its_energy():
+    from pybalmorel.backcasting.__main__ import entsoe_to_category, map_technology_categories
+
+    with pytest.raises(ValueError, match=r"'Fossil Mystery' \(2.00 TWh\)"):
+        map_technology_categories(_generation_frame(), entsoe_to_category, "ENTSO-E")
+
+
+def test_unmapped_technology_is_kept_as_unmapped():
+    from pybalmorel.backcasting.__main__ import (
+        UNMAPPED_CATEGORY,
+        entsoe_to_category,
+        map_technology_categories,
+    )
+
+    with pytest.warns(Warning, match="Fossil Mystery"):
+        generation = map_technology_categories(
+            _generation_frame(), entsoe_to_category, "ENTSO-E", allow_unmapped=True
+        )
+
+    totals = generation.groupby("Technology")["Value"].sum()
+    assert totals.to_dict() == {UNMAPPED_CATEGORY: 2e6, "Wind": 300.0}
+
+
+# %% ------------------------------- ###
+###   9. Observed demand profiles   ###
+### ------------------------------- ###
+
+
+def test_grid_to_profile_keeps_labels_order_and_missing_hours():
+    from pybalmorel.backcasting.calendar import SEASONS, TERMS
+    from pybalmorel.backcasting.demand import grid_to_profile
+
+    hourly = pd.Series(range(8736), index=backcast_hours(2023), dtype=float)
+    hourly.iloc[5] = np.nan
+
+    profile = grid_to_profile(to_backcast_grid(hourly, 2023))
+
+    assert len(profile) == 8736
+    assert profile.index[0] == ("S01", "T001")
+    assert profile.index[-1] == ("S52", "T168")
+    assert profile[("S02", "T001")] == 168.0
+    assert np.isnan(profile[("S01", "T006")])
+    assert list(profile.index.get_level_values(0).unique()) == SEASONS
+    assert list(profile.index.get_level_values(1).unique()) == TERMS
+
+
+def test_zones_are_summed_and_a_missing_hour_is_missing_for_the_region():
+    from pybalmorel.backcasting.demand import sum_zones
+
+    time = pd.date_range("2023-01-02", periods=3, freq="h", tz="UTC")
+    zones = pd.DataFrame(
+        {
+            "IT-NORD": [10.0, 10.0, 10.0],
+            "IT-SUD": [5.0, np.nan, 5.0],
+            "DK1": [1.0, 2.0, 3.0],
+        },
+        index=time,
+    )
+
+    regions = sum_zones(zones)
+
+    assert set(regions.columns) == {"IT", "DK1"}
+    assert regions["IT"].iloc[0] == 15.0
+    assert np.isnan(regions["IT"].iloc[1])
+    assert regions["DK1"].tolist() == [1.0, 2.0, 3.0]
+
+
+def test_clean_profile_interpolates_implausible_and_missing_hours():
+    from pybalmorel.backcasting.demand import clean_profile
+
+    profile = pd.Series([100.0, 100.0, 1000.0, np.nan, 100.0, 10.0, 100.0])
+
+    cleaned, n_implausible = clean_profile(profile)
+
+    assert n_implausible == 3
+    assert cleaned.tolist() == [100.0] * 7
+
+
+def test_clean_profile_rejects_a_negative_profile():
+    from pybalmorel.backcasting.demand import clean_profile
+
+    _, n_implausible = clean_profile(pd.Series([-1e13, -5.0, -3.0, 2.0]))
+
+    assert n_implausible == 4
+
+
+def _flat_hourly(value: float, year: int = 2023) -> pd.Series:
+    return pd.Series(value, index=backcast_hours(year))
+
+
+def test_demand_profiles_use_entsoe_and_fall_back_above_the_threshold():
+    from pybalmorel.backcasting.demand import (
+        MAX_IMPLAUSIBLE_SHARE,
+        current_profiles,
+        demand_profiles,
+    )
+    from pybalmorel.backcasting.calendar import backcast_calendar
+
+    # Just at the threshold for DK1, one hour above it for NL
+    n_allowed = int(MAX_IMPLAUSIBLE_SHARE * 8736)
+    dk1 = _flat_hourly(100.0)
+    dk1.iloc[:n_allowed] = np.nan
+    nl = _flat_hourly(200.0)
+    nl.iloc[: n_allowed + 1] = 1e6
+    observed = pd.DataFrame({"DK1": dk1, "NL": nl, "DE": _flat_hourly(300.0)})
+
+    calendar = backcast_calendar(2023)
+    de_var_t = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "Scenario": "backcast",
+                    "RRR": region,
+                    "DEUSER": "OTHER",
+                    "SSS": calendar.Season,
+                    "TTT": calendar.Term,
+                    "Value": value,
+                }
+            )
+            for region, value in (("NL", 7.0), ("AL", 9.0), ("LV", -1.0))
+        ]
+    )
+
+    with pytest.warns(Warning, match="LV keeps its current demand profile unchanged"):
+        profiles, report = demand_profiles(
+            ["DK1", "NL", "DE4-E", "AL", "LV", "MT"], observed, current_profiles(de_var_t), 2023
+        )
+
+    assert set(profiles) == {"DK1", "NL", "DE4-E", "AL"}
+    assert (profiles["DK1"] == 100.0).all()
+    assert (profiles["NL"] == 7.0).all()
+    assert (profiles["DE4-E"] == 300.0).all()
+    assert (profiles["AL"] == 9.0).all()
+    assert f"DK1: ENTSO-E DK1, {n_allowed} hours interpolated" in report
+    assert any(line.startswith("NL: input data") and "ENTSO-E NL has" in line for line in report)
+    assert "MT: no ENTSO-E load or input profile, keeps its current profile" in report
+
+
+def test_write_de_var_t_override(tmp_path):
+    from pybalmorel.backcasting.demand import grid_to_profile, write_de_var_t_override
+
+    profile = grid_to_profile(to_backcast_grid(_flat_hourly(123.456), 2023))
+
+    write_de_var_t_override({"DK1": profile}, ["DK1: ENTSO-E DK1, 0 hours interpolated"], 2023, tmp_path)
+
+    lines = (tmp_path / "DE_VAR_T_ENTSOE.inc").read_text().splitlines()
+    assert "* DK1: ENTSO-E DK1, 0 hours interpolated" in lines
+    assert "DE_VAR_T('DK1','OTHER','S01','T001')=123.46;" in lines
+    assert "DE_VAR_T('DK1','RESE',SSS,TTT)=DE_VAR_T('DK1','OTHER',SSS,TTT);" in lines
+    assert sum(line.startswith("DE_VAR_T('DK1','OTHER'") for line in lines) == 8736
+
+
+def test_de_var_t_include_is_appended_once(tmp_path):
+    from pybalmorel.backcasting.demand import DE_VAR_T_INCLUDE, append_de_var_t_include
+
+    de_var_t = tmp_path / "DE_VAR_T.inc"
+    de_var_t.write_text("$include '../../base/data/DE_VAR_T.inc';\nDE_VAR_T('DK1', 'OTHER', 'S01', 'T001') = 1;")
+
+    append_de_var_t_include(de_var_t)
+    append_de_var_t_include(de_var_t)
+
+    content = de_var_t.read_text()
+    assert content.count(DE_VAR_T_INCLUDE) == 1
+    assert content.endswith(DE_VAR_T_INCLUDE + "\n")
+    assert "= 1;\n" in content
+
+
+def test_de_var_t_include_creates_a_missing_file_on_base(tmp_path):
+    from pybalmorel.backcasting.demand import DE_VAR_T_INCLUDE, append_de_var_t_include
+
+    de_var_t = tmp_path / "DE_VAR_T.inc"
+    append_de_var_t_include(de_var_t)
+
+    lines = de_var_t.read_text().splitlines()
+    assert lines[0] == "$include '../../base/data/DE_VAR_T.inc';"
+    assert lines[-1] == DE_VAR_T_INCLUDE
+
+
+def test_load_observed_load_reads_zones(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IT-NORD_load.csv", 2023, [1.0, 2.0])
+    _write_series_csv(tmp_path, "2023_10YDK-1--------W_load.csv", 2023, [3.0, 4.0])
+
+    zones = load_observed_load(str(tmp_path), 2023)
+
+    assert set(zones.columns) == {"IT-NORD", "DK1"}
+    assert str(zones.index.tz) == "UTC"

@@ -69,6 +69,7 @@ balmorel_to_category = {
     "CHP-BACK-PRESSURE - STRAW": "Biomass & Bioenergy",
     "CHP-EXTRACTION - BIOMETHANE": "Biomass & Bioenergy",
     "CHP-EXTRACTION - WOODPELLETS": "Biomass & Bioenergy",
+    "CHP-EXTRACTION - BIOOIL": "Biomass & Bioenergy",
     # Fossil Gas
     "BOILERS - NATGAS": "Fossil Gas",
     "CONDENSING - NATGAS": "Fossil Gas",
@@ -86,6 +87,7 @@ balmorel_to_category = {
     "CONDENSING - COAL": "Fossil Solid",
     "CONDENSING - LIGNITE": "Fossil Solid",
     "CHP-EXTRACTION - SHALE": "Fossil Solid",
+    "CONDENSING - SHALE": "Fossil Solid",
     "BOILERS - COAL": "Fossil Solid",
     "BOILERS - PEAT": "Fossil Solid",
     "CHP-BACK-PRESSURE - COAL": "Fossil Solid",
@@ -124,6 +126,8 @@ entsoe_to_category = {
     # Solar
     "Solar": "Solar",
     # Hydro
+    "Hydro Run-of-river and pondage": "Hydro",
+    # Spelling of older entsoe-py versions, still in files fetched with them
     "Hydro Run-of-river and poundage": "Hydro",
     "Hydro Water Reservoir": "Hydro",
     # Nuclear
@@ -137,15 +141,17 @@ entsoe_to_category = {
     "Fossil Brown coal/Lignite": "Fossil Solid",
     "Fossil Hard coal": "Fossil Solid",
     "Fossil Peat": "Fossil Solid",
+    # Oil shale is burned as a solid fuel, as Balmorel's SHALE technologies are
+    "Fossil Oil shale": "Fossil Solid",
     # Fossil Liquid & Other Fossil
     "Fossil Oil": "Fossil Liquid & Other Fossil",
-    "Fossil Oil shale": "Fossil Liquid & Other Fossil",
     # Waste & Heat Recovery
     "Waste": "Waste & Heat Recovery",
     # Storage & Flexibility
     # Pumped storage is storage on the Balmorel side too (INTRASEASONAL-ELECT-STORAGE),
     # so Hydro means natural-inflow hydro on both sides
     "Hydro Pumped Storage": "Storage & Flexibility",
+    "Energy storage": "Storage & Flexibility",
     "Geothermal": "Storage & Flexibility",
     "Marine": "Storage & Flexibility",
     "Other renewable": "Storage & Flexibility",
@@ -154,6 +160,9 @@ entsoe_to_category = {
 
 # ENTSO-E queries the download command fetches
 entsoe_queries = ["load", "day_ahead_prices", "generation", "crossborder_flows"]
+
+# Category of technologies missing from the mappings, with format --allow-unmapped
+UNMAPPED_CATEGORY = "Unmapped"
 
 colors = {
     "Wind": "#4ECDC4",
@@ -167,6 +176,7 @@ colors = {
     "Waste & Heat Recovery": "#9B59B6",
     "Storage & Flexibility": "#F39C12",
     "Other": "#CCCCCC",
+    UNMAPPED_CATEGORY: "#FF00FF",
 }
 
 # ------------------------------- #
@@ -296,6 +306,25 @@ def load_observed_nuclear(entsoe_data_path: str, year: int) -> dict[str, pd.Seri
     return nuclear
 
 
+def load_observed_load(entsoe_data_path: str, year: int) -> pd.DataFrame:
+    """Hourly ENTSO-E actual load per bidding zone, from the load csv's.
+
+    Args:
+        entsoe_data_path (str): Folder with the fetched load csv's.
+        year (int): The Backcast Year.
+
+    Returns:
+        pd.DataFrame: Load (MW) indexed by UTC hour, one column per zone.
+    """
+    files = sorted(Path(entsoe_data_path).glob(f"{year}_*_load.csv"))
+    if not files:
+        return pd.DataFrame()
+
+    return pd.concat(
+        [format_entsoe_data(pd.read_csv(item), "h", item, year, "load") for item in files]
+    ).pivot_table(index="Time", columns="Region", values="Value")
+
+
 def format_balmorel_df(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.
 
@@ -413,8 +442,54 @@ def aggregate_regions(df: pd.DataFrame, aggfunc: str, time_columns: list):
     return df
 
 
+def map_technology_categories(
+    df: pd.DataFrame, mapping: dict[str, str], source: str, allow_unmapped: bool = False
+) -> pd.DataFrame:
+    """Map 'Technology' onto the overarching categories and sum per region, category and hour.
+
+    A technology missing from `mapping` is never dropped: it raises, or with
+    `allow_unmapped` it is compared as UNMAPPED_CATEGORY.
+
+    Args:
+        df (pd.DataFrame): Hourly generation (MW) with columns 'Region',
+            'Technology', 'Time' and 'Value'.
+        mapping (dict[str, str]): Technology -> category, e.g. entsoe_to_category.
+        source (str): 'Balmorel' or 'ENTSO-E', named in the error.
+        allow_unmapped (bool, optional): Put unmapped technologies in
+            UNMAPPED_CATEGORY instead of raising. Defaults to False.
+
+    Raises:
+        ValueError: If a technology is not in `mapping` and `allow_unmapped` is False.
+
+    Returns:
+        pd.DataFrame: Columns 'Region', 'Technology', 'Time' and 'Value'.
+    """
+    unmapped = set(df.Technology.unique()) - mapping.keys()
+    if unmapped:
+        energy = (
+            df[df.Technology.isin(unmapped)].groupby("Technology")["Value"].sum() / 1e6
+        ).sort_values(ascending=False)
+        listing = ", ".join(f"'{technology}' ({twh:.2f} TWh)" for technology, twh in energy.items())
+        message = f"{source} technologies without a category: {listing}."
+        if not allow_unmapped:
+            raise ValueError(
+                f"{message} Add them to the category mapping in "
+                "pybalmorel/backcasting/__main__.py, or run `format` with "
+                f"--allow-unmapped to compare them as '{UNMAPPED_CATEGORY}'."
+            )
+        warn(f"{message} They are compared as '{UNMAPPED_CATEGORY}'.")
+
+    df = df.assign(Technology=df.Technology.map(mapping).fillna(UNMAPPED_CATEGORY))
+    return df.groupby(["Region", "Technology", "Time"], as_index=False).sum(numeric_only=True)
+
+
 def get_and_format_balmorel(
-    balmorel_scenario, balmorel_scenario_path, year, elpriceaggfunc, overwrite
+    balmorel_scenario,
+    balmorel_scenario_path,
+    year,
+    elpriceaggfunc,
+    overwrite,
+    allow_unmapped: bool = False,
 ):
     balmorel_load, balmorel_elprices, balmorel_generation, balmorel_flows = (
         load_balmorel_data(balmorel_scenario, balmorel_scenario_path, year, overwrite)
@@ -433,17 +508,9 @@ def get_and_format_balmorel(
     )
 
     # Aggregate technology groups
-    for tech_category in balmorel_generation.Technology:
-        if tech_category not in balmorel_to_category:
-            warn(
-                f"{tech_category} technology category in Balmorel has not been mapped to overarching category in the balmorel_to_category dictionary!"
-            )
-    balmorel_generation.Technology = balmorel_generation.Technology.map(
-        balmorel_to_category
+    balmorel_generation = map_technology_categories(
+        balmorel_generation, balmorel_to_category, "Balmorel", allow_unmapped
     )
-    balmorel_generation = balmorel_generation.groupby(
-        ["Region", "Technology", "Time"], as_index=False
-    ).sum(numeric_only=True)
 
     # Check unique regions in Balmorel results
     balmorel_load_unique_regions = set(balmorel_load.Region.unique())
@@ -467,7 +534,7 @@ def get_and_format_balmorel(
     )
 
 
-def get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc):
+def get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc, allow_unmapped: bool = False):
     # Load
     entsoe_load, entsoe_elprices, entsoe_generation = load_entsoe_data(
         entsoe_data_path, year
@@ -484,17 +551,10 @@ def get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc):
     entsoe_generation.columns = ["Time", "Region", "Technology", "Value"]
     entsoe_generation = aggregate_regions(entsoe_generation, "sum", ["Time"])
 
-    for tech_category in entsoe_generation.Technology:
-        if tech_category not in entsoe_to_category:
-            warn(
-                f"{tech_category} technology category in ENTSO-E has not been mapped to overarching category in the entsoe_to_category dictionary!"
-            )
-
     # Aggregate technology groups
-    entsoe_generation.Technology = entsoe_generation.Technology.map(entsoe_to_category)
-    entsoe_generation = entsoe_generation.groupby(
-        ["Region", "Technology", "Time"], as_index=False
-    ).sum(numeric_only=True)
+    entsoe_generation = map_technology_categories(
+        entsoe_generation, entsoe_to_category, "ENTSO-E", allow_unmapped
+    )
 
     entsoe_load_unique_regions = set(entsoe_load.Region.unique())
     entsoe_elprices_unique_regions = set(entsoe_elprices.Region.unique())
@@ -526,6 +586,7 @@ def load_and_align(
     elpriceaggfunc: str,
     overwrite: bool,
     percentile: float = OBSERVED_FLOW_PERCENTILE,
+    allow_unmapped: bool = False,
 ):
 
     # Load and format data
@@ -536,7 +597,7 @@ def load_and_align(
         entsoe_load_unique_regions,
         entsoe_elprices_unique_regions,
         entsoe_generation_unique_regions,
-    ) = get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc)
+    ) = get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc, allow_unmapped)
 
     (
         balmorel_load,
@@ -547,7 +608,12 @@ def load_and_align(
         balmorel_elprices_unique_regions,
         balmorel_generation_unique_regions,
     ) = get_and_format_balmorel(
-        balmorel_scenario, balmorel_scenario_path, year, elpriceaggfunc, overwrite
+        balmorel_scenario,
+        balmorel_scenario_path,
+        year,
+        elpriceaggfunc,
+        overwrite,
+        allow_unmapped,
     )
 
     # Get unique regions
@@ -710,6 +776,13 @@ def main():
     help="Percentile (in percent) of the hourly flow used as the Observed Flow Limit "
     "in flows.csv; use the same value as transmission-flow-limit. 100 gives the maximum.",
 )
+@click.option(
+    "--allow-unmapped",
+    is_flag=True,
+    default=False,
+    help="Compare technologies missing from the category mappings as 'Unmapped' "
+    "instead of stopping with an error.",
+)
 def format(
     balmorel_scenario,
     balmorel_scenario_path,
@@ -718,6 +791,7 @@ def format(
     elpriceaggfunc,
     overwrite,
     percentile,
+    allow_unmapped,
 ):
 
     load_file, price_file, generation_file, flow_file = (
@@ -735,6 +809,7 @@ def format(
         elpriceaggfunc,
         overwrite,
         percentile,
+        allow_unmapped,
     )
     loads.to_csv(load_file)
     prices.to_csv(price_file)
@@ -927,6 +1002,45 @@ def nuclear_availability(balmorel_scenario_path, entsoe_data_path, year, reload_
         balmorel_scenario_path.name,
         year,
         observed,
+        gams_system_directory=config("GAMS_SYSTEM_DIR", None),
+        reload_input=reload_input,
+    )
+
+
+@main.command(name="demand-profile")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("entsoe-data-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--reload-input",
+    is_flag=True,
+    help="Run ReadData again instead of reusing the cached <scenario>_input_data.gdx (takes a while).",
+)
+def demand_profile(balmorel_scenario_path, entsoe_data_path, year, reload_input):
+    """Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load.
+
+    Per Balmorel region with electricity demand: the hourly ENTSO-E load of
+    its canonical region in YEAR (from `download --query load`) on the
+    Backcast Calendar, as DE_VAR_T for the users OTHER and RESE. Implausible
+    hours are interpolated. Writes <balmorel-scenario-path>/data/DE_VAR_T_ENTSOE.inc
+    and appends its $include to the scenario's DE_VAR_T.inc. Rerun after
+    writing new weather-year data, which overwrites DE_VAR_T.inc. See CONTEXT.md.
+    """
+    from .demand import generate_demand_profile
+
+    balmorel_scenario_path = Path(balmorel_scenario_path)
+    zones = load_observed_load(entsoe_data_path, year)
+    if zones.empty:
+        warn(
+            f"No ENTSO-E load for {year} in {entsoe_data_path}. "
+            f"Run `python -m pybalmorel.backcasting download {entsoe_data_path} {year} --query load`"
+        )
+
+    generate_demand_profile(
+        balmorel_scenario_path.parent,
+        balmorel_scenario_path.name,
+        year,
+        zones,
         gams_system_directory=config("GAMS_SYSTEM_DIR", None),
         reload_input=reload_input,
     )

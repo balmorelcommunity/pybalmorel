@@ -7,7 +7,8 @@ so its results can be compared with what actually happened (see
 
 1. **Prepare** the Backcast's inputs: download ENTSO-E data, derive the
    `XKFX` transmission override from ENTSO-E's Observed Flow Limit, the
-   weekly [nuclear availability](#nuclear-availability), and write
+   weekly [nuclear availability](#nuclear-availability), the
+   [electricity demand profiles](#demand-profiles), and write
    season- and hour-resolved historical [fuel prices](#fuel-prices) and a
    [CO2 tax](#co2-tax) for the Backcast Year. This page.
 2. **Run** the Balmorel scenario as usual.
@@ -58,6 +59,13 @@ python -m pybalmorel.backcasting nuclear-availability \
     <year> \
     [--reload-input]
 
+# Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load
+python -m pybalmorel.backcasting demand-profile \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--reload-input]
+
 # Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
 python -m pybalmorel.backcasting ttf-csv <html-path> <historicalprices-path>
 
@@ -85,7 +93,7 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 
 | `--query` | Files | Used by |
 |---|---|---|
-| `load` | `<year>_<zone>_load.csv` | `format` |
+| `load` | `<year>_<zone>_load.csv` | `format`, `demand-profile` |
 | `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format` |
 | `generation` | `<year>_<zone>_generation.csv` | `format`, `nuclear-availability` |
 | `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-flow-limit`, `format` |
@@ -168,6 +176,62 @@ $if EXIST '../data/GKRATE_ENTSOE.inc' $INCLUDE '../data/GKRATE_ENTSOE.inc';
 
 The nuclear availability is a Calibration Input: nuclear output that it
 fixes by construction is not evidence in Backcast validation.
+
+## Demand profiles
+
+The `demand-profile` command writes `<scenario-path>/data/DE_VAR_T_ENTSOE.inc`:
+the hourly ENTSO-E actual load of the Backcast Year on the Backcast
+Calendar, as `DE_VAR_T` of the electricity users `OTHER` and `RESE` (set
+equal to `OTHER`) in every region with electricity demand. `PII` keeps its
+profile. Balmorel scales `DE_VAR_T` to the annual `DE`, which still comes
+from the scenario's input data, so only the shape is replaced. It reads the
+load files `download --query load` fetched; it does not fetch.
+
+It exists because the weather-year electricity demand profiles
+(`classic_demand.csv`) are corrupt from 2022 onwards: negative hours down to
+-1e13 in LV and LT, spikes of 20-60 times the median in NL and EE, and
+copies of one profile in sub-areas. In the 2023 backcast, NL's demand
+peaked at 136 GW (observed: about 19 GW). The weather-year demand step now
+[checks the profiles](multi_weather_year_input.md#demand-plausibility-check),
+but the backcast should use the observed load anyway.
+
+- Regions and the current profiles are read through GAMS from the
+  scenario's cached `<scenario>_input_data.gdx`, as for
+  [nuclear availability](#nuclear-availability), with the same staleness
+  warning and `--reload-input`.
+- Bidding zones are summed to their Canonical Region Name (`IT-*` → `IT`);
+  an hour missing in one zone is missing for the region. Balmorel regions
+  take the load of their Canonical Region Name, so all `DE4-*` take `DE`'s
+  and `FIN` takes `FI`'s.
+- Hours outside 0.2-3 times the profile's median, or missing, are
+  interpolated. A region with more than 2% such hours takes its current
+  profile from the input data instead, with the same cleaning, and if that
+  fails too it keeps its current profile unchanged, with a warning. Regions
+  without ENTSO-E load (the UK, and CY, LU, MT, TR in 2023) also take the
+  input data. The file's header lists the source and number of
+  interpolated hours of every region; check it.
+- The command appends this line to the scenario's `data/DE_VAR_T.inc` if it
+  isn't there, creating the file to include base's first if needed:
+
+  ```gams
+  $if EXIST '../data/DE_VAR_T_ENTSOE.inc' $INCLUDE '../data/DE_VAR_T_ENTSOE.inc';
+  ```
+
+  Writing new weather-year data (`run_weatheryear`, `write_scenario_data`)
+  overwrites `DE_VAR_T.inc`, so run `demand-profile` again afterwards.
+
+Caveats:
+
+- ENTSO-E actual load is total load. It includes demand that Balmorel
+  models endogenously: heat pumps, electric boilers, EV charging and
+  electrolysis. Using its shape for the exogenous users counts part of
+  their temperature and time-of-day variation twice. For a backcast this is
+  a much smaller error than the corrupt profiles. A cleaner option is to
+  subtract an estimate of those loads first.
+- The demand profile is a Calibration Input: the load-shape correlation in
+  [Backcast validation](../postprocessing/validating_backcast.md) is no
+  longer independent evidence. Only the annual level and the endogenous
+  demand remain to be validated.
 
 ## Price Year
 
@@ -252,8 +316,8 @@ when Balmorel would ignore what they wrote:
 
 - **API Key**: set `ENTSOE_API_KEY` in `.env`, or provide it when prompted.
 - **GAMS Path**: set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing.
-- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, GKRATE, fuel price
-  and CO2 tax overrides written to `<scenario-path>/data/`; validation
+- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, GKRATE, fuel price,
+  CO2 tax and demand profile overrides written to `<scenario-path>/data/`; validation
   data cached in `<scenario-path>/backcastoutput/`.
 
 ## Data flow
@@ -262,7 +326,8 @@ when Balmorel would ignore what they wrote:
    as CSV.
 2. The XKFX override is computed from the ENTSO-E flows
    (`transmission-flow-limit`), and the GKRATE override from the ENTSO-E
-   nuclear output (`nuclear-availability`).
+   nuclear output (`nuclear-availability`), and the DE_VAR_T override from
+   the ENTSO-E load (`demand-profile`).
 3. Historical prices are mapped onto the UTC Backcast Calendar and written
    (`fuelprices`, `co2-tax`).
 

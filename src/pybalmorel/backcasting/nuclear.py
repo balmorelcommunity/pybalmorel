@@ -218,22 +218,26 @@ def check_gkrate_include(gkrate_inc_path: str | Path) -> None:
         )
 
 
-def check_input_cache(input_gdx: Path, scenario_data_path: Path) -> None:
+def check_input_cache(
+    input_gdx: Path, scenario_data_path: Path, ignore: tuple[str, ...] = ()
+) -> None:
     """Warn if a scenario data file is newer than the cached input GDX, which then misses it.
 
     Args:
         input_gdx (Path): The cached <scenario>_input_data.gdx.
         scenario_data_path (Path): The scenario's 'data' folder.
+        ignore (tuple[str, ...], optional): File names not to check, e.g. the
+            override file the caller writes itself. Defaults to ().
     """
     newer = sorted(
         inc_file.name
         for inc_file in scenario_data_path.glob("*.inc")
-        if inc_file.stat().st_mtime > input_gdx.stat().st_mtime
+        if inc_file.name not in ignore and inc_file.stat().st_mtime > input_gdx.stat().st_mtime
     )
     if newer:
         warn(
-            f"{input_gdx} is older than {', '.join(newer)} in {scenario_data_path}, so its GKFX "
-            "may be stale. Run again with --reload-input to read the data again."
+            f"{input_gdx} is older than {', '.join(newer)} in {scenario_data_path}, so the "
+            "inputs read from it may be stale. Run again with --reload-input to read the data again."
         )
 
 

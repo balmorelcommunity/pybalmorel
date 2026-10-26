@@ -7,6 +7,7 @@ CapDev timestep generation, and ECDF-based scaling of reduced time-series subset
 @author: Polyneikis Kanellas, Development Engineer DTU Wind
 """
 
+import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable
@@ -20,6 +21,11 @@ from .exceptions import MalformedTechnologyFolderError
 def create_directory_if_needed(destination_path: str) -> None:
     """Create directory tree if it does not exist."""
     Path(destination_path).mkdir(parents=True, exist_ok=True)
+
+
+def column_digest(column: pd.Series) -> str:
+    """A hash of a column's values, equal for identical series regardless of their name or index."""
+    return hashlib.sha1(column.to_numpy().tobytes()).hexdigest()
 
 
 def align_timeseries_to_first_monday(df: pd.DataFrame, df_cut: pd.DataFrame, start_date: int) -> pd.DataFrame:

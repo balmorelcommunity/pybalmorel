@@ -11,6 +11,7 @@ python -m pytest tests/test_weatheryear_naming_and_filtering.py
 python -m pytest tests/test_weatheryear_config.py
 python -m pytest tests/test_weatheryear_scenario_data.py
 python -m pytest tests/test_weatheryear_hydro_flh.py
+python -m pytest tests/test_weatheryear_demand.py
 python -m pytest tests/test_backcasting.py
 
 echo -e

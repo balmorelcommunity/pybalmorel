@@ -40,6 +40,9 @@ The GAMS parameter linking an `AAA_renewable` member to the `INVDATASET_renewabl
 Hydro full-load hours computed as CorRES inflow energy divided by the Balmorel capacity that receives it (`hydro_flh: mode: absolute`), instead of a factor on Balmorel's base FLH (the default, relative mode).
 _Avoid_: Hydro factor (that is the relative mode)
 
+**Demand Profile Fallback**:
+For a region whose weather-year electricity demand profile fails the plausibility check (an hour at or below 0 or missing, a peak above 3 times the median, or the same values as another region's profile), the weather year writes no profile, so the region keeps base's `DE_VAR_T`. A stopgap for corrupt demand model data; a Backcast uses its Observed Demand Profile instead.
+
 ### Backcasting
 
 **Observed Flow Limit**:
@@ -80,6 +83,10 @@ _Avoid_: ETS country list
 The share of a country's nuclear `GKFX` that could run in one week of the Backcast Year: the highest hourly nuclear output ENTSO-E reports for that week, divided by the country's nuclear `GKFX`, clipped at 1. It includes outages, maintenance and closures: weeks after the country's observed series ends are rated zero. Written as weekly `GKRATE` overrides to `GKRATE_ENTSOE.inc`; a zero is written as `eps`, since Balmorel reads 0 as full capacity. A calibration input, not a validation result.
 _Avoid_: Capacity factor, load factor (those describe output, not availability)
 
+**Observed Demand Profile**:
+The hourly ENTSO-E actual load of a region's Canonical Region Name in the Backcast Year, on the Backcast Calendar, used as the `DE_VAR_T` of the exogenous electricity users (`OTHER`, `RESE`). Implausible or missing hours are interpolated; a region with more than 2% of them takes its profile from the scenario's input data instead. Written to `DE_VAR_T_ENTSOE.inc`. Balmorel scales it to the annual `DE`, so only the shape is observed. ENTSO-E load is total load, so it also carries part of the endogenous demand's variation. A Calibration Input.
+_Avoid_: Demand (the annual level still comes from `DE`)
+
 **Natural-Inflow Hydro**:
 Run-of-river and reservoir hydro fed by natural water inflow. It excludes pumped-storage output, which is electricity storage.
 _Avoid_: Hydro (ambiguous about pumped storage)
@@ -89,7 +96,7 @@ For a country whose CorRES inflow fails the plausibility check, or that CorRES c
 _Avoid_: Hydro calibration (the Backcast Year's own generation is never the reference)
 
 **Calibration Input**:
-A Backcast input derived from observed data for the Backcast Year that says what was available that year (nuclear outages, the usable interconnector capacity), not what the model should decide. Results that a calibration input fixes by construction are not evidence in Backcast validation.
+A Backcast input derived from observed data for the Backcast Year that says what was available or given that year (nuclear outages, the usable interconnector capacity, the shape of exogenous demand), not what the model should decide. Results that a calibration input fixes by construction are not evidence in Backcast validation.
 _Avoid_: Tuning, fitting
 
 **Validation Metric**:

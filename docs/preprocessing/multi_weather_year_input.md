@@ -176,6 +176,18 @@ By default the hydro full-load-hour files (`WTRRSFLH_WY.inc`, `WTRRRFLH_WY.inc`)
 
 The run stops if any FLH is above 8,760 h or if every country fails the check, since both point to wrong units.
 
+## Demand Plausibility Check
+
+`get_demand_data()` checks each region's electricity demand profile for the year, both as cut from `classic_demand.csv` and after scaling to the full distribution, before writing it. A profile fails if it has:
+
+- any hour at or below 0, or a missing hour,
+- a peak more than 3 times its median, or
+- exactly the same values as another region's profile (every copy fails).
+
+A failing region gets the **Demand Profile Fallback**: it is left out of `DE_VAR_T_OTHER.inc` and `DE_VAR_T_RESE.inc`, so it keeps base's `DE_VAR_T`, and a warning names the reason. The run stops if every region fails.
+
+The scaled profile depends on every year in the file, so corrupt years spoil the other years too. The `classic_demand.csv` of `weatheryear_inputs_2023` is corrupt from 2022 onwards, and as a result most regions fail even for 2021. A backcast should take its demand profiles from ENTSO-E with [`demand-profile`](preparing_backcast.md#demand-profiles) instead.
+
 ## Writing a Balmorel Scenario
 
 Some of the WEATHERYEAR output can't be dropped straight into a Balmorel scenario: Balmorel only reads a scenario's own `data/<NAME>.inc` when the filename matches exactly, and some output is split across several files or holds scaling factors rather than values. `write_scenario_data` turns one year's CapDev output into the files a scenario's `data/` folder needs:
@@ -195,7 +207,7 @@ What it does:
 
 - **Wind and solar** profiles and full-load hours keep their names. Wind gets a fallback profile for existing areas CorRES has no profile for.
 - **Hydro** files lose the `_WY` suffix. The full-load-hour files are scaling factors, so the base values are loaded first and multiplied. Absolute Hydro FLH files set the value and are left as they are.
-- **Demand** is split by user in the WEATHERYEAR output, but Balmorel reads one `DE_VAR_T.inc` and one `DH_VAR_T.inc`. The files are concatenated on top of the base defaults, since the weather year only sets its own users' values.
+- **Demand** is split by user in the WEATHERYEAR output, but Balmorel reads one `DE_VAR_T.inc` and one `DH_VAR_T.inc`. The files are concatenated on top of the base defaults, since the weather year only sets its own users' values. This overwrites the `$include` that the backcasting `demand-profile` command appends, so run it again afterwards.
 - **Individual-user heat** is loaded inside `DH.inc` and `DH_VAR_T.inc`, and empty `INDIVUSERS_DH*.inc` overrides are written so it isn't applied twice.
 - **Investment files** at the top of `to_balmorel/` are copied, except `GKFX_renewable.inc` (the existing fleet comes from base) and `SUBTECHGROUPKPOT.inc`.
 - **Heat-pump COP** files are not written; models that use them need their own wrapper.

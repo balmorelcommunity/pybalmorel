@@ -19,11 +19,11 @@ Created on 22.10.2026
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-import hashlib
 import re
 
 import pandas as pd
 
+from .auxiliary_functions import column_digest
 from .config_models import HydroFlhConfig
 from .hydro_reference import hydro_natural_inflow_twh
 
@@ -196,10 +196,6 @@ def move_spilled_run_of_river(
 ### ------------------------------- ###
 
 
-def _column_digest(column: pd.Series) -> str:
-    return hashlib.sha1(column.to_numpy().tobytes()).hexdigest()
-
-
 def missing_columns(res: pd.DataFrame, ror: pd.DataFrame, capacity: pd.DataFrame) -> dict[str, list[str]]:
     """The (area, type) pairs with hydro capacity but no CorRES column, per symbol."""
     return {
@@ -240,7 +236,7 @@ def plausibility_failures(
     for kind, inflow in (("reservoir", res), ("run-of-river", ror)):
         for area in inflow.columns:
             if inflow[area].abs().sum() > 0:
-                columns.setdefault(_column_digest(inflow[area]), []).append((area, kind))
+                columns.setdefault(column_digest(inflow[area]), []).append((area, kind))
     for duplicates in columns.values():
         areas = sorted({area for area, _ in duplicates})
         for area, kind in duplicates:

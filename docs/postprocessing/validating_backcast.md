@@ -23,7 +23,8 @@ python -m pybalmorel.backcasting format \
     <entsoe-data-path> \
     <year> \
     [--elpriceaggfunc mean] \
-    [--overwrite]
+    [--overwrite] \
+    [--allow-unmapped]
 
 # Generate statistics
 python -m pybalmorel.backcasting statistics <balmorel-scenario-path>
@@ -41,6 +42,9 @@ python -m pybalmorel.backcasting flows <balmorel-scenario-path>
   `max`). Defaults to `mean`.
 - `--overwrite` — regenerate the cached `.csv` files in
   `<scenario-path>/backcastoutput/` instead of reusing them.
+- `--allow-unmapped` — compare technologies without a category as
+  `Unmapped` instead of stopping (see
+  [Technology categories](#technology-categories)).
 
 :::{important}
 Caches in `backcastoutput/` made before the switch to the UTC Backcast
@@ -55,7 +59,7 @@ command.
 
 - **Technology Categorisation**: `balmorel_to_category`/`entsoe_to_category`
   standardise generation technologies between Balmorel and ENTSO-E so they can
-  be compared.
+  be compared (see [Technology categories](#technology-categories)).
 - **Spatial Aggregation**: sums sub-regions to their canonical zone
   (`DE4-*` → `DE`, `IT-*` → `IT`) before comparing.
 - **Label matching**: Balmorel results are mapped onto the
@@ -64,6 +68,32 @@ command.
 - **Flow validation**: compares Balmorel's hourly flows with ENTSO-E's per
   directed border, using the same ENTSO-E flow files as the transmission
   overrides (see [Flow validation](#flow-validation)).
+
+## Technology categories
+
+Every Balmorel technology (`COMMODITY - FUEL`, e.g. `CONDENSING - SHALE`)
+and every ENTSO-E production type must have a category in
+`balmorel_to_category`/`entsoe_to_category` in
+`pybalmorel/backcasting/__main__.py`. If one doesn't, `format` stops with a
+`ValueError` that names it with its annual energy in TWh. Add it to the
+mapping, or rerun with `--allow-unmapped` to compare it as `Unmapped`, which
+then shows up in the `generation` table and plots. Earlier versions dropped
+such technologies with a warning; in the 2023 backcast this left out all
+observed run-of-river hydro (a misspelt key), about 170 TWh, and Estonia's
+oil-shale condensing fleet. Rerun `format` with `--overwrite` on caches made
+before the fix.
+
+Oil shale is `Fossil Solid` on both sides, since it is burned as a solid
+fuel.
+
+## Demand profiles
+
+If the Backcast's demand profiles come from ENTSO-E load
+([`demand-profile`](../preprocessing/preparing_backcast.md#demand-profiles)),
+the load-shape correlation that `statistics` prints compares observed load
+with itself, up to Balmorel's endogenous demand. It is no longer independent
+evidence. Only the annual level (`DE`) and the endogenous demand (heat
+pumps, electric boilers, EVs, electrolysis) remain to be validated.
 
 ## Flow validation
 
