@@ -1,0 +1,217 @@
+pybalmorel.entsoe
+=================
+
+.. py:module:: pybalmorel.entsoe
+
+.. autoapi-nested-parse::
+
+   ENTSO-E API
+
+   Generic client for fetching data from the ENTSO-E transparency platform,
+   including the zone-code vocabulary bridging ENTSO-E bidding zones and
+   Balmorel regions (see CONTEXT.md). Independent of Balmorel backcasting -
+   see pybalmorel.backcasting for that.
+
+   Raw data is downloaded with `python -m pybalmorel.backcasting download`.
+
+   Created on 18.06.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.bidding_zone_codes
+   pybalmorel.entsoe.bidding_zones
+   pybalmorel.entsoe.bidding_zone_translation
+   pybalmorel.entsoe._extra_entsoe_codes
+   pybalmorel.entsoe._code_to_region
+   pybalmorel.entsoe._zone_token
+   pybalmorel.entsoe._extra_neighbours
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.region_to_entsoe_code
+   pybalmorel.entsoe.entsoe_code_to_region
+   pybalmorel.entsoe.zone_eic_code
+   pybalmorel.entsoe.zone_to_region
+   pybalmorel.entsoe.parse_transmission_filename
+   pybalmorel.entsoe.transmission_files
+   pybalmorel.entsoe.find_transmission_file
+   pybalmorel.entsoe.entsoe_subzones
+   pybalmorel.entsoe.neighbour_pairs
+   pybalmorel.entsoe.date_format
+   pybalmorel.entsoe.get_full_year
+   pybalmorel.entsoe.get_api_key
+   pybalmorel.entsoe.fetch_annual_data
+   pybalmorel.entsoe.no_data_file
+   pybalmorel.entsoe.read_no_data_pairs
+   pybalmorel.entsoe.read_no_data_zones
+   pybalmorel.entsoe.fetch_annual_transmission_data
+
+
+Package Contents
+----------------
+
+.. py:data:: bidding_zone_codes
+
+.. py:data:: bidding_zones
+   :value: ['IE_SEM', '10YGB----------A', 'PT', 'ES', 'FR', 'BE', 'NL', 'DE_LU', '10YDK-1--------W',...
+
+
+.. py:data:: bidding_zone_translation
+
+.. py:data:: _extra_entsoe_codes
+
+.. py:function:: region_to_entsoe_code(canonical_region: str) -> str
+
+   Map a canonical region name to the code entsoe-py expects for querying it.
+
+
+.. py:data:: _code_to_region
+
+.. py:function:: entsoe_code_to_region(code: str) -> str
+
+   Map an ENTSO-E query code back to its region name.
+
+   Inverse of region_to_entsoe_code. Falls back to the code itself if unmapped.
+
+
+.. py:function:: zone_eic_code(zone: str) -> str
+
+   The EIC code of any ENTSO-E zone identifier.
+
+   Accepts a Balmorel/canonical region name ('DK1', 'UK'), an entsoe-py area
+   name ('DK_1', 'GB') or an EIC code ('10YDK-1--------W'), so files fetched
+   under different spellings of the same zone can be recognised as one.
+
+   Args:
+       zone (str): The zone identifier.
+
+   Returns:
+       str: The EIC code, or the query code itself if entsoe-py doesn't know it.
+
+
+.. py:function:: zone_to_region(zone: str) -> str
+
+   The region name of any ENTSO-E zone identifier (before canonical translation).
+
+   Like entsoe_code_to_region, but also understands entsoe-py area names
+   ('DK_1' -> 'DK1', 'IT_NORD' -> 'IT-NORD', 'GB' -> 'UK') and EIC codes not in
+   bidding_zone_codes.
+
+   Args:
+       zone (str): The zone identifier.
+
+   Returns:
+       str: The region name, falling back to the entsoe-py area name or `zone` itself.
+
+
+.. py:data:: _zone_token
+   :value: '(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z0-9]+)*)'
+
+
+.. py:function:: parse_transmission_filename(file_name: str, year: int, entsoe_query: str = 'crossborder_flows') -> tuple[str, str] | None
+
+   The (from, to) zones of a '<year>_<from>-<to>_<entsoe_query>.csv' file.
+
+   Args:
+       file_name (str): The file name, without folder.
+       year (int): The year the file must be for.
+       entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+   Returns:
+       tuple[str, str] | None: The zones as spelled in the name, or None if it doesn't match.
+
+
+.. py:function:: transmission_files(path: str | pathlib.Path, year: int, entsoe_query: str = 'crossborder_flows') -> dict[tuple[str, str], pathlib.Path]
+
+   The fetched transmission files in `path`, one per directed pair of EIC codes.
+
+   A pair fetched under several spellings (e.g. 'DK_1-DE_LU' and
+   '10YDK-1--------W-DE_LU') appears once, so it is never read twice.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year to look for.
+       entsoe_query (str, optional): The query in the file names. Defaults to 'crossborder_flows'.
+
+   Returns:
+       dict[tuple[str, str], Path]: {(from EIC code, to EIC code): file}.
+
+
+.. py:function:: find_transmission_file(path: str | pathlib.Path, year: int, zone_from: str, zone_to: str, entsoe_query: str = 'crossborder_flows') -> pathlib.Path | None
+
+   The fetched file for one directed pair, whichever spelling it was saved under.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year to look for.
+       zone_from (str): Zone the flow originates from, in any spelling.
+       zone_to (str): Zone the flow arrives at, in any spelling.
+       entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+   Returns:
+       Path | None: The file, or None if the pair hasn't been fetched.
+
+
+.. py:function:: entsoe_subzones(canonical_region: str) -> list[str]
+
+   The ENTSO-E bidding zones that collapse to `canonical_region`.
+
+   Returns multiple zones only when ENTSO-E's resolution is finer than Balmorel's
+   for this region (e.g. 'IT' -> the 7 Italian bidding zones). Otherwise returns
+   a single-item list of the canonical name itself.
+
+
+.. py:data:: _extra_neighbours
+
+.. py:function:: neighbour_pairs(zones: list[str]) -> list[tuple[str, str]]
+
+   The directed pairs of neighbouring zones, both within `zones`, to query flows for.
+
+   Both directions are included, since NEIGHBOURS isn't symmetric (e.g. no AL
+   key). Zones are spelled as transmission-max-flow looks them up.
+
+   Args:
+       zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.
+
+   Returns:
+       list[tuple[str, str]]: Sorted (from, to) query codes.
+
+
+.. py:function:: date_format(date)
+
+.. py:function:: get_full_year(year: int)
+
+.. py:function:: get_api_key()
+
+.. py:function:: fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key, timeout: int = 120)
+
+.. py:function:: no_data_file(path: str | pathlib.Path, year: int, entsoe_query: str) -> pathlib.Path
+
+   The file remembering zones or pairs ENTSO-E has no data for, so reruns skip them.
+
+   Delete it to query those pairs again.
+
+
+.. py:function:: read_no_data_pairs(path: str | pathlib.Path, year: int, entsoe_query: str = 'crossborder_flows') -> set[tuple[str, str]]
+
+   The (from EIC code, to EIC code) pairs ENTSO-E previously had no data for.
+
+
+.. py:function:: read_no_data_zones(path: str | pathlib.Path, year: int, entsoe_query: str) -> set[str]
+
+   The zones ENTSO-E previously had no data for in a single-zone query.
+
+
+.. py:function:: fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key, timeout: int = 120)
+

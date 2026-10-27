@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENTSO-E Data Fetching &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Preparing a Backcast" href="preparing_backcast.html" />
+    <link rel="prev" title="Economic Adjustments: Currency &amp; Inflation Tools" href="economics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Pre-Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timeseriesagg.html">Time Series Aggregation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_weather_year_input.html">Multi-Weather-Year Input Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="economics.html">Economic Adjustments: Currency &amp; Inflation Tools</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ENTSO-E Data Fetching</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#zone-vocabulary">Zone vocabulary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fetching-data">Fetching data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-line">Command line</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="preparing_backcast.html">Preparing a Backcast</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../preprocessing.html">Pre-Processing</a></li>
+      <li class="breadcrumb-item active">ENTSO-E Data Fetching</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/preprocessing/entsoe.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="entso-e-data-fetching">
+<h1>ENTSO-E Data Fetching<a class="headerlink" href="#entso-e-data-fetching" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> is a thin, Balmorel-independent client for the ENTSO-E
+Transparency Platform. It fetches raw load, day-ahead price, generation, and
+cross-border flow data, and it owns the zone-code vocabulary that bridges
+Balmorel region names and ENTSO-E bidding zones (see <a class="reference external" href="https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md"><code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code></a>). It has no
+dependency on Balmorel results — <code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting</span></code> builds on top of it
+for <a class="reference internal" href="preparing_backcast.html"><span class="std std-doc">preparing</span></a> and
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">validating</span></a> a Backcast.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> needs the <code class="docutils literal notranslate"><span class="pre">entso-e</span></code> extra, which installs <code class="docutils literal notranslate"><span class="pre">entsoe-py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">python-decouple</span></code> and <code class="docutils literal notranslate"><span class="pre">click</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pybalmorel<span class="o">[</span>entso-e<span class="o">]</span>
+</pre></div>
+</div>
+<p>You also need an API key for the ENTSO-E Transparency Platform: register
+at <a class="reference external" href="https://transparency.entsoe.eu/">transparency.entsoe.eu</a> and request
+Restful API access. Then put the key in a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in your working
+directory, so you are not prompted for it every time:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ENTSOE_API_KEY</span><span class="o">=</span><span class="n">your</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">here</span>
+</pre></div>
+</div>
+</section>
+<section id="zone-vocabulary">
+<h2>Zone vocabulary<a class="headerlink" href="#zone-vocabulary" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">bidding_zone_codes</span></code> — dict, canonical region name → ENTSO-E query code
+(<code class="docutils literal notranslate"><span class="pre">IT-NORD</span></code>, <code class="docutils literal notranslate"><span class="pre">NO1</span></code>–<code class="docutils literal notranslate"><span class="pre">NO5</span></code>, <code class="docutils literal notranslate"><span class="pre">SE1</span></code>–<code class="docutils literal notranslate"><span class="pre">SE4</span></code>, <code class="docutils literal notranslate"><span class="pre">BA</span></code>, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bidding_zones</span></code> — list of every ENTSO-E bidding zone identifier this package
+knows about.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bidding_zone_translation</span></code> — dict, Balmorel region name → canonical name
+shared with ENTSO-E (e.g. <code class="docutils literal notranslate"><span class="pre">DE4-E</span></code>/<code class="docutils literal notranslate"><span class="pre">DE4-N</span></code>/<code class="docutils literal notranslate"><span class="pre">DE4-S</span></code>/<code class="docutils literal notranslate"><span class="pre">DE4-W</span></code> → <code class="docutils literal notranslate"><span class="pre">DE</span></code>,
+<code class="docutils literal notranslate"><span class="pre">IT-NORD</span></code>/… → <code class="docutils literal notranslate"><span class="pre">IT</span></code>, <code class="docutils literal notranslate"><span class="pre">FIN</span></code> → <code class="docutils literal notranslate"><span class="pre">FI</span></code>). See <a class="reference external" href="https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md"><code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code></a>’s “Canonical Region
+Name”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">region_to_entsoe_code(canonical_region)</span></code> — canonical name → the code
+<code class="docutils literal notranslate"><span class="pre">entsoe-py</span></code> expects for querying it, including the handful of codes (<code class="docutils literal notranslate"><span class="pre">DE</span></code>,
+<code class="docutils literal notranslate"><span class="pre">IE</span></code>, <code class="docutils literal notranslate"><span class="pre">UK</span></code>, <code class="docutils literal notranslate"><span class="pre">DK1</span></code>, <code class="docutils literal notranslate"><span class="pre">DK2</span></code>) that aren’t equal to their canonical name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entsoe_subzones(canonical_region)</span></code> — the ENTSO-E bidding zones that
+collapse to a canonical region (e.g. <code class="docutils literal notranslate"><span class="pre">'IT'</span></code> → the 7 Italian bidding zones).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entsoe_code_to_region(code)</span></code> — inverse of <code class="docutils literal notranslate"><span class="pre">region_to_entsoe_code</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zone_eic_code(zone)</span></code> / <code class="docutils literal notranslate"><span class="pre">zone_to_region(zone)</span></code> — the EIC code / region
+name of a zone in any spelling: a region name (<code class="docutils literal notranslate"><span class="pre">DK1</span></code>, <code class="docutils literal notranslate"><span class="pre">UK</span></code>), an
+<code class="docutils literal notranslate"><span class="pre">entsoe-py</span></code> area name (<code class="docutils literal notranslate"><span class="pre">DK_1</span></code>, <code class="docutils literal notranslate"><span class="pre">GB</span></code>) or an EIC code (<code class="docutils literal notranslate"><span class="pre">10YDK-1--------W</span></code>).</p></li>
+</ul>
+</section>
+<section id="fetching-data">
+<h2>Fetching data<a class="headerlink" href="#fetching-data" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_api_key()</span></code> — reads <code class="docutils literal notranslate"><span class="pre">ENTSOE_API_KEY</span></code> from <code class="docutils literal notranslate"><span class="pre">.env</span></code>, or prompts for it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch_annual_data(entsoe_query,</span> <span class="pre">year,</span> <span class="pre">bidding_zones,</span> <span class="pre">path,</span> <span class="pre">api_key,</span> <span class="pre">timeout=120)</span></code> —
+fetch a full calendar year of a single-zone query (e.g. <code class="docutils literal notranslate"><span class="pre">'load'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'day_ahead_prices'</span></code>, <code class="docutils literal notranslate"><span class="pre">'generation'</span></code>) for each zone, skipping any already
+downloaded and any ENTSO-E had no data for on an earlier run.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fetch_annual_transmission_data(entsoe_query,</span> <span class="pre">from_to_list,</span> <span class="pre">year,</span> <span class="pre">path,</span> <span class="pre">api_key,</span> <span class="pre">timeout=120)</span></code>
+— same, but for a border-pair query (e.g. <code class="docutils literal notranslate"><span class="pre">'crossborder_flows'</span></code>). A pair
+counts as downloaded if a file exists for it under any spelling of its
+zones, so <code class="docutils literal notranslate"><span class="pre">2023_DK_1-DE_LU_crossborder_flows.csv</span></code> also covers a request
+for <code class="docutils literal notranslate"><span class="pre">10YDK-1--------W</span></code> → <code class="docutils literal notranslate"><span class="pre">DE_LU</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transmission_files(path,</span> <span class="pre">year)</span></code> / <code class="docutils literal notranslate"><span class="pre">find_transmission_file(path,</span> <span class="pre">year,</span> <span class="pre">from,</span> <span class="pre">to)</span></code>
+— the downloaded border files, one per directed pair of EIC codes, so a
+border saved under two spellings is never read twice.</p></li>
+</ul>
+<p>Data is saved as one CSV per zone (or border) and query, named
+<code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_&lt;query&gt;.csv</span></code> (or <code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_&lt;query&gt;.csv</span></code>), in the
+<code class="docutils literal notranslate"><span class="pre">path</span></code> folder, which must already exist.</p>
+<p>Zones and pairs ENTSO-E answers “no matching data” for are written to
+<code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;query&gt;_nodata.txt</span></code> in <code class="docutils literal notranslate"><span class="pre">path</span></code> (one zone, or two tab-separated EIC
+codes, per line) and skipped on later calls; delete a line or the file to
+query them again. Timeouts, dropped connections and server errors are
+reported but not remembered, so the next call retries them. <code class="docutils literal notranslate"><span class="pre">timeout</span></code> is in
+seconds; without one, a connection lost mid-request would hang forever.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pybalmorel.entsoe</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_api_key</span><span class="p">,</span> <span class="n">fetch_annual_data</span><span class="p">,</span> <span class="n">bidding_zones</span>
+
+<span class="n">Path</span><span class="p">(</span><span class="s2">"entsoe_data"</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">api_key</span> <span class="o">=</span> <span class="n">get_api_key</span><span class="p">()</span>
+<span class="n">fetch_annual_data</span><span class="p">(</span><span class="s2">"load"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">,</span> <span class="n">bidding_zones</span><span class="p">,</span> <span class="s2">"entsoe_data"</span><span class="p">,</span> <span class="n">api_key</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="command-line">
+<h2>Command line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h2>
+<p>To download every zone in <code class="docutils literal notranslate"><span class="pre">bidding_zones</span></code>, and the flows between
+neighbouring zones, without writing Python, use the backcasting
+<a class="reference internal" href="preparing_backcast.html#downloading-entso-e-data"><span class="std std-ref"><code class="docutils literal notranslate"><span class="pre">download</span></code> command</span></a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>download<span class="w"> </span>&lt;entsoe-data-path&gt;<span class="w"> </span>&lt;year&gt;
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">neighbour_pairs(zones)</span></code> gives the directed border pairs it queries.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="economics.html" class="btn btn-neutral float-left" title="Economic Adjustments: Currency &amp; Inflation Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="preparing_backcast.html" class="btn btn-neutral float-right" title="Preparing a Backcast" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

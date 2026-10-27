@@ -1,0 +1,203 @@
+pybalmorel.backcasting.__main__
+===============================
+
+.. py:module:: pybalmorel.backcasting.__main__
+
+.. autoapi-nested-parse::
+
+   Validation through Backcasting
+
+   Download data from ENTSO-E and compare to Balmorel simulation of similar year
+
+   Created on 24.06.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.balmorel_to_category
+   pybalmorel.backcasting.__main__.entsoe_to_category
+   pybalmorel.backcasting.__main__.entsoe_queries
+   pybalmorel.backcasting.__main__.colors
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.DataContainer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.format_entsoe_region_name
+   pybalmorel.backcasting.__main__.format_entsoe_data
+   pybalmorel.backcasting.__main__.load_entsoe_data
+   pybalmorel.backcasting.__main__.format_balmorel_df
+   pybalmorel.backcasting.__main__.load_balmorel_data
+   pybalmorel.backcasting.__main__.calculate_statistics
+   pybalmorel.backcasting.__main__.aggregate_regions
+   pybalmorel.backcasting.__main__.get_and_format_balmorel
+   pybalmorel.backcasting.__main__.get_and_format_entsoe
+   pybalmorel.backcasting.__main__.load_and_align
+   pybalmorel.backcasting.__main__.plot_bar_chart
+   pybalmorel.backcasting.__main__.plot_price_profile
+   pybalmorel.backcasting.__main__.main
+   pybalmorel.backcasting.__main__.format
+   pybalmorel.backcasting.__main__.statistics
+   pybalmorel.backcasting.__main__.generation
+   pybalmorel.backcasting.__main__.prices
+   pybalmorel.backcasting.__main__.flows
+   pybalmorel.backcasting.__main__.transmission_max_flow
+   pybalmorel.backcasting.__main__.download
+   pybalmorel.backcasting.__main__.ttf_csv
+   pybalmorel.backcasting.__main__.fuelprices
+   pybalmorel.backcasting.__main__.co2_tax
+
+
+Module Contents
+---------------
+
+.. py:data:: balmorel_to_category
+
+.. py:data:: entsoe_to_category
+
+.. py:data:: entsoe_queries
+   :value: ['load', 'day_ahead_prices', 'generation', 'crossborder_flows']
+
+
+.. py:data:: colors
+
+.. py:class:: DataContainer(data_items)
+
+   Container for ENTSO-E data.
+
+
+.. py:function:: format_entsoe_region_name(path, year, parameter)
+
+.. py:function:: format_entsoe_data(df, resampling: str, filepath: pathlib.Path, year: int, parameter: str)
+
+   Format ENTSO-E data
+
+
+.. py:function:: load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = 'h')
+
+   Load the csvs for `year`
+
+
+.. py:function:: format_balmorel_df(df: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.
+
+   Args:
+       df (pd.DataFrame): MainResults symbol with 'Region', 'Season', 'Time'
+           and 'Value' columns, optionally 'Technology'.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Columns 'Time' (UTC timestamps), 'Region', optionally
+           'Technology', and 'Value'.
+
+
+.. py:function:: load_balmorel_data(scenario_name: str, scenario_folder_path: str, year: int, overwrite: bool)
+
+   Load df from MainResults
+
+
+.. py:function:: calculate_statistics(df: pandas.DataFrame, timeslicing: int = 0, per_region: bool = False)
+
+   Get std. dev, mean, max etc...
+
+
+.. py:function:: aggregate_regions(df: pandas.DataFrame, aggfunc: str, time_columns: list)
+
+   Aggregate DE4, IT-* etc
+
+
+.. py:function:: get_and_format_balmorel(balmorel_scenario, balmorel_scenario_path, year, elpriceaggfunc, overwrite)
+
+.. py:function:: get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc)
+
+.. py:function:: load_and_align(balmorel_scenario: str, balmorel_scenario_path: str, entsoe_data_path: str, year: int, elpriceaggfunc: str, overwrite: bool)
+
+.. py:function:: plot_bar_chart(df: pandas.DataFrame, columns_to_keep: list = [], per_region: bool = False)
+
+.. py:function:: plot_price_profile(prices: pandas.DataFrame)
+
+.. py:function:: main()
+
+.. py:function:: format(balmorel_scenario, balmorel_scenario_path, entsoe_data_path, year, elpriceaggfunc, overwrite)
+
+.. py:function:: statistics(balmorel_scenario_path)
+
+.. py:function:: generation(balmorel_scenario_path)
+
+.. py:function:: prices(balmorel_scenario_path)
+
+.. py:function:: flows(balmorel_scenario_path)
+
+   Plot duration curves of Balmorel vs ENTSO-E flows per directed border.
+
+
+.. py:function:: transmission_max_flow(balmorel_scenario_path, entsoe_data_path, year)
+
+   Write XKFX_ENTSOE.inc: backcast transmission overrides from ENTSO-E Observed Max Flow.
+
+   Reads the scenario's current XKFX borders, fetches matching ENTSO-E
+   cross-border flows for YEAR, and writes/updates
+   <balmorel-scenario-path>/data/XKFX_ENTSOE.inc plus the $include in XKFX.inc.
+   See CONTEXT.md and docs/adr/0005, 0006.
+
+
+.. py:function:: download(entsoe_data_path, year, queries)
+
+   Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-max-flow`.
+
+   Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
+   every neighbouring pair of them. Files already downloaded, and pairs
+   ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
+   failed requests.
+
+
+.. py:function:: ttf_csv(html_path, historicalprices_path)
+
+   Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_<year>.csv.
+
+   HTML_PATH is the page https://finance.yahoo.com/quote/TTF%3DF/history/
+   saved from a browser, covering any number of years. One CSV per year is
+   written to HISTORICALPRICES_PATH in the format the fuelprices command reads.
+
+
+.. py:function:: fuelprices(balmorel_scenario_path, historicalprices_path, year)
+
+   Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical
+   NATGAS/COAL prices for backcasting.
+
+   Reads HISTORICALPRICES_PATH's CSVs, converts them to the Price Year
+   (EUR2016, bundled HICP and EUR/USD tables), maps them onto the UTC Backcast
+   Calendar and writes <balmorel-scenario-path>/data/FUELPRICE.inc and
+   FUELPRICE_CONSTANT.inc. See docs/adr/0001-fuelprice-season-term-resolution.md
+   in the Balmorel repo. Warns if balopt.opt doesn't set
+   FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT (it is never edited).
+
+
+.. py:function:: co2_tax(balmorel_scenario_path, historicalprices_path, year, co2_overrides)
+
+   Write TAX_CO2_ST.inc: (S,T)-resolved historical CO2 tax for backcasting.
+
+   Reads the EEX EUA primary-auction report for YEAR under
+   HISTORICALPRICES_PATH, converts it to the Price Year (EUR2016), maps it onto
+   the UTC Backcast Calendar and writes <balmorel-scenario-path>/data/TAX_CO2_ST.inc.
+   See docs/adr/0002-co2-tax-season-term-resolution.md in the Balmorel repo.
+   Warns if balopt.opt doesn't set TAX_CO2_DOL=YYY_CCC_SSS_TTT (it is never edited).
+
+

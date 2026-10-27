@@ -1,0 +1,163 @@
+pybalmorel.weatheryear.to_inc
+=============================
+
+.. py:module:: pybalmorel.weatheryear.to_inc
+
+.. autoapi-nested-parse::
+
+   TITLE
+
+   Description
+
+
+   @author: Polyneikis Kanellas, Development Engineer DTU Wind
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.to_inc._INC_PREFIX_MAP
+   pybalmorel.weatheryear.to_inc._INC_TABLE_SPECS
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.to_inc._IncTableSpec
+   pybalmorel.weatheryear.to_inc.IncFile_temp
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.to_inc._copy_table_body
+   pybalmorel.weatheryear.to_inc._single_value_parameter_body
+   pybalmorel.weatheryear.to_inc.create_table_style_inc
+   pybalmorel.weatheryear.to_inc.append_split_wind_solar_sets
+   pybalmorel.weatheryear.to_inc.build_inc_file_list_type
+   pybalmorel.weatheryear.to_inc.create_GKFX_inc
+   pybalmorel.weatheryear.to_inc.create_Table_inc
+   pybalmorel.weatheryear.to_inc.create_SSS_TTT_AAA_inc
+   pybalmorel.weatheryear.to_inc.create_AAA_inc
+   pybalmorel.weatheryear.to_inc.create_GGG_GDATASET_inc
+
+
+Module Contents
+---------------
+
+.. py:data:: _INC_PREFIX_MAP
+   :type:  dict[str, str]
+
+.. py:class:: _IncTableSpec
+
+   .. py:attribute:: prefix
+      :type:  str
+
+
+   .. py:attribute:: suffix
+      :type:  str
+
+
+   .. py:attribute:: body_builder
+      :type:  Callable[[pandas.DataFrame | pandas.Series], pandas.DataFrame]
+
+
+.. py:function:: _copy_table_body(data: pandas.DataFrame | pandas.Series) -> pandas.DataFrame
+
+.. py:function:: _single_value_parameter_body(data: pandas.DataFrame | pandas.Series) -> pandas.DataFrame
+
+.. py:data:: _INC_TABLE_SPECS
+   :type:  dict[str, _IncTableSpec]
+
+.. py:function:: create_table_style_inc(data: pandas.DataFrame | pandas.Series, name: str, output_folder: str) -> None
+
+   Create an .inc file for table or parameter-style data blocks.
+
+   The emitted format is driven by the ``name``-specific prefix, suffix, and
+   body conversion defined in ``_INC_TABLE_SPECS``.
+
+
+.. py:class:: IncFile_temp(prefix: str = '', body: str = '', suffix: str = '', name: str = 'name', path: str = 'Balmorel/base/data/')
+
+   A useful class for creating .inc-files for GAMS models
+   Args:
+   prefix (str): The first part of the .inc file.
+   body (str): The main part of the .inc file.
+   suffix (str): The last part of the .inc file.
+   name (str): The name of the .inc file.
+   path (str): The path to save the file, defaults to 'Balmorel/base/data'.
+
+
+   .. py:attribute:: prefix
+      :value: ''
+
+
+
+   .. py:attribute:: body
+      :value: ''
+
+
+
+   .. py:attribute:: suffix
+      :value: ''
+
+
+
+   .. py:attribute:: name
+      :value: 'name'
+
+
+
+   .. py:attribute:: path
+      :value: 'Balmorel/base/data/'
+
+
+
+   .. py:method:: body_concat(df: pandas.DataFrame) -> None
+
+      Concatenate a body temporarily being a dataframe to another dataframe
+              
+
+
+
+   .. py:method:: body_prepare(index: list, columns: list, values: str = 'Value', aggfunc: str = 'sum', fill_value: Union[str, int] = '') -> None
+
+
+   .. py:method:: save() -> None
+
+
+.. py:function:: append_split_wind_solar_sets(the_file, df: pandas.DataFrame, name: str) -> None
+
+.. py:function:: build_inc_file_list_type(df: pandas.DataFrame, name: str, output_folder: str, equations: bool = False, filename: str | None = None) -> None
+
+   Write Balmorel set/parameter assignment lines to a .inc file.
+
+   Args:
+       df: DataFrame whose column ``name`` contains the assignment lines to write.
+       name: Column key used to look up lines in ``df`` and to resolve the GAMS
+           prefix/suffix for known renewable-set names.
+       output_folder: Directory where the ``.inc`` file is written.
+       equations: When *True*, skip the ``$onMulti`` / ``/ … /;`` envelope and
+           write raw assignment lines only (used for INVDATA and ANNUITYCG blocks).
+       filename: Output file stem (without ``.inc``). Defaults to ``name`` when
+           not provided, allowing callers to write a different file name while
+           still keying into ``df`` by ``name``.
+
+
+.. py:function:: create_GKFX_inc(GKFX: pandas.DataFrame, name: str, output_folder: str) -> None
+
+.. py:function:: create_Table_inc(df: pandas.DataFrame, name: str, output_folder: str) -> None
+
+.. py:function:: create_SSS_TTT_AAA_inc(df: pandas.DataFrame, name: str, output_folder: str) -> None
+
+.. py:function:: create_AAA_inc(df: pandas.DataFrame, name: str, output_folder: str) -> None
+
+.. py:function:: create_GGG_GDATASET_inc(df: pandas.DataFrame, name: str, output_folder: str) -> None
+

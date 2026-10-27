@@ -1,0 +1,387 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preparing a Backcast &mdash; pybalmorel 1.3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=98c25ec5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Execution" href="../execution.html" />
+    <link rel="prev" title="ENTSO-E Data Fetching" href="entsoe.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Pre-Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timeseriesagg.html">Time Series Aggregation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_weather_year_input.html">Multi-Weather-Year Input Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="economics.html">Economic Adjustments: Currency &amp; Inflation Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="entsoe.html">ENTSO-E Data Fetching</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Preparing a Backcast</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli">CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-entso-e-data">Downloading ENTSO-E data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-features">Key features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#price-year">Price Year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fuel-prices">Fuel prices</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-the-ttf-price-files">Getting the TTF price files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#co2-tax">CO2 tax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-flow">Data flow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../preprocessing.html">Pre-Processing</a></li>
+      <li class="breadcrumb-item active">Preparing a Backcast</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/preprocessing/preparing_backcast.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="preparing-a-backcast">
+<h1>Preparing a Backcast<a class="headerlink" href="#preparing-a-backcast" title="Link to this heading"></a></h1>
+<p>A Backcast is a Balmorel scenario run for one historical Backcast Year,
+so its results can be compared with what actually happened (see
+<a class="reference external" href="https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md"><code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code></a>).
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting</span></code> covers the whole workflow:</p>
+<ol class="arabic simple">
+<li><p><strong>Prepare</strong> the Backcast’s inputs: download ENTSO-E data, derive the
+<code class="docutils literal notranslate"><span class="pre">XKFX</span></code> transmission override from ENTSO-E’s Observed Max Flow, and write
+season- and hour-resolved historical <a class="reference internal" href="#fuel-prices">fuel prices</a> and a
+<a class="reference internal" href="#co2-tax">CO2 tax</a> for the Backcast Year. This page.</p></li>
+<li><p><strong>Run</strong> the Balmorel scenario as usual.</p></li>
+<li><p><strong>Validate</strong> the Backcast’s results against ENTSO-E observations. See
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">Validating a Backcast</span></a>.</p></li>
+</ol>
+<p>The transmission override follows ADRs
+<a class="reference internal" href="../adr/0005-observed-max-flow-not-ntc-for-backcasting.html"><span class="std std-doc">0005</span></a>,
+<a class="reference internal" href="../adr/0006-xkfx-override-file-not-regeneration.html"><span class="std std-doc">0006</span></a> and
+<a class="reference internal" href="../adr/0007-split-entsoe-and-backcasting-packages.html"><span class="std std-doc">0007</span></a>.
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting</span></code> depends on <a class="reference internal" href="entsoe.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code></span></a> for raw
+data access and on <code class="docutils literal notranslate"><span class="pre">pybalmorel.MainResults</span></code> for Balmorel results — never the
+other way round.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>Backcasting needs the <code class="docutils literal notranslate"><span class="pre">entso-e</span></code> extra:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pybalmorel<span class="o">[</span>entso-e<span class="o">]</span>
+</pre></div>
+</div>
+<p>A GAMS installation is also needed for reading Balmorel results, i.e. for
+<code class="docutils literal notranslate"><span class="pre">transmission-max-flow</span></code> (which reads the scenario’s <code class="docutils literal notranslate"><span class="pre">XKFX</span></code> borders) and for
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">validating a Backcast</span></a>.</p>
+</section>
+<section id="cli">
+<h2>CLI<a class="headerlink" href="#cli" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download ENTSO-E load, prices, generation and cross-border flows</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>download<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--query<span class="w"> </span>load<span class="w"> </span>--query<span class="w"> </span>crossborder_flows<span class="o">]</span>
+
+<span class="c1"># Write XKFX_ENTSOE.inc: transmission overrides from ENTSO-E Observed Max Flow</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>transmission-max-flow<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;
+
+<span class="c1"># Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_&lt;year&gt;.csv</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>ttf-csv<span class="w"> </span>&lt;html-path&gt;<span class="w"> </span>&lt;historicalprices-path&gt;
+
+<span class="c1"># Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: historical NATGAS/COAL prices</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>fuelprices<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;
+
+<span class="c1"># Write TAX_CO2_ST.inc: historical EUA price as CO2 tax</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>co2-tax<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--co2-override<span class="w"> </span><span class="nv">UNITED_KINGDOM</span><span class="o">=</span><span class="m">85</span><span class="w"> </span>--co2-override<span class="w"> </span><span class="nv">SERBIA</span><span class="o">=</span><span class="m">0</span><span class="o">]</span>
+</pre></div>
+</div>
+<p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pybalmorel.backcasting</span> <span class="pre">&lt;command&gt;</span> <span class="pre">--help</span></code> for details on each
+command.</p>
+</section>
+<section id="downloading-entso-e-data">
+<h2>Downloading ENTSO-E data<a class="headerlink" href="#downloading-entso-e-data" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">download</span></code> fetches the Backcast Year’s ENTSO-E data into <code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>,
+for every zone in <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe.bidding_zones</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">--query</span></code></p></th>
+<th class="head"><p>Files</p></th>
+<th class="head"><p>Used by</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">load</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_load.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">day_ahead_prices</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_day_ahead_prices.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">generation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_generation.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">crossborder_flows</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_crossborder_flows.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">transmission-max-flow</span></code>, <code class="docutils literal notranslate"><span class="pre">format</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Without <code class="docutils literal notranslate"><span class="pre">--query</span></code>, all four are downloaded. <code class="docutils literal notranslate"><span class="pre">--query</span></code> is repeatable.</p>
+<p>Flows are fetched for every directed pair of neighbouring zones.</p>
+<p>The download can be stopped and rerun at any time. On a rerun:</p>
+<ul class="simple">
+<li><p>Files that already exist are skipped.</p></li>
+<li><p>Zones and pairs ENTSO-E answered “no matching data” for on an earlier
+run are skipped. They are listed in <code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;query&gt;_nodata.txt</span></code> in
+<code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>, one zone per line (or, for flows, two EIC codes
+separated by a tab). Delete a line to query that zone or pair again, or
+the whole file to query them all again, e.g. if ENTSO-E has since
+published the data.</p></li>
+<li><p>Failed requests are retried. Timeouts, dropped connections and server
+errors are never written to the <code class="docutils literal notranslate"><span class="pre">_nodata.txt</span></code> files, and don’t stop the
+download. Requests time out after 120 seconds, so a connection lost
+mid-request, e.g. when switching networks, doesn’t hang the download.</p></li>
+</ul>
+</section>
+<section id="key-features">
+<h2>Key features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Backcast Calendar</strong>: every timestamp ↔ (Season, Term) conversion goes
+through <code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting.calendar</span></code>. S01 T001 is 00:00 UTC on the
+first Monday of the year, and every day has 24 terms (see
+<a class="reference internal" href="../adr/0008-backcast-calendar-utc.html"><span class="std std-doc">ADR 0008</span></a>). Balmorel results are
+matched by label, never by position. Inputs not in UTC, such as a demand
+series in local time, must be converted before they are mapped onto it.</p></li>
+<li><p><strong>Bidding Zone Mapping</strong>: uses <code class="docutils literal notranslate"><span class="pre">bidding_zone_codes</span></code>/<code class="docutils literal notranslate"><span class="pre">bidding_zone_translation</span></code>
+from <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> to bridge ENTSO-E bidding zones and Balmorel regions.</p></li>
+<li><p><strong>Transmission overrides</strong>: <code class="docutils literal notranslate"><span class="pre">flows.py</span></code> computes the Observed Max Flow per
+border and writes it to <code class="docutils literal notranslate"><span class="pre">XKFX_ENTSOE.inc</span></code> (see ADRs
+<a class="reference internal" href="../adr/0005-observed-max-flow-not-ntc-for-backcasting.html"><span class="std std-doc">0005</span></a> and
+<a class="reference internal" href="../adr/0006-xkfx-override-file-not-regeneration.html"><span class="std std-doc">0006</span></a>) — a
+non-destructive override file, never a rewrite of the base <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code>.</p></li>
+</ul>
+</section>
+<section id="price-year">
+<h2>Price Year<a class="headerlink" href="#price-year" title="Link to this heading"></a></h2>
+<p>All generated prices are in €2016. Nominal prices are converted from USD
+at the Eurostat annual-average EUR/USD rate of the Backcast Year and
+deflated with the annual euro-area HICP. Both tables are bundled in
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting.pricelevel</span></code> (see
+<a class="reference internal" href="../adr/0009-price-year-bundled-deflator-table.html"><span class="std std-doc">ADR 0009</span></a>), with the
+Eurostat dataset codes next to them; extend them when a new year is needed.</p>
+</section>
+<section id="fuel-prices">
+<h2>Fuel prices<a class="headerlink" href="#fuel-prices" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> command converts historical daily fuel prices into Balmorel’s
+season- and hour-resolved <code class="docutils literal notranslate"><span class="pre">FUELPRICE(YYY,AAA,FFF,SSS,TTT)</span></code> input, so a
+Backcast sees the fuel prices of the actual year. It reads two CSV files
+from <code class="docutils literal notranslate"><span class="pre">&lt;historicalprices-path&gt;</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Fuel</p></th>
+<th class="head"><p>File</p></th>
+<th class="head"><p>Unit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NATGAS</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">natural_gas_TTF_&lt;year&gt;.csv</span></code> (TTF futures, see <a class="reference internal" href="#getting-the-ttf-price-files">below</a>)</p></td>
+<td><p>€/MWh, converted to €/GJ</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">COAL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Rotterdam</span> <span class="pre">Coal</span> <span class="pre">Futures</span> <span class="pre">Historical</span> <span class="pre">Data.csv</span></code> (must cover the year)</p></td>
+<td><p>USD/t, converted to €/GJ with 30.2 GJ/t</p></td>
+</tr>
+</tbody>
+</table>
+<section id="getting-the-ttf-price-files">
+<h3>Getting the TTF price files<a class="headerlink" href="#getting-the-ttf-price-files" title="Link to this heading"></a></h3>
+<p>Yahoo Finance only lets paying users download its history as CSV. Instead,
+open <a class="reference external" href="https://finance.yahoo.com/quote/TTF%3DF/history/">https://finance.yahoo.com/quote/TTF%3DF/history/</a>, choose a date range
+(it can span several years), and save the page from the browser as HTML.
+Then run <code class="docutils literal notranslate"><span class="pre">ttf-csv</span></code> on it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>ttf-csv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"2020-2025 Dutch TTF Natural Gas Calendar (TTF=F) Stock Historical Prices &amp; Data - Yahoo Finance.html"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;
+</pre></div>
+</div>
+<p>This writes one <code class="docutils literal notranslate"><span class="pre">natural_gas_TTF_&lt;year&gt;.csv</span></code> per calendar year on the page,
+overwriting any that already exist. Each file has the columns
+<code class="docutils literal notranslate"><span class="pre">Date,Open,High,Low,Close,Adj</span> <span class="pre">Close,Volume</span></code>. <code class="docutils literal notranslate"><span class="pre">Date</span></code> has no year (<code class="docutils literal notranslate"><span class="pre">Dec</span> <span class="pre">30</span></code>),
+and <code class="docutils literal notranslate"><span class="pre">Volume</span></code> has no thousands separators, so the file is valid CSV. The
+<code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> command uses <code class="docutils literal notranslate"><span class="pre">Adj</span> <span class="pre">Close</span></code>.</p>
+<p>Daily prices apply to the UTC calendar day on the Backcast Calendar,
+carrying the last price forward over weekends and holidays. Two files are
+written to <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FUELPRICE.inc</span></code> — the (S,T)-resolved NATGAS and COAL prices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FUELPRICE_CONSTANT.inc</span></code> — flags every other fuel as constant over the year.</p></li>
+</ul>
+<p>Only natural gas and coal are covered; oil is not covered yet. For annual
+averages instead, see the
+<a class="reference internal" href="economics.html#average-fuel-prices-cli"><span class="std std-ref">average fuel prices CLI</span></a>.</p>
+</section>
+</section>
+<section id="co2-tax">
+<h2>CO2 tax<a class="headerlink" href="#co2-tax" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code> command converts the EEX EUA primary-auction results into
+Balmorel’s <code class="docutils literal notranslate"><span class="pre">TAX_CO2_ST(YYY,CCC,SSS,TTT)</span></code> input (see ADR 0002 in the
+Balmorel repo) and writes <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/TAX_CO2_ST.inc</span></code>. It reads
+<code class="docutils literal notranslate"><span class="pre">emission-spot-primary-market-auction-report-&lt;year&gt;-data.xlsx</span></code>, found
+anywhere under <code class="docutils literal notranslate"><span class="pre">&lt;historicalprices-path&gt;</span></code>, downloaded from
+<a class="reference external" href="https://www.eex.com/en/market-data/market-data-hub/environmentals/eex-eua-primary-auction-spot-download">EEX</a>.</p>
+<p>Only successful auctions are used. Days with several auctions (EU, DE, PL)
+get the mean clearing price, and days without one carry the last price
+forward.</p>
+<p>Every country gets the EUA price. Use <code class="docutils literal notranslate"><span class="pre">--co2-override</span> <span class="pre">COUNTRY=VALUE</span></code>
+(repeatable, Balmorel <code class="docutils literal notranslate"><span class="pre">CCC</span></code> names, nominal €/tCO2 of the Backcast Year) for
+countries with a different carbon price, such as the UK, or <code class="docutils literal notranslate"><span class="pre">0</span></code> for
+countries without one.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> and <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code> never edit the scenario’s options, but they warn
+when Balmorel would ignore what they wrote:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">balopt.opt</span></code> (the scenario’s own, else <code class="docutils literal notranslate"><span class="pre">base/model/balopt.opt</span></code>) must set
+<code class="docutils literal notranslate"><span class="pre">FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT</span></code> and <code class="docutils literal notranslate"><span class="pre">TAX_CO2_DOL=YYY_CCC_SSS_TTT</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HYDROGEN_FUELPRICE.inc</span></code> must not assign COAL or NATGAS prices, since
+<code class="docutils literal notranslate"><span class="pre">FUELPRICE_HYDROGEN</span></code> overrides <code class="docutils literal notranslate"><span class="pre">IFUELPRICE</span></code> wherever it is nonzero.</p></li>
+</ul>
+</div>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>API Key</strong>: set <code class="docutils literal notranslate"><span class="pre">ENTSOE_API_KEY</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code>, or provide it when prompted.</p></li>
+<li><p><strong>GAMS Path</strong>: set <code class="docutils literal notranslate"><span class="pre">GAMS_SYSTEM_DIR</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code> for Balmorel result processing.</p></li>
+<li><p><strong>Output</strong>: raw ENTSO-E data in <code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>; XKFX, fuel price
+and CO2 tax overrides written to <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/</span></code>; validation
+data cached in <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/backcastoutput/</span></code>.</p></li>
+</ul>
+</section>
+<section id="data-flow">
+<h2>Data flow<a class="headerlink" href="#data-flow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Raw ENTSO-E data fetched via <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> (<code class="docutils literal notranslate"><span class="pre">download</span></code>) and saved
+as CSV.</p></li>
+<li><p>The XKFX override is computed from the ENTSO-E flows
+(<code class="docutils literal notranslate"><span class="pre">transmission-max-flow</span></code>).</p></li>
+<li><p>Historical prices are mapped onto the UTC Backcast Calendar and written
+(<code class="docutils literal notranslate"><span class="pre">fuelprices</span></code>, <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code>).</p></li>
+</ol>
+<p>The Backcast is then run in Balmorel and
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">validated</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="entsoe.html" class="btn btn-neutral float-left" title="ENTSO-E Data Fetching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../execution.html" class="btn btn-neutral float-right" title="Execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
