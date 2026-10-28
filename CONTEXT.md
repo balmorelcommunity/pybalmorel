@@ -73,7 +73,8 @@ The mapping from a Backcast Year's clock time to Balmorel's 52 seasons (S01–S5
 _Avoid_: Local time, Copenhagen time, CET
 
 **Price Year**:
-The currency year all backcast prices are expressed in: €2016. Every series is deflated with the euro-area HICP and converted from USD using the Eurostat annual-average exchange rate, both from tables bundled in `pybalmorel.backcasting.pricelevel` (see ADR 0009).
+The currency year all backcast prices are expressed in: €2016. Every series is deflated with the euro-area HICP and converted from USD using the Eurostat annual-average exchange rate, both from tables bundled in `pybalmorel.backcasting.pricelevel` (see ADR 0009). Backcast validation converts Balmorel's prices the other way, to nominal euros of the Backcast Year, before comparing them with ENTSO-E.
+_Avoid_: Base year, EUR2012 (outdated header leftover)
 
 **CO2 Override**:
 A flat, nominal €/tCO2 price for one Balmorel country (`CCC`) that replaces the EUA price in `TAX_CO2_ST`, e.g. the UK's own carbon price or 0 for a country without one. Every country without an override gets the EUA primary-auction price, so no list of ETS members is kept.
@@ -83,9 +84,25 @@ _Avoid_: ETS country list
 The share of a country's nuclear `GKFX` that could run in one week of the Backcast Year: the highest hourly nuclear output ENTSO-E reports for that week, divided by the country's nuclear `GKFX`, clipped at 1. It includes outages, maintenance and closures: weeks after the country's observed series ends are rated zero. Written as weekly `GKRATE` overrides to `GKRATE_ENTSOE.inc`; a zero is written as `eps`, since Balmorel reads 0 as full capacity. A calibration input, not a validation result.
 _Avoid_: Capacity factor, load factor (those describe output, not availability)
 
+**Thermal Availability**:
+The share of a country's fossil, biomass or waste `GKFX` of one fuel group that could run in a given week of the Backcast Year: ENTSO-E's installed capacity as a share of `GKFX` (at most 1), less the capacity ENTSO-E reports as out of service that week. Taken from ENTSO-E's installed capacity and outage reports, never from observed output, because the fossil mix is a Validation Metric. Written as weekly `GKRATE` overrides to `GKRATE_THERMAL_ENTSOE.inc`. A Calibration Input.
+_Avoid_: Capacity factor (that describes output); Nuclear Availability (that is taken from observed output)
+
+**Must-run Floor**:
+The lowest electricity output a zone's fossil, biomass or waste fuel group kept in a week of the Backcast Year when it would have paid to stop: the week's lowest observed hourly output (ENTSO-E), for weeks in which the zone's day-ahead price stayed at or below 40 €/MWh for at least 4 hours, and for biomass and waste in every week. Balmorel must produce at least that much, or pay a penalty per MWh short. It fixes only the bottom of the fossil mix by construction; the fossil mix above the floor stays a Validation Metric. Written to `MUSTRUN_FLOOR.inc`, whose existence switches Balmorel's `MUSTRUN` addon on. A Calibration Input.
+_Avoid_: Minimum load (a property of one unit); Must-run (a plant flag, not an observed level)
+
+**VRE Level**:
+The annual output a country's wind or solar fleet could deliver in the Backcast Year: the weather year's full-load hours, scaled per country and kind (solar, onshore, offshore) so that it equals ENTSO-E's reported output for that year. Where ENTSO-E reports no offshore output for a country with Balmorel offshore capacity, onshore and offshore share one factor. Factors outside 0.6–1.5 are not written, since such a gap is a capacity or reporting problem. The hourly profile still comes from the weather year. Written as `WNDFLH`/`SOLEFLH` overrides to `WNDFLH_ENTSOE.inc` and `SOLEFLH_ENTSOE.inc` (see ADR 0012). A Calibration Input.
+_Avoid_: Capacity factor (that describes output after curtailment)
+
 **Observed Demand Profile**:
 The hourly ENTSO-E actual load of a region's Canonical Region Name in the Backcast Year, on the Backcast Calendar, used as the `DE_VAR_T` of the exogenous electricity users (`OTHER`, `RESE`). Implausible or missing hours are interpolated; a region with more than 2% of them takes its profile from the scenario's input data instead. Written to `DE_VAR_T_ENTSOE.inc`. Balmorel scales it to the annual `DE`, so only the shape is observed. ENTSO-E load is total load, so it also carries part of the endogenous demand's variation. A Calibration Input.
 _Avoid_: Demand (the annual level still comes from `DE`)
+
+**Demand Level**:
+The annual exogenous electricity demand (`DE`) of a region in the Backcast Year: its ENTSO-E load over the Backcast Calendar, net of Balmorel's distribution losses, less the electricity Eurostat reports for heating (household space and water heating, electric boilers and heat pumps in district heating), which Balmorel adds endogenously. Taken from ENTSO-E's load rather than Eurostat's final consumption because the two differ in coverage (DE: ENTSO-E sees 7% less). With it, Balmorel's load misses ENTSO-E's only by its electric-heating error. Split over regions and users by the input data's `DE`. Written as `DE` overrides to `DE_ENTSOE.inc`. A Calibration Input; electric heating stays a Validation Metric.
+_Avoid_: Final consumption (Eurostat's figure, with different coverage); Demand (the level alone, without the Observed Demand Profile)
 
 **Natural-Inflow Hydro**:
 Run-of-river and reservoir hydro fed by natural water inflow. It excludes pumped-storage output, which is electricity storage.

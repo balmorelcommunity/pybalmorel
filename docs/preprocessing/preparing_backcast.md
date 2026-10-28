@@ -7,8 +7,11 @@ so its results can be compared with what actually happened (see
 
 1. **Prepare** the Backcast's inputs: download ENTSO-E data, derive the
    `XKFX` transmission override from ENTSO-E's Observed Flow Limit, the
-   weekly [nuclear availability](#nuclear-availability), the
-   [electricity demand profiles](#demand-profiles), and write
+   weekly [nuclear](#nuclear-availability) and
+   [thermal availability](#thermal-availability), the
+   [must-run floor](#must-run-floor), the [VRE level](#vre-level), the
+   [electricity demand profiles](#demand-profiles) and
+   [level](#demand-level), and write
    season- and hour-resolved historical [fuel prices](#fuel-prices) and a
    [CO2 tax](#co2-tax) for the Backcast Year. This page.
 2. **Run** the Balmorel scenario as usual.
@@ -59,12 +62,40 @@ python -m pybalmorel.backcasting nuclear-availability \
     <year> \
     [--reload-input]
 
+# Write GKRATE_THERMAL_ENTSOE.inc: weekly thermal availability from ENTSO-E capacity and outages
+python -m pybalmorel.backcasting thermal-availability \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--reload-input]
+
+# Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks
+python -m pybalmorel.backcasting must-run-floor \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--price-threshold 40] [--min-hours 4] [--every-week BIOMASS --every-week WASTE] [--reload-input]
+
+# Write WNDFLH_ENTSOE.inc + SOLEFLH_ENTSOE.inc: VRE full-load hours scaled to ENTSO-E output
+python -m pybalmorel.backcasting vre-flh \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--bounds 0.6 1.5] [--reload-input]
+
 # Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load
 python -m pybalmorel.backcasting demand-profile \
     <balmorel-scenario-path> \
     <entsoe-data-path> \
     <year> \
     [--reload-input]
+
+# Write DE_ENTSOE.inc: annual electricity demand from ENTSO-E load less Eurostat heating
+python -m pybalmorel.backcasting demand-level \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--basis entsoe|eurostat] [--coverage-bounds 0.8 1.3] [--eurostat-data-path PATH] [--reload-input]
 
 # Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
 python -m pybalmorel.backcasting ttf-csv <html-path> <historicalprices-path>
@@ -93,12 +124,15 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 
 | `--query` | Files | Used by |
 |---|---|---|
-| `load` | `<year>_<zone>_load.csv` | `format`, `demand-profile` |
-| `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format` |
-| `generation` | `<year>_<zone>_generation.csv` | `format`, `nuclear-availability` |
+| `load` | `<year>_<zone>_load.csv` | `format`, `demand-profile`, `demand-level`, `must-run-floor` |
+| `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format`, `must-run-floor` |
+| `generation` | `<year>_<zone>_generation.csv` | `format`, `nuclear-availability`, `thermal-availability`, `must-run-floor`, `vre-flh` |
 | `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-flow-limit`, `format` |
+| `installed_generation_capacity` | `<year>_<zone>_installed_generation_capacity.csv` | `thermal-availability` |
+| `unavailability_of_generation_units` | `<year>_<zone>_unavailability_of_generation_units.csv` | `thermal-availability` |
 
-Without `--query`, all four are downloaded. `--query` is repeatable.
+Without `--query`, the first four are downloaded. The capacity and outage
+queries must be asked for. `--query` is repeatable.
 
 Flows are fetched for every directed pair of neighbouring zones.
 
@@ -177,6 +211,95 @@ $if EXIST '../data/GKRATE_ENTSOE.inc' $INCLUDE '../data/GKRATE_ENTSOE.inc';
 The nuclear availability is a Calibration Input: nuclear output that it
 fixes by construction is not evidence in Backcast validation.
 
+## Thermal availability
+
+The `thermal-availability` command writes
+`<scenario-path>/data/GKRATE_THERMAL_ENTSOE.inc`: one `GKRATE` per fossil,
+biomass or waste (area, technology) and Backcast Calendar week. The rating
+is the country's Thermal Availability for the technology's fuel group
+(`HARDCOAL`, `LIGNITE`, `GAS`, `OIL`, `BIOMASS`, `WASTE`): ENTSO-E's
+installed capacity of the group as a share of its `GKFX` (at most 1), less
+the share ENTSO-E reports out of service that week. It reads the files of
+`download --query installed_generation_capacity --query
+unavailability_of_generation_units`.
+
+- Technologies are grouped by their `GDFUEL` acronym, read from the input
+  GDX. An electricity-producing fuel that is neither in a group nor listed
+  as ungrouped (nuclear, heat, ...) raises an error, so a new fuel can't
+  silently keep full availability.
+- Only the latest revision of each outage report counts, and cancelled or
+  withdrawn reports are dropped. Planned and forced outages are averaged
+  over the hours of each week.
+- A group without ENTSO-E installed capacity keeps its base `GKRATE`, and a
+  country without outage reports only has `GKFX` scaled to the installed
+  capacity; both warn.
+- The ratings are saved to `backcastoutput/thermal_availability.csv`, and
+  `backcastoutput/thermal_capacity.csv` checks `GKFX` against ENTSO-E's
+  installed capacity and observed output per country and group,
+  including solar and wind (check only).
+
+The scenario's `data/GKRATE.inc` must include the file after the base
+ratings (the command warns if it doesn't):
+
+```gams
+$if EXIST '../data/GKRATE_THERMAL_ENTSOE.inc' $INCLUDE '../data/GKRATE_THERMAL_ENTSOE.inc';
+```
+
+Thermal Availability is taken from capacity and outage reports, never from
+observed output, so the fossil mix stays a Validation Metric.
+
+## Must-run floor
+
+The `must-run-floor` command writes the data of Balmorel's `MUSTRUN` addon
+to `<scenario-path>/data/`: `MUSTRUN_ZONE.inc`, `MUSTRUN_ZONE_RRR.inc`,
+`MUSTRUN_GROUP.inc`, `MUSTRUN_GROUP_FFF.inc` and, last,
+`MUSTRUN_FLOOR.inc`, whose existence switches the addon on. The floor is
+the lowest hourly output ENTSO-E reports for a country's fuel group in a
+Backcast Calendar week in which the day-ahead price stayed at or below
+`--price-threshold` (40 €/MWh, nominal) for at least `--min-hours` (4)
+hours. `--every-week` groups (biomass and waste, paid regardless of the
+price) are floored in every week.
+
+- The country's price is the load-weighted mean of its zones' prices.
+- Floors are capped at Balmorel's available capacity (`GKFX` × `GKRATE`),
+  so run `thermal-availability` first; the command warns if
+  `GKRATE_THERMAL_ENTSOE.inc` is missing.
+- Without any floor, no files are written. A `MUSTRUN_FLOOR.inc` left from
+  an earlier run is warned about, not deleted.
+- The floors are saved to `backcastoutput/must_run_floor.csv`.
+
+The floor fixes only the bottom of the fossil mix; the rest of it stays a
+Validation Metric.
+
+## VRE level
+
+The `vre-flh` command scales the weather year's wind and solar full-load
+hours per country and kind (solar, onshore, offshore), so that the output
+Balmorel can produce in the Backcast Year (`GKFX` × FLH × the mean weekly
+`GKRATE`) equals ENTSO-E's reported output (see
+[ADR 0012](../adr/0012-vre-level-from-observed-output.md)). Every area of a
+country and kind gets the same factor, so the hourly profiles and the spread
+between areas stay as the weather year wrote them.
+
+- Wind is every technology with fuel `WIND`; solar is `GSOLE` technologies
+  with fuel `SUN`, so solar heat isn't counted. Offshore areas are named
+  `*_OFF_Existing_RG<n>` or `*_VRE-OFF_*` by the weather year.
+- Where ENTSO-E reports no offshore output for a country with Balmorel
+  offshore capacity (SE4, FI, IE), onshore and offshore share one factor,
+  since ENTSO-E books small offshore farms as onshore.
+- A factor outside `--bounds` (0.6-1.5) is not written and warns: such a
+  gap is a capacity or reporting problem. So does a country without a
+  generation file (UK), and an area with `GKFX` but no full-load hours.
+- Both files are always written, even without lines, and the command
+  appends their `$include` to the scenario's `WNDFLH.inc` and
+  `SOLEFLH.inc`. The weather year overwrites those, so rerun `vre-flh`
+  after every weather-year run. Rerunning is safe: on scaled input data
+  the factors are 1 and the files don't change.
+- The factors are saved to `backcastoutput/vre_flh.csv`.
+
+A country's annual wind and solar output is then a Calibration Input; the
+hourly timing still comes from the weather year and stays a check.
+
 ## Demand profiles
 
 The `demand-profile` command writes `<scenario-path>/data/DE_VAR_T_ENTSOE.inc`:
@@ -232,6 +355,46 @@ Caveats:
   [Backcast validation](../postprocessing/validating_backcast.md) is no
   longer independent evidence. Only the annual level and the endogenous
   demand remain to be validated.
+
+## Demand level
+
+The `demand-level` command writes `<scenario-path>/data/DE_ENTSOE.inc`: the
+annual `DE` of the Backcast Year per region and user. Per country, the
+Demand Level is ENTSO-E's load over the Backcast Calendar, net of Balmorel's
+distribution losses (`DISLOSS_E`), less the electricity Eurostat reports for
+heating: households' space and water heating (`nrg_d_hhq`) and electric
+boilers and heat pumps in district heating (`nrg_bal_c`). Balmorel adds
+electric heating itself, so its load then misses ENTSO-E's only by its
+electric-heating error.
+
+- Eurostat data is fetched from the public dissemination API (no key) and
+  cached in `--eurostat-data-path` (default `<scenario-path>/eurostatdata`),
+  one JSON file per dataset and year.
+- ENTSO-E's `DE_LU` load is split between DE and LU by Eurostat final
+  consumption. A country with several zones (NO1-5, SE1-4, DK1-2) gets each
+  zone's load net of losses, less the country's heating split by load.
+  Within a zone (DE4-*) and over the users, the level is split by the
+  input data's `DE`.
+- Missing load hours are filled with the zone's mean; more than 2% missing
+  warns.
+- A country keeps its input `DE`, with a warning, without ENTSO-E load
+  (UK, TR) or Eurostat data (CH), or if its load net of losses over Eurostat
+  final consumption is outside `--coverage-bounds` (0.8-1.3; AL in 2023).
+- `--basis eurostat` takes Eurostat final consumption less heating instead.
+- The summary is saved to `backcastoutput/demand_level.csv`.
+
+The scenario's `data/DE.inc` must include the file after base's `DE.inc`
+(the command warns if it doesn't):
+
+```gams
+$include '../../base/data/DE.inc';
+$if EXIST '../data/DE_ENTSOE.inc' $INCLUDE '../data/DE_ENTSOE.inc';
+```
+
+With the `entsoe` basis, a country's total load is a Calibration Input;
+only its electric heating stays a Validation Metric. Electric heating in
+services has no Eurostat split, so it stays in `DE` and is counted again by
+Balmorel's tertiary heating.
 
 ## Price Year
 
@@ -316,18 +479,22 @@ when Balmorel would ignore what they wrote:
 
 - **API Key**: set `ENTSOE_API_KEY` in `.env`, or provide it when prompted.
 - **GAMS Path**: set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing.
-- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; XKFX, GKRATE, fuel price,
-  CO2 tax and demand profile overrides written to `<scenario-path>/data/`; validation
-  data cached in `<scenario-path>/backcastoutput/`.
+- **Output**: raw ENTSO-E data in `<entsoe-data-path>`; Eurostat data in
+  `<scenario-path>/eurostatdata/`; XKFX, GKRATE, MUSTRUN, WNDFLH, SOLEFLH, DE,
+  DE_VAR_T, fuel price and CO2 tax overrides written to `<scenario-path>/data/`;
+  summaries and validation data in `<scenario-path>/backcastoutput/`.
 
 ## Data flow
 
 1. Raw ENTSO-E data fetched via `pybalmorel.entsoe` (`download`) and saved
    as CSV.
 2. The XKFX override is computed from the ENTSO-E flows
-   (`transmission-flow-limit`), and the GKRATE override from the ENTSO-E
-   nuclear output (`nuclear-availability`), and the DE_VAR_T override from
-   the ENTSO-E load (`demand-profile`).
+   (`transmission-flow-limit`), the GKRATE overrides from the ENTSO-E
+   nuclear output (`nuclear-availability`) and from installed capacity and
+   outages (`thermal-availability`), the MUSTRUN files from output and
+   prices (`must-run-floor`), the WNDFLH and SOLEFLH overrides from wind
+   and solar output (`vre-flh`), and the DE_VAR_T and DE overrides from the
+   ENTSO-E load and Eurostat heating (`demand-profile`, `demand-level`).
 3. Historical prices are mapped onto the UTC Backcast Calendar and written
    (`fuelprices`, `co2-tax`).
 
