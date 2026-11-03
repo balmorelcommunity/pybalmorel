@@ -20,6 +20,7 @@ import re
 import pandas as pd
 import requests
 from pathlib import Path
+from warnings import warn
 from entsoe.entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 from entsoe.mappings import NEIGHBOURS, lookup_area
@@ -96,6 +97,12 @@ bidding_zones = [
     "10Y1001A1001A75E",
     "10Y1001A1001A74G",
 ]
+
+# Bidding zone -> the smaller area its load is fetched for, so the load covers
+# only the Balmorel region: IE_SEM is all-island, but Balmorel has Northern
+# Ireland in UK, so IE's load is Ireland's control area (10YIE-1001A00010).
+# Prices, generation and flows stay on the bidding zone.
+load_zones = {"IE_SEM": "IE"}
 
 # Balmorel region name -> canonical name shared with an ENTSO-E zone,
 # for regions where Balmorel's resolution differs from ENTSO-E's
@@ -424,6 +431,56 @@ def read_no_data_zones(path: str | Path, year: int, entsoe_query: str) -> set[st
     if not f.exists():
         return set()
     return {line for line in f.read_text().splitlines() if line}
+
+
+def query_zones(entsoe_query: str, zones: list[str]) -> list[str]:
+    """The zones to fetch `entsoe_query` for: `zones`, with load_zones swapped in for load.
+
+    Args:
+        entsoe_query (str): The query, e.g. 'load'.
+        zones (list[str]): ENTSO-E zone identifiers, e.g. bidding_zones.
+
+    Returns:
+        list[str]: The zones to query.
+    """
+    if entsoe_query != "load":
+        return list(zones)
+    return [load_zones.get(zone, zone) for zone in zones]
+
+
+def load_files(path: str | Path, year: int) -> list[Path]:
+    """The load csv's of `year`, without those of a bidding zone whose load is fetched for a smaller area.
+
+    A superseded file (e.g. '<year>_IE_SEM_load.csv', from before IE's load
+    was fetched for Ireland only) is never read, so a zone is not counted
+    twice. Its replacement missing is warned about, as that region then has
+    no load. Zones are matched by their file name token, not their EIC code,
+    since region 'IE' itself resolves to IE_SEM's code.
+
+    Args:
+        path (str | Path): Folder with the fetched load csv's.
+        year (int): The year.
+
+    Returns:
+        list[Path]: The load csv's to read, sorted.
+    """
+    files = sorted(Path(path).glob(f"{year}_*_load.csv"))
+    names = {file.name for file in files}
+    kept = []
+    for file in files:
+        zone = file.name.removeprefix(f"{year}_").removesuffix("_load.csv")
+        if zone not in load_zones:
+            kept.append(file)
+            continue
+        replacement = f"{year}_{load_zones[zone]}_load.csv"
+        if replacement not in names:
+            warn(
+                f"{file} is not read: {zone} covers more than the Balmorel region, so its load is fetched "
+                f"for {load_zones[zone]} instead, and {replacement} is missing. "
+                f"Run `python -m pybalmorel.backcasting download {path} {year} --query load`"
+            )
+
+    return kept
 
 
 def fetch_annual_transmission_data(

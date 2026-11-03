@@ -564,6 +564,56 @@ def test_fetch_annual_data_remembers_no_data_and_survives_timeouts(tmp_path, mon
     assert calls == ["AL"]
 
 
+def test_load_is_fetched_for_ireland_not_the_all_island_zone(tmp_path, monkeypatch):
+    from click.testing import CliRunner
+    import pybalmorel.entsoe as entsoe_module
+    from pybalmorel.backcasting.__main__ import main
+
+    zones = {}
+    monkeypatch.setattr(entsoe_module, "get_api_key", lambda: "key")
+    monkeypatch.setattr(
+        entsoe_module,
+        "fetch_annual_data",
+        lambda query, year, query_zones, path, api_key: zones.update({query: query_zones}),
+    )
+
+    args = ["download", str(tmp_path), "2023", "--query", "load", "--query", "day_ahead_prices"]
+    result = CliRunner().invoke(main, args)
+
+    assert result.exit_code == 0, result.output
+    assert "IE" in zones["load"] and "IE_SEM" not in zones["load"]
+    assert zones["day_ahead_prices"] == entsoe_module.bidding_zones
+    assert len(zones["load"]) == len(entsoe_module.bidding_zones)
+
+
+def test_all_island_load_is_not_read_next_to_ireland(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_entsoe_data, load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IE_SEM_load.csv", 2023, [5000.0, 5000.0])
+    _write_series_csv(tmp_path, "2023_IE_load.csv", 2023, [4000.0, 4000.0])
+    _write_series_csv(tmp_path, "2023_FR_load.csv", 2023, [1.0, 2.0])
+
+    zones = load_observed_load(str(tmp_path), 2023)
+    with pytest.warns(Warning, match="No ENTSO-E day_ahead_prices"):
+        load, _, _ = load_entsoe_data(str(tmp_path), 2023)
+
+    assert zones["IE"].tolist() == [4000.0, 4000.0]
+    assert load[load.Region == "IE"].Value.tolist() == [4000.0, 4000.0]
+    assert canonical_region("IE") == "IE"
+
+
+def test_all_island_load_without_ireland_warns(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IE_SEM_load.csv", 2023, [5000.0, 5000.0])
+    _write_series_csv(tmp_path, "2023_FR_load.csv", 2023, [1.0, 2.0])
+
+    with pytest.warns(UserWarning, match="2023_IE_load.csv is missing"):
+        zones = load_observed_load(str(tmp_path), 2023)
+
+    assert list(zones.columns) == ["FR"]
+
+
 # %% ------------------------------- ###
 ###     7. Nuclear Availability     ###
 ### ------------------------------- ###

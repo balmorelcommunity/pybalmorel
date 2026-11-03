@@ -57,7 +57,7 @@ _Avoid_: Capacity (when ambiguous with Observed Flow Limit)
 A shared identifier used to bridge a Balmorel region and an ENTSO-E bidding zone when the two disagree on spelling or resolution (e.g. Balmorel's `DE4-E`/`DE4-N`/`DE4-S`/`DE4-W` and ENTSO-E's `IT-NORD`, `IT-CNOR`, etc. all canonicalize to `DE`/`IT`). Defined by `bidding_zone_translation`; a name absent from it is already canonical.
 
 **ENTSO-E Zone Code**:
-The raw identifier the ENTSO-E transparency platform API expects for a query (e.g. `10YNO-1--------2`, `DE_LU`) — one layer downstream of a Canonical Region Name, which a code can share (`FR`) or differ from entirely.
+The raw identifier the ENTSO-E transparency platform API expects for a query (e.g. `10YNO-1--------2`, `DE_LU`) — one layer downstream of a Canonical Region Name, which a code can share (`FR`) or differ from entirely. A region's load can use another code than its other queries when the bidding zone is larger than the Balmorel region: IE's load is Ireland's control area (`IE`), since the `IE_SEM` bidding zone also covers Northern Ireland, which Balmorel has in UK (`load_zones`).
 _Avoid_: Region, Zone (when ambiguous with Canonical Region Name)
 
 **Backcast**:

@@ -21,7 +21,7 @@ from pathlib import Path
 import click
 from decouple import config
 from .. import MainResults
-from ..entsoe import bidding_zone_translation, entsoe_code_to_region
+from ..entsoe import bidding_zone_translation, entsoe_code_to_region, load_files
 from .calendar import backcast_hours, from_backcast_grid
 from .flows import (
     OBSERVED_FLOW_PERCENTILE,
@@ -273,7 +273,7 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
     data = DataContainer(data_items)
 
     for data_item in data_items:
-        files = sorted(path.glob(f"{year}_*_{data_item}.csv"))
+        files = load_files(path, year) if data_item == "load" else sorted(path.glob(f"{year}_*_{data_item}.csv"))
         if not files:
             warn(
                 f"No ENTSO-E {data_item} files for {year} in {path}, so its comparison will be empty. "
@@ -387,6 +387,9 @@ def load_observed_prices(entsoe_data_path: str, year: int) -> pd.DataFrame:
 def load_observed_load(entsoe_data_path: str, year: int) -> pd.DataFrame:
     """Hourly ENTSO-E actual load per bidding zone, from the load csv's.
 
+    IE's load is Ireland's control area, not the all-island IE_SEM zone (see
+    pybalmorel.entsoe.load_zones).
+
     Args:
         entsoe_data_path (str): Folder with the fetched load csv's.
         year (int): The Backcast Year.
@@ -394,7 +397,7 @@ def load_observed_load(entsoe_data_path: str, year: int) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Load (MW) indexed by UTC hour, one column per zone.
     """
-    files = sorted(Path(entsoe_data_path).glob(f"{year}_*_load.csv"))
+    files = load_files(entsoe_data_path, year)
     if not files:
         return pd.DataFrame()
 
@@ -1655,7 +1658,8 @@ def download(entsoe_data_path, year, queries):
     """Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-flow-limit`.
 
     Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
-    every neighbouring pair of them. Files already downloaded, and pairs
+    every neighbouring pair of them. IE's load is fetched for Ireland's
+    control area instead of the all-island IE_SEM zone. Files already downloaded, and pairs
     ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
     failed requests.
     """
@@ -1665,6 +1669,7 @@ def download(entsoe_data_path, year, queries):
         fetch_annual_transmission_data,
         get_api_key,
         neighbour_pairs,
+        query_zones,
     )
 
     path = Path(entsoe_data_path)
@@ -1678,7 +1683,7 @@ def download(entsoe_data_path, year, queries):
                 query, neighbour_pairs(bidding_zones), year, path, api_key
             )
         else:
-            fetch_annual_data(query, year, bidding_zones, path, api_key)
+            fetch_annual_data(query, year, query_zones(query, bidding_zones), path, api_key)
 
 
 @main.command(name="ttf-csv")

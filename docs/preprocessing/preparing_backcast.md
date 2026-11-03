@@ -136,6 +136,12 @@ queries must be asked for. `--query` is repeatable.
 
 Flows are fetched for every directed pair of neighbouring zones.
 
+IE's load is fetched for Ireland's control area (`<year>_IE_load.csv`), not
+the all-island `IE_SEM` bidding zone, because Balmorel has Northern Ireland in
+UK (`pybalmorel.entsoe.load_zones`). Prices, generation and flows stay on
+`IE_SEM`. An older `<year>_IE_SEM_load.csv` is not read. If it is the only IE
+load file, the commands warn, and you should rerun `download --query load`.
+
 The download can be stopped and rerun at any time. On a rerun:
 
 - Files that already exist are skipped.
@@ -371,7 +377,8 @@ electric-heating error.
   cached in `--eurostat-data-path` (default `<scenario-path>/eurostatdata`),
   one JSON file per dataset and year.
 - ENTSO-E's `DE_LU` load is split between DE and LU by Eurostat final
-  consumption. A country with several zones (NO1-5, SE1-4, DK1-2) gets each
+  consumption. IE's load is Ireland's control area, without Northern
+  Ireland (see [Downloading ENTSO-E data](#downloading-entso-e-data)). A country with several zones (NO1-5, SE1-4, DK1-2) gets each
   zone's load net of losses, less the country's heating split by load.
   Within a zone (DE4-*) and over the users, the level is split by the
   input data's `DE`.

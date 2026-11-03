@@ -587,7 +587,7 @@ def generate_demand_level(
     output_path.mkdir(exist_ok=True)
     summary.to_csv(output_path / "demand_level.csv", index=False)
     written = summary[summary["Written"]]
-    with pd.option_context("display.max_rows", None, "display.width", 250):
+    with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", 250):
         print(summary.set_index("Country").round(2))
     print(
         f"DE of the {len(written)} countries written goes from {written['BaseTWh'].sum():.1f} TWh "
