@@ -280,6 +280,21 @@ def find_transmission_file(
     )
 
 
+def read_flow_csv(csv_path: str | Path) -> pd.Series:
+    """Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.
+
+    Args:
+        csv_path (str | Path): The csv.
+
+    Returns:
+        pd.Series: Hourly flows.
+    """
+    temp = pd.read_csv(csv_path)
+    temp.columns = ["Time", "Value"]
+    temp.Time = pd.to_datetime(temp.Time, utc=True)
+    return temp.set_index("Time")["Value"].resample("1h").mean()
+
+
 def entsoe_subzones(canonical_region: str) -> list[str]:
     """The ENTSO-E bidding zones that collapse to `canonical_region`.
 
@@ -520,3 +535,11 @@ def fetch_annual_transmission_data(
             # shouldn't stop the loop - rerun to retry
             print(f"Request failed for link {region_from}-{region_to}, rerun to retry")
             print(e)
+
+
+# ------------------------------- #
+#             3. Maps             #
+# ------------------------------- #
+
+# Imported last, as maps builds on the functions above
+from .maps import load_zone_geometries, plot_transmission_map, sum_crossborder_flows  # noqa: E402

@@ -25,6 +25,7 @@ from ..entsoe import (
     entsoe_subzones,
     fetch_annual_transmission_data,
     find_transmission_file,
+    read_flow_csv,
     region_to_entsoe_code,
     transmission_files,
     zone_to_region,
@@ -37,21 +38,6 @@ from .calendar import backcast_hours, from_backcast_grid
 # ------------------------------- #
 
 OBSERVED_FLOW_PERCENTILE = 99.0
-
-
-def read_flow_csv(csv_path: str | Path) -> pd.Series:
-    """Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.
-
-    Args:
-        csv_path (str | Path): The csv.
-
-    Returns:
-        pd.Series: Hourly flows.
-    """
-    temp = pd.read_csv(csv_path)
-    temp.columns = ["Time", "Value"]
-    temp.Time = pd.to_datetime(temp.Time, utc=True)
-    return temp.set_index("Time")["Value"].resample("1h").mean()
 
 
 # ------------------------------- #

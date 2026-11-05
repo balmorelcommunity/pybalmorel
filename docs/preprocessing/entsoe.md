@@ -73,6 +73,53 @@ query them again. Timeouts, dropped connections and server errors are
 reported but not remembered, so the next call retries them. `timeout` is in
 seconds; without one, a connection lost mid-request would hang forever.
 
+## Transmission map
+
+`plot_transmission_map(path, year)` maps the downloaded `crossborder_flows`
+between ENTSO-E's own bidding zones, as `entsoe-py` names them (`DE_LU`,
+`DK_1`, `IT_NORD`, `IE_SEM`, ...). Nothing is translated to Balmorel regions
+or Canonical Region Names. Each border with a downloaded file is drawn as a
+line between its two zones. The line's width is proportional to the energy
+that flowed over the border.
+
+```python
+from pybalmorel.entsoe import plot_transmission_map
+
+# Net flows over 2024, arrows pointing at the net importer
+fig, ax = plot_transmission_map("entsoe_data", 2024)
+
+# Both directions added, for January, in GWh, zoomed in on the Nordics
+fig, ax = plot_transmission_map(
+    "entsoe_data", 2024, value="gross", start="2024-01-01", end="2024-02-01",
+    unit="GWh", extent=(3, 53.5, 32, 71.5), line_label_show=True,
+)
+```
+
+- `value` — `'net'` (flow one way minus the other, with an arrow towards the
+  net importer) or `'gross'` (both ways added).
+- `start` / `end` — limit the map to part of the year. Both are read as
+  Brussels time; `end` itself is excluded.
+- `extent` — `(lon min, lat min, lon max, lat max)` to show. Zones partly
+  outside are clipped, and their lines meet in the part shown.
+- `line_value_max` — the flow drawn at the widest line. Set it to compare
+  several maps on one scale.
+- `zone_coordinates` — `{zone: (lon, lat)}` where a zone's lines meet,
+  instead of the centroid of its largest part.
+
+See the docstring for the remaining styling options. Flows are physical, so
+they include loop flows. A direction without a downloaded file counts as no
+flow.
+
+The data and outlines behind the map are available separately:
+
+- `sum_crossborder_flows(path, year, start=None, end=None)` — the energy (MWh)
+  over each directed border, with columns `From`, `To` and `Value`.
+- `load_zone_geometries(zones, year=None)` — zone outlines in lon/lat. They come
+  from `entsoe-py`, and from pybalmorel's geofiles for the zones `entsoe-py`
+  has no outline for. GB is drawn with the UK's outline and `IE_SEM` with
+  Ireland's, so Northern Ireland shows as part of GB. Before 2021, the
+  Italian zones get their pre-2021 outlines.
+
 ## Example
 
 ```python
