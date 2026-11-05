@@ -172,7 +172,8 @@ class MainResults:
                      region: str = 'ALL',
                      style: str = 'light',
                      seasons: str | list[str] | None = None,
-                     terms: str | list[str] | None = None) -> Tuple[Figure, Axes]:
+                     terms: str | list[str] | None = None,
+                     price_aggregation: str = 'load-weighted') -> Tuple[Figure, Axes]:
         """Plots the production profile of a commodity, in a year, for a certain scenario
 
         By default the whole year is plotted. Use `seasons` and/or `terms` to plot
@@ -188,12 +189,14 @@ class MainResults:
             style (str, optional): Plot style, light or dark. Defaults to 'light'.
             seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
             terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+            price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
 
         Returns:
             Figure, Axes: The figure and axes objects for further manipulations
         """
         return plot_profile(self, commodity, year, scenario, columns=columns, region=region,
-                            style=style, seasons=seasons, terms=terms)
+                            style=style, seasons=seasons, terms=terms,
+                            price_aggregation=price_aggregation)
 
     def plot_profiles(self,
                     commodity: str,
@@ -204,7 +207,8 @@ class MainResults:
                     region: str = 'ALL',
                     style: str = 'light',
                     seasons: str | list[str] | None = None,
-                    terms: str | list[str] | None = None) -> Tuple[List, List]:
+                    terms: str | list[str] | None = None,
+                    price_aggregation: str = 'load-weighted') -> Tuple[List, List]:
         """Plots the production profile of a commodity, in a year, for a certain scenario,
         split into one figure per `chunk_size` timeslices
 
@@ -222,12 +226,14 @@ class MainResults:
             style (str, optional): Plot style, light or dark. Defaults to 'light'.
             seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
             terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+            price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
 
         Returns:
             list[Figure], list[Axes]: The figure and axes objects for further manipulations
         """
         return plot_profiles(self, commodity, year, scenario, chunk_size=chunk_size, columns=columns,
-                             region=region, style=style, seasons=seasons, terms=terms)
+                             region=region, style=style, seasons=seasons, terms=terms,
+                             price_aggregation=price_aggregation)
     
     def plot_map(self, 
                  scenario: str, 

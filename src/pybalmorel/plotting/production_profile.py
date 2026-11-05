@@ -37,6 +37,7 @@ def plot_profile(
     style: str = "light",
     seasons: str | list[str] | None = None,
     terms: str | list[str] | None = None,
+    price_aggregation: str = "load-weighted",
 ) -> Tuple[Figure, Axes]:
     """Plots the production profile of a commodity, in a year, for a certain scenario
 
@@ -54,14 +55,15 @@ def plot_profile(
         style (str, optional): Plot style, light or dark. Defaults to 'light'.
         seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
         terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+        price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
 
     Returns:
         Figure, Axes: The figure and axes objects for further manipulations
     """
 
     fc, demcolor = _set_plot_style(style)
-    scenario, commodity, region, year, CorRorA, fD, fP, f = _prepare_profile_data(
-        MainResults, commodity, year, scenario, columns, region
+    scenario, commodity, region, year, price_label, fD, fP, f = _prepare_profile_data(
+        MainResults, commodity, year, scenario, columns, region, price_aggregation
     )
     fD, fP, f = _select_timeslices(fD, fP, f, seasons, terms)
 
@@ -71,7 +73,7 @@ def plot_profile(
         commodity,
         region,
         year,
-        CorRorA,
+        price_label,
         fD,
         fP,
         fc=fc,
@@ -94,6 +96,7 @@ def plot_profiles(
     style: str = "light",
     seasons: str | list[str] | None = None,
     terms: str | list[str] | None = None,
+    price_aggregation: str = "load-weighted",
 ) -> Tuple[List, List]:
     """Plots the production profile of a commodity, in a year, for a certain scenario,
     split into one figure per `chunk_size` timeslices
@@ -113,14 +116,15 @@ def plot_profiles(
         style (str, optional): Plot style, light or dark. Defaults to 'light'.
         seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
         terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+        price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
 
     Returns:
         list[Figure], list[Axes]: The figure and axes objects for further manipulations
     """
 
     fc, demcolor = _set_plot_style(style)
-    scenario, commodity, region, year, CorRorA, fD, fP, f = _prepare_profile_data(
-        MainResults, commodity, year, scenario, columns, region
+    scenario, commodity, region, year, price_label, fD, fP, f = _prepare_profile_data(
+        MainResults, commodity, year, scenario, columns, region, price_aggregation
     )
     fD, fP, f = _select_timeslices(fD, fP, f, seasons, terms)
 
@@ -132,7 +136,7 @@ def plot_profiles(
             commodity,
             region,
             year,
-            CorRorA,
+            price_label,
             fD.iloc[i : i + chunk_size, :],
             fP.iloc[i : i + chunk_size, :],
             fc=fc,
@@ -232,6 +236,49 @@ def _select_timeslices(
     return fD[mask], fP[mask], f[mask]
 
 
+def _aggregate_price(
+    prices: pd.DataFrame,
+    demand: pd.DataFrame,
+    node: str,
+    price_aggregation: str,
+) -> pd.DataFrame:
+    """Aggregate the prices of several regions or areas to one price per timeslice.
+
+    Args:
+        prices (pd.DataFrame): Price per node and timeslice, in columns `node`,
+            'SSS', 'TTT' and 'Val'.
+        demand (pd.DataFrame): Demand per node and timeslice, in columns `node`,
+            'SSS', 'TTT' and 'Val'. Several rows per node and timeslice, e.g. one
+            per demand category, are summed.
+        node (str): The column with the nodes, 'RRR' for regions or 'AAA' for areas.
+        price_aggregation (str): 'load-weighted' weights the price of each node by
+            its demand, 'average' takes the simple mean over the nodes. Timeslices
+            without any demand get the simple mean.
+
+    Returns:
+        pd.DataFrame: The price, indexed by (season, term), in column 'Val'.
+    """
+    timeslice = ["SSS", "TTT"]
+    average = prices.groupby(timeslice)["Val"].mean()
+    if price_aggregation == "average":
+        return average.to_frame("Val")
+
+    load = demand.groupby([node] + timeslice)["Val"].sum().rename("Load")
+    # Nodes with demand but no price record get a price of 0, as GDX files do not store zeros
+    df = (
+        prices.set_index([node] + timeslice)["Val"]
+        .rename("Price")
+        .to_frame()
+        .join(load, how="outer")
+        .fillna(0)
+    )
+    cost = (df["Price"] * df["Load"]).groupby(level=timeslice).sum()
+    total_load = df["Load"].groupby(level=timeslice).sum()
+    weighted = cost / total_load.where(total_load > 0)
+
+    return weighted.fillna(average).to_frame("Val")
+
+
 def _prepare_profile_data(
     MainResults,
     commodity: str,
@@ -239,6 +286,7 @@ def _prepare_profile_data(
     scenario: str | int,
     columns: str,
     region: str,
+    price_aggregation: str = "load-weighted",
 ) -> tuple[str, str, str, str, str, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load and aggregate demand, price, production and import data for a profile plot.
 
@@ -249,12 +297,20 @@ def _prepare_profile_data(
         scenario (str | int): Scenario name or index in MainResults.sc.
         columns (str): Technology or Fuel.
         region (str): Which country, region or area to plot, or 'ALL'.
+        price_aggregation (str, optional): 'load-weighted' or 'average', how to
+            aggregate the price over several regions (areas for heat). Defaults
+            to 'load-weighted'.
 
     Returns:
-        tuple: scenario, commodity, region, year and region level (C, R, A or All),
-            followed by demand, price and production DataFrames sharing the same
-            sorted (season, term) index.
+        tuple: scenario, commodity, region, year and price axis label (e.g.
+            'Load-Weighted Price'), followed by demand, price and production
+            DataFrames sharing the same sorted (season, term) index.
     """
+
+    if price_aggregation not in ("load-weighted", "average"):
+        raise Exception(
+            f"price_aggregation must be 'load-weighted' or 'average', not '{price_aggregation}'"
+        )
 
     if type(scenario) == int:
         scenario = MainResults.sc[scenario]
@@ -410,9 +466,6 @@ def _prepare_profile_data(
             )
 
     resfactor = 1  # Factor on flows, to get yearly results
-    price_agg_func = (
-        np.average
-    )  # function for aggregation of regions - average or max ?
     bypass_eps = "Y"  # Bypass EPS values in electricity prices? This could be fair, if you have regions with very small electricity demand, making EPS electricity prices (not wrong)
 
     ### ----------------------------- ###
@@ -489,12 +542,10 @@ def _prepare_profile_data(
         # print('No transmission data')
 
     ### Electricity Demand and price
+    # fLoad is the demand per region (area for heat) that weights the price
     if CorRorA == "C":
-        fP = fPrice.groupby(["Y", "C", "SSS", "TTT"], as_index=False)
-        fP = fP.aggregate(
-            {"Val": price_agg_func}
-        )  # For aggregation of electricity price, max or average? (maybe max if nodal representation of a market?)
-        fP = fP[fP.C == country]
+        fP = fPrice[fPrice.C == country]
+        fLoad = fDem[fDem.C == country]
 
         if commodity == "ELECTRICITY":
             fBal = (
@@ -516,15 +567,15 @@ def _prepare_profile_data(
                 .fillna(0)
             )
         fD = fDem[fDem["RRR"] == region]
+        fLoad = fD
     elif CorRorA == "A":
         dems = fDem[(fDem["Y"] == year) & (fDem["AAA"] == region)]
         fP = fPrice[fPrice["AAA"] == region]
         fD = fDem[fDem["AAA"] == region]
+        fLoad = fD
     elif CorRorA == "All":
-        fP = fPrice.groupby(["Y", "C", "SSS", "TTT"], as_index=False)
-        fP = fP.aggregate(
-            {"Val": price_agg_func}
-        )  # For aggregation of electricity price, max or average? (maybe max if nodal representation of a market?)
+        fP = fPrice
+        fLoad = fDem
         if commodity == "ELECTRICITY":
             fBal = (
                 fBal[(fBal.Y == year)]
@@ -571,8 +622,17 @@ def _prepare_profile_data(
         )
         fP.loc[:, "Val"] = fP.Val.astype(float).values
 
-    idx = fP["Y"] == year
-    fP = fP[idx].pivot_table(values="Val", index=["SSS", "TTT"], aggfunc=price_agg_func)
+    # Aggregate the price over the regions (areas for heat) in the chosen region
+    node = "AAA" if commodity == "HEAT" else "RRR"
+    fP = fP[fP["Y"] == year]
+    fLoad = fLoad[fLoad["Y"] == year]
+    if len(set(fP[node]) | set(fLoad[node])) > 1:
+        price_label = (
+            "Load-Weighted Price" if price_aggregation == "load-weighted" else "Average Price"
+        )
+    else:
+        price_label = "Price"
+    fP = _aggregate_price(fP, fLoad, node, price_aggregation)
 
     # Make sure no values are missing
     fP = df_placeholder.join(fP, how="left")
@@ -602,7 +662,7 @@ def _prepare_profile_data(
     fP = fP.reindex(xticks, fill_value=0)
     f = f.reindex(xticks, fill_value=0)
 
-    return scenario, commodity, region, year, CorRorA, fD, fP, f
+    return scenario, commodity, region, year, price_label, fD, fP, f
 
 
 # %% ----------------------------- ###
@@ -639,7 +699,7 @@ def _fill_area(
 
 
 def single_profile_plot(
-    scenario, commodity, region, year, CorRorA, fD, fP, fc, f, c, demcolor
+    scenario, commodity, region, year, price_label, fD, fP, fc, f, c, demcolor
 ):
     fig, ax = plt.subplots(figsize=(9, 3), facecolor=fc)
     x = range(len(fD))
@@ -691,10 +751,7 @@ def single_profile_plot(
     ax.set_title(scenario + " - " + commodity + " - " + region + " - " + str(year))
     ax.set_ylabel("Power [GW]")
 
-    if (CorRorA == "R") | (CorRorA == "A"):
-        ax2.set_ylabel("Price [€ / MWh]")
-    else:
-        ax2.set_ylabel("Average Price [€ / MWh]")
+    ax2.set_ylabel(f"{price_label} [€ / MWh]")
 
     ax.set_xlim([min(x), max(x)])
 

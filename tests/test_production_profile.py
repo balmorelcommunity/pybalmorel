@@ -20,6 +20,7 @@ matplotlib.use("Agg")
 
 from pybalmorel.formatting import balmorel_colours  # noqa: E402
 from pybalmorel.plotting.production_profile import (  # noqa: E402
+    _aggregate_price,
     _stack_order,
     single_profile_plot,
 )
@@ -58,7 +59,63 @@ def test_technologies_stacked_thermal_hydro_wind_solar():
 
 
 # %% ------------------------------- ###
-###             2. Plot             ###
+###       2. Price aggregation      ###
+### ------------------------------- ###
+
+
+def _price_and_demand() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Two regions over three timeslices, T003 without any demand."""
+    prices = pd.DataFrame(
+        {
+            "RRR": ["DK1", "DK2"] * 3,
+            "SSS": ["S01"] * 6,
+            "TTT": ["T001", "T001", "T002", "T002", "T003", "T003"],
+            "Val": [10.0, 40.0, 20.0, 20.0, 30.0, 50.0],
+        }
+    )
+    demand = pd.DataFrame(
+        {
+            "RRR": ["DK1", "DK1", "DK2", "DK1", "DK2"],
+            "SSS": ["S01"] * 5,
+            "TTT": ["T001", "T001", "T001", "T002", "T002"],
+            "VARIABLE_CATEGORY": ["EXOGENOUS", "DIST_LOSSES", "EXOGENOUS", "EXOGENOUS", "EXOGENOUS"],
+            "Val": [200.0, 100.0, 100.0, 50.0, 150.0],
+        }
+    )
+    return prices, demand
+
+
+def test_load_weighted_price_weights_regions_by_demand():
+    prices, demand = _price_and_demand()
+
+    price = _aggregate_price(prices, demand, "RRR", "load-weighted")
+
+    # T001: DK1 has 300 (two demand categories), DK2 100. T003 has no demand, so gets the average
+    assert price.loc[("S01", "T001"), "Val"] == (10 * 300 + 40 * 100) / 400
+    assert price.loc[("S01", "T002"), "Val"] == 20
+    assert price.loc[("S01", "T003"), "Val"] == 40
+
+
+def test_average_price_is_simple_mean_over_regions():
+    prices, demand = _price_and_demand()
+
+    price = _aggregate_price(prices, demand, "RRR", "average")
+
+    assert list(price["Val"]) == [25, 20, 40]
+
+
+def test_load_weighted_price_counts_demand_without_price_record_as_zero_price():
+    prices, demand = _price_and_demand()
+    # GDX files do not store zeros, so DK2 had a price of 0 in T001
+    prices = prices[~((prices.RRR == "DK2") & (prices.TTT == "T001"))]
+
+    price = _aggregate_price(prices, demand, "RRR", "load-weighted")
+
+    assert price.loc[("S01", "T001"), "Val"] == (10 * 300 + 0 * 100) / 400
+
+
+# %% ------------------------------- ###
+###             3. Plot             ###
 ### ------------------------------- ###
 
 
@@ -77,7 +134,7 @@ def test_import_on_top_and_export_below_zero():
     )
 
     fig, ax = single_profile_plot(
-        "scenario", "ELECTRICITY", "DK1", "2023", "R", demand, price,
+        "scenario", "ELECTRICITY", "DK1", "2023", "Price", demand, price,
         fc="white", f=production, c=balmorel_colours, demcolor="k",
     )
 
@@ -97,3 +154,4 @@ def test_import_on_top_and_export_below_zero():
     export_area = ax.collections[-1]
     assert np.isclose(export_area.get_paths()[0].vertices[:, 1].min(), -1.0)
     assert to_hex(areas["NUCLEAR"].get_facecolor()[0]) == balmorel_colours["NUCLEAR"].lower()
+    assert fig.axes[1].get_ylabel() == "Price [€ / MWh]"

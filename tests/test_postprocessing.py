@@ -130,6 +130,23 @@ def test_MainResults():
     with pytest.raises(Exception, match="not found in the results"):
         res.plot_profile(scenario="SC1", year=2050, commodity="Electricity", seasons="S99")
 
+    # Price of several regions is load-weighted by default, or a simple average
+    fig, ax = res.plot_profile(scenario="SC1", year=2050, commodity="Electricity")
+    weighted_price = fig.axes[1].lines[0].get_ydata()
+    assert fig.axes[1].get_ylabel() == "Load-Weighted Price [€ / MWh]"
+    fig, ax = res.plot_profile(
+        scenario="SC1", year=2050, commodity="Electricity", price_aggregation="average"
+    )
+    assert fig.axes[1].get_ylabel() == "Average Price [€ / MWh]"
+    assert not (fig.axes[1].lines[0].get_ydata() == weighted_price).all()
+    fig, ax = res.plot_profile(scenario="SC1", year=2050, commodity="Electricity", region="DK1")
+    assert fig.axes[1].get_ylabel() == "Price [€ / MWh]"
+
+    with pytest.raises(Exception, match="price_aggregation must be"):
+        res.plot_profile(
+            scenario="SC1", year=2050, commodity="Electricity", price_aggregation="max"
+        )
+
     assert (
         "electricity_profile.png" in os.listdir("tests/output")
         and "heat_profile.png" in os.listdir("tests/output")
