@@ -105,6 +105,31 @@ def test_MainResults():
     )
     for i, fig in enumerate(figs):
         fig.savefig(f"tests/output/heat_profile{i}.png", bbox_inches='tight')
+
+    # Test plotting a specific week (season) only
+    fig, ax = res.plot_profile(
+        scenario="SC1", year=2050, commodity="Electricity", region="DK1", seasons="S26"
+    )
+    fig.savefig("tests/output/electricity_profile_S26.png", bbox_inches='tight')
+    assert len(ax.lines[0].get_xdata()) == 6
+    assert all(label.get_text().startswith("S26") for label in ax.get_xticklabels())
+
+    fig, ax = res.plot_profile(
+        scenario="SC1", year=2050, commodity="Electricity", region="DK1",
+        seasons="S01", terms=["T001", "T005"],
+    )
+    assert len(ax.lines[0].get_xdata()) == 2
+
+    figs, axes = res.plot_profiles(
+        scenario="SC1", year=2050, commodity="Electricity", region="DK1",
+        seasons=["S01", "S26"], chunk_size=6,
+    )
+    assert len(figs) == 2
+    assert all(label.get_text().startswith("S26") for label in axes[1].get_xticklabels())
+
+    with pytest.raises(Exception, match="not found in the results"):
+        res.plot_profile(scenario="SC1", year=2050, commodity="Electricity", seasons="S99")
+
     assert (
         "electricity_profile.png" in os.listdir("tests/output")
         and "heat_profile.png" in os.listdir("tests/output")

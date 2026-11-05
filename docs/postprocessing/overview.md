@@ -38,6 +38,23 @@ figs, axes = model.results.plot_profiles('electricity', 2050, model.results.sc[0
 figs[0].savefig('electricity_week1.png')
 ```
 
+To plot only part of the year, e.g. a specific week, pass `seasons` and/or `terms`. Both accept a single name or a list:
+
+```python
+# Only the second week (season S02)
+fig, ax = model.results.plot_profile('electricity', 2050, model.results.sc[0], seasons='S02')
+
+# The first day of week 2
+fig, ax = model.results.plot_profile('electricity', 2050, model.results.sc[0], seasons='S02',
+                                     terms=[f'T{i:03d}' for i in range(1, 25)])
+
+# One figure for each of weeks 2 and 3
+figs, axes = model.results.plot_profiles('electricity', 2050, model.results.sc[0],
+                                         seasons=['S02', 'S03'], chunk_size=168)
+```
+
+If a season or term is not in the results, the error message lists the available ones.
+
 Both functions also take `columns` ('Technology' or 'Fuel'), `region` (a country, region or area, defaults to 'ALL') and `style` ('light' or 'dark').
 
 There are many more features, read more about the map plotting tool here [here](map_plotting.md).
