@@ -616,10 +616,10 @@ def single_profile_plot(
         temp = temp + f.loc[fD.index, col].values / 1e3
 
     # p0, = ax.plot(x, H2, color=[76/255,128/255, 204/255])
-    (p1,) = ax.plot(x, fD.values[:, 0] / 1e3, color=demcolor)
+    (p1,) = ax.plot(x, fD.values[:, 0] / 1e3, color=demcolor, label="Demand")
     ax2 = ax.twinx()
     try:
-        (p2,) = ax2.plot(x, fP.loc[fD.index].values, "r--", linewidth=1)
+        (p2,) = ax2.plot(x, fP.loc[fD.index].values, "r--", linewidth=1, label="Price")
     except TypeError:
         print('\nThere could be "EPS" values in electricity prices - cannot plot')
 

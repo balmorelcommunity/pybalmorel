@@ -541,5 +541,6 @@ def fetch_annual_transmission_data(
 #             3. Maps             #
 # ------------------------------- #
 
-# Imported last, as maps builds on the functions above
+# Imported last, as maps and profile build on the functions above
 from .maps import load_zone_geometries, plot_transmission_map, sum_crossborder_flows  # noqa: E402
+from .profile import EntsoeProfile, plot_profile, read_profile  # noqa: E402

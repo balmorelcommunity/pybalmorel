@@ -120,6 +120,80 @@ The data and outlines behind the map are available separately:
   Ireland's, so Northern Ireland shows as part of GB. Before 2021, the
   Italian zones get their pre-2021 outlines.
 
+## Production profile
+
+`plot_profile(path, year, zones)` plots one or more zones' hourly production
+from the downloaded files. The production is stacked by type, with net import
+on top and the load drawn as a line. If day-ahead prices were downloaded,
+they go in a panel below.
+
+```python
+from pybalmorel.entsoe import plot_profile
+
+# DK1 in the last week of June
+fig, axes = plot_profile("entsoe_data", 2023, "DK1", start="2023-06-26", end="2023-07-03")
+
+# All 7 Italian zones summed, over the whole year
+fig, axes = plot_profile("entsoe_data", 2023, "IT")
+
+# Several zones, with your own title
+fig, axes = plot_profile("entsoe_data", 2023, ["DK1", "DK2"], title="Denmark")
+
+# Every zone with generation and load in the folder
+fig, axes = plot_profile("entsoe_data", 2023, "all", start="2023-01-09", end="2023-01-16")
+```
+
+- `zones` — one zone or a list, in any spelling `zone_eic_code` accepts. A
+  region made of several bidding zones (e.g. `'IT'`, `'NO'`) means all of
+  them. The zones are summed, and their prices are weighted by their load.
+  An hour missing for any of the zones is a gap in the sum, so a total that
+  is missing a zone is never drawn.
+- `zones='all'` — every zone with both generation and load in the folder.
+  Zones with only one of them, or listed in a `_nodata.txt` file, are left
+  out, as are zones without data in the period. The printout lists them
+  under `Left out:`, e.g. `AL (no generation from ENTSO-E)`.
+- `start` / `end` — limit the plot to part of the year. Both are read as
+  Brussels time; `end` itself is excluded. The time axis is in Brussels time.
+- The production types are grouped as Nuclear, Coal & lignite, Gas, Hydro,
+  Biomass & waste, Wind, Solar and Oil & other (everything else). The groups
+  are listed in `pybalmorel.entsoe.profile.production_groups`. Pumping
+  consumption ('Actual Consumption') is left out.
+- Net import is the flow into the zones from all their other neighbours,
+  minus the flow out to them. Flows between the selected zones cancel out,
+  including flows to LU when DE_LU is selected.
+  Exports are drawn below 0. A direction without a downloaded file counts as
+  no flow. Without any flow files, net import is left out.
+
+Generation and load are required. If either is missing for any zone, the
+function raises an error. The error lists each missing file, and whether
+ENTSO-E has no data for the zone (it is in `<year>_<query>_nodata.txt`) or
+the file was not downloaded. For files that were not downloaded, it also
+prints the `download` command that fetches them. It also raises an error if
+the files have no data in the period. Hours without data are left as gaps.
+With several zones, the printout lists the zones with missing hours, the
+most missing first. The energy totals then cover only the hours that every
+zone has data for.
+
+Every call prints the scope of the plot:
+
+```text
+ENTSO-E profile scope
+  Zones:       DK_1 (10YDK-1--------W)
+  Period:      2023-06-26 00:00 to 2023-07-03 00:00 Europe/Brussels (168 hours)
+               = 2023-06-25 22:00 to 2023-07-02 22:00 UTC
+  Generation:  2023_10YDK-1--------W_generation.csv - 10 production types, all 168 hours
+  Load:        2023_10YDK-1--------W_load.csv - all 168 hours
+  Price:       2023_10YDK-1--------W_day_ahead_prices.csv - all 168 hours
+  Net import:  borders with DE_LU, DK_2, GB, NL, NO_2, SE_3
+  Energy:      generation 428 GWh, net import -55 GWh, load 360 GWh
+```
+
+The data behind the plot is returned by `read_profile`, with the same
+arguments. It returns an `EntsoeProfile` with `generation` (MW per
+production type), `load`, `price` and `net_import`, indexed by hour in
+Brussels time. `price` and `net_import` are None when there is no data for
+them. Pass `verbose=False` to skip the printout.
+
 ## Example
 
 ```python
