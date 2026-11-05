@@ -15,6 +15,7 @@ python -m pytest tests/test_weatheryear_demand.py
 python -m pytest tests/test_backcasting.py
 python -m pytest tests/test_entsoe_maps.py
 python -m pytest tests/test_entsoe_profile.py
+python -m pytest tests/test_production_profile.py
 
 echo -e
 echo "NOTE:"

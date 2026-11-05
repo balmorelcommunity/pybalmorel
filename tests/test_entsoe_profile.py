@@ -17,10 +17,12 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.colors import to_hex
 
 matplotlib.use("Agg")
 
 from pybalmorel.entsoe import plot_profile, read_profile  # noqa: E402
+from pybalmorel.formatting import fuel_colours  # noqa: E402
 from pybalmorel.entsoe.profile import _group_production  # noqa: E402
 
 START, END = "2023-01-02", "2023-01-03"
@@ -269,6 +271,17 @@ def test_plot_with_price_panel(entsoe_folder):
     ]
     assert axes[1].lines[0].get_ydata().tolist() == [10.0] * 24
     assert axes[0].get_title(loc="left").startswith("DK1 - ENTSO-E")
+
+
+def test_plot_uses_balmorel_fuel_colours(entsoe_folder):
+    fig, axes = plot_profile(entsoe_folder, 2023, "DK1", start=START, end=END)
+
+    colours = {
+        area.get_label(): to_hex(area.get_facecolor()[0]) for area in axes[0].collections
+    }
+    assert colours["Wind"] == fuel_colours["WIND"]
+    assert colours["Gas"] == fuel_colours["NATGAS"]
+    assert colours["Net import (export below 0)"] == fuel_colours["IMPORT"]
 
 
 def test_plot_all_zones_title(entsoe_folder):

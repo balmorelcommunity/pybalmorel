@@ -154,10 +154,19 @@ fig, axes = plot_profile("entsoe_data", 2023, "all", start="2023-01-09", end="20
   under `Left out:`, e.g. `AL (no generation from ENTSO-E)`.
 - `start` / `end` — limit the plot to part of the year. Both are read as
   Brussels time; `end` itself is excluded. The time axis is in Brussels time.
-- The production types are grouped as Nuclear, Coal & lignite, Gas, Hydro,
-  Biomass & waste, Wind, Solar and Oil & other (everything else). The groups
-  are listed in `pybalmorel.entsoe.profile.production_groups`. Pumping
-  consumption ('Actual Consumption') is left out.
+- The production types are grouped as Nuclear, Coal & lignite, Gas,
+  Biomass & waste, Hydro, Wind, Solar and Oil & other (everything else),
+  stacked in that order. The groups are listed in
+  `pybalmorel.entsoe.profile.production_groups`. Pumping consumption
+  ('Actual Consumption') is left out.
+- The groups match a Balmorel profile stacked by fuel
+  (`plot_profile(..., columns='Fuel')`), which stacks its fuels in the same
+  groups and order, from `pybalmorel.formatting.fuel_groups`. Each group is
+  drawn in the colour of its first fuel there, from
+  `pybalmorel.formatting.fuel_colours`: Nuclear is `NUCLEAR`, Coal & lignite
+  `COAL`, Gas `NATGAS`, Biomass & waste `BIOMASS`, Hydro `WATER`, Wind
+  `WIND`, Solar `SUN` and Oil & other `OIL`. Net import is `IMPORT`, as in
+  the Balmorel profile.
 - Net import is the flow into the zones from all their other neighbours,
   minus the flow out to them. Flows between the selected zones cancel out,
   including flows to LU when DE_LU is selected.

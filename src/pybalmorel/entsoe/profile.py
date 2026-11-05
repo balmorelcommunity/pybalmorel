@@ -35,6 +35,7 @@ from . import (
     zone_eic_code,
 )
 from .maps import _period_label, _to_brussels_time, zone_area_name
+from ..formatting import fuel_colours, fuel_groups
 
 # ENTSO-E production type -> group drawn in the profile, so at most eight areas
 # are stacked. Types not listed here, e.g. 'Fossil Oil', 'Geothermal', 'Marine',
@@ -60,20 +61,14 @@ production_groups = {
 }
 _other_group = "Oil & other"
 
-# Stacked bottom to top in this order, which keeps neighbouring areas apart
+# Stacked bottom to top in the order of pybalmorel.formatting.fuel_groups, as in
+# a Balmorel profile, and drawn in the colour of the group's first Balmorel fuel,
+# so a group looks the same as that fuel in a Balmorel fuel profile
+# (plot_profile(..., columns='Fuel')). The order keeps neighbouring areas apart
 # for colour-blind readers (checked with the dataviz palette validator)
-group_colours = {
-    "Nuclear": "#6250d6",
-    "Coal & lignite": "#9a5b2e",
-    "Gas": "#eb6834",
-    "Hydro": "#2a78d6",
-    "Biomass & waste": "#008300",
-    "Wind": "#1baf7a",
-    "Solar": "#eda100",
-    _other_group: "#e87ba4",
-}
+group_colours = {group: fuel_colours[fuels[0]] for group, fuels in fuel_groups.items()}
 
-_net_import_colour = "#b4b2ab"
+_net_import_colour = fuel_colours["IMPORT"]
 _load_colour = "#0b0b0b"
 _price_colour = "#e34948"
 _grid_colour = "#e8e6e1"

@@ -14,11 +14,12 @@ from gams import GamsException
 from typing import Tuple, List
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.collections import PolyCollection
 from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 
 from ..utils import symbol_to_df
-from ..formatting import balmorel_colours
+from ..formatting import balmorel_colours, fuel_groups, technology_order
 
 
 # %% ----------------------------- ###
@@ -166,6 +167,26 @@ def _set_plot_style(style: str) -> tuple[str, str]:
         plt.style.use("dark_background")
         return "none", "w"
     raise Exception(f"style must be 'light' or 'dark', not '{style}'")
+
+
+def _stack_order(production_columns: list[str], columns: str) -> list[str]:
+    """Order production columns from the bottom of the stack up, as the ENTSO-E profile stacks them.
+
+    Args:
+        production_columns (list[str]): The fuels or technologies to order.
+        columns (str): 'Fuel', which orders by `fuel_groups`, or 'Technology',
+            which orders by `technology_order`.
+
+    Returns:
+        list[str]: The columns in stacking order. Columns not listed in
+            `fuel_groups` or `technology_order` come last, in alphabetical order.
+    """
+    if columns == "Fuel":
+        order = [fuel for fuels in fuel_groups.values() for fuel in fuels]
+    else:
+        order = technology_order
+    listed = [column for column in order if column in production_columns]
+    return listed + sorted(column for column in production_columns if column not in order)
 
 
 def _select_timeslices(
@@ -422,6 +443,7 @@ def _prepare_profile_data(
     )
     fPr = df_placeholder.join(fPr, how="left")
     fPr.fillna(0, inplace=True)
+    fPr = fPr[_stack_order(list(fPr.columns), columns)]
 
     ### Import / Export
     # First aggregate regions in country, if country
@@ -588,50 +610,80 @@ def _prepare_profile_data(
 ### ----------------------------- ###
 
 
+def _fill_area(
+    ax: Axes,
+    x: range,
+    lower: np.ndarray,
+    upper: np.ndarray,
+    column: str,
+    colours: dict[str, str],
+) -> PolyCollection:
+    """Fill between lower and upper in the colour of a fuel or technology.
+
+    Args:
+        ax (Axes): The axes to draw on.
+        x (range): Timeslice positions.
+        lower (np.ndarray): Lower edge of the area, GW.
+        upper (np.ndarray): Upper edge of the area, GW.
+        column (str): The fuel or technology, used as label and colour key.
+        colours (dict[str, str]): Colour per fuel or technology. Columns without
+            one get matplotlib's next colour.
+
+    Returns:
+        PolyCollection: The filled area.
+    """
+    if column not in colours:
+        print("No defined colour for %s" % column)
+        return ax.fill_between(x, lower, upper, label=column)
+    return ax.fill_between(x, lower, upper, label=column, facecolor=colours[column])
+
+
 def single_profile_plot(
     scenario, commodity, region, year, CorRorA, fD, fP, fc, f, c, demcolor
 ):
     fig, ax = plt.subplots(figsize=(9, 3), facecolor=fc)
-    temp = np.zeros(len(fD))
     x = range(len(fD))
-    ps = []
-    for col in f:
-        try:
-            ps.append(
-                ax.fill_between(
-                    x,
-                    temp,
-                    temp + f.loc[fD.index, col].values / 1e3,
-                    label=col,
-                    facecolor=c[col],
-                )
-            )
-        except KeyError:
-            print("No defined colour for %s" % col)
-            ps.append(
-                ax.fill_between(
-                    x, temp, temp + f.loc[fD.index, col].values / 1e3, label=col
-                )
-            )
-        temp = temp + f.loc[fD.index, col].values / 1e3
+    values = {col: f.loc[fD.index, col].values / 1e3 for col in f}
 
-    # p0, = ax.plot(x, H2, color=[76/255,128/255, 204/255])
-    (p1,) = ax.plot(x, fD.values[:, 0] / 1e3, color=demcolor, label="Demand")
+    # Production is stacked from 0 in the order of the columns, net import goes
+    # on top and net export below 0, as in the ENTSO-E profile
+    production = [col for col in f if col != "IMPORT"]
+    bottoms = {}
+    top = np.zeros(len(fD))
+    for col in production:
+        bottoms[col] = top
+        top = top + values[col]
+
+    # Artists are added in legend order: demand, import, then production from the top down
+    (demand_line,) = ax.plot(x, fD.values[:, 0] / 1e3, color=demcolor, label="Demand")
+    handles, names = [demand_line], ["Demand"]
+    if "IMPORT" in values:
+        net_import = values["IMPORT"]
+        import_area = _fill_area(ax, x, top, top + np.clip(net_import, 0, None), "IMPORT", c)
+        handles.append(import_area)
+        names.append("Import (export below 0)")
+    for col in reversed(production):
+        handles.append(_fill_area(ax, x, bottoms[col], bottoms[col] + values[col], col, c))
+        names.append(col.lower().capitalize())
+    if "IMPORT" in values:
+        ax.fill_between(
+            x, 0, np.clip(net_import, None, 0), facecolor=import_area.get_facecolor()
+        )
+
     ax2 = ax.twinx()
     try:
-        (p2,) = ax2.plot(x, fP.loc[fD.index].values, "r--", linewidth=1, label="Price")
+        (price_line,) = ax2.plot(
+            x, fP.loc[fD.index].values, "r--", linewidth=1, label="Price"
+        )
+        handles.append(price_line)
+        names.append("Price")
     except TypeError:
         print('\nThere could be "EPS" values in electricity prices - cannot plot')
 
     ax.set_facecolor(fc)
-    names = pd.Series(f.columns).str.lower().str.capitalize()
-    # names = list(names) + ['H$_2$ Production [GW$_\mathrm{H_2}$]', 'Demand', 'Price'] # With H2 production
-    names = list(names) + ["Demand", "Price"]  # Without H2 production
-
-    # ax.legend(ps+[p0, p1, p2], names, # With H2 production
     ax.legend(
-        ps + [p1, p2],
-        names,  # Without H2 production
+        handles,
+        names,
         loc="center",
         bbox_to_anchor=(0.5, 1.28),
         ncol=5,
