@@ -28,6 +28,8 @@ from gams import GamsWorkspace
 from typing import Tuple
 import geopandas as gpd
 import cartopy.crs as ccrs
+from pyproj import CRS, Transformer
+from shapely.geometry import box
 
 
 def plot_map(path_to_result: str, 
@@ -74,6 +76,8 @@ def plot_map(path_to_result: str,
             **show_country_out (bool, optional): Show countries outside the model or not. Defaults to True.
             **choosen_map_coordinates (str, optional): Choose the map to be shown. Choose from ['EU', 'DK', 'Nordic']. Defaults to 'EU'.
             **map_coordinates (list, optional): Coordinates of the map if custom coordinates needed. Defaults to ''.
+            **crs (str, optional): Map projection, e.g. 'EPSG:3035' (equal-area Europe, as in pybalmorel.entsoe.plot_transmission_map).
+                Coordinates, map limits and pie radii are still given in degrees and projected. Defaults to None (plain lon/lat).
             Lines options :
                 **line_width_cat (str, optional): Way of determining lines width. Choose from ['log', 'linear', 'cluster']. Defaults to 'log'.
                 **line_show_min (int, optional): Minimum transmission capacity (GW) or flow (TWh) shown on map. Defaults to 0.
@@ -1165,11 +1169,48 @@ def plot_map(path_to_result: str,
 
         ### 3.1 Create the map with the countries and regions
         
-        projection = ccrs.EqualEarth()
-        
         # Get the coordinates of the graph
         xlim = dict_map_coordinates[choosen_map_coordinates][0]
         ylim = dict_map_coordinates[choosen_map_coordinates][1]
+
+        crs = kwargs.get('crs', None) # Map projection, None keeps plain lon/lat
+        if crs is None:
+            projection = ccrs.EqualEarth() # Only a canvas: everything is drawn in lon/lat
+            def to_map_crs(gdf):
+                return gdf
+        else:
+            projection = ccrs.epsg(CRS(crs).to_epsg())
+            transformer = Transformer.from_crs('EPSG:4326', crs, always_xy=True)
+
+            def to_map_crs(gdf):
+                if gdf.crs is None:
+                    gdf = gdf.set_crs('EPSG:4326')
+                return gdf.to_crs(crs)
+
+            def project_columns(df, lon, lat):
+                known = df[lon].notna() & df[lat].notna()
+                x, y = transformer.transform(df.loc[known, lon].values, df.loc[known, lat].values)
+                df.loc[known, lon], df.loc[known, lat] = x, y
+
+            # Everything below compares and draws in projected coordinates
+            if lines != None:
+                for lon, lat in [('LonExp', 'LatExp'), ('LonImp', 'LatImp'), ('LonMid', 'LatMid')]:
+                    project_columns(df_line, lon, lat)
+                if H2_import and commodity == 'Hydrogen':
+                    for lon, lat in [('LonExp', 'LatExp'), ('LonImp', 'LatImp')]:
+                        project_columns(df_hydrogen_lines_outside, lon, lat)
+            if generation != None:
+                project_columns(df_slack_generation, 'Lon', 'Lat')
+                if generation_display_type == 'Pie':
+                    # Pie radii are given in degrees, i.e. ~111 km
+                    pie_radius_min, pie_radius_max = pie_radius_min * 111_320, pie_radius_max * 111_320
+                    pie_cluster_radius = [radius * 111_320 for radius in pie_cluster_radius]
+            if background != None:
+                project_columns(df_background, 'Lon', 'Lat')
+
+            # The view is the bounding box of the projected lon/lat box
+            view = gpd.GeoSeries([box(xlim[0], ylim[0], xlim[1], ylim[1])], crs='EPSG:4326').segmentize(0.5).to_crs(crs).total_bounds
+            xlim, ylim = (view[0], view[2]), (view[1], view[3])
 
         # Calculate the aspect ratio based on the limits and set the figure size based on the aspect ratio
         aspect_ratio = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0])
@@ -1199,7 +1240,7 @@ def plot_map(path_to_result: str,
                     if len(country_color) > 0:
                         face_color = country_color[0]
                 # Get the geo file and plot it
-                geo = gpd.read_file(layers_in[R])
+                geo = to_map_crs(gpd.read_file(layers_in[R]))
                 geo_artist = ax.add_geometries(geo.geometry, crs = projection,
                                                 facecolor=[face_color], edgecolor='#46585d',
                                                 linewidth=.2)
@@ -1213,12 +1254,13 @@ def plot_map(path_to_result: str,
                     if len(country_color) > 0:
                         face_color = country_color[0]
                 if show_country_out or face_color != regions_ext_color:
-                    geo = gpd.read_file(layers_out[R])
+                    geo = to_map_crs(gpd.read_file(layers_out[R]))
                     geo_artist = ax.add_geometries(geo.geometry, crs = projection,
                                                 facecolor=[face_color], edgecolor='#46585d',
                                                 linewidth=.2)
                     geo_artist.set_zorder(1)
         else :
+            geo_file = to_map_crs(geo_file)
             for R in r_out :
                 face_color = regions_ext_color
                 # Get the personalized color of the country if defined
@@ -1709,4 +1751,4 @@ def plot_map(path_to_result: str,
             
     else:
         print("\nDidn't find a scenario in the paths given")
-      
+      
