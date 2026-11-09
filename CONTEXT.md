@@ -81,11 +81,11 @@ A flat, nominal €/tCO2 price for one Balmorel country (`CCC`) that replaces th
 _Avoid_: ETS country list
 
 **Nuclear Availability**:
-The share of a country's nuclear `GKFX` that could run in one week of the Backcast Year: the highest hourly nuclear output ENTSO-E reports for that week, divided by the country's nuclear `GKFX`, clipped at 1. It includes outages, maintenance and closures: weeks after the country's observed series ends are rated zero. Written as weekly `GKRATE` overrides to `GKRATE_ENTSOE.inc`; a zero is written as `eps`, since Balmorel reads 0 as full capacity. A calibration input, not a validation result.
+The share of a country's nuclear `GKFX` that could run in one week of the Backcast Year: the highest hourly nuclear output ENTSO-E reports for that week, divided by the country's nuclear `GKFX`, clipped at 1. It includes outages, maintenance and closures: weeks after the country's observed series ends are rated zero. Written as weekly `GKRATE` overrides to `GKRATE_ENTSOE.inc`; a zero is written as `eps`, since Balmorel reads 0 as full capacity (see ADR 0013). A calibration input, not a validation result.
 _Avoid_: Capacity factor, load factor (those describe output, not availability)
 
 **Thermal Availability**:
-The share of a country's fossil, biomass or waste `GKFX` of one fuel group that could run in a given week of the Backcast Year: ENTSO-E's installed capacity as a share of `GKFX` (at most 1), less the capacity ENTSO-E reports as out of service that week. Taken from ENTSO-E's installed capacity and outage reports, never from observed output, because the fossil mix is a Validation Metric. Written as weekly `GKRATE` overrides to `GKRATE_THERMAL_ENTSOE.inc`. A Calibration Input.
+The share of a country's fossil, biomass or waste `GKFX` of one fuel group that could run in a given week of the Backcast Year: ENTSO-E's installed capacity as a share of `GKFX` (at most 1), less the capacity ENTSO-E reports as out of service that week. Taken from ENTSO-E's installed capacity and outage reports, never from observed output, because the fossil mix is a Validation Metric. Written as weekly `GKRATE` overrides to `GKRATE_THERMAL_ENTSOE.inc` (see ADR 0014). A Calibration Input.
 _Avoid_: Capacity factor (that describes output); Nuclear Availability (that is taken from observed output)
 
 **Must-run Floor**:

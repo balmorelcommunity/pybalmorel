@@ -306,6 +306,10 @@ def group_installed(installed: pd.DataFrame, groups: dict[str, tuple[str, ...]])
 def latest_outages(unavailability: pd.DataFrame) -> pd.DataFrame:
     """The outage periods of the latest revision of every event, without cancelled or withdrawn events.
 
+    Exact duplicate rows are dropped first: ENTSO-E's download repeats some
+    periods of the same event and revision (10,495 of 69,492 rows in 2023),
+    which would otherwise count those outages twice.
+
     Args:
         unavailability (pd.DataFrame): Output of load_unavailability.
 
@@ -318,6 +322,7 @@ def latest_outages(unavailability: pd.DataFrame) -> pd.DataFrame:
     if unavailability.empty:
         return pd.DataFrame(columns=columns)
 
+    unavailability = unavailability.drop_duplicates()
     latest = unavailability.groupby("mrid")["revision"].transform("max")
     outages = unavailability[
         (unavailability["revision"] == latest) & ~unavailability["docstatus"].isin(VOID_DOCSTATUS)

@@ -234,8 +234,9 @@ unavailability_of_generation_units`.
   as ungrouped (nuclear, heat, ...) raises an error, so a new fuel can't
   silently keep full availability.
 - Only the latest revision of each outage report counts, and cancelled or
-  withdrawn reports are dropped. Planned and forced outages are averaged
-  over the hours of each week.
+  withdrawn reports are dropped. Rows that the download repeats exactly
+  count once (10,495 of 69,492 in 2023). Planned and forced outages are
+  averaged over the hours of each week.
 - A group without ENTSO-E installed capacity keeps its base `GKRATE`, and a
   country without outage reports only has `GKFX` scaled to the installed
   capacity; both warn.

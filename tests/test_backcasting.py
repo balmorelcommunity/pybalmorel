@@ -1377,6 +1377,19 @@ def test_latest_revision_counts_once_and_withdrawn_events_count_nothing():
     assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
 
 
+def test_duplicated_outage_row_counts_once():
+    from pybalmorel.backcasting.thermal import latest_outages, weekly_outage_energy
+
+    # ENTSO-E's 2023 download repeats 10,495 rows exactly (same event and revision)
+    monday = first_monday(2023)
+    outage = _outage("a", 1, monday, monday + pd.Timedelta(days=1))
+    outages = pd.DataFrame([outage, outage])
+
+    energy = weekly_outage_energy(latest_outages(outages), 2023)
+
+    assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
+
+
 def test_outage_spanning_two_weeks_is_split_by_hours():
     from pybalmorel.backcasting.thermal import latest_outages, weekly_outage_energy
 
