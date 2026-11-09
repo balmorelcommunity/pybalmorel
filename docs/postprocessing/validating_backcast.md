@@ -30,11 +30,20 @@ python -m pybalmorel.backcasting format \
 python -m pybalmorel.backcasting statistics <balmorel-scenario-path>
 
 # Generate plots
-python -m pybalmorel.backcasting generation <balmorel-scenario-path>
-python -m pybalmorel.backcasting prices <balmorel-scenario-path>
-python -m pybalmorel.backcasting price-duration <balmorel-scenario-path> [--ylim -60 320]
-python -m pybalmorel.backcasting flows <balmorel-scenario-path>
+python -m pybalmorel.backcasting generation <balmorel-scenario-path> [--style light] [--output-dir .]
+python -m pybalmorel.backcasting prices <balmorel-scenario-path> [--style light] [--output-dir .]
+python -m pybalmorel.backcasting price-duration <balmorel-scenario-path> [--ylim -60 320] [--style light] [--output-dir .]
+python -m pybalmorel.backcasting flows <balmorel-scenario-path> [--style light] [--output-dir .]
 ```
+
+Plot options:
+
+- `--style` — `light` (default) or `dark`. `dark` uses Catppuccin Mocha
+  colours and saves with a transparent background, so the plots sit on a
+  dark slide's own background. It also lightens the fossil and backup
+  colours of the generation plots, which are too dark to see otherwise.
+- `--output-dir` — the folder the PNGs are saved in, created if missing.
+  Defaults to the current folder.
 
 `format` options:
 

@@ -32,6 +32,7 @@ from ..entsoe import (
 )
 from ..classes import Balmorel, IncFile
 from .calendar import backcast_hours, from_backcast_grid
+from .plotstyle import BALMOREL_COLOUR, ENTSOE_COLOUR, plot_style
 
 # ------------------------------- #
 #          1. Functions           #
@@ -475,34 +476,45 @@ def flow_statistics(flows: pd.DataFrame, tolerance: float = 0.01) -> pd.DataFram
     return stats
 
 
-def plot_flow_duration_curves(flows: pd.DataFrame, ncols: int = 6) -> tuple[Figure, np.ndarray]:
+def plot_flow_duration_curves(
+    flows: pd.DataFrame, ncols: int = 6, style: str = "light"
+) -> tuple[Figure, np.ndarray]:
     """Duration curves of ENTSO-E and Balmorel flows, one subplot per directed border.
 
     Args:
         flows (pd.DataFrame): Output of align_flows.
         ncols (int, optional): Subplot columns. Defaults to 6.
+        style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
 
     Returns:
         tuple[Figure, np.ndarray]: The figure and its axes.
     """
     borders = flows.index.droplevel("Time").unique()
     nrows = int(np.ceil(len(borders) / ncols))
-    fig, axes = plt.subplots(
-        nrows, ncols, figsize=(3 * ncols, 2.2 * nrows), squeeze=False, sharex=True
-    )
+    lines = [
+        ("ENTSOE", ENTSOE_COLOUR, "ENTSO-E (observed)"),
+        ("BALMOREL", BALMOREL_COLOUR, "Balmorel"),
+    ]
 
-    for ax, (region_from, region_to) in zip(axes.flat, borders):
-        border = flows.loc[(region_from, region_to)]
-        for source in ["ENTSOE", "BALMOREL"]:
-            curve = np.sort(border[source].to_numpy())[::-1]
-            ax.plot(np.linspace(0, 100, len(curve)), curve, label=source)
-        ax.set_title(f"{region_from} → {region_to}", fontsize=9)
-    for ax in axes.flat[len(borders) :]:
-        ax.set_visible(False)
+    with plot_style(style) as (tokens, _):
+        fig, axes = plt.subplots(
+            nrows, ncols, figsize=(3 * ncols, 2.2 * nrows), squeeze=False, sharex=True
+        )
 
-    axes[0, 0].legend(fontsize=8)
-    fig.supxlabel("Share of hours (%)")
-    fig.supylabel("Flow (MW)")
-    fig.tight_layout()
+        for ax, (region_from, region_to) in zip(axes.flat, borders):
+            border = flows.loc[(region_from, region_to)]
+            for column, colour, label in lines:
+                curve = np.sort(border[column].to_numpy())[::-1]
+                ax.plot(np.linspace(0, 100, len(curve)), curve, color=colour, label=label)
+            ax.grid(axis="y", color=tokens["grid"], lw=0.8)
+            ax.set_axisbelow(True)
+            ax.set_title(f"{region_from} → {region_to}", fontsize=9)
+        for ax in axes.flat[len(borders) :]:
+            ax.set_visible(False)
+
+        axes[0, 0].legend(fontsize=8)
+        fig.supxlabel("Share of hours (%)")
+        fig.supylabel("Flow (MW)")
+        fig.tight_layout()
 
     return fig, axes

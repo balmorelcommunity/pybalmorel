@@ -33,6 +33,7 @@ from .flows import (
     observed_flow_limits,
     plot_flow_duration_curves,
 )
+from .plotstyle import BALMOREL_COLOUR, ENTSOE_COLOUR, UNMAPPED_CATEGORY, plot_style
 from .pricelevel import PRICE_YEAR, to_price_year
 from warnings import warn
 
@@ -171,33 +172,9 @@ entsoe_queries = ["load", "day_ahead_prices", "generation", "crossborder_flows"]
 # ENTSO-E queries for thermal-availability, downloaded only on request
 entsoe_capacity_queries = ["installed_generation_capacity", "unavailability_of_generation_units"]
 
-# Category of technologies missing from the mappings, with format --allow-unmapped
-UNMAPPED_CATEGORY = "Unmapped"
-
-colors = {
-    "Wind": "#4ECDC4",
-    "Solar": "#FFE66D",
-    "Hydro": "#0077B6",
-    "Nuclear": "#FF6B6B",
-    "Biomass & Bioenergy": "#6B8E23",
-    "Fossil Gas": "#8B4513",
-    "Fossil Solid": "#555555",
-    "Fossil Liquid & Other Fossil": "#333333",
-    "Waste & Heat Recovery": "#9B59B6",
-    "Storage": "#F39C12",
-    "Other renewable": "#A3D977",
-    "Other": "#CCCCCC",
-    "Backup": "#C0392B",
-    UNMAPPED_CATEGORY: "#FF00FF",
-}
-
 # Balmorel load categories that are storage charging, which ENTSO-E's
 # Actual Total Load excludes
 STORAGE_CHARGING_CATEGORIES = ("ENDO_INTRASTO",)
-
-# Line colours of the price plots, checked for colour-blind separation
-ENTSOE_COLOUR = "#2a78d6"
-BALMOREL_COLOUR = "#eb6834"
 
 # Order of the per-region panels of price-duration; other regions follow alphabetically
 PRICE_DURATION_REGION_ORDER = [
@@ -901,54 +878,79 @@ def load_and_align(
 
 
 def plot_bar_chart(
-    df: pd.DataFrame, columns_to_keep: list = [], per_region: bool = False
-):
+    df: pd.DataFrame,
+    columns_to_keep: list = [],
+    per_region: bool = False,
+    style: str = "light",
+) -> tuple[Figure, Axes]:
+    """Stacked bars of ENTSO-E's and Balmorel's annual generation.
 
-    if per_region:
-        fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
+    Each stack segment has a thin edge in the theme's surface colour, so
+    neighbouring segments of similar colour stay apart.
 
-        if len(columns_to_keep) > 0:
-            df_agg = df.pivot_table(
-                index=columns_to_keep,
-                columns="Region",
-                values=["ENTSOE", "BALMOREL"],
-                aggfunc=lambda x: np.sum(x) / 1e6,
-            ).T
-            df_agg.index.names = ["Value", "Region"]
-            df_agg = df_agg.sort_index(level=["Region", "Value"])
-            df_agg = df_agg.reset_index().set_index(["Region", "Value"])
+    Args:
+        df (pd.DataFrame): Index (Region, Technology, Time), columns 'ENTSOE'
+            and 'BALMOREL' in MWh, as in generation.csv.
+        columns_to_keep (list, optional): Index levels the bars are stacked
+            by, e.g. ['Technology']. Defaults to [].
+        per_region (bool, optional): Draw a pair of bars per region instead
+            of one pair in total. Defaults to False.
+        style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
+
+    Returns:
+        tuple[Figure, Axes]: The figure and its axes.
+    """
+    with plot_style(style) as (tokens, fuel_colours):
+        if per_region:
+            fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
+
+            if len(columns_to_keep) > 0:
+                df_agg = df.pivot_table(
+                    index=columns_to_keep,
+                    columns="Region",
+                    values=["ENTSOE", "BALMOREL"],
+                    aggfunc=lambda x: np.sum(x) / 1e6,
+                ).T
+                df_agg.index.names = ["Value", "Region"]
+                df_agg = df_agg.sort_index(level=["Region", "Value"])
+                df_agg = df_agg.reset_index().set_index(["Region", "Value"])
+            else:
+                df_agg = df.pivot_table(
+                    index="Region",
+                    values=["ENTSOE", "BALMOREL"],
+                    aggfunc=lambda x: np.sum(x) / 1e6,
+                )
         else:
-            df_agg = df.pivot_table(
-                index="Region",
-                values=["ENTSOE", "BALMOREL"],
-                aggfunc=lambda x: np.sum(x) / 1e6,
-            )
+            fig, ax = plt.subplots()
 
-        df_agg.plot(ax=ax, kind="bar", stacked=True, color=colors)
-        ax.set_ylabel("Generation (TWh)")
-        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
-        fig.savefig("generation_per_region.png", bbox_inches="tight")
-    else:
-        fig, ax = plt.subplots()
+            if len(columns_to_keep) > 0:
+                df_agg = df.pivot_table(
+                    index=columns_to_keep, aggfunc=lambda x: np.sum(x) / 1e6
+                ).T
+            else:
+                df_agg = df.T.sum() / 1e6
 
-        if len(columns_to_keep) > 0:
-            df_agg = df.pivot_table(
-                index=columns_to_keep, aggfunc=lambda x: np.sum(x) / 1e6
-            ).T
-        else:
-            df_agg = df.T.sum() / 1e6
-
-        df_agg.plot(ax=ax, kind="bar", stacked=True, color=colors)
-        ax.set_ylabel("Generation (TWh)")
-        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
-        fig.savefig(
-            "generation.png",
-            bbox_inches="tight",
+        df_agg.plot(
+            ax=ax, kind="bar", stacked=True, color=fuel_colours,
+            edgecolor=tokens["surface"], linewidth=0.5,
         )
+        ax.set_ylabel("Generation (TWh)")
+        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
+
+    return fig, ax
 
 
-def plot_price_profile(prices: pd.DataFrame):
+def plot_price_profile(prices: pd.DataFrame, style: str = "light") -> tuple[Figure, Axes]:
+    """Daily mean prices of ENTSO-E and Balmorel over the Backcast Year.
 
+    Args:
+        prices (pd.DataFrame): Columns or index levels 'Time', 'ENTSOE' and
+            'BALMOREL' (nominal €/MWh of the Backcast Year), as in prices.csv.
+        style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
+
+    Returns:
+        tuple[Figure, Axes]: The figure and its axes.
+    """
     prices = prices.reset_index()
     prices.Time = pd.to_datetime(prices.Time, utc=True)
 
@@ -958,14 +960,38 @@ def plot_price_profile(prices: pd.DataFrame):
         .aggregate("mean")
     )
 
-    fig, ax = plt.subplots()
-    df.plot(ax=ax, color={"ENTSOE": ENTSOE_COLOUR, "BALMOREL": BALMOREL_COLOUR})
-    ax.set_ylabel(f"El. Price (nominal €{df.index.year.max()}/MWh)")
-    fig.savefig("prices.png", bbox_inches="tight")
+    with plot_style(style):
+        fig, ax = plt.subplots()
+        df.plot(ax=ax, color={"ENTSOE": ENTSOE_COLOUR, "BALMOREL": BALMOREL_COLOUR})
+        ax.set_ylabel(f"El. Price (nominal €{df.index.year.max()}/MWh)")
+
+    return fig, ax
+
+
+def save_figure(fig: Figure, output_dir: Path, file_name: str, style: str, **kwargs) -> Path:
+    """Save a figure in output_dir, with a transparent background in the dark style.
+
+    Args:
+        fig (Figure): The figure to save.
+        output_dir (Path): Folder to save in, created if missing.
+        file_name (str): File name, e.g. 'prices.png'.
+        style (str): The style the figure was drawn in, 'light' or 'dark'.
+        **kwargs: Passed on to Figure.savefig, e.g. dpi or bbox_inches.
+
+    Returns:
+        Path: The saved file.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / file_name
+    fig.savefig(path, transparent=(style == "dark"), **kwargs)
+    return path
 
 
 def plot_price_duration_curves(
-    prices: pd.DataFrame, title: str, ylim: tuple[float, float] = (-60, 320)
+    prices: pd.DataFrame,
+    title: str,
+    ylim: tuple[float, float] = (-60, 320),
+    style: str = "light",
 ) -> tuple[Figure, np.ndarray]:
     """Price duration curves of ENTSO-E and Balmorel, pooled and per region.
 
@@ -979,13 +1005,12 @@ def plot_price_duration_curves(
             (nominal €/MWh of the Backcast Year), as in prices.csv.
         title (str): Figure title.
         ylim (tuple[float, float], optional): Y-range in €/MWh. Defaults to (-60, 320).
+        style (str, optional): 'light' or 'dark', see plot_style. 'light' has an
+            off-white background, 'dark' a transparent one. Defaults to 'light'.
 
     Returns:
         tuple[Figure, np.ndarray]: The figure and its axes, pooled panel first.
     """
-    ink, ink2, muted, grid, axis_colour, surface = (
-        "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#fcfcfb"
-    )
     y_low, y_high = ylim
     n_columns = 8
     prices = prices.dropna(subset=["ENTSOE", "BALMOREL"])
@@ -1001,6 +1026,7 @@ def plot_price_duration_curves(
         values = np.sort(values)[::-1]
         return np.linspace(0, 100, len(values)), values
 
+    # Uses tokens and face, set by the plot_style context below
     def draw(ax: Axes, df: pd.DataFrame, panel_title: str, big: bool = False) -> None:
         for column, colour, label in lines:
             x, y = duration_curve(df[column].to_numpy())
@@ -1010,16 +1036,18 @@ def plot_price_duration_curves(
             )
         ax.set_ylim(y_low, y_high)
         ax.set_xlim(0, 100)
-        ax.grid(axis="y", color=grid, lw=0.8)
+        ax.set_facecolor(face)
+        ax.grid(axis="y", color=tokens["grid"], lw=0.8)
         ax.set_axisbelow(True)
         for spine in ["top", "right", "left"]:
             ax.spines[spine].set_visible(False)
-        ax.axhline(0, color=axis_colour, lw=0.8)
+        ax.spines["bottom"].set_color(tokens["axis"])
+        ax.axhline(0, color=tokens["axis"], lw=0.8)
         ax.set_xticks([0, 50, 100])
         ax.set_yticks([tick for tick in range(0, int(y_high) + 1, 100) if tick >= y_low])
-        ax.tick_params(length=0, labelsize=9 if big else 7)
+        ax.tick_params(length=0, labelsize=9 if big else 7, colors=tokens["muted"])
         ax.set_title(
-            panel_title, loc="left", color=ink, fontsize=12 if big else 9,
+            panel_title, loc="left", color=tokens["ink"], fontsize=12 if big else 9,
             fontweight="bold", pad=3,
         )
         entsoe, balmorel = df["ENTSOE"], df["BALMOREL"]
@@ -1029,24 +1057,20 @@ def plot_price_duration_curves(
             f"std {entsoe.std():.0f} / {balmorel.std():.0f}\n"
             f"h ≤ 0: {(entsoe <= 0).sum()} / {(balmorel <= 0).sum()}",
             transform=ax.transAxes, ha="right", va="top", fontsize=9 if big else 6.5,
-            color=ink2, linespacing=1.25,
+            color=tokens["ink2"], linespacing=1.25,
         )
 
-    style = {
-        "font.family": "sans-serif", "font.size": 8, "axes.edgecolor": axis_colour,
-        "axes.labelcolor": ink2, "xtick.color": muted, "ytick.color": muted,
-        "figure.facecolor": surface, "axes.facecolor": surface,
-    }
-    with plt.rc_context(style):
-        fig = plt.figure(figsize=(17, 13.5))
+    with plot_style(style) as (tokens, _):
+        face = "none" if style == "dark" else tokens["surface"]
+        fig = plt.figure(figsize=(17, 13.5), facecolor=face)
         grid_spec = GridSpec(
             6, n_columns, figure=fig, hspace=0.55, wspace=0.18,
             left=0.04, right=0.99, top=0.9, bottom=0.04,
         )
         pooled = fig.add_subplot(grid_spec[0:2, 0:3])
         draw(pooled, prices, "All bidding zones (pooled region-hours)", big=True)
-        pooled.set_ylabel("€/MWh (nominal)")
-        pooled.set_xlabel("share of hours (%)")
+        pooled.set_ylabel("€/MWh (nominal)", fontsize=8, color=tokens["ink2"])
+        pooled.set_xlabel("share of hours (%)", fontsize=8, color=tokens["ink2"])
 
         slots = [(row, col) for row in range(0, 2) for col in range(3, n_columns)]
         slots += [(row, col) for row in range(2, 6) for col in range(n_columns)]
@@ -1065,18 +1089,18 @@ def plot_price_duration_curves(
         n_outside = (
             (prices[["ENTSOE", "BALMOREL"]] < y_low) | (prices[["ENTSOE", "BALMOREL"]] > y_high)
         ).sum()
-        fig.suptitle(title, x=0.04, ha="left", fontsize=15, fontweight="bold", color=ink, y=0.975)
+        fig.suptitle(title, x=0.04, ha="left", fontsize=15, fontweight="bold", color=tokens["ink"], y=0.975)
         fig.text(
             0.04, 0.935,
             "Balmorel prices converted from the Price Year to nominal euros of the Backcast Year. "
             f"Panel text: ENTSO-E / Balmorel. Y-axis clipped to [{y_low:g}, {y_high:g}] €/MWh "
             f"(ENTSO-E region-hours outside: {n_outside.ENTSOE}, Balmorel: {n_outside.BALMOREL}).",
-            fontsize=10, color=ink2,
+            fontsize=10, color=tokens["ink2"],
         )
         handles, labels = pooled.get_legend_handles_labels()
         fig.legend(
             handles, labels, loc="upper right", bbox_to_anchor=(0.99, 0.975),
-            frameon=False, fontsize=10, ncol=2, labelcolor=ink,
+            frameon=False, fontsize=10, ncol=2, labelcolor=tokens["ink"],
         )
 
     return fig, np.array(axes)
@@ -1085,6 +1109,23 @@ def plot_price_duration_curves(
 # ------------------------------- #
 #            2. Main              #
 # ------------------------------- #
+
+
+style_option = click.option(
+    "--style",
+    type=click.Choice(["light", "dark"]),
+    default="light",
+    show_default=True,
+    help="Plot style. 'dark' saves with a transparent background, for slides with a dark background.",
+)
+
+output_dir_option = click.option(
+    "--output-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=".",
+    show_default=True,
+    help="Folder to save the plots in, created if missing.",
+)
 
 
 @click.group()
@@ -1218,7 +1259,13 @@ def statistics(balmorel_scenario_path):
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-def generation(balmorel_scenario_path):
+@style_option
+@output_dir_option
+def generation(balmorel_scenario_path, style, output_dir):
+    """Plot ENTSO-E vs Balmorel annual generation per technology category.
+
+    Saves generation.png, in total, and generation_per_region.png.
+    """
 
     generation_file = Path(balmorel_scenario_path).joinpath(
         "backcastoutput/generation.csv"
@@ -1232,13 +1279,18 @@ def generation(balmorel_scenario_path):
         print("Load csv's from last loading")
         generation = pd.read_csv(generation_file, index_col=[0, 1, 2])
 
-    plot_bar_chart(generation, ["Technology"])
-    plot_bar_chart(generation, ["Technology"], True)
+    fig, _ = plot_bar_chart(generation, ["Technology"], style=style)
+    save_figure(fig, output_dir, "generation.png", style, bbox_inches="tight")
+    fig, _ = plot_bar_chart(generation, ["Technology"], per_region=True, style=style)
+    save_figure(fig, output_dir, "generation_per_region.png", style, bbox_inches="tight")
 
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-def prices(balmorel_scenario_path):
+@style_option
+@output_dir_option
+def prices(balmorel_scenario_path, style, output_dir):
+    """Plot daily mean ENTSO-E vs Balmorel prices, saved as prices.png."""
 
     prices_file = Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv")
 
@@ -1250,7 +1302,8 @@ def prices(balmorel_scenario_path):
         print("Load csv's from last loading")
         prices = pd.read_csv(prices_file, index_col=[0, 1, 2])
 
-    plot_price_profile(prices)
+    fig, _ = plot_price_profile(prices, style=style)
+    save_figure(fig, output_dir, "prices.png", style, bbox_inches="tight")
 
 
 @main.command(name="price-duration")
@@ -1262,7 +1315,9 @@ def prices(balmorel_scenario_path):
     show_default=True,
     help="Y-range of every panel in €/MWh; prices outside are clipped and counted in the subtitle.",
 )
-def price_duration(balmorel_scenario_path, ylim):
+@style_option
+@output_dir_option
+def price_duration(balmorel_scenario_path, ylim, style, output_dir):
     """Plot price duration curves of Balmorel vs ENTSO-E, pooled and per region.
 
     Reads <balmorel-scenario-path>/backcastoutput/prices.csv from `format`, in
@@ -1278,16 +1333,21 @@ def price_duration(balmorel_scenario_path, ylim):
     scenario = Path(balmorel_scenario_path).resolve().name
 
     fig, _ = plot_price_duration_curves(
-        prices, f"Price duration curves {year} — {scenario} vs ENTSO-E day-ahead", tuple(ylim)
+        prices, f"Price duration curves {year} — {scenario} vs ENTSO-E day-ahead", tuple(ylim), style
     )
-    fig.savefig("price_duration_curves.png", dpi=130)
-    print(f"Saved price_duration_curves.png with {prices.Region.nunique()} regions")
+    path = save_figure(fig, output_dir, "price_duration_curves.png", style, dpi=130)
+    print(f"Saved {path} with {prices.Region.nunique()} regions")
 
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-def flows(balmorel_scenario_path):
-    """Plot duration curves of Balmorel vs ENTSO-E flows per directed border."""
+@style_option
+@output_dir_option
+def flows(balmorel_scenario_path, style, output_dir):
+    """Plot duration curves of Balmorel vs ENTSO-E flows per directed border.
+
+    Saves flow_duration_curves.png.
+    """
 
     flow_file = Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv")
 
@@ -1299,8 +1359,8 @@ def flows(balmorel_scenario_path):
         print("Load csv's from last loading")
         flows = pd.read_csv(flow_file, index_col=[0, 1, 2])
 
-    fig, _ = plot_flow_duration_curves(flows)
-    fig.savefig("flow_duration_curves.png", bbox_inches="tight")
+    fig, _ = plot_flow_duration_curves(flows, style=style)
+    save_figure(fig, output_dir, "flow_duration_curves.png", style, bbox_inches="tight")
 
 
 @main.command(name="transmission-flow-limit")

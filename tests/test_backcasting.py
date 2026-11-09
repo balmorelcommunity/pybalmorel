@@ -1100,7 +1100,8 @@ def test_balmorel_load_leaves_out_storage_charging_and_prices_are_nominal(tmp_pa
 
 
 def test_storage_and_flexibility_is_split():
-    from pybalmorel.backcasting.__main__ import balmorel_to_category, colors, entsoe_to_category
+    from pybalmorel.backcasting.__main__ import balmorel_to_category, entsoe_to_category
+    from pybalmorel.backcasting.plotstyle import colors
 
     categories = set(balmorel_to_category.values()) | set(entsoe_to_category.values())
     assert "Storage & Flexibility" not in categories
@@ -1111,24 +1112,136 @@ def test_storage_and_flexibility_is_split():
     assert balmorel_to_category["CONDENSING - DUMMY"] == "Backup"
 
 
+def _synthetic_prices() -> pd.DataFrame:
+    """100 hours of random prices for the regions XX, FR and DE."""
+    rng = np.random.default_rng(0)
+    return pd.concat(
+        pd.DataFrame(
+            {
+                "Region": region,
+                "Time": _hours(100),
+                "ENTSOE": rng.normal(90, 50, 100),
+                "BALMOREL": rng.normal(90, 25, 100),
+            }
+        )
+        for region in ["XX", "FR", "DE"]
+    )
+
+
 def test_price_duration_plot_has_a_panel_per_region():
     import matplotlib
 
     matplotlib.use("Agg")
     from pybalmorel.backcasting.__main__ import plot_price_duration_curves
 
-    rng = np.random.default_rng(0)
-    prices = pd.concat(
-        pd.DataFrame(
-            {"Region": region, "ENTSOE": rng.normal(90, 50, 100), "BALMOREL": rng.normal(90, 25, 100)}
-        )
-        for region in ["XX", "FR", "DE"]
-    )
-
-    fig, axes = plot_price_duration_curves(prices, "test")
+    fig, axes = plot_price_duration_curves(_synthetic_prices(), "test")
 
     assert [ax.get_title(loc="left") for ax in axes[1:]] == ["DE", "FR", "XX"]
     assert all(ax.get_ylim() == (-60, 320) for ax in axes)
+
+
+@pytest.mark.parametrize(
+    "style, face, ink", [("light", "#fcfcfb", "#0b0b0b"), ("dark", "none", "#cdd6f4")]
+)
+def test_price_duration_plot_style(style, face, ink):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex, to_rgba
+    from pybalmorel.backcasting.__main__ import plot_price_duration_curves
+
+    fig, axes = plot_price_duration_curves(_synthetic_prices(), "test", style=style)
+
+    assert fig.get_facecolor() == to_rgba(face)
+    assert all(ax.get_facecolor() == to_rgba(face) for ax in axes)
+    assert to_hex(fig._suptitle.get_color()) == ink
+
+
+def test_plot_style_rejects_other_styles_and_restores_rcparams():
+    import matplotlib.pyplot as plt
+    from pybalmorel.backcasting.plotstyle import DARK_COLOR_OVERRIDES, colors, plot_style
+
+    with pytest.raises(ValueError, match="style must be 'light' or 'dark', not 'blue'"):
+        with plot_style("blue"):
+            pass
+
+    before = plt.rcParams.copy()
+    with plot_style("dark") as (tokens, fuel_colours):
+        assert plt.rcParams["figure.facecolor"] == "none"
+        assert fuel_colours == {**colors, **DARK_COLOR_OVERRIDES}
+    assert plt.rcParams == before
+
+
+@pytest.mark.parametrize("style", ["light", "dark"])
+def test_flow_duration_plot_uses_the_price_plot_colours(style):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex
+    from pybalmorel.backcasting.flows import plot_flow_duration_curves
+    from pybalmorel.backcasting.plotstyle import BALMOREL_COLOUR, ENTSOE_COLOUR
+
+    flows = pd.DataFrame(
+        {"ENTSOE": [100.0, 50.0, 0.0], "BALMOREL": [80.0, 80.0, 0.0]},
+        index=pd.MultiIndex.from_product(
+            [["DK1"], ["DE"], _hours(3)], names=["From", "To", "Time"]
+        ),
+    )
+
+    fig, axes = plot_flow_duration_curves(flows, style=style)
+
+    lines = axes[0, 0].get_lines()
+    assert [to_hex(line.get_color()) for line in lines] == [ENTSOE_COLOUR, BALMOREL_COLOUR]
+    assert [line.get_label() for line in lines] == ["ENTSO-E (observed)", "Balmorel"]
+
+
+def test_dark_generation_bars_use_the_dark_category_colours():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex, to_rgba
+    from pybalmorel.backcasting.__main__ import plot_bar_chart
+    from pybalmorel.backcasting.plotstyle import DARK_COLOR_OVERRIDES, THEMES
+
+    technologies = ["Fossil Liquid & Other Fossil", "Fossil Solid"]
+    generation = pd.DataFrame(
+        {"ENTSOE": [5.0, 3.0], "BALMOREL": [4.0, 2.0]},
+        index=pd.MultiIndex.from_product(
+            [["DE"], technologies, _hours(1)], names=["Region", "Technology", "Time"]
+        ),
+    )
+
+    fig, ax = plot_bar_chart(generation, ["Technology"], style="dark")
+
+    legend = ax.get_legend()
+    colours = {
+        text.get_text(): to_hex(handle.get_facecolor())
+        for handle, text in zip(legend.legend_handles, legend.get_texts())
+    }
+    assert colours == {technology: DARK_COLOR_OVERRIDES[technology] for technology in technologies}
+    assert all(bar.get_edgecolor() == to_rgba(THEMES["dark"]["surface"]) for bar in ax.patches)
+
+
+@pytest.mark.parametrize("style, corner_alpha", [("light", 1.0), ("dark", 0.0)])
+def test_price_duration_command_saves_in_the_output_dir(tmp_path, style, corner_alpha):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.image as mpimg
+    from click.testing import CliRunner
+    from pybalmorel.backcasting.__main__ import main
+
+    scenario = tmp_path / "backcast"
+    (scenario / "backcastoutput").mkdir(parents=True)
+    _synthetic_prices().to_csv(scenario / "backcastoutput" / "prices.csv", index=False)
+    output_dir = tmp_path / "analysis" / "plots"
+
+    result = CliRunner().invoke(
+        main, ["price-duration", str(scenario), "--style", style, "--output-dir", str(output_dir)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert mpimg.imread(output_dir / "price_duration_curves.png")[0, 0, 3] == corner_alpha
 
 
 # %% ------------------------------- ###
