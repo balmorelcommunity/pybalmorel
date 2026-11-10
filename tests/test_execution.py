@@ -11,6 +11,9 @@ Created on 03.10.2024
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
+import shutil
+from pathlib import Path
+
 from pybalmorel import Balmorel
 
 
@@ -26,4 +29,16 @@ def test_Balmorel():
     scenarios.sort()
 
     assert scenarios == ["base", "valid_scenario"]
+
+
+def test_Balmorel_legacy_top_level_simex(tmp_path: Path, capsys) -> None:
+    """Balmorel versions before balmorelcommunity/Balmorel#57 have simex in the top folder"""
+    model_folder = tmp_path / "Balmorel"
+    shutil.copytree("examples/Balmorel", model_folder)
+    (model_folder / "simex").mkdir()
+
+    model = Balmorel(model_folder)
+
+    assert sorted(model.scenarios) == ["base", "valid_scenario"]
+    assert str(model_folder / "simex") not in capsys.readouterr().out
 

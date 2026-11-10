@@ -406,7 +406,7 @@ class Balmorel:
     """A class that recognises the Balmorel folder structure, can be used to run scenarios or results
 
     Args:
-        model_folder (str): The top level folder of Balmorel, where base and simex are located
+        model_folder (str): The top level folder of Balmorel, where base and the scenario folders are located
     """
 
     def __init__(self, model_folder: str | Path, gams_system_directory: str | None  = None):
@@ -422,14 +422,17 @@ class Balmorel:
             raise Exception(f"Incorrect Balmorel folder, couldn't find base in {self.path}")
         
         # Get scenario folders
-        scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name != 'simex' and SC.name[0] != '.']
-        
+        scenarios = [SC for SC in self.path.iterdir() if SC.is_dir() and SC.name[0] != '.']
+
         # Check validity of scenario folders and make list of scenarios
         self.scenarios = []
         self.input_data = {}
         for SC in scenarios:
             if (SC / 'model/Balmorel.gms').exists() and ((SC / 'model/cplex.op4').exists() or (SC / 'model/cplex.op2').exists()):
                 self.scenarios.append(SC.name)
+            elif SC.name == 'simex':
+                # Balmorel versions before balmorelcommunity/Balmorel#57 keep simex in the top folder, skip it without a warning
+                continue
             else:
                 print(f'Folder {SC} not added to scenario as the necessary {SC}/model/Balmorel.gms and/or {SC}/model/cplex.op4 or {SC}/model/cplex.op2 did not exist')
 

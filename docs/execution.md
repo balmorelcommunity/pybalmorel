@@ -18,7 +18,7 @@ model.results.get_result('OBJ_YCR') # Get objective function
 
 ## Finding the Model
 
-`Balmorel` recognises the folder structure of a Balmorel model: the folder must contain `base`, and every other folder (except `simex`) with a `model/Balmorel.gms` and a `model/cplex.op4` or `model/cplex.op2` file is added as a scenario. Folders that don't qualify are reported. The scenarios found are listed in `model.scenarios`.
+`Balmorel` recognises the folder structure of a Balmorel model: the folder must contain `base`, and every other folder with a `model/Balmorel.gms` and a `model/cplex.op4` or `model/cplex.op2` file is added as a scenario. Folders that don't qualify are reported, except a top-level `simex` folder from Balmorel versions that kept it outside the scenario folders. The scenarios found are listed in `model.scenarios`.
 
 If GAMS can't find your installation by itself, pass its system directory:
 
