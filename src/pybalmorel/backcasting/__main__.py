@@ -23,6 +23,7 @@ from decouple import config
 from .. import MainResults
 from ..entsoe import bidding_zone_translation, entsoe_code_to_region, load_files
 from .calendar import backcast_hours, from_backcast_grid
+from .demand import SHARED_LOAD
 from .flows import (
     OBSERVED_FLOW_PERCENTILE,
     align_flows,
@@ -175,6 +176,22 @@ entsoe_capacity_queries = ["installed_generation_capacity", "unavailability_of_g
 # Balmorel load categories that are storage charging, which ENTSO-E's
 # Actual Total Load excludes
 STORAGE_CHARGING_CATEGORIES = ("ENDO_INTRASTO",)
+
+# Balmorel regions whose load and generation ENTSO-E reports inside another
+# region's bidding zone (LU inside DE_LU), so the comparison adds them to that
+# region. Their price is left out: the bidding zone's price is not an average with theirs.
+COMPARED_INSIDE = {
+    country: region
+    for region, countries in SHARED_LOAD.items()
+    for country in countries
+    if country != region
+}
+COMPARISON_REGIONS = {**bidding_zone_translation, **COMPARED_INSIDE}
+
+# Regions whose ENTSO-E generation misses whole categories, so their generation
+# is not compared; their load, prices and flows still are. CH reports about a
+# third of its hydro (13 TWh in 2023) and no waste.
+INCOMPLETE_GENERATION = {"CH"}
 
 # Order of the per-region panels of price-duration; other regions follow alphabetically
 PRICE_DURATION_REGION_ORDER = [
@@ -471,8 +488,13 @@ def calculate_statistics(
         )
 
 
-def aggregate_regions(df: pd.DataFrame, aggfunc: str, time_columns: list):
-    "Aggregate DE4, IT-* etc"
+def aggregate_regions(
+    df: pd.DataFrame,
+    aggfunc: str,
+    time_columns: list,
+    translation: dict[str, str] = bidding_zone_translation,
+):
+    "Aggregate DE4, IT-* etc, or the regions of `translation`"
 
     # Combine technology and fuel column for Balmorel
     if "Technology" in df.columns and "Fuel" in df.columns:
@@ -485,9 +507,9 @@ def aggregate_regions(df: pd.DataFrame, aggfunc: str, time_columns: list):
         new_index = ["Region"] + time_columns
 
     for region in df.Region.unique():
-        if region in bidding_zone_translation:
+        if region in translation:
             df = (
-                df.replace({"Region": {region: bidding_zone_translation[region]}})
+                df.replace({"Region": {region: translation[region]}})
                 .pivot_table(
                     index=new_index,
                     values="Value",
@@ -495,7 +517,7 @@ def aggregate_regions(df: pd.DataFrame, aggfunc: str, time_columns: list):
                 )
                 .reset_index()
             )
-            print(f"Aggregating {region} to {bidding_zone_translation[region]}")
+            print(f"Aggregating {region} to {translation[region]}")
 
     return df
 
@@ -549,12 +571,13 @@ def balmorel_load_components(load: pd.DataFrame) -> pd.DataFrame:
             'Region', 'Category' and 'Value' (MW per hour).
 
     Returns:
-        pd.DataFrame: Columns 'Region' (DE4-* as DE, IT-* as IT), 'Category',
+        pd.DataFrame: Columns 'Region' (DE4-* and LU as DE, IT-* as IT, see
+            COMPARISON_REGIONS), 'Category',
             'BALMOREL' (TWh) and 'Excluded' (True for storage charging, which
             the comparison leaves out).
     """
     components = (
-        load.assign(Region=load.Region.replace(bidding_zone_translation))
+        load.assign(Region=load.Region.replace(COMPARISON_REGIONS))
         .groupby(["Region", "Category"], as_index=False)["Value"]
         .sum()
         .rename(columns={"Value": "BALMOREL"})
@@ -599,7 +622,7 @@ def get_and_format_balmorel(
         ~balmorel_load.Category.isin(STORAGE_CHARGING_CATEGORIES)
     ]
     balmorel_load = format_balmorel_df(
-        aggregate_regions(balmorel_load, "sum", ["Season", "Time"]), year
+        aggregate_regions(balmorel_load, "sum", ["Season", "Time"], COMPARISON_REGIONS), year
     )
 
     # The cached balmorel_prices.csv stays in the Price Year, convert after reading it
@@ -609,7 +632,7 @@ def get_and_format_balmorel(
     )
     balmorel_elprices = balmorel_prices_in_year(balmorel_elprices, year)
     balmorel_generation = format_balmorel_df(
-        aggregate_regions(balmorel_generation, "sum", ["Season", "Time"]),
+        aggregate_regions(balmorel_generation, "sum", ["Season", "Time"], COMPARISON_REGIONS),
         year,
     )
 
@@ -736,7 +759,8 @@ def join_generation(
     MainResults leaves out zeros, so a category Balmorel has no row for in an
     hour produced 0. ENTSO-E's missing categories are 0 too, but only in
     hours where ENTSO-E reports some generation for the region; a region-hour
-    without any ENTSO-E generation is left out on both sides.
+    without any ENTSO-E generation is left out on both sides, and so are the
+    regions in INCOMPLETE_GENERATION.
 
     Args:
         entsoe (pd.DataFrame): Columns 'Region', 'Technology', 'Time' and 'Value'.
@@ -749,6 +773,7 @@ def join_generation(
     """
     keys = ["Region", "Technology", "Time"]
     hours = backcast_hours(year)
+    regions = set(regions) - INCOMPLETE_GENERATION
     entsoe = entsoe[entsoe.Region.isin(regions) & entsoe.Time.isin(hours)]
     balmorel = balmorel[balmorel.Region.isin(regions) & balmorel.Time.isin(hours)]
 
@@ -1615,20 +1640,52 @@ def demand_profile(balmorel_scenario_path, entsoe_data_path, year, reload_input)
     is_flag=True,
     help="Run ReadData again instead of reusing the cached <scenario>_input_data.gdx (takes a while).",
 )
+@click.option(
+    "--heat",
+    type=click.Choice(["model", "eurostat"]),
+    default="model",
+    show_default=True,
+    help="Leave out the electricity the previous backcast run used for heat, or Eurostat's electricity "
+    "for heating (the first run of a new backcast year).",
+)
+@click.option(
+    "--load-results",
+    type=str,
+    default=None,
+    help="The previous run's balmorel_load.csv (from `format`), for --heat model. "
+    "Defaults to <balmorel-scenario-path>/backcastoutput/balmorel_load.csv.",
+)
 def demand_level(
-    balmorel_scenario_path, entsoe_data_path, year, basis, coverage_bounds, eurostat_data_path, reload_input
+    balmorel_scenario_path,
+    entsoe_data_path,
+    year,
+    basis,
+    coverage_bounds,
+    eurostat_data_path,
+    reload_input,
+    heat,
+    load_results,
 ):
-    """Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load and Eurostat heating.
+    """Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.
 
-    Per country: ENTSO-E's load in YEAR (from `download --query load`) net of
-    Balmorel's distribution losses, less the electricity Eurostat reports for
-    household space and water heating and for district heating, which
-    Balmorel adds endogenously. Split over regions and users by the input
-    data's DE. Eurostat responses are fetched once and cached. Writes
-    <balmorel-scenario-path>/data/DE_ENTSOE.inc, which the scenario's DE.inc
-    must include, and backcastoutput/demand_level.csv. See CONTEXT.md.
+    Per region: ENTSO-E's load in YEAR (from `download --query load`) less
+    the previous backcast run's transmission losses, net of Balmorel's
+    distribution losses, less the electricity that run used for heat
+    (ENDOGENOUS_ELECT2HEAT), which Balmorel adds back endogenously. That
+    heating responds to prices, so solve, `format`, and run this again for
+    as long as the printed residual keeps falling. With --heat eurostat (the
+    first run of a new backcast year), Eurostat's electricity for household
+    space and water heating and for district heating is left out instead.
+    Split over regions and users by the input data's DE. Eurostat responses
+    are fetched once and cached. Writes <balmorel-scenario-path>/data/DE_ENTSOE.inc,
+    which the scenario's DE.inc, INDUSTRY_DE.inc and INDIVUSERS_DE.inc must
+    include, and backcastoutput/demand_level.csv. See CONTEXT.md and
+    docs/adr/0015.
     """
     from .demand import generate_demand_level
+
+    if heat == "model" and basis != "entsoe":
+        raise click.UsageError("--heat model needs --basis entsoe")
 
     balmorel_scenario_path = Path(balmorel_scenario_path)
     zones = load_observed_load(entsoe_data_path, year)
@@ -1648,6 +1705,8 @@ def demand_level(
         coverage_bounds=coverage_bounds,
         gams_system_directory=config("GAMS_SYSTEM_DIR", None),
         reload_input=reload_input,
+        heat=heat,
+        load_results=load_results,
     )
 
 

@@ -71,7 +71,16 @@ command.
   standardise generation technologies between Balmorel and ENTSO-E so they can
   be compared (see [Technology categories](#technology-categories)).
 - **Spatial Aggregation**: sums sub-regions to their canonical zone
-  (`DE4-*` → `DE`, `IT-*` → `IT`) before comparing.
+  (`DE4-*` → `DE`, `IT-*` → `IT`) before comparing. Balmorel's LU load and
+  generation go to `DE` as well (`COMPARISON_REGIONS`), because ENTSO-E
+  reports them only inside the `DE_LU` bidding zone. LU's price stays apart
+  and drops out, since ENTSO-E has no LU price. Regions without ENTSO-E
+  data (UK since Brexit, CY, MT, TR) are left out of the comparison; AL and
+  BA have load but no generation. CH's generation is left out as well
+  (`INCOMPLETE_GENERATION`): ENTSO-E reports about a third of Swiss hydro
+  (13 TWh in 2023) and no waste. CH's load, prices and flows are still
+  compared. LU's flows are not mapped: BE–LU is compared as reported, and
+  ENTSO-E has no FR–LU or DE_LU–LU flows.
 - **Full hourly grid**: generation is outer-joined per (region, category,
   hour) over the regions both sides have. A missing Balmorel value is 0,
   since `MainResults` leaves out zeros; a missing ENTSO-E value is 0 only in
@@ -155,10 +164,14 @@ with. Depending on which preparation commands were run:
   load with itself, up to Balmorel's endogenous demand.
 - **Demand level**
   ([`demand-level`](../preprocessing/preparing_backcast.md#demand-level)):
-  with the `entsoe` basis, a country's annual load matches ENTSO-E's up to
-  Balmorel's electric heating. Only the endogenous demand (heat pumps,
-  electric boilers, EVs, electrolysis) remains to be validated;
-  `load_components.csv` shows it per category.
+  a country's annual load matches ENTSO-E's up to the previous run's
+  residual, which `demand-level` prints and iterating closes. In the first
+  run of a Backcast Year (`--heat eurostat`) it matches up to Balmorel's
+  electric heating less Eurostat's, plus transmission losses. Only the
+  endogenous demand (heat pumps, electric boilers, EVs, electrolysis)
+  remains to be validated, apart from the load: `E2H_minus_H_TWh` in
+  `demand_level.csv` compares Balmorel's electric heating with Eurostat's,
+  and `load_components.csv` shows the endogenous demand per category.
 - **VRE level** ([`vre-flh`](../preprocessing/preparing_backcast.md#vre-level)):
   a country's annual wind and solar output matches ENTSO-E's up to
   curtailment. Their hourly timing, which comes from the weather year,

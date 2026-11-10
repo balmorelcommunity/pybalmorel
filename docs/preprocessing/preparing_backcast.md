@@ -90,12 +90,13 @@ python -m pybalmorel.backcasting demand-profile \
     <year> \
     [--reload-input]
 
-# Write DE_ENTSOE.inc: annual electricity demand from ENTSO-E load less Eurostat heating
+# Write DE_ENTSOE.inc: annual electricity demand from ENTSO-E load less the previous run's heating
 python -m pybalmorel.backcasting demand-level \
     <balmorel-scenario-path> \
     <entsoe-data-path> \
     <year> \
-    [--basis entsoe|eurostat] [--coverage-bounds 0.8 1.3] [--eurostat-data-path PATH] [--reload-input]
+    [--heat model|eurostat] [--load-results PATH] [--basis entsoe|eurostat] \
+    [--coverage-bounds 0.8 1.3] [--eurostat-data-path PATH] [--reload-input]
 
 # Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
 python -m pybalmorel.backcasting ttf-csv <html-path> <historicalprices-path>
@@ -366,30 +367,83 @@ Caveats:
 ## Demand level
 
 The `demand-level` command writes `<scenario-path>/data/DE_ENTSOE.inc`: the
-annual `DE` of the Backcast Year per region and user. Per country, the
-Demand Level is ENTSO-E's load over the Backcast Calendar, net of Balmorel's
-distribution losses (`DISLOSS_E`), less the electricity Eurostat reports for
-heating: households' space and water heating (`nrg_d_hhq`) and electric
-boilers and heat pumps in district heating (`nrg_bal_c`). Balmorel adds
-electric heating itself, so its load then misses ENTSO-E's only by its
-electric-heating error.
+annual `DE` of the Backcast Year per region and user. Per zone k, the
+Demand Level is
 
-- Eurostat data is fetched from the public dissemination API (no key) and
-  cached in `--eurostat-data-path` (default `<scenario-path>/eurostatdata`),
-  one JSON file per dataset and year.
+X_k = (L_k − T_k)(1 − d_k) − E_k
+
+- L_k is ENTSO-E's load over the Backcast Calendar.
+- T_k is the previous backcast run's transmission losses (`TRANS_LOSSES`).
+  ENTSO-E's load contains them, but Balmorel adds them on top of `DE`.
+- d_k is Balmorel's distribution loss (`DISLOSS_E`), weighted by the input
+  data's `DE`.
+- E_k is the electricity the previous run used for heat
+  (`ENDOGENOUS_ELECT2HEAT`), which Balmorel adds back endogenously.
+
+Balmorel's load is then ENTSO-E's, if the run's heating and losses stay as
+they were. They respond to prices, and so to the level: E2H falls by about
+0.3 TWh per TWh of `DE`. The level is therefore iterated over runs (see
+[ADR 0015](../adr/0015-demand-level-net-of-the-models-own-heating.md)):
+
+1. **Iteration 0**: a solved full-year backcast. For a new Backcast Year,
+   generate the level with `--heat eurostat` first (below), and solve.
+2. Run `format` on the solved run. It writes
+   `backcastoutput/balmorel_load.csv`, which `demand-level` reads by
+   default (`--load-results` to read another).
+3. Run `demand-level` (`--heat model` is the default) and solve again.
+4. Repeat 2-3 for as long as you like. The command prints the previous
+   run's residual, X_k less that run's exogenous load, summed over Europe
+   and summed in absolute terms over countries. It is what that run's load
+   missed ENTSO-E's by, at final-consumption level. Around 10 TWh summed
+   over countries is as close as the other errors allow; nothing stops the
+   iteration for you.
+
+The previous run must be the one that solved with the scenario's current
+`DE_ENTSOE.inc`. The command warns where that run's exogenous load is more
+than 1% off the file's level, and it stops if `balmorel_load.csv` holds
+more than one scenario, another year, or not every hour of the calendar (a
+sampled run).
+
+- ENTSO-E's load is its mean over the Backcast Calendar times 8760 hours.
+  Balmorel spreads `DE` over 8760 hours whatever its time steps cover, so
+  the calendar's 8736 hours get back the observed load. The previous run's
+  losses and heating, summed over the calendar's 8736 hours, are scaled to
+  8760 the same way.
 - ENTSO-E's `DE_LU` load is split between DE and LU by Eurostat final
-  consumption. IE's load is Ireland's control area, without Northern
-  Ireland (see [Downloading ENTSO-E data](#downloading-entso-e-data)). A country with several zones (NO1-5, SE1-4, DK1-2) gets each
-  zone's load net of losses, less the country's heating split by load.
-  Within a zone (DE4-*) and over the users, the level is split by the
-  input data's `DE`.
+  consumption, and each takes its own heating and losses. IE's load is
+  Ireland's control area, without Northern Ireland (see
+  [Downloading ENTSO-E data](#downloading-entso-e-data)). A zone covering
+  several Balmorel regions (DE4-*) sums their heating and losses, and its
+  level is split by the input data's `DE`, as it is over the users.
 - Missing load hours are filled with the zone's mean; more than 2% missing
   warns.
 - A country keeps its input `DE`, with a warning, without ENTSO-E load
-  (UK, TR) or Eurostat data (CH), or if its load net of losses over Eurostat
-  final consumption is outside `--coverage-bounds` (0.8-1.3; AL in 2023).
-- `--basis eurostat` takes Eurostat final consumption less heating instead.
-- The summary is saved to `backcastoutput/demand_level.csv`.
+  (UK, TR), if one of its zones is not in the previous run, if a level is
+  not positive, or if its load net of losses over Eurostat final
+  consumption is outside `--coverage-bounds` (0.8-1.3; AL in 2023). A
+  country without Eurostat data (CH) is written, with its coverage
+  unchecked.
+- Eurostat data is fetched from the public dissemination API (no key) and
+  cached in `--eurostat-data-path` (default `<scenario-path>/eurostatdata`),
+  one JSON file per dataset and year. With `--heat model` it is only used
+  for the coverage check, the DE_LU split and the summary.
+- The summary is saved to `backcastoutput/demand_level.csv`. Next to the
+  level (`NewTWh`) and the input data's `DE` (`InputTWh`, the previous
+  level after the first run), it reports the previous run's heating
+  (`E2H_TWh`), losses (`TransLossTWh`), exogenous load (`PrevExoTWh`) and
+  `ResidualTWh`, and Balmorel's electric heating less Eurostat's
+  (`E2H_minus_H_TWh`).
+
+`--heat eurostat` leaves out the electricity Eurostat reports for heating
+instead of E_k, with no transmission losses: households' space and water
+heating (`nrg_d_hhq`) and electric boilers and heat pumps in district
+heating (`nrg_bal_c`). It needs no previous run, so it is how the first
+run of a new Backcast Year gets its level. Its load misses ENTSO-E's by
+the model's electric heating less Eurostat's and by the transmission
+losses. Electric heating in services has no Eurostat split, so with it
+that heating stays in `DE` and is counted again by Balmorel's tertiary
+heating. `--basis eurostat` (only with `--heat eurostat`) takes Eurostat
+final consumption less heating instead of ENTSO-E's load.
 
 The scenario's `data/DE.inc` must include the file after base's `DE.inc`
 (the command warns if it doesn't):
@@ -399,10 +453,13 @@ $include '../../base/data/DE.inc';
 $if EXIST '../data/DE_ENTSOE.inc' $INCLUDE '../data/DE_ENTSOE.inc';
 ```
 
-With the `entsoe` basis, a country's total load is a Calibration Input;
-only its electric heating stays a Validation Metric. Electric heating in
-services has no Eurostat split, so it stays in `DE` and is counted again by
-Balmorel's tertiary heating.
+The INDUSTRY and INDIVUSERS addons adjust `DE` again after `DE.inc`, so the
+scenario's own `INDUSTRY_DE.inc` and `INDIVUSERS_DE.inc` must include
+base's and then `DE_ENTSOE.inc` again (the command warns if one doesn't).
+
+A country's total load is a Calibration Input; its electric heating
+(`E2H_minus_H_TWh`) stays a Validation Metric. Read it knowing the scopes
+differ: Balmorel's E2H also covers industry and services.
 
 ## Price Year
 
@@ -502,7 +559,8 @@ when Balmorel would ignore what they wrote:
    outages (`thermal-availability`), the MUSTRUN files from output and
    prices (`must-run-floor`), the WNDFLH and SOLEFLH overrides from wind
    and solar output (`vre-flh`), and the DE_VAR_T and DE overrides from the
-   ENTSO-E load and Eurostat heating (`demand-profile`, `demand-level`).
+   ENTSO-E load and the previous run's heating, or Eurostat's for the
+   first run (`demand-profile`, `demand-level`).
 3. Historical prices are mapped onto the UTC Backcast Calendar and written
    (`fuelprices`, `co2-tax`).
 

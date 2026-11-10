@@ -61,7 +61,7 @@ The raw identifier the ENTSO-E transparency platform API expects for a query (e.
 _Avoid_: Region, Zone (when ambiguous with Canonical Region Name)
 
 **Backcast**:
-A Balmorel scenario run for one Backcast Year from backcast inputs (Observed Flow Limit, historical fuel prices, CO2 tax), so its results can be compared with what actually happened. Preparing a Backcast means generating those inputs; validating a Backcast means comparing its results with ENTSO-E observations.
+A Balmorel scenario run for one Backcast Year from backcast inputs (Observed Flow Limit, historical fuel prices, CO2 tax), so its results can be compared with what actually happened. Preparing a Backcast means generating those inputs; validating a Backcast means comparing its results with ENTSO-E observations, to test Balmorel's supply side: what it dispatches and trades to meet a given load. Electric heating, the one Validation Metric on the demand side, is reported apart, as a finding about the heat sector.
 _Avoid_: Backcasting run, backcast scenario (when the run's results are meant)
 
 **Backcast Year**:
@@ -101,7 +101,7 @@ The hourly ENTSO-E actual load of a region's Canonical Region Name in the Backca
 _Avoid_: Demand (the annual level still comes from `DE`)
 
 **Demand Level**:
-The annual exogenous electricity demand (`DE`) of a region in the Backcast Year: its ENTSO-E load over the Backcast Calendar, net of Balmorel's distribution losses, less the electricity Eurostat reports for heating (household space and water heating, electric boilers and heat pumps in district heating), which Balmorel adds endogenously. Taken from ENTSO-E's load rather than Eurostat's final consumption because the two differ in coverage (DE: ENTSO-E sees 7% less). With it, Balmorel's load misses ENTSO-E's only by its electric-heating error. Split over regions and users by the input data's `DE`. Written as `DE` overrides to `DE_ENTSOE.inc`. A Calibration Input; electric heating stays a Validation Metric.
+The annual exogenous electricity demand (`DE`) of a region in the Backcast Year: its ENTSO-E load over the Backcast Calendar, extrapolated to the 8760 hours Balmorel spreads `DE` over, less the previous backcast run's transmission losses, net of Balmorel's distribution losses, less the electricity the previous run used for heat (`ENDOGENOUS_ELECT2HEAT`), which Balmorel adds back endogenously. Its electric heating and losses respond to the level, so the level is iterated over runs for as long as the user finds the previous run's residual (its load's miss, at final-consumption level) worth closing. The first run of a new Backcast Year has no previous run and leaves out the electricity Eurostat reports for heating instead (household space and water heating, electric boilers and heat pumps in district heating). Taken from ENTSO-E's load rather than Eurostat's final consumption because the two differ in coverage (DE: ENTSO-E sees 7% less). Split over regions and users by the input data's `DE`. Written as `DE` overrides to `DE_ENTSOE.inc`, which the Backcast applies again after the INDUSTRY and INDIVUSERS addons have adjusted `DE` (see ADR 0015). ENTSO-E load is thereby a Calibration Input at every level, the system's and each country's, and a country's load gap is not a supply-side error. Electric heating, Balmorel's against Eurostat's, stays a Validation Metric.
 _Avoid_: Final consumption (Eurostat's figure, with different coverage); Demand (the level alone, without the Observed Demand Profile)
 
 **Natural-Inflow Hydro**:
@@ -117,7 +117,7 @@ A Backcast input derived from observed data for the Backcast Year that says what
 _Avoid_: Tuning, fitting
 
 **Validation Metric**:
-A result the model must reproduce on its own to pass Backcast validation: prices, cross-border flows, the fossil mix, and the timing of nuclear and hydro output within the year. Never derived from the same data as a Calibration Input.
+A result the model must reproduce on its own to pass Backcast validation: prices, cross-border flows, the fossil mix, electric heating (reported apart, see Backcast), and the timing of nuclear and hydro output within the year. Never derived from the same data as a Calibration Input.
 _Avoid_: Target (ambiguous between the two)
 
 **Flow Validation**:

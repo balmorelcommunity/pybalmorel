@@ -13,8 +13,12 @@ them takes its profile from the input data instead, with the same cleaning,
 or keeps it unchanged if that fails too.
 
 Also sets the annual level of that demand, the Demand Level (DE_ENTSOE.inc):
-ENTSO-E's annual load net of Balmorel's distribution losses, less the
-electricity Eurostat reports for heating, which Balmorel adds endogenously.
+ENTSO-E's annual load less the previous backcast run's transmission losses,
+net of Balmorel's distribution losses, less the electricity that run used for
+heat, which Balmorel adds back endogenously (`heat='model'`, docs/adr/0015).
+That heating responds to prices, so the level is iterated over runs. The
+first run of a new Backcast Year takes Eurostat's electricity for heating
+instead (`heat='eurostat'`).
 
 Created on 26.10.2026
 @author: Mathias Berg Rosendal
@@ -56,8 +60,24 @@ COVERAGE_BOUNDS = (0.8, 1.3)
 # Canonical regions whose ENTSO-E load covers several countries, split by Eurostat final consumption
 SHARED_LOAD = {"DE": ("DE", "LU")}
 
+# Balmorel spreads an annual quantity such as DE over 8760 hours (IOF8760 in
+# IHOURSINST), whatever the time steps cover; the Backcast Calendar has 8736
+BALMOREL_YEAR_HOURS = 8760
+
 # Eurostat's electricity-for-heat balances, which Balmorel's ELECT2HEAT adds endogenously
 HEATING = tuple(balance for balances in HEATING_BALANCES.values() for balance in balances)
+
+# Where the heating the Demand Level leaves out comes from: Eurostat, or the previous backcast run
+HEAT_SOURCES = ("eurostat", "model")
+
+# The previous run's load categories the Demand Level uses, in balmorel_load.csv (written by `format`)
+PREVIOUS_RUN_CATEGORIES = {"EXOGENOUS": "EXO", "ENDOGENOUS_ELECT2HEAT": "E2H", "TRANS_LOSSES": "TLoss"}
+
+# A previous run whose EXOGENOUS differs more than this from DE_ENTSOE.inc did not solve with it
+PREVIOUS_RUN_TOLERANCE = 0.01
+
+# Addons that adjust DE after DE.inc, so the scenario's own copy must apply DE_ENTSOE.inc again
+DE_ADDONS = ("INDUSTRY_DE.inc", "INDIVUSERS_DE.inc")
 
 # ------------------------------- #
 #          1. Profiles            #
@@ -218,10 +238,13 @@ def country_of(region: str) -> str:
 
 
 def annual_load(observed: pd.DataFrame, year: int) -> pd.Series:
-    """ENTSO-E's load per canonical region over the Backcast Calendar (MWh).
+    """ENTSO-E's load per canonical region over Balmorel's year (MWh).
 
-    Missing hours are filled with the region's mean, so a gap doesn't lower
-    the level.
+    The mean hourly load over the Backcast Calendar times Balmorel's 8760
+    hours, so that a DE built on it gives back the observed load in the
+    calendar's 8736 hours, and is on the same annual footing as Eurostat's
+    heating and final consumption. Missing hours are filled with the mean, so
+    a gap doesn't lower the level.
 
     Args:
         observed (pd.DataFrame): Hourly load (MW) per canonical region (output of sum_zones).
@@ -242,7 +265,7 @@ def annual_load(observed: pd.DataFrame, year: int) -> pd.Series:
         elif 0 < n_missing < len(hours):
             print(f"{region}: {n_missing} hours of ENTSO-E load missing, filled with the mean")
 
-    return hourly.mean() * len(hours)
+    return hourly.mean() * BALMOREL_YEAR_HOURS
 
 
 def split_shared_load(load: pd.Series, balances: pd.DataFrame) -> pd.Series:
@@ -274,6 +297,52 @@ def split_shared_load(load: pd.Series, balances: pd.DataFrame) -> pd.Series:
     return load
 
 
+def previous_run_heat(load_results: str | Path, year: int) -> pd.DataFrame:
+    """The previous backcast run's exogenous load, electric heating and transmission losses per region.
+
+    Args:
+        load_results (str | Path): balmorel_load.csv of one solved backcast,
+            as `format` writes it (MWh per hour on the Backcast Calendar).
+        year (int): The Backcast Year.
+
+    Raises:
+        ValueError: If the file holds more than one scenario, another year,
+            or not every hour of the Backcast Calendar.
+
+    Returns:
+        pd.DataFrame: 'EXO', 'E2H' and 'TLoss' (MWh over the calendar's 8736
+            hours) per Balmorel region, with the scenario in attrs['scenario'].
+    """
+    frame = pd.read_csv(load_results, usecols=["Scenario", "Year", "Region", "Season", "Time", "Category", "Value"])
+    scenarios = frame["Scenario"].unique()
+    if len(scenarios) != 1:
+        raise ValueError(
+            f"{load_results} holds {len(scenarios)} scenarios ({', '.join(map(str, scenarios))}), "
+            "expected the one scenario of the previous run"
+        )
+    years = sorted(frame["Year"].astype(str).unique())
+    if years != [str(year)]:
+        raise ValueError(f"{load_results} is for {', '.join(years)}, not {year}")
+    n_hours, calendar_hours = len(frame[["Season", "Time"]].drop_duplicates()), len(SEASONS) * len(TERMS)
+    if n_hours != calendar_hours:
+        raise ValueError(
+            f"{load_results} has {n_hours} of the {calendar_hours} hours of the Backcast Calendar, "
+            "so it is not a full-year run"
+        )
+
+    used = frame[frame["Category"].isin(list(PREVIOUS_RUN_CATEGORIES))]
+    previous = (
+        used.pivot_table(index="Region", columns="Category", values="Value", aggfunc="sum")
+        .reindex(columns=list(PREVIOUS_RUN_CATEGORIES))
+        .rename(columns=PREVIOUS_RUN_CATEGORIES)
+        .fillna(0.0)
+        .rename_axis(columns=None)
+    )
+    previous.attrs["scenario"] = str(scenarios[0])
+
+    return previous
+
+
 def demand_levels(
     de: pd.DataFrame,
     disloss: pd.DataFrame,
@@ -282,18 +351,32 @@ def demand_levels(
     year: int,
     basis: str = "entsoe",
     coverage_bounds: tuple[float, float] = COVERAGE_BOUNDS,
+    heat: str = "eurostat",
+    previous: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """The Demand Level of `year` per region and user, with a summary per country.
 
-    Per country c, with L its ENTSO-E load, d its load-weighted DISLOSS_E and
-    H its Eurostat electricity for heating, the level is L(1-d) - H
-    ('entsoe') or FC_E - H ('eurostat'). A country with several canonical
-    regions (NO1-5) gets L_r(1-d_r) - H L_r/L per region ('entsoe') or its
-    level split by L_r(1-d_r) ('eurostat'). Within a canonical region
-    (DE4-*) and then over the users, the level is split by the shares of
-    `de`, so a rerun on its own output writes the same level. A country is
-    not written, and warns, without ENTSO-E load, without Eurostat final
-    consumption or heating, or if L(1-d)/FC_E is outside `coverage_bounds`.
+    With `heat='eurostat'`, per country c, with L its ENTSO-E load, d its
+    load-weighted DISLOSS_E and H its Eurostat electricity for heating, the
+    level is L(1-d) - H ('entsoe') or FC_E - H ('eurostat'). A country with
+    several canonical regions (NO1-5) gets L_r(1-d_r) - H L_r/L per region
+    ('entsoe') or its level split by L_r(1-d_r) ('eurostat').
+
+    With `heat='model'` (basis 'entsoe' only), per canonical region k, with
+    T_k and E_k the previous run's transmission losses and electricity for
+    heat (ENDOGENOUS_ELECT2HEAT) summed over its Balmorel regions and scaled
+    from the calendar's 8736 hours to Balmorel's 8760, the level is
+    (L_k - T_k)(1 - d_k) - E_k. Balmorel's load is then ENTSO-E's if the
+    run's heating and losses stay as they were, so the level is iterated.
+
+    Within a canonical region (DE4-*) and then over the users, the level is
+    split by the shares of `de`, so a rerun on its own output keeps them. A
+    country is not written, and warns, without ENTSO-E load, if
+    L(1-d)/FC_E is outside `coverage_bounds`, if a level is not positive,
+    and with 'eurostat' heat without Eurostat final consumption or heating,
+    or with 'model' heat if a region is not in the previous run. With 'model'
+    heat, a country without Eurostat final consumption (CH) is written with
+    its coverage unchecked.
 
     Args:
         de (pd.DataFrame): DE from get_input, ending in (YYY, RRR, DEUSER, Value).
@@ -305,14 +388,29 @@ def demand_levels(
         basis (str, optional): 'entsoe' or 'eurostat'. Defaults to 'entsoe'.
         coverage_bounds (tuple[float, float], optional): Lowest and highest
             L(1-d)/FC_E written. Defaults to COVERAGE_BOUNDS.
+        heat (str, optional): 'eurostat' or 'model', where the heating left
+            out comes from. Defaults to 'eurostat'.
+        previous (pd.DataFrame | None, optional): Output of previous_run_heat.
+            Needed for 'model' heat; with 'eurostat' heat it only fills the
+            previous-run columns of the summary.
 
     Returns:
         tuple[pd.DataFrame, pd.DataFrame]: The level per 'Region' and 'User'
             ('Value', MWh) of the countries written, and the summary per
-            country (TWh).
+            country (TWh). 'InputTWh' is the input data's DE, which after a
+            first run is the previous level. 'ResidualTWh' is the model-heat
+            level less the previous run's exogenous load: what that run's
+            load missed ENTSO-E's by, at final-consumption level.
     """
     if basis not in DEMAND_LEVEL_BASES:
         raise ValueError(f"Unknown demand level basis '{basis}', use one of {DEMAND_LEVEL_BASES}")
+    if heat not in HEAT_SOURCES:
+        raise ValueError(f"Unknown heat source '{heat}', use one of {HEAT_SOURCES}")
+    model_heat = heat == "model"
+    if model_heat and basis != "entsoe":
+        raise ValueError("Heat from the previous run ('model') needs the 'entsoe' basis")
+    if model_heat and previous is None:
+        raise ValueError("Heat from the previous run ('model') needs the previous run's results (previous_run_heat)")
 
     de = de.iloc[:, -4:].set_axis(["Year", "Region", "User", "Value"], axis=1)
     de = de[de["Year"].astype(str) == str(year)].assign(Value=lambda df: df["Value"].astype(float))
@@ -340,31 +438,57 @@ def demand_levels(
     canonical["Load"] = load.reindex(canonical.index).astype(float)
     canonical["NetLoad"] = canonical["Load"] * (1 - canonical["DisLoss"])
 
+    # The previous run over Balmorel's year, summed to canonical regions (DE4-* to DE, LU on its own)
+    if previous is not None:
+        to_year = BALMOREL_YEAR_HOURS / (len(SEASONS) * len(TERMS))
+        prev = (previous[["EXO", "E2H", "TLoss"]] * to_year).groupby(previous.index.map(canonical_region)).sum()
+        canonical = canonical.join(prev.rename(columns={"EXO": "PrevExo"}))
+        canonical["InPrevious"] = canonical.index.isin(prev.index)
+        canonical["ModelLevel"] = (canonical["Load"] - canonical["TLoss"]) * (1 - canonical["DisLoss"]) - canonical["E2H"]
+    else:
+        canonical[["PrevExo", "E2H", "TLoss", "ModelLevel"]] = float("nan")
+        canonical["InPrevious"] = False
+
     balances = balances.reindex(columns=[FINAL_CONSUMPTION, *HEATING]) * 1e3
     summary, levels = [], []
     for country, group in canonical.groupby("Country"):
         load_c, net_c = group["Load"].sum(min_count=len(group)), group["NetLoad"].sum(min_count=len(group))
         eurostat = balances.loc[country] if country in balances.index else pd.Series(index=balances.columns, dtype=float)
         heating = eurostat[list(HEATING)]
-        heat_c = heating.sum()
+        heat_c = heating.sum(min_count=1)
         final_c = eurostat[FINAL_CONSUMPTION]
         coverage = net_c / final_c if final_c > 0 else float("nan")
-        level_c = net_c - heat_c if basis == "entsoe" else final_c - heat_c
+        e2h_c, tloss_c, prev_exo_c = (group[column].sum(min_count=len(group)) for column in ("E2H", "TLoss", "PrevExo"))
+        model_level_c = group["ModelLevel"].sum(min_count=len(group))
+
+        if model_heat:
+            region_levels = group["ModelLevel"]
+        elif basis == "entsoe":
+            region_levels = group["NetLoad"] - heat_c * group["Load"] / load_c
+        else:
+            region_levels = (final_c - heat_c) * group["NetLoad"] / net_c
+        level_c = region_levels.sum(min_count=len(group))
+        missing = list(group.index[~group["InPrevious"]])
 
         if pd.isna(load_c):
             note = "no ENTSO-E load"
-        elif pd.isna(final_c):
+        elif model_heat and missing:
+            note = "not in the previous run" + (f" ({', '.join(missing)})" if len(missing) < len(group) else "")
+        elif not model_heat and pd.isna(final_c):
             note = "no Eurostat final consumption"
-        elif heating.isna().all():
+        elif not model_heat and heating.isna().all():
             note = "no Eurostat electricity for heating"
-        elif not coverage_bounds[0] <= coverage <= coverage_bounds[1]:
+        elif pd.notna(final_c) and not coverage_bounds[0] <= coverage <= coverage_bounds[1]:
             note = f"coverage {coverage:.2f} outside {coverage_bounds[0]}-{coverage_bounds[1]}"
-        elif not level_c > 0:
+        elif not (level_c > 0 and (region_levels > 0).all()):
             note = "level not positive"
         elif (group["Base"] <= 0).any():
             note = "a canonical region without base DE to split by"
         else:
             note = ""
+        written = not note
+        if written and pd.isna(final_c):
+            note = "no Eurostat final consumption, coverage not checked"
 
         summary.append(
             {
@@ -375,27 +499,100 @@ def demand_levels(
                 "Coverage": coverage,
                 **{f"{balance}_TWh": heating[balance] / 1e6 for balance in HEATING},
                 "HeatTWh": heat_c / 1e6,
-                "BaseTWh": group["Base"].sum() / 1e6,
-                "NewTWh": level_c / 1e6 if not note else float("nan"),
-                "Written": not note,
+                "HeatSource": heat,
+                "TransLossTWh": tloss_c / 1e6,
+                "E2H_TWh": e2h_c / 1e6,
+                "E2H_minus_H_TWh": (e2h_c - heat_c) / 1e6,
+                "PrevExoTWh": prev_exo_c / 1e6,
+                "InputTWh": group["Base"].sum() / 1e6,
+                "NewTWh": level_c / 1e6 if written else float("nan"),
+                "ResidualTWh": (model_level_c - prev_exo_c) / 1e6,
+                "Written": written,
                 "Note": note,
             }
         )
-        if note:
+        if not written:
             warn(f"{country} keeps the input data's DE: {note}.")
             continue
 
         for region, row in group.iterrows():
-            if basis == "entsoe":
-                level = row["NetLoad"] - heat_c * row["Load"] / load_c
-            else:
-                level = level_c * row["NetLoad"] / net_c
             users = de[de["Region"].isin(regions.index[regions["Canonical"] == region])]
-            levels.append(users.assign(Value=users["Value"] * level / row["Base"])[["Region", "User", "Value"]])
+            levels.append(
+                users.assign(Value=users["Value"] * region_levels[region] / row["Base"])[["Region", "User", "Value"]]
+            )
 
     levels = pd.concat(levels, ignore_index=True) if levels else pd.DataFrame(columns=["Region", "User", "Value"])
 
     return levels, pd.DataFrame(summary)
+
+
+def check_previous_run(previous: pd.DataFrame, de_entsoe_path: str | Path, year: int) -> None:
+    """Warn where the previous run's exogenous load isn't the Demand Level it should have solved with.
+
+    The previous run's EXOGENOUS over the calendar's 8736 hours is DE x
+    8736/8760. A region more than PREVIOUS_RUN_TOLERANCE off means that run
+    solved with another DE_ENTSOE.inc (or none), so its heating and losses
+    belong to another level.
+
+    Args:
+        previous (pd.DataFrame): Output of previous_run_heat.
+        de_entsoe_path (str | Path): The scenario's current DE_ENTSOE.inc.
+        year (int): The Backcast Year.
+    """
+    de_entsoe_path = Path(de_entsoe_path)
+    run = previous.attrs.get("scenario", "the previous run")
+    if not de_entsoe_path.exists():
+        warn(f"There is no {de_entsoe_path}, so {run} can't be checked against the demand level it solved with.")
+        return
+
+    pattern = re.compile(rf"^DE\('{year}','([^']+)','[^']+'\)\s*=\s*([-+0-9.eE]+);", re.MULTILINE)
+    current = pd.DataFrame(pattern.findall(de_entsoe_path.read_text()), columns=["Region", "Value"])
+    if current.empty:
+        warn(f"{de_entsoe_path} has no DE for {year}, so {run} can't be checked against it.")
+        return
+    current = current.astype({"Value": float}).groupby("Region")["Value"].sum()
+
+    solved = previous["EXO"].reindex(current.index).fillna(0.0) * BALMOREL_YEAR_HOURS / (len(SEASONS) * len(TERMS))
+    off = solved / current - 1
+    off = off[off.abs() > PREVIOUS_RUN_TOLERANCE]
+    if not off.empty:
+        warn(
+            f"{run} did not solve with this {de_entsoe_path.name}: its exogenous load is more than "
+            f"{PREVIOUS_RUN_TOLERANCE:.0%} off the level in {len(off)} regions "
+            f"({', '.join(f'{region} {value:+.1%}' for region, value in off.items())}). Its heating and "
+            "losses belong to another level: `format` the run that solved with this file first."
+        )
+
+
+def check_de_wrappers(data_path: str | Path, base_data_path: str | Path) -> None:
+    """Warn if a DE addon of base runs without the scenario re-applying DE_ENTSOE.inc after it.
+
+    The INDUSTRY and INDIVUSERS addons adjust DE after DE.inc, so the
+    scenario needs its own INDUSTRY_DE.inc and INDIVUSERS_DE.inc that include
+    base's and then DE_ENTSOE.inc again. Otherwise Balmorel solves with
+    another DE than the Demand Level.
+
+    Args:
+        data_path (str | Path): The scenario's 'data' folder.
+        base_data_path (str | Path): base/data.
+    """
+    for addon in DE_ADDONS:
+        if not (Path(base_data_path) / addon).exists():
+            continue
+        wrapper = Path(data_path) / addon
+        if not wrapper.exists():
+            warn(
+                f"There is no {wrapper}, so base's {addon} adjusts DE after DE_ENTSOE.inc and Balmorel "
+                f"doesn't solve with the demand level. Add one with\n$include '../../base/data/{addon}';\n"
+                "$if EXIST '../data/DE_ENTSOE.inc' $INCLUDE '../data/DE_ENTSOE.inc';"
+            )
+            continue
+        lines = [line for line in wrapper.read_text().splitlines() if not line.lstrip().startswith("*")]
+        if not any("DE_ENTSOE.inc" in line for line in lines):
+            warn(
+                f"{wrapper} doesn't include DE_ENTSOE.inc after base's {addon}, so Balmorel doesn't solve "
+                "with the demand level. End it with\n$if EXIST '../data/DE_ENTSOE.inc' $INCLUDE '../data/DE_ENTSOE.inc';"
+            )
 
 
 # ------------------------------- #
@@ -471,7 +668,14 @@ def append_de_var_t_include(de_var_t_inc_path: str | Path, base_data_dir: str = 
     print(f"Added the $include of DE_VAR_T_ENTSOE.inc to {de_var_t_inc_path}")
 
 
-def write_de_override(levels: pd.DataFrame, year: int, basis: str, scenario_data_path: str | Path) -> IncFile:
+def write_de_override(
+    levels: pd.DataFrame,
+    year: int,
+    basis: str,
+    scenario_data_path: str | Path,
+    heat: str = "eurostat",
+    previous_scenario: str | None = None,
+) -> IncFile:
     """Write DE_ENTSOE.inc with the Demand Level of `year`.
 
     Args:
@@ -479,25 +683,36 @@ def write_de_override(levels: pd.DataFrame, year: int, basis: str, scenario_data
         year (int): The Backcast Year.
         basis (str): 'entsoe' or 'eurostat'.
         scenario_data_path (str | Path): The scenario's 'data' folder.
+        heat (str, optional): 'eurostat' or 'model'. Defaults to 'eurostat'.
+        previous_scenario (str | None, optional): The run the heating came
+            from, named in the header with 'model' heat.
 
     Returns:
         IncFile: The saved IncFile instance.
     """
-    source = (
-        "ENTSO-E load net of distribution losses"
-        if basis == "entsoe"
-        else "Eurostat final electricity consumption"
-    )
+    if heat == "model":
+        prefix = (
+            f"* Electricity demand level for {year}: ENTSO-E load less transmission losses, net of\n"
+            f"* distribution losses, less the electricity {previous_scenario or 'the previous run'} used for heat\n"
+            "* (ENDOGENOUS_ELECT2HEAT, see CONTEXT.md) - generated, do not hand-edit\n"
+        )
+    else:
+        source = (
+            "ENTSO-E load net of distribution losses"
+            if basis == "entsoe"
+            else "Eurostat final electricity consumption"
+        )
+        prefix = (
+            f"* Electricity demand level for {year}: {source}, less\n"
+            "* Eurostat electricity for heating (see CONTEXT.md) - generated, do not hand-edit\n"
+        )
     lines = [
         f"DE('{year}','{row.Region}','{row.User}')={row.Value:.1f};\n"
         for row in levels.sort_values(["Region", "User"]).itertuples()
     ]
 
     inc_file = IncFile(
-        prefix=(
-            f"* Electricity demand level for {year}: {source}, less\n"
-            "* Eurostat electricity for heating (see CONTEXT.md) - generated, do not hand-edit\n"
-        ),
+        prefix=prefix,
         body="".join(lines),
         suffix="",
         name="DE_ENTSOE",
@@ -549,10 +764,17 @@ def generate_demand_level(
     coverage_bounds: tuple[float, float] = COVERAGE_BOUNDS,
     gams_system_directory: str | None = None,
     reload_input: bool = False,
+    heat: str = "model",
+    load_results: str | Path | None = None,
 ) -> IncFile:
     """Write DE_ENTSOE.inc and backcastoutput/demand_level.csv for a Balmorel scenario.
 
-    The scenario's DE.inc must include DE_ENTSOE.inc after base's DE.inc.
+    The scenario's DE.inc must include DE_ENTSOE.inc after base's DE.inc, and
+    its INDUSTRY_DE.inc and INDIVUSERS_DE.inc again after base's. With 'model'
+    heat, the heating and transmission losses come from the previous run's
+    balmorel_load.csv, which must be the run that solved with the scenario's
+    current DE_ENTSOE.inc (warned about if not). Its residual is printed, for
+    the user to decide whether to iterate again.
 
     Args:
         balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
@@ -568,11 +790,37 @@ def generate_demand_level(
         gams_system_directory (str | None, optional): GAMS system directory.
         reload_input (bool, optional): Run ReadData again instead of reusing
             the cached input GDX. Defaults to False.
+        heat (str, optional): 'model' takes the heating from the previous
+            run, 'eurostat' from Eurostat (the first run of a new Backcast
+            Year). Defaults to 'model'.
+        load_results (str | Path | None, optional): The previous run's
+            balmorel_load.csv. Defaults to <scenario>/backcastoutput/balmorel_load.csv.
+
+    Raises:
+        FileNotFoundError: With 'model' heat, if there is no previous run.
 
     Returns:
         IncFile: The saved IncFile instance.
     """
     scenario_path = Path(balmorel_model_folder) / scenario
+    if heat not in HEAT_SOURCES:
+        raise ValueError(f"Unknown heat source '{heat}', use one of {HEAT_SOURCES}")
+    if heat == "model" and basis != "entsoe":
+        raise ValueError("Heat from the previous run ('model') needs the 'entsoe' basis")
+
+    previous = None
+    if heat == "model":
+        load_results = Path(load_results) if load_results else scenario_path / "backcastoutput" / "balmorel_load.csv"
+        if not load_results.exists():
+            raise FileNotFoundError(
+                f"No previous backcast run at {load_results}: run `format` on a solved backcast first, "
+                "or use `--heat eurostat` for the first run of a new backcast year"
+            )
+        previous = previous_run_heat(load_results, year)
+        print(f"Taking electric heating and transmission losses from {previous.attrs['scenario']} ({load_results})")
+        check_previous_run(previous, scenario_path / "data" / "DE_ENTSOE.inc", year)
+    check_de_wrappers(scenario_path / "data", Path(balmorel_model_folder) / "base" / "data")
+
     if eurostat_data_path is None:
         eurostat_data_path = scenario_path / "eurostatdata"
     balances = electricity_balances(year, eurostat_data_path)
@@ -580,7 +828,8 @@ def generate_demand_level(
     model = load_input_data(balmorel_model_folder, scenario, gams_system_directory, reload_input, ("DE_ENTSOE.inc",))
     load = split_shared_load(annual_load(sum_zones(zones), year), balances)
     levels, summary = demand_levels(
-        model.get_input("DE"), model.get_input("DISLOSS_E"), load, balances, year, basis, coverage_bounds
+        model.get_input("DE"), model.get_input("DISLOSS_E"), load, balances, year, basis, coverage_bounds,
+        heat=heat, previous=previous,
     )
 
     output_path = scenario_path / "backcastoutput"
@@ -590,11 +839,21 @@ def generate_demand_level(
     with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", 250):
         print(summary.set_index("Country").round(2))
     print(
-        f"DE of the {len(written)} countries written goes from {written['BaseTWh'].sum():.1f} TWh "
+        f"DE of the {len(written)} countries written goes from {written['InputTWh'].sum():.1f} TWh "
         f"to {written['NewTWh'].sum():.1f} TWh"
     )
+    if previous is not None:
+        residual = written["ResidualTWh"]
+        print(
+            f"Residual of {previous.attrs['scenario']} over these countries: {residual.sum():+.1f} TWh in "
+            f"Europe, {residual.abs().sum():.1f} TWh summed over countries. Its load missed ENTSO-E's by this; "
+            "iterate while it falls (about 10 TWh summed is as close as other errors allow)."
+        )
 
-    inc_file = write_de_override(levels, year, basis, scenario_path / "data")
+    inc_file = write_de_override(
+        levels, year, basis, scenario_path / "data", heat=heat,
+        previous_scenario=previous.attrs["scenario"] if previous is not None else None,
+    )
     de_inc = scenario_path / "data" / "DE.inc"
     if not de_inc.exists() or "DE_ENTSOE.inc" not in de_inc.read_text():
         warn(
