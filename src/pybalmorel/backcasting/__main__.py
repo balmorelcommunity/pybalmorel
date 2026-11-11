@@ -1669,10 +1669,11 @@ def demand_level(
     """Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.
 
     Per region: ENTSO-E's load in YEAR (from `download --query load`) less
-    the previous backcast run's transmission losses, net of Balmorel's
-    distribution losses, less the electricity that run used for heat
-    (ENDOGENOUS_ELECT2HEAT), which Balmorel adds back endogenously. That
-    heating responds to prices, so solve, `format`, and run this again for
+    what the previous backcast run added on top of DE: its transmission
+    losses, the electricity it used for heat (ENDOGENOUS_ELECT2HEAT), and
+    its distribution losses on anything but exogenous demand (on that
+    heating, and on wind and solar output); all net of Balmorel's
+    distribution losses. That heating responds to prices, so solve, `format`, and run this again for
     as long as the printed residual keeps falling. With --heat eurostat (the
     first run of a new backcast year), Eurostat's electricity for household
     space and water heating and for district heating is left out instead.

@@ -12,7 +12,12 @@ hourly refinement to `demand-profile`.
 > See ADR 0015 and `docs/preprocessing/preparing_backcast.md`. Differences
 > from this spec: CH is written (coverage unchecked), the residual is
 > reported but no stop rule is enforced, the summary's `BaseTWh` is
-> `InputTWh`, and step 2 (the hourly refinement) is deferred.
+> `InputTWh`, and step 2 (the hourly refinement) is deferred. On
+> 2026-11-11 the formula below was corrected to
+> `X_k = (L_k − T_k − E_k − O_k)(1 − d_k)`: Balmorel's `DIST_LOSSES` also
+> holds losses on its electric heating and on wind and solar output
+> (`DISLOSS_E_AG`, 6.7 TWh in the compared countries), which this spec
+> missed, so the residual disagreed with the load comparison by 7.3 TWh.
 >
 > **Earlier status: not built.** This file was never committed, and
 > it was restored from the 2026-11-03 session. The tables below come

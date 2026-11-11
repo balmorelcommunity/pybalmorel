@@ -370,18 +370,24 @@ The `demand-level` command writes `<scenario-path>/data/DE_ENTSOE.inc`: the
 annual `DE` of the Backcast Year per region and user. Per zone k, the
 Demand Level is
 
-X_k = (L_k − T_k)(1 − d_k) − E_k
+X_k = (L_k − T_k − E_k − O_k)(1 − d_k)
 
 - L_k is ENTSO-E's load over the Backcast Calendar.
 - T_k is the previous backcast run's transmission losses (`TRANS_LOSSES`).
   ENTSO-E's load contains them, but Balmorel adds them on top of `DE`.
-- d_k is Balmorel's distribution loss (`DISLOSS_E`), weighted by the input
-  data's `DE`.
 - E_k is the electricity the previous run used for heat
   (`ENDOGENOUS_ELECT2HEAT`), which Balmorel adds back endogenously.
+- O_k is the previous run's distribution losses on anything but exogenous
+  demand: `DIST_LOSSES` less `EXOGENOUS` × d/(1 − d), per Balmorel region.
+  That is the losses on its electric heating, and the 1-2% of wind and
+  solar output that Balmorel books as distribution loss (`DISLOSS_E_AG`;
+  6.7 TWh in the compared countries in `backcast_R2023` of 2026-11-10).
+- d_k is Balmorel's distribution loss (`DISLOSS_E`), weighted by the input
+  data's `DE`.
 
-Balmorel's load is then ENTSO-E's, if the run's heating and losses stay as
-they were. They respond to prices, and so to the level: E2H falls by about
+Balmorel's load as `format` compares it (`EXOGENOUS`,
+`ENDOGENOUS_ELECT2HEAT`, `DIST_LOSSES` and `TRANS_LOSSES`) is then
+ENTSO-E's, if the run's heating and losses stay as they were. They respond to prices, and so to the level: E2H falls by about
 0.3 TWh per TWh of `DE`. The level is therefore iterated over runs (see
 [ADR 0015](../adr/0015-demand-level-net-of-the-models-own-heating.md)):
 
@@ -394,7 +400,7 @@ they were. They respond to prices, and so to the level: E2H falls by about
 4. Repeat 2-3 for as long as you like. The command prints the previous
    run's residual, X_k less that run's exogenous load, summed over Europe
    and summed in absolute terms over countries. It is what that run's load
-   missed ENTSO-E's by, at final-consumption level. Around 10 TWh summed
+   missed ENTSO-E's by, net of distribution losses. Around 10 TWh summed
    over countries is as close as the other errors allow; nothing stops the
    iteration for you.
 
@@ -430,17 +436,18 @@ sampled run).
 - The summary is saved to `backcastoutput/demand_level.csv`. Next to the
   level (`NewTWh`) and the input data's `DE` (`InputTWh`, the previous
   level after the first run), it reports the previous run's heating
-  (`E2H_TWh`), losses (`TransLossTWh`), exogenous load (`PrevExoTWh`) and
+  (`E2H_TWh`), transmission losses (`TransLossTWh`), other distribution
+  losses (`OtherDistLossTWh`), exogenous load (`PrevExoTWh`) and
   `ResidualTWh`, and Balmorel's electric heating less Eurostat's
   (`E2H_minus_H_TWh`).
 
 `--heat eurostat` leaves out the electricity Eurostat reports for heating
-instead of E_k, with no transmission losses: households' space and water
+instead of E_k, with no T_k or O_k: households' space and water
 heating (`nrg_d_hhq`) and electric boilers and heat pumps in district
 heating (`nrg_bal_c`). It needs no previous run, so it is how the first
 run of a new Backcast Year gets its level. Its load misses ENTSO-E's by
 the model's electric heating less Eurostat's and by the transmission
-losses. Electric heating in services has no Eurostat split, so with it
+losses and O_k. Electric heating in services has no Eurostat split, so with it
 that heating stays in `DE` and is counted again by Balmorel's tertiary
 heating. `--basis eurostat` (only with `--heat eurostat`) takes Eurostat
 final consumption less heating instead of ENTSO-E's load.

@@ -2124,9 +2124,11 @@ def test_previous_run_heat_sums_each_category_per_region(tmp_path):
 
     previous = previous_run_heat(file, 2023)
 
-    assert previous.loc["DK1"].to_dict() == pytest.approx({"EXO": 2.0 * 8736, "E2H": 0.5 * 8736, "TLoss": 0.1 * 8736})
+    assert previous.loc["DK1"].to_dict() == pytest.approx(
+        {"EXO": 2.0 * 8736, "E2H": 0.5 * 8736, "TLoss": 0.1 * 8736, "DLoss": 9.0 * 8736}
+    )
     # A category without rows counts as 0
-    assert previous.loc["NO1"].to_dict() == pytest.approx({"EXO": 8736.0, "E2H": 0.0, "TLoss": 0.0})
+    assert previous.loc["NO1"].to_dict() == pytest.approx({"EXO": 8736.0, "E2H": 0.0, "TLoss": 0.0, "DLoss": 0.0})
     assert previous.attrs["scenario"] == "backcast_R2023"
 
 
@@ -2153,9 +2155,17 @@ def test_previous_run_heat_rejects_a_file_that_is_not_one_full_hourly_year(tmp_p
         previous_run_heat(file, 2023)
 
 
-def _previous(rows: dict[str, tuple[float, float, float]]) -> pd.DataFrame:
-    """Previous-run EXO, E2H and TLoss per Balmorel region, in MWh over the 8736 hours."""
-    return pd.DataFrame.from_dict(rows, orient="index", columns=["EXO", "E2H", "TLoss"])
+def _previous(rows: dict[str, tuple[float, ...]], disloss: dict[str, float] | None = None) -> pd.DataFrame:
+    """Previous-run EXO, E2H, TLoss and DLoss per Balmorel region, in MWh over the 8736 hours.
+
+    Without a fourth value, DLoss is a run's losses on exogenous demand and
+    heating alone, (EXO + E2H) d/(1-d) with d from `disloss` (0 if not given).
+    """
+    frame = pd.DataFrame({region: values[:3] for region, values in rows.items()}, index=["EXO", "E2H", "TLoss"]).T
+    d = pd.Series(disloss or {}, dtype=float).reindex(frame.index).fillna(0.0)
+    own = (frame["EXO"] + frame["E2H"]) * d / (1 - d)
+    frame["DLoss"] = [values[3] if len(values) > 3 else own[region] for region, values in rows.items()]
+    return frame
 
 
 def test_model_heat_level_is_load_less_losses_and_the_previous_runs_heating():
@@ -2163,7 +2173,7 @@ def test_model_heat_level_is_load_less_losses_and_the_previous_runs_heating():
 
     to_year = 8760 / 8736
     load = pd.Series({"DK1": 20e6})
-    previous = _previous({"DK1": (14e6, 3e6, 0.2e6)})
+    previous = _previous({"DK1": (14e6, 3e6, 0.2e6)}, {"DK1": 0.05})
 
     levels, summary = demand_levels(
         _de([("DK1", "RESE", 6e6), ("DK1", "OTHER", 12e6)]), _disloss({"DK1": 0.05}), load,
@@ -2181,6 +2191,29 @@ def test_model_heat_level_is_load_less_losses_and_the_previous_runs_heating():
     assert row["E2H_minus_H_TWh"] == pytest.approx((e2h - 6e6) / 1e6)
     # What the previous run missed at final-consumption level
     assert row["ResidualTWh"] == pytest.approx(((20e6 - tloss) * 0.95 - 14e6 * to_year - e2h) / 1e6)
+
+
+def test_model_heat_leaves_out_the_previous_runs_losses_on_wind_and_solar_output():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    to_year = 8760 / 8736
+    load = pd.Series({"DK1": 20e6})
+    # 0.3 TWh of DIST_LOSSES beyond those on exogenous demand and heating, e.g. 2% of 15 TWh of wind
+    own = (14e6 + 3e6) * 0.05 / 0.95
+    previous = _previous({"DK1": (14e6, 3e6, 0.2e6, own + 0.3e6)})
+
+    levels, summary = demand_levels(
+        _de([("DK1", "OTHER", 18e6)]), _disloss({"DK1": 0.05}), load,
+        _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}}), 2023, heat="model", previous=previous,
+    )
+
+    x = levels["Value"].sum()
+    e2h, tloss = 3e6 * to_year, 0.2e6 * to_year
+    other = (3e6 * 0.05 / 0.95 + 0.3e6) * to_year
+    assert summary.iloc[0]["OtherDistLossTWh"] == pytest.approx(other / 1e6)
+    # Balmorel's load as compared: EXO + E2H + DIST_LOSSES + TRANS_LOSSES, with the
+    # losses on the new EXO at d and the rest as in the previous run
+    assert x / 0.95 + e2h + other + tloss == pytest.approx(load["DK1"])
 
 
 def test_model_heat_sums_e2h_and_losses_over_de4_and_keeps_base_ratios():
@@ -2203,7 +2236,7 @@ def test_model_heat_sums_e2h_and_losses_over_de4_and_keeps_base_ratios():
 def test_model_heat_uses_each_norwegian_regions_own_e2h_and_losses():
     from pybalmorel.backcasting.demand import demand_levels
 
-    previous = _previous({"NO1": (1, 4e6, 0.1e6), "NO2": (1, 1e6, 0.0)})
+    previous = _previous({"NO1": (1, 4e6, 0.1e6), "NO2": (1, 1e6, 0.0)}, {"NO1": 0.1})
 
     levels, _ = demand_levels(
         _de([("NO1", "OTHER", 30e6), ("NO2", "OTHER", 40e6)]), _disloss({"NO1": 0.1, "NO2": 0.0}),
@@ -2293,5 +2326,5 @@ def test_model_heat_header_names_the_previous_run(tmp_path):
     write_de_override(levels, 2023, "entsoe", tmp_path, heat="model", previous_scenario="backcast_R2023")
 
     content = (tmp_path / "DE_ENTSOE.inc").read_text()
-    assert "less the electricity backcast_R2023 used for heat" in content
+    assert "other than on exogenous demand of backcast_R2023" in content
     assert "ENDOGENOUS_ELECT2HEAT" in content

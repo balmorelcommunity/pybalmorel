@@ -15,23 +15,28 @@ system level (2,694.7 against 2,699.6 TWh), but the country gaps summed to
 175 TWh in absolute terms, nearly all of it E2H − H: IT +50.6 TWh (E2H − H
 +45.5), FR −25.5 (−24.7), NO −13.5 (−13.6). The system match itself hid
 offsetting errors (LU left out of the Balmorel side, `DE` 0.27% low).
-(a′) also counted transmission losses twice, about 20 TWh in that run.
+(a′) also counted transmission losses twice, about 20 TWh in that run,
+and the distribution losses Balmorel books on wind and solar output,
+about 7 TWh.
 
 The Demand Level of canonical region k is now
 
-    X_k = (L_k − T_k)(1 − d_k) − E_k
+    X_k = (L_k − T_k − E_k − O_k)(1 − d_k)
 
-with L_k ENTSO-E's load, d_k the distribution loss, and T_k and E_k the
-previous backcast run's transmission losses and electricity for heat,
-summed over k's Balmorel regions and scaled from the calendar's 8736 hours
-to Balmorel's 8760. Balmorel's load, `(EXO + E2H)/(1 − d) + T`, then equals
-L_k exactly, as long as E2H and T stay as they were.
+with L_k ENTSO-E's load, d_k the distribution loss, and T_k, E_k and O_k
+the previous backcast run's transmission losses, electricity for heat, and
+distribution losses on anything but exogenous demand (on its electric
+heating, and the 1–2% of wind and solar output Balmorel books as
+distribution loss), summed over k's Balmorel regions and scaled from the
+calendar's 8736 hours to Balmorel's 8760. Balmorel's load as `format`
+compares it, `EXO + E2H + DIST_LOSSES + TRANS_LOSSES`, then equals L_k
+exactly, as long as E2H and the losses stay as they were.
 
 They don't, because E2H responds to prices: lower `DE` gives lower prices
 and more electric heating, roughly −0.3 TWh of E2H per TWh of `DE` in
 Europe (−0.06 in IT to −0.59 in ES, from two runs that differed in more
 than `DE`). The level is therefore a fixed-point iteration over runs,
-`X_{n+1} = (L − T_n)(1 − d) − E_n`, which converges for any slope between
+`X_{n+1} = (L − T_n − E_n − O_n)(1 − d)`, which converges for any slope between
 −1 and 0, with the error shrinking by about that factor each run.
 `demand-level --heat model` is the default. Each run prints the previous
 run's residual, X less that run's exogenous load, summed over Europe and
