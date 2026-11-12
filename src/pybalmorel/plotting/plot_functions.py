@@ -44,7 +44,7 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
     
     # Unit
     if 'Unit' in df.columns:
-        unit = df['Unit'][0]  # Get the first unit value if the column exists
+        unit = df['Unit'].iloc[0]  # Get the first unit value if the column exists
     else:
         unit = None  # Set to an empty list
 

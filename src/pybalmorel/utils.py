@@ -113,13 +113,13 @@ def symbol_to_df(db: gams.GamsDatabase, symbol: str,
         df = container[symbol].records
 
         if type(db[symbol]) == gams.GamsParameter:
-            df = df.astype({col: object for col in df.columns[:-1]}) # Domain columns come back as category dtype
+            df = df.astype({col: str for col in df.columns[:-1]}) # Domain columns come back as category dtype
             df = create_parameter_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         elif type(db[symbol]) == gams.GamsSet:
-            df = df.drop(columns=['element_text']).astype(object)
+            df = df.drop(columns=['element_text']).astype(str)
             df = create_set_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         elif type(db[symbol]) == gams.GamsVariable or type(db[symbol]) == gams.GamsEquation:
-            df = df.astype({col: object for col in df.columns[:-5]}) # Domain columns come back as category dtype
+            df = df.astype({col: str for col in df.columns[:-5]}) # Domain columns come back as category dtype
             df = create_variable_columns(df, db, symbol, preformatted_columns[result_type.lower()], cols)
         else:
             raise TypeError('%s is not supported by symbol_to_df'%(str(type(db[symbol]))))

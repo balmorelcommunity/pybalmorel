@@ -554,7 +554,7 @@ def _prepare_profile_data(
                 .fillna(0)
             )
         fD = fDem.groupby(["Y", "C", "VARIABLE_CATEGORY", "SSS", "TTT"], as_index=False)
-        fD = fD.aggregate({"Val": np.sum})
+        fD = fD.aggregate({"Val": "sum"})
         dems = fD[(fD["Y"] == year) & (fD["C"] == country)]
         fD = fDem[fDem.C == country]
     elif CorRorA == "R":
