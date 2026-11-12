@@ -37,10 +37,13 @@ ACRONYM_SCALE = 1e301
 # Technology types that produce electricity from a fuel
 THERMAL_TYPES = ("GCND", "GBPR", "GEXT")
 
-# Fuel groups, with GAMS-safe labels: Balmorel GDFUEL names and ENTSO-E production types
+# Fuel groups, with GAMS-safe labels: Balmorel GDFUEL names and ENTSO-E production types.
+# Hard coal and lignite are one group, because the two sources label them differently:
+# Balmorel gives the lignite fleets of e.g. BG, RO, CZ, HU, SK and the western Balkans
+# the fuel COAL, where ENTSO-E reports them as lignite. Separate groups rated that
+# lignite GKFX by the country's hard coal alone (BG: 356 MW installed / 4475 MW GKFX).
 GROUP_FUELS = {
-    "LIGNITE": ("LIGNITE",),
-    "HARDCOAL": ("COAL",),
+    "COAL": ("COAL", "LIGNITE"),
     # Retort gas is coke-oven gas, ENTSO-E's coal-derived gas
     "GAS": ("NATGAS", "OTHERGAS", "LNG", "RETORTGAS"),
     "OIL": ("FUELOIL", "LIGHTOIL"),
@@ -51,8 +54,7 @@ GROUP_FUELS = {
     "WASTE": ("MUNIWASTE",),
 }
 GROUP_PRODUCTION_TYPES = {
-    "LIGNITE": ("Fossil Brown coal/Lignite",),
-    "HARDCOAL": ("Fossil Hard coal",),
+    "COAL": ("Fossil Hard coal", "Fossil Brown coal/Lignite"),
     "GAS": ("Fossil Gas", "Fossil Coal-derived gas"),
     "OIL": ("Fossil Oil",),
     "OILSHALE_PEAT": ("Fossil Oil shale", "Fossil Peat"),

@@ -18,8 +18,12 @@ k(1 − u):
 
 `thermal-availability` writes it as weekly `GKRATE` overrides to
 `GKRATE_THERMAL_ENTSOE.inc`, which the scenario includes after the nuclear
-ratings. The groups are lignite, hard coal, gas, oil, oil shale and peat,
-biomass, and waste. Technologies are assigned to a group by their `GDFUEL`.
+ratings. The groups are coal (hard coal and lignite), gas, oil, oil shale
+and peat, biomass, and waste. Technologies are assigned to a group by their
+`GDFUEL`. Hard coal and lignite are one group because Balmorel labels the
+lignite fleets of e.g. BG, RO, CZ, HU and SK as `COAL`, which ENTSO-E reports
+as lignite; separate groups rated them by the country's small hard coal
+fleet (2026-11-12).
 An electricity-producing fuel that belongs to no group stops the command,
 so a new fuel can't silently keep full availability. Every technology of a
 group in a country gets the same rating.

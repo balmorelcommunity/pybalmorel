@@ -224,7 +224,7 @@ The `thermal-availability` command writes
 `<scenario-path>/data/GKRATE_THERMAL_ENTSOE.inc`: one `GKRATE` per fossil,
 biomass or waste (area, technology) and Backcast Calendar week. The rating
 is the country's Thermal Availability for the technology's fuel group
-(`HARDCOAL`, `LIGNITE`, `GAS`, `OIL`, `BIOMASS`, `WASTE`): ENTSO-E's
+(`COAL`, `GAS`, `OIL`, `OILSHALE_PEAT`, `BIOMASS`, `WASTE`): ENTSO-E's
 installed capacity of the group as a share of its `GKFX` (at most 1), less
 the share ENTSO-E reports out of service that week. It reads the files of
 `download --query installed_generation_capacity --query

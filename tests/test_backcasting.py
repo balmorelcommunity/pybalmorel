@@ -1404,7 +1404,7 @@ def test_thermal_groups_are_selected_by_acronym_name():
     with_checks = group_capacity(*inputs, 2023, check_only=True)
 
     assert capacity.groupby(["Region", "Group"]).Capacity.sum().to_dict() == {
-        ("DE", "HARDCOAL"): 1000.0, ("DE", "LIGNITE"): 300.0, ("FR", "GAS"): 200.0,
+        ("DE", "COAL"): 1300.0, ("FR", "GAS"): 200.0,
     }
     assert with_checks.query("Group == 'SOLAR'").Capacity.sum() == 50.0
 
@@ -1422,7 +1422,7 @@ def test_unmapped_thermal_fuel_stops():
 def test_installed_capacity_scales_and_caps_the_rating(installed, k):
     from pybalmorel.backcasting.thermal import thermal_ratings
 
-    installed = pd.Series({("DE", "HARDCOAL"): installed})
+    installed = pd.Series({("DE", "COAL"): installed})
 
     ratings = thermal_ratings(_coal_capacity(), installed, None)
 
@@ -1437,7 +1437,7 @@ def test_outage_lowers_its_week_by_lost_hours():
     outages = pd.DataFrame([_outage("a", 1, monday, monday + pd.Timedelta(days=2))])
 
     energy = weekly_outage_energy(latest_outages(outages), 2023)
-    ratings = thermal_ratings(_coal_capacity(), pd.Series({("DE", "HARDCOAL"): 1000.0}), energy)
+    ratings = thermal_ratings(_coal_capacity(), pd.Series({("DE", "COAL"): 1000.0}), energy)
 
     u = 500 * 48 / (1000 * 168)
     week = ratings.set_index("Season")
@@ -1461,7 +1461,7 @@ def test_latest_revision_counts_once_and_withdrawn_events_count_nothing():
 
     energy = weekly_outage_energy(latest_outages(outages), 2023)
 
-    assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
+    assert energy.loc[("DE", "COAL", "S01"), "Forced"] == 500 * 24
 
 
 def test_duplicated_outage_row_counts_once():
@@ -1474,7 +1474,7 @@ def test_duplicated_outage_row_counts_once():
 
     energy = weekly_outage_energy(latest_outages(outages), 2023)
 
-    assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
+    assert energy.loc[("DE", "COAL", "S01"), "Forced"] == 500 * 24
 
 
 def test_outage_spanning_two_weeks_is_split_by_hours():
@@ -1488,7 +1488,7 @@ def test_outage_spanning_two_weeks_is_split_by_hours():
     energy = weekly_outage_energy(latest_outages(outages), 2023)
 
     assert energy["Planned"].to_dict() == {
-        ("DE", "HARDCOAL", "S01"): 500 * 24, ("DE", "HARDCOAL", "S02"): 500 * 24,
+        ("DE", "COAL", "S01"): 500 * 24, ("DE", "COAL", "S02"): 500 * 24,
     }
     assert energy["Forced"].eq(0).all()
 
@@ -1497,7 +1497,7 @@ def test_zero_thermal_rating_is_eps(tmp_path):
     from pybalmorel.backcasting.thermal import thermal_ratings, write_thermal_gkrate_override
 
     capacity = _coal_capacity()
-    ratings = thermal_ratings(capacity, pd.Series({("DE", "HARDCOAL"): 0.0}), None)
+    ratings = thermal_ratings(capacity, pd.Series({("DE", "COAL"): 0.0}), None)
     write_thermal_gkrate_override(ratings, capacity, tmp_path)
 
     text = (tmp_path / "GKRATE_THERMAL_ENTSOE.inc").read_text()
@@ -1529,10 +1529,10 @@ def test_installed_capacity_sums_zones_of_a_region(tmp_path):
 
     installed = group_installed(
         load_installed_capacity(tmp_path, 2023),
-        {"HARDCOAL": ("Fossil Hard coal",), "GAS": ("Fossil Gas",)},
+        {"COAL": ("Fossil Hard coal",), "GAS": ("Fossil Gas",)},
     )
 
-    assert installed.to_dict() == {("FR", "GAS"): 300.0, ("IT", "HARDCOAL"): 1200.0}
+    assert installed.to_dict() == {("FR", "GAS"): 300.0, ("IT", "COAL"): 1200.0}
 
 
 # %% ------------------------------- ###
@@ -1639,15 +1639,15 @@ def test_floor_above_available_capacity_is_capped_and_without_gkfx_dropped():
         {"AAA": ["DE4-S_A"], "GGG": ["COAL_CND"], "SSS": ["S01"], "Value": [0.5]}
     )
     floors = _floors(
-        [("DE", "HARDCOAL", "S01", 800.0), ("DE", "HARDCOAL", "S02", 800.0),
+        [("DE", "COAL", "S01", 800.0), ("DE", "COAL", "S02", 800.0),
          ("DE", "GAS", "S01", 300.0), ("XX", "GAS", "S01", 300.0)]
     )
 
     with pytest.warns(UserWarning) as warnings:
         capped = cap_floors(floors, capacity, gkrate, ["DE4-S", "DE4-W"]).set_index(["Group", "Season"])
 
-    assert capped.loc[("HARDCOAL", "S01"), ["Floor", "K", "Capped"]].tolist() == [500.0, 500.0, True]
-    assert capped.loc[("HARDCOAL", "S02"), ["Floor", "Capped"]].tolist() == [800.0, False]
+    assert capped.loc[("COAL", "S01"), ["Floor", "K", "Capped"]].tolist() == [500.0, 500.0, True]
+    assert capped.loc[("COAL", "S02"), ["Floor", "Capped"]].tolist() == [800.0, False]
     assert np.isnan(capped.loc[("GAS", "S01"), "Floor"])
     assert set(capped["Region"]) == {"DE"}
     messages = " ".join(str(warning.message) for warning in warnings)
@@ -1657,7 +1657,7 @@ def test_floor_above_available_capacity_is_capped_and_without_gkfx_dropped():
 def test_must_run_files_list_zones_groups_and_floors(tmp_path):
     from pybalmorel.backcasting.mustrun import write_must_run_files
 
-    floors = _floors([("DE", "LIGNITE", "S01", 3000.0), ("DE", "BIOMASS", "S02", 3600.04), ("DK1", "GAS", "S01", np.nan)])
+    floors = _floors([("DE", "COAL", "S01", 3000.0), ("DE", "BIOMASS", "S02", 3600.04), ("DK1", "GAS", "S01", np.nan)])
 
     inc_files = write_must_run_files(floors, ["DE4-W", "DE4-E", "DK1"], ["LIGNITE", "WOODCHIPS", "STRAW"], tmp_path)
 
@@ -1665,9 +1665,10 @@ def test_must_run_files_list_zones_groups_and_floors(tmp_path):
     read = lambda name: (tmp_path / f"{name}.inc").read_text()
     assert "/\nDE\n/;" in read("MUSTRUN_ZONE")
     assert "DE.(DE4-E,DE4-W)" in read("MUSTRUN_ZONE_RRR")
-    assert "/\nLIGNITE\nBIOMASS\n/;" in read("MUSTRUN_GROUP")
+    assert "/\nCOAL\nBIOMASS\n/;" in read("MUSTRUN_GROUP")
+    assert "COAL.(LIGNITE)" in read("MUSTRUN_GROUP_FFF")
     assert "BIOMASS.(WOODCHIPS,STRAW)" in read("MUSTRUN_GROUP_FFF")
-    assert "DE.BIOMASS.S02 3600.0\nDE.LIGNITE.S01 3000.0\n" in read("MUSTRUN_FLOOR")
+    assert "DE.BIOMASS.S02 3600.0\nDE.COAL.S01 3000.0\n" in read("MUSTRUN_FLOOR")
 
 
 class _FakeModel:
