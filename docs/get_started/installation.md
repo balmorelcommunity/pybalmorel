@@ -35,7 +35,7 @@ dependencies:
   - click>=8
   - pip
   - pip:
-    - pybalmorel==1.4.1
+    - pybalmorel==1.4.2
 ```
 
 ## GAMS
