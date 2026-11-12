@@ -919,48 +919,58 @@ def plot_bar_chart(
         columns_to_keep (list, optional): Index levels the bars are stacked
             by, e.g. ['Technology']. Defaults to [].
         per_region (bool, optional): Draw a pair of bars per region instead
-            of one pair in total. Defaults to False.
+            of one pair in total, Balmorel's left of the region's tick and
+            ENTSO-E's right of it. Defaults to False.
         style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
 
     Returns:
         tuple[Figure, Axes]: The figure and its axes.
     """
     with plot_style(style) as (tokens, fuel_colours):
-        if per_region:
+        bar_style = dict(
+            kind="bar", stacked=True, color=fuel_colours,
+            edgecolor=tokens["surface"], linewidth=0.5,
+        )
+        if per_region and len(columns_to_keep) > 0:
             fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
-
-            if len(columns_to_keep) > 0:
-                df_agg = df.pivot_table(
-                    index=columns_to_keep,
-                    columns="Region",
-                    values=["ENTSOE", "BALMOREL"],
-                    aggfunc=lambda x: np.sum(x) / 1e6,
-                ).T
-                df_agg.index.names = ["Value", "Region"]
-                df_agg = df_agg.sort_index(level=["Region", "Value"])
-                df_agg = df_agg.reset_index().set_index(["Region", "Value"])
-            else:
+            df_agg = df.pivot_table(
+                index="Region",
+                columns=columns_to_keep,
+                values=["BALMOREL", "ENTSOE"],
+                aggfunc=lambda x: np.sum(x) / 1e6,
+            )
+            # position=1 puts the bar's right edge on the tick, position=0 its left edge.
+            # The legend takes Balmorel's segments only, one entry per category
+            df_agg["BALMOREL"].plot(ax=ax, position=1, width=0.4, legend=False, **bar_style)
+            handles, labels = ax.get_legend_handles_labels()
+            df_agg["ENTSOE"].plot(ax=ax, position=0, width=0.4, legend=False, **bar_style)
+            ax.legend(handles, labels, loc="center left", bbox_to_anchor=(1.01, 0.5))
+            ax.set_xlim(-0.6, len(df_agg) - 0.4)
+            ax.text(
+                0, 1.02, "Left: Balmorel, Right: ENTSO-E", transform=ax.transAxes,
+                ha="left", va="bottom", fontsize=10, color=tokens["ink2"],
+            )
+        else:
+            if per_region:
+                fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
                 df_agg = df.pivot_table(
                     index="Region",
                     values=["ENTSOE", "BALMOREL"],
                     aggfunc=lambda x: np.sum(x) / 1e6,
                 )
-        else:
-            fig, ax = plt.subplots()
-
-            if len(columns_to_keep) > 0:
-                df_agg = df.pivot_table(
-                    index=columns_to_keep, aggfunc=lambda x: np.sum(x) / 1e6
-                ).T
             else:
-                df_agg = df.T.sum() / 1e6
+                fig, ax = plt.subplots()
 
-        df_agg.plot(
-            ax=ax, kind="bar", stacked=True, color=fuel_colours,
-            edgecolor=tokens["surface"], linewidth=0.5,
-        )
+                if len(columns_to_keep) > 0:
+                    df_agg = df.pivot_table(
+                        index=columns_to_keep, aggfunc=lambda x: np.sum(x) / 1e6
+                    ).T
+                else:
+                    df_agg = df.T.sum() / 1e6
+
+            df_agg.plot(ax=ax, **bar_style)
+            ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
         ax.set_ylabel("Generation (TWh)")
-        ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
 
     return fig, ax
 

@@ -1265,6 +1265,36 @@ def test_dark_generation_bars_use_the_dark_category_colours():
     assert all(bar.get_edgecolor() == to_rgba(THEMES["dark"]["surface"]) for bar in ax.patches)
 
 
+def test_generation_per_region_ticks_are_regions_with_balmorel_left_of_entsoe():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from pybalmorel.backcasting.__main__ import plot_bar_chart
+
+    technologies = ["Fossil Solid", "Wind"]
+    generation = pd.DataFrame(
+        {"ENTSOE": [5.0, 3.0, 7.0, 1.0], "BALMOREL": [4.0, 2.0, 6.0, 2.0]},
+        index=pd.MultiIndex.from_product(
+            [["DE", "DK"], technologies, _hours(1)], names=["Region", "Technology", "Time"]
+        ),
+    )
+
+    fig, ax = plot_bar_chart(generation, ["Technology"], per_region=True)
+
+    assert [label.get_text() for label in ax.get_xticklabels()] == ["DE", "DK"]
+    legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert legend_labels == technologies
+    # Bars of DE: Balmorel's stack left of the tick, ENTSO-E's right of it
+    tick = ax.get_xticks()[0]
+    de_bars = [bar for bar in ax.patches if abs(bar.get_x() + bar.get_width() / 2 - tick) < 0.5]
+    left = [bar.get_height() for bar in de_bars if bar.get_x() + bar.get_width() / 2 < tick]
+    right = [bar.get_height() for bar in de_bars if bar.get_x() + bar.get_width() / 2 > tick]
+    assert left == pytest.approx([4.0 / 1e6, 2.0 / 1e6])
+    assert right == pytest.approx([5.0 / 1e6, 3.0 / 1e6])
+    texts = [text.get_text() for text in ax.texts]
+    assert any("Left: Balmorel" in text and "Right: ENTSO-E" in text for text in texts)
+
+
 @pytest.mark.parametrize("style, corner_alpha", [("light", 1.0), ("dark", 0.0)])
 def test_price_duration_command_saves_in_the_output_dir(tmp_path, style, corner_alpha):
     import matplotlib
