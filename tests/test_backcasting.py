@@ -29,11 +29,11 @@ from pybalmorel.backcasting.fuelprices import load_ttf_gas_prices, split_yahoo_t
 from pybalmorel.backcasting.flows import (
     align_flows,
     canonical_region,
-    entsoe_flow_limits,
+    compute_entsoe_transmission_overrides,
     flow_statistics,
     format_balmorel_flows,
     load_entsoe_flows,
-    observed_max_flow,
+    observed_flow_limits,
 )
 from pybalmorel.backcasting.pricelevel import deflator, eur_per_usd, to_price_year
 from pybalmorel.entsoe import (
@@ -296,12 +296,12 @@ def test_transmission_files_found_under_any_spelling(tmp_path):
         tmp_path / "2023_NO_2-DK_1_crossborder_flows.csv"
     )
     assert find_transmission_file(tmp_path, 2023, "DK_1", "NO_2") is None
-    assert observed_max_flow(2023, "10YNO-2--------T", "10YDK-1--------W", tmp_path) == 50.0
 
     # Read once, not summed twice
     flows = load_entsoe_flows(tmp_path, 2023)
     assert flows.query("From == 'DK1' and To == 'DE'")["Value"].tolist() == [100.0]
-    assert entsoe_flow_limits(tmp_path, 2023)[("DK1", "DE")] == 100.0
+    # A constant series, so every percentile is 100
+    assert observed_flow_limits(tmp_path, 2023)[("DK1", "DE")] == 100.0
 
 
 def _write_flow_csv(path, file_name, values, freq="15min"):
@@ -322,8 +322,9 @@ def test_flow_validation(tmp_path):
     it_ch = entsoe.query("From == 'IT'").set_index("Time")["Value"]
     assert it_ch.tolist() == [150.0, 110.0]  # hourly means of 15-min data, summed
 
-    limits = entsoe_flow_limits(tmp_path, 2023)
-    assert limits[("IT", "CH")] == 150.0
+    limits = observed_flow_limits(tmp_path, 2023)
+    assert limits[("IT", "CH")] == pytest.approx(149.6)  # 99th percentile of [150, 110]
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("IT", "CH")] == 150.0
 
     # Balmorel only reports the first hour IT-NORD -> CH; the rest is zero flow
     balmorel = format_balmorel_flows(
@@ -346,6 +347,60 @@ def test_flow_validation(tmp_path):
     assert stats.loc[("IT", "CH"), "ENTSOE_TWh"] == pytest.approx(260 / 1e6)
     assert stats.loc[("IT", "CH"), "BALMOREL_AtLimit"] == 0.5
     assert stats.loc[("IT", "CH"), "ENTSOE_AtLimit"] == 0.5
+
+
+def test_flow_limit_sums_pairs_before_the_percentile(tmp_path):
+    # Two Italian sub-zones into CH peaking in different hours
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A73I-CH_crossborder_flows.csv", [100.0, 0.0], freq="h")
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A70O-CH_crossborder_flows.csv", [0.0, 100.0], freq="h")
+
+    # The old sum of per-file maxima gave 200
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("IT", "CH")] == 100.0
+
+
+def test_flow_limit_percentile_100_is_the_maximum(tmp_path):
+    values = list(np.linspace(0.0, 500.0, 50))
+    _write_flow_csv(tmp_path, "2023_FR-ES_crossborder_flows.csv", values, freq="h")
+
+    assert observed_flow_limits(tmp_path, 2023, percentile=100)[("FR", "ES")] == 500.0
+    assert observed_flow_limits(tmp_path, 2023)[("FR", "ES")] < 500.0
+
+
+def test_flow_limit_of_rare_and_absent_directions(tmp_path):
+    # Flows in 3 hours out of 200 in one direction, never in the other
+    _write_flow_csv(tmp_path, "2023_SE_3-SE_2_crossborder_flows.csv", [0.0] * 197 + [1000.0, 1200.0, 1500.0], freq="h")
+    _write_flow_csv(tmp_path, "2023_SE_2-SE_3_crossborder_flows.csv", [0.0] * 200, freq="h")
+
+    limits = observed_flow_limits(tmp_path, 2023)
+    assert limits[("SE3", "SE2")] == pytest.approx(1494.0)  # not closed
+    assert limits[("SE2", "SE3")] == 0.0
+
+
+def test_overrides_split_the_canonical_limit(tmp_path, monkeypatch):
+    import pybalmorel.backcasting.flows as flows_module
+
+    monkeypatch.setattr(
+        flows_module,
+        "get_current_borders",
+        lambda *args: pd.DataFrame(
+            {
+                "RegionFrom": ["BE", "BE", "IT-NORD"],
+                "RegionTo": ["DE4-S", "DE4-W", "CH"],
+            }
+        ),
+    )
+    monkeypatch.setattr(flows_module, "fetch_annual_transmission_data", lambda *args: None)
+    _write_flow_csv(tmp_path, "2023_BE-DE_LU_crossborder_flows.csv", [800.0] * 4, freq="h")
+    _write_flow_csv(tmp_path, "2023_10Y1001A1001A73I-CH_crossborder_flows.csv", [300.0] * 4, freq="h")
+
+    overrides, failed_pairs = compute_entsoe_transmission_overrides("balmorel", "backcast", 2023, tmp_path, "key")
+
+    values = overrides.set_index(["RegionFrom", "RegionTo"])["Value"]
+    assert values[("BE", "DE4-S")] == 400.0
+    assert values[("BE", "DE4-W")] == 400.0
+    assert values[("IT-NORD", "CH")] == 300.0
+    assert ("10Y1001A1001A70O", "CH") in failed_pairs
+    assert ("BE", "DE_LU") not in failed_pairs
 
 
 def test_fetch_transmission_remembers_no_data_and_survives_timeouts(tmp_path, monkeypatch):
@@ -423,7 +478,7 @@ def test_generation_ignores_actual_consumption(tmp_path):
 
     assert generation["Hydro Pumped Storage"].fillna(0).tolist() == [100.0, 0.0]
     assert generation["Nuclear"].tolist() == [500.0, 500.0]
-    assert entsoe_to_category["Hydro Pumped Storage"] == "Storage & Flexibility"
+    assert entsoe_to_category["Hydro Pumped Storage"] == "Storage"
 
 
 def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
@@ -431,7 +486,7 @@ def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
 
     assert all((to, frm) in pairs for frm, to in pairs)
     assert ("FR", "BE") in pairs
-    # Saved under the spelling transmission-max-flow looks up
+    # Saved under the spelling transmission-flow-limit looks up
     assert ("10YDK-1--------W", "DE_LU") in pairs
     # Missing from entsoe-py's NEIGHBOURS
     assert ("GR", "10Y1001A1001A788") in pairs
@@ -445,6 +500,10 @@ def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
     [
         ([], ["load", "day_ahead_prices", "generation", "crossborder_flows"]),
         (["--query", "load", "--query", "crossborder_flows"], ["load", "crossborder_flows"]),
+        (
+            ["--query", "installed_generation_capacity", "--query", "unavailability_of_generation_units"],
+            ["installed_generation_capacity", "unavailability_of_generation_units"],
+        ),
     ],
 )
 def test_download_command(tmp_path, monkeypatch, args, expected):
@@ -503,3 +562,1799 @@ def test_fetch_annual_data_remembers_no_data_and_survives_timeouts(tmp_path, mon
     calls.clear()
     entsoe_module.fetch_annual_data("load", 2023, zones, tmp_path, "key")
     assert calls == ["AL"]
+
+
+def test_load_is_fetched_for_ireland_not_the_all_island_zone(tmp_path, monkeypatch):
+    from click.testing import CliRunner
+    import pybalmorel.entsoe as entsoe_module
+    from pybalmorel.backcasting.__main__ import main
+
+    zones = {}
+    monkeypatch.setattr(entsoe_module, "get_api_key", lambda: "key")
+    monkeypatch.setattr(
+        entsoe_module,
+        "fetch_annual_data",
+        lambda query, year, query_zones, path, api_key: zones.update({query: query_zones}),
+    )
+
+    args = ["download", str(tmp_path), "2023", "--query", "load", "--query", "day_ahead_prices"]
+    result = CliRunner().invoke(main, args)
+
+    assert result.exit_code == 0, result.output
+    assert "IE" in zones["load"] and "IE_SEM" not in zones["load"]
+    assert zones["day_ahead_prices"] == entsoe_module.bidding_zones
+    assert len(zones["load"]) == len(entsoe_module.bidding_zones)
+
+
+def test_all_island_load_is_not_read_next_to_ireland(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_entsoe_data, load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IE_SEM_load.csv", 2023, [5000.0, 5000.0])
+    _write_series_csv(tmp_path, "2023_IE_load.csv", 2023, [4000.0, 4000.0])
+    _write_series_csv(tmp_path, "2023_FR_load.csv", 2023, [1.0, 2.0])
+
+    zones = load_observed_load(str(tmp_path), 2023)
+    with pytest.warns(Warning, match="No ENTSO-E day_ahead_prices"):
+        load, _, _ = load_entsoe_data(str(tmp_path), 2023)
+
+    assert zones["IE"].tolist() == [4000.0, 4000.0]
+    assert load[load.Region == "IE"].Value.tolist() == [4000.0, 4000.0]
+    assert canonical_region("IE") == "IE"
+
+
+def test_all_island_load_without_ireland_warns(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IE_SEM_load.csv", 2023, [5000.0, 5000.0])
+    _write_series_csv(tmp_path, "2023_FR_load.csv", 2023, [1.0, 2.0])
+
+    with pytest.warns(UserWarning, match="2023_IE_load.csv is missing"):
+        zones = load_observed_load(str(tmp_path), 2023)
+
+    assert list(zones.columns) == ["FR"]
+
+
+# %% ------------------------------- ###
+###     7. Nuclear Availability     ###
+### ------------------------------- ###
+
+NUCLEAR, NATGAS = 3.94e303, 3.95e303
+
+
+def _nuclear_inputs():
+    gkfx = pd.DataFrame(
+        {
+            "YYY": ["2023", "2023", "2023", "2023", "2022"],
+            "AAA": ["DE4-S_A", "DE4-W_A", "DE4-S_A", "FR_A", "FR_A"],
+            "GGG": ["NUCL_1", "NUCL_1", "GAS_NUCL_NAMED", "NUCL_1", "NUCL_1"],
+            "Value": [600.0, 400.0, 999.0, 100.0, 5000.0],
+        }
+    )
+    gdata = pd.DataFrame(
+        {
+            "GGG": ["NUCL_1", "NUCL_1", "GAS_NUCL_NAMED"],
+            "GDATASET": ["GDFUEL", "GDTYPE", "GDFUEL"],
+            "Value": [NUCLEAR, 2.2e303, NATGAS],
+        }
+    )
+    fdata = pd.DataFrame(
+        {
+            "FFF": ["NUCLEAR", "NATGAS"],
+            "FDATASET": ["FDACRONYM", "FDACRONYM"],
+            "Value": [NUCLEAR, NATGAS],
+        }
+    )
+    rrraaa = pd.DataFrame({"RRR": ["DE4-S", "DE4-W", "FR"], "AAA": ["DE4-S_A", "DE4-W_A", "FR_A"]})
+    return gkfx, gdata, fdata, rrraaa
+
+
+def _weekly_series(weekly_values: list[float], year: int = 2023) -> pd.Series:
+    hours = backcast_hours(year)
+    return pd.Series(np.repeat(weekly_values, 168), index=hours)
+
+
+def test_nuclear_capacity_found_by_fuel_acronym():
+    from pybalmorel.backcasting.nuclear import nuclear_capacity
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+
+    # The gas technology named like nuclear and the 2022 capacity are ignored
+    assert set(capacity.Technology) == {"NUCL_1"}
+    assert capacity.groupby("Region").Capacity.sum().to_dict() == {"DE": 1000.0, "FR": 100.0}
+
+
+def test_nuclear_ratings_and_override(tmp_path):
+    from pybalmorel.backcasting.nuclear import nuclear_capacity, nuclear_ratings, write_gkrate_override
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+    # DE: at capacity, above it, zero, then no data; the rest at half
+    de = _weekly_series([1000.0, 1200.0, 0.0, np.nan] + [500.0] * 48)
+    observed = {"DE": de, "BE": _weekly_series([100.0] * 52)}
+
+    with pytest.warns(Warning) as record:
+        ratings = nuclear_ratings(observed, capacity, 2023)
+    messages = " ".join(str(warning.message) for warning in record)
+    assert "FR has 100 MW of nuclear GKFX but no ENTSO-E nuclear output" in messages
+    assert "BE has 0.87 TWh of ENTSO-E nuclear output" in messages
+    assert "above its GKFX of 1000 MW in 1 week(s)" in messages
+    assert "week(s) ['S04']" in messages
+
+    assert list(ratings.columns) == ["DE"]
+    assert ratings.loc[["S01", "S02", "S03", "S05"], "DE"].tolist() == [1.0, 1.0, 0.0, 0.5]
+
+    # Both DE areas share the rating, computed against their summed GKFX
+    content = write_gkrate_override(ratings, capacity, tmp_path).body
+    assert "GKRATE('DE4-S_A','NUCL_1','S03')=eps;" in content
+    assert "GKRATE('DE4-W_A','NUCL_1','S05')=0.5000;" in content
+    assert "=0;" not in content
+    assert "'S04'" not in content
+    assert "FR_A" not in content
+    assert (tmp_path / "GKRATE_ENTSOE.inc").exists()
+
+
+def test_nuclear_weeks_after_the_series_ends_are_a_closure(tmp_path):
+    from pybalmorel.backcasting.nuclear import nuclear_capacity, nuclear_ratings, write_gkrate_override
+
+    capacity = nuclear_capacity(*_nuclear_inputs(), 2023)
+    # DE: a gap in S02, data until S15, then nothing
+    de = _weekly_series([600.0, np.nan] + [700.0] * 13 + [np.nan] * 37)
+    fr = _weekly_series([50.0] * 52)
+
+    with pytest.warns(Warning) as record:
+        ratings = nuclear_ratings({"DE": de, "FR": fr}, capacity, 2023)
+    messages = " ".join(str(warning.message) for warning in record)
+    assert "CLOSURE: DE" in messages and "S16-S52" in messages
+    assert "6.22 TWh" in messages  # 1000 MW x 168 h x 37 weeks
+    assert "week(s) ['S02']" in messages
+
+    content = write_gkrate_override(ratings, capacity, tmp_path).body
+    assert "GKRATE('DE4-S_A','NUCL_1','S16')=eps;" in content
+    assert "GKRATE('DE4-W_A','NUCL_1','S52')=eps;" in content
+    assert "GKRATE('DE4-S_A','NUCL_1','S02')" not in content
+
+
+def test_stale_input_cache_warns(tmp_path):
+    import os
+
+    from pybalmorel.backcasting.nuclear import check_input_cache
+
+    input_gdx = tmp_path / "backcast_input_data.gdx"
+    input_gdx.write_text("")
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "GKFX.inc").write_text("")
+    (data / "OLD.inc").write_text("")
+    os.utime(input_gdx, (1_000_000, 1_000_000))
+    os.utime(data / "OLD.inc", (0, 0))
+
+    with pytest.warns(Warning, match="older than GKFX.inc in") as record:
+        check_input_cache(input_gdx, data)
+    assert "OLD.inc" not in str(record[0].message)
+
+
+def test_tiny_nuclear_rating_is_eps():
+    from pybalmorel.backcasting.nuclear import format_rating
+
+    assert format_rating(0.00001) == "eps"
+    assert format_rating(1.0) == "1.0000"
+
+
+# %% ------------------------------- ###
+###     8. Generation categories    ###
+### ------------------------------- ###
+
+# PSR types that are grid assets, not production types
+GRID_ASSET_TYPES = {"AC Link", "DC Link", "Substation", "Transformer"}
+
+
+def test_every_entsoe_production_type_has_a_category():
+    from entsoe.mappings import PSRTYPE_MAPPINGS
+
+    from pybalmorel.backcasting.__main__ import entsoe_to_category
+
+    production_types = {
+        name for code, name in PSRTYPE_MAPPINGS.items() if code.startswith("B")
+    } - GRID_ASSET_TYPES
+
+    assert "Hydro Run-of-river and pondage" in production_types
+    assert production_types - entsoe_to_category.keys() == set()
+
+
+def test_older_run_of_river_spelling_is_still_hydro():
+    # Files fetched with older entsoe-py versions spell it "poundage"
+    from pybalmorel.backcasting.__main__ import entsoe_to_category
+
+    assert entsoe_to_category["Hydro Run-of-river and poundage"] == "Hydro"
+    assert entsoe_to_category["Hydro Run-of-river and pondage"] == "Hydro"
+
+
+def test_oil_shale_has_the_same_category_on_both_sides():
+    from pybalmorel.backcasting.__main__ import balmorel_to_category, entsoe_to_category
+
+    assert entsoe_to_category["Fossil Oil shale"] == "Fossil Solid"
+    assert balmorel_to_category["CHP-EXTRACTION - SHALE"] == "Fossil Solid"
+    assert balmorel_to_category["CONDENSING - SHALE"] == "Fossil Solid"
+
+
+def _generation_frame():
+    time = pd.date_range("2023-01-02", periods=2, freq="h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "Region": ["EE"] * 4,
+            "Technology": ["Wind Onshore", "Wind Onshore", "Fossil Mystery", "Fossil Mystery"],
+            "Time": list(time) * 2,
+            "Value": [100.0, 200.0, 1.5e6, 0.5e6],
+        }
+    )
+
+
+def test_unmapped_technology_raises_with_its_energy():
+    from pybalmorel.backcasting.__main__ import entsoe_to_category, map_technology_categories
+
+    with pytest.raises(ValueError, match=r"'Fossil Mystery' \(2.00 TWh\)"):
+        map_technology_categories(_generation_frame(), entsoe_to_category, "ENTSO-E")
+
+
+def test_unmapped_technology_is_kept_as_unmapped():
+    from pybalmorel.backcasting.__main__ import (
+        UNMAPPED_CATEGORY,
+        entsoe_to_category,
+        map_technology_categories,
+    )
+
+    with pytest.warns(Warning, match="Fossil Mystery"):
+        generation = map_technology_categories(
+            _generation_frame(), entsoe_to_category, "ENTSO-E", allow_unmapped=True
+        )
+
+    totals = generation.groupby("Technology")["Value"].sum()
+    assert totals.to_dict() == {UNMAPPED_CATEGORY: 2e6, "Wind": 300.0}
+
+
+# %% ------------------------------- ###
+###   9. Observed demand profiles   ###
+### ------------------------------- ###
+
+
+def test_grid_to_profile_keeps_labels_order_and_missing_hours():
+    from pybalmorel.backcasting.calendar import SEASONS, TERMS
+    from pybalmorel.backcasting.demand import grid_to_profile
+
+    hourly = pd.Series(range(8736), index=backcast_hours(2023), dtype=float)
+    hourly.iloc[5] = np.nan
+
+    profile = grid_to_profile(to_backcast_grid(hourly, 2023))
+
+    assert len(profile) == 8736
+    assert profile.index[0] == ("S01", "T001")
+    assert profile.index[-1] == ("S52", "T168")
+    assert profile[("S02", "T001")] == 168.0
+    assert np.isnan(profile[("S01", "T006")])
+    assert list(profile.index.get_level_values(0).unique()) == SEASONS
+    assert list(profile.index.get_level_values(1).unique()) == TERMS
+
+
+def test_zones_are_summed_and_a_missing_hour_is_missing_for_the_region():
+    from pybalmorel.backcasting.demand import sum_zones
+
+    time = pd.date_range("2023-01-02", periods=3, freq="h", tz="UTC")
+    zones = pd.DataFrame(
+        {
+            "IT-NORD": [10.0, 10.0, 10.0],
+            "IT-SUD": [5.0, np.nan, 5.0],
+            "DK1": [1.0, 2.0, 3.0],
+        },
+        index=time,
+    )
+
+    regions = sum_zones(zones)
+
+    assert set(regions.columns) == {"IT", "DK1"}
+    assert regions["IT"].iloc[0] == 15.0
+    assert np.isnan(regions["IT"].iloc[1])
+    assert regions["DK1"].tolist() == [1.0, 2.0, 3.0]
+
+
+def test_clean_profile_interpolates_implausible_and_missing_hours():
+    from pybalmorel.backcasting.demand import clean_profile
+
+    profile = pd.Series([100.0, 100.0, 1000.0, np.nan, 100.0, 10.0, 100.0])
+
+    cleaned, n_implausible = clean_profile(profile)
+
+    assert n_implausible == 3
+    assert cleaned.tolist() == [100.0] * 7
+
+
+def test_clean_profile_rejects_a_negative_profile():
+    from pybalmorel.backcasting.demand import clean_profile
+
+    _, n_implausible = clean_profile(pd.Series([-1e13, -5.0, -3.0, 2.0]))
+
+    assert n_implausible == 4
+
+
+def _flat_hourly(value: float, year: int = 2023) -> pd.Series:
+    return pd.Series(value, index=backcast_hours(year))
+
+
+def test_demand_profiles_use_entsoe_and_fall_back_above_the_threshold():
+    from pybalmorel.backcasting.demand import (
+        MAX_IMPLAUSIBLE_SHARE,
+        current_profiles,
+        demand_profiles,
+    )
+    from pybalmorel.backcasting.calendar import backcast_calendar
+
+    # Just at the threshold for DK1, one hour above it for NL
+    n_allowed = int(MAX_IMPLAUSIBLE_SHARE * 8736)
+    dk1 = _flat_hourly(100.0)
+    dk1.iloc[:n_allowed] = np.nan
+    nl = _flat_hourly(200.0)
+    nl.iloc[: n_allowed + 1] = 1e6
+    observed = pd.DataFrame({"DK1": dk1, "NL": nl, "DE": _flat_hourly(300.0)})
+
+    calendar = backcast_calendar(2023)
+    de_var_t = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "Scenario": "backcast",
+                    "RRR": region,
+                    "DEUSER": "OTHER",
+                    "SSS": calendar.Season,
+                    "TTT": calendar.Term,
+                    "Value": value,
+                }
+            )
+            for region, value in (("NL", 7.0), ("AL", 9.0), ("LV", -1.0))
+        ]
+    )
+
+    with pytest.warns(Warning, match="LV keeps its current demand profile unchanged"):
+        profiles, report = demand_profiles(
+            ["DK1", "NL", "DE4-E", "AL", "LV", "MT"], observed, current_profiles(de_var_t), 2023
+        )
+
+    assert set(profiles) == {"DK1", "NL", "DE4-E", "AL"}
+    assert (profiles["DK1"] == 100.0).all()
+    assert (profiles["NL"] == 7.0).all()
+    assert (profiles["DE4-E"] == 300.0).all()
+    assert (profiles["AL"] == 9.0).all()
+    assert f"DK1: ENTSO-E DK1, {n_allowed} hours interpolated" in report
+    assert any(line.startswith("NL: input data") and "ENTSO-E NL has" in line for line in report)
+    assert "MT: no ENTSO-E load or input profile, keeps its current profile" in report
+
+
+def test_write_de_var_t_override(tmp_path):
+    from pybalmorel.backcasting.demand import grid_to_profile, write_de_var_t_override
+
+    profile = grid_to_profile(to_backcast_grid(_flat_hourly(123.456), 2023))
+
+    write_de_var_t_override({"DK1": profile}, ["DK1: ENTSO-E DK1, 0 hours interpolated"], 2023, tmp_path)
+
+    lines = (tmp_path / "DE_VAR_T_ENTSOE.inc").read_text().splitlines()
+    assert "* DK1: ENTSO-E DK1, 0 hours interpolated" in lines
+    assert "DE_VAR_T('DK1','OTHER','S01','T001')=123.46;" in lines
+    assert "DE_VAR_T('DK1','RESE',SSS,TTT)=DE_VAR_T('DK1','OTHER',SSS,TTT);" in lines
+    assert sum(line.startswith("DE_VAR_T('DK1','OTHER'") for line in lines) == 8736
+
+
+def test_de_var_t_include_is_appended_once(tmp_path):
+    from pybalmorel.backcasting.demand import DE_VAR_T_INCLUDE, append_de_var_t_include
+
+    de_var_t = tmp_path / "DE_VAR_T.inc"
+    de_var_t.write_text("$include '../../base/data/DE_VAR_T.inc';\nDE_VAR_T('DK1', 'OTHER', 'S01', 'T001') = 1;")
+
+    append_de_var_t_include(de_var_t)
+    append_de_var_t_include(de_var_t)
+
+    content = de_var_t.read_text()
+    assert content.count(DE_VAR_T_INCLUDE) == 1
+    assert content.endswith(DE_VAR_T_INCLUDE + "\n")
+    assert "= 1;\n" in content
+
+
+def test_de_var_t_include_creates_a_missing_file_on_base(tmp_path):
+    from pybalmorel.backcasting.demand import DE_VAR_T_INCLUDE, append_de_var_t_include
+
+    de_var_t = tmp_path / "DE_VAR_T.inc"
+    append_de_var_t_include(de_var_t)
+
+    lines = de_var_t.read_text().splitlines()
+    assert lines[0] == "$include '../../base/data/DE_VAR_T.inc';"
+    assert lines[-1] == DE_VAR_T_INCLUDE
+
+
+def test_load_observed_load_reads_zones(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_observed_load
+
+    _write_series_csv(tmp_path, "2023_IT-NORD_load.csv", 2023, [1.0, 2.0])
+    _write_series_csv(tmp_path, "2023_10YDK-1--------W_load.csv", 2023, [3.0, 4.0])
+
+    zones = load_observed_load(str(tmp_path), 2023)
+
+    assert set(zones.columns) == {"IT-NORD", "DK1"}
+    assert str(zones.index.tz) == "UTC"
+
+
+# %% ------------------------------- ###
+### 10. Comparison on the full grid ###
+### ------------------------------- ###
+
+
+def _hours(n: int, year: int = 2023) -> pd.DatetimeIndex:
+    return backcast_hours(year)[:n]
+
+
+def _long(rows: list[tuple]) -> pd.DataFrame:
+    return pd.DataFrame(rows, columns=["Region", "Technology", "Time", "Value"])
+
+
+def test_generation_join_fills_balmorel_zeros_and_drops_hours_without_entsoe():
+    from pybalmorel.backcasting.__main__ import join_generation
+
+    h0, h1, h2 = _hours(3)
+    entsoe = _long(
+        [
+            ("DE", "Biomass & Bioenergy", h0, 5000.0),
+            ("DE", "Nuclear", h0, 3000.0),
+            ("DE", "Nuclear", h1, 3000.0),
+            # Only in ENTSO-E: dropped as Balmorel doesn't have the region
+            ("NO1", "Hydro", h0, 100.0),
+        ]
+    )
+    balmorel = _long(
+        [
+            ("DE", "Nuclear", h0, 2500.0),
+            ("DE", "Wind", h1, 700.0),
+            # No ENTSO-E generation for DE in h2 at all: dropped on both sides
+            ("DE", "Wind", h2, 900.0),
+        ]
+    )
+
+    generation = join_generation(entsoe, balmorel, {"DE"}, 2023)
+
+    assert generation.loc[("DE", "Biomass & Bioenergy", h0)].tolist() == [5000.0, 0.0]
+    assert generation.loc[("DE", "Wind", h1)].tolist() == [0.0, 700.0]
+    assert h2 not in generation.index.get_level_values("Time")
+    # Sums equal each input over the common regions and the hours both have
+    assert generation["ENTSOE"].sum() == 11000.0
+    assert generation["BALMOREL"].sum() == 3200.0
+
+
+def test_generation_join_leaves_out_hours_outside_the_backcast_calendar():
+    from pybalmorel.backcasting.__main__ import join_generation
+
+    before = backcast_hours(2023)[0] - pd.Timedelta(hours=1)
+    entsoe = _long([("DE", "Nuclear", before, 3000.0), ("DE", "Nuclear", _hours(1)[0], 3000.0)])
+    balmorel = _long([("DE", "Nuclear", _hours(1)[0], 2000.0)])
+
+    generation = join_generation(entsoe, balmorel, {"DE"}, 2023)
+
+    assert len(generation) == 1
+
+
+def test_generation_join_leaves_out_ch_whose_entsoe_generation_is_incomplete():
+    from pybalmorel.backcasting.__main__ import join_generation
+
+    (h0,) = _hours(1)
+    # ENTSO-E reports about a third of Swiss hydro, so CH is left out on both sides
+    entsoe = _long([("DE", "Nuclear", h0, 3000.0), ("CH", "Hydro", h0, 1500.0)])
+    balmorel = _long([("DE", "Nuclear", h0, 2500.0), ("CH", "Hydro", h0, 4200.0)])
+
+    generation = join_generation(entsoe, balmorel, {"DE", "CH"}, 2023)
+
+    assert set(generation.index.get_level_values("Region")) == {"DE"}
+
+
+def test_hourly_join_warns_about_regions_with_missing_hours():
+    from pybalmorel.backcasting.__main__ import join_hourly
+
+    hours = backcast_hours(2023)
+    entsoe = pd.DataFrame({"Region": "FR", "Time": hours, "Value": 1.0})
+    balmorel = pd.DataFrame({"Region": "FR", "Time": hours[:-10], "Value": 2.0})
+
+    with pytest.warns(Warning, match="Balmorel load of FR has 8726 of the 8736 hours"):
+        loads = join_hourly(entsoe, balmorel, 2023, "load")
+
+    assert len(loads) == 8726
+    assert loads.columns.tolist() == ["ENTSOE", "BALMOREL"]
+
+
+def test_balmorel_prices_are_converted_to_the_backcast_year():
+    from pybalmorel.backcasting.__main__ import balmorel_prices_in_year
+
+    prices = pd.DataFrame({"Region": ["DE"], "Value": [100.0]})
+
+    assert balmorel_prices_in_year(prices, 2023)["Value"].iloc[0] == pytest.approx(122.87, abs=0.01)
+    assert prices["Value"].iloc[0] == 100.0
+
+
+def _write_balmorel_cache(scenario_path, year: int = 2023) -> None:
+    cache = scenario_path / "backcastoutput"
+    cache.mkdir(parents=True)
+    st = {"Year": year, "Season": "S01", "Time": "T001"}
+    pd.DataFrame([{**st, "Region": "DE4-E", "Value": 100.0}]).to_csv(
+        cache / "balmorel_prices.csv", index=False
+    )
+    pd.DataFrame(
+        [
+            {**st, "Region": "DE4-E", "Category": "EXOGENOUS", "Value": 1000.0},
+            {**st, "Region": "DE4-E", "Category": "ENDO_INTRASTO", "Value": 200.0},
+        ]
+    ).to_csv(cache / "balmorel_load.csv", index=False)
+    pd.DataFrame(
+        [{**st, "Region": "DE4-E", "Technology": "CONDENSING", "Fuel": "NUCLEAR", "Value": 900.0}]
+    ).to_csv(cache / "balmorel_generation.csv", index=False)
+    pd.DataFrame([{**st, "From": "DE4-E", "To": "DK1", "Value": 10.0}]).to_csv(
+        cache / "balmorel_flows.csv", index=False
+    )
+
+
+def test_balmorel_load_leaves_out_storage_charging_and_prices_are_nominal(tmp_path):
+    from pybalmorel.backcasting.__main__ import get_and_format_balmorel, load_components_table
+
+    _write_balmorel_cache(tmp_path)
+    cached_prices = (tmp_path / "backcastoutput" / "balmorel_prices.csv").read_text()
+
+    load, prices, *_, components = get_and_format_balmorel("sc", str(tmp_path), 2023, "mean", False)
+
+    assert load.Value.tolist() == [1000.0]
+    assert prices.Value.iloc[0] == pytest.approx(122.87, abs=0.01)
+    assert (tmp_path / "backcastoutput" / "balmorel_prices.csv").read_text() == cached_prices
+
+    entsoe_load = pd.DataFrame({"Region": "DE", "Time": _hours(1), "Value": 1100.0})
+    table = load_components_table(components, entsoe_load, 2023).set_index("Category")
+    assert table.loc["ENDO_INTRASTO", "Excluded"]
+    assert table.loc["ENDO_INTRASTO", "BALMOREL"] == pytest.approx(200.0 / 1e6)
+    assert table.loc["Total compared", "BALMOREL"] == pytest.approx(1000.0 / 1e6)
+    assert table.loc["Total compared", "ENTSOE"] == pytest.approx(1100.0 / 1e6)
+
+
+def test_lu_load_and_generation_are_compared_inside_de_but_its_price_is_not(tmp_path):
+    from pybalmorel.backcasting.__main__ import get_and_format_balmorel, load_components_table
+
+    _write_balmorel_cache(tmp_path)
+    cache = tmp_path / "backcastoutput"
+    st = {"Year": 2023, "Season": "S01", "Time": "T001"}
+    for name, row in (
+        ("balmorel_prices.csv", {"Value": 300.0}),
+        ("balmorel_load.csv", {"Category": "EXOGENOUS", "Value": 50.0}),
+        ("balmorel_generation.csv", {"Technology": "CONDENSING", "Fuel": "NUCLEAR", "Value": 20.0}),
+    ):
+        df = pd.read_csv(cache / name)
+        pd.concat([df, pd.DataFrame([{**st, "Region": "LU", **row}])]).to_csv(cache / name, index=False)
+
+    load, prices, generation, *_, components = get_and_format_balmorel(
+        "sc", str(tmp_path), 2023, "mean", False
+    )
+
+    assert load.set_index("Region").Value.to_dict() == {"DE": 1050.0}
+    assert generation.set_index("Region").Value.to_dict() == {"DE": 920.0}
+    # ENTSO-E has no LU price, and DE_LU's price is not an average with LU's
+    assert prices.set_index("Region").Value.to_dict() == pytest.approx({"DE": 122.87, "LU": 368.61}, abs=0.01)
+
+    entsoe_load = pd.DataFrame({"Region": "DE", "Time": _hours(1), "Value": 1100.0})
+    table = load_components_table(components, entsoe_load, 2023)
+    assert set(table.Region) == {"DE"}
+    totals = table.set_index("Category").loc["Total compared"]
+    assert totals.BALMOREL == pytest.approx(1050.0 / 1e6)
+
+
+def test_storage_and_flexibility_is_split():
+    from pybalmorel.backcasting.__main__ import balmorel_to_category, entsoe_to_category
+    from pybalmorel.backcasting.plotstyle import colors
+
+    categories = set(balmorel_to_category.values()) | set(entsoe_to_category.values())
+    assert "Storage & Flexibility" not in categories
+    assert categories <= colors.keys()
+    assert entsoe_to_category["Other"] == "Other"
+    assert entsoe_to_category["Geothermal"] == "Other renewable"
+    assert balmorel_to_category["INTRASEASONAL-ELECT-STORAGE - ELECTRIC"] == "Storage"
+    assert balmorel_to_category["CONDENSING - DUMMY"] == "Backup"
+
+
+def _synthetic_prices() -> pd.DataFrame:
+    """100 hours of random prices for the regions XX, FR and DE."""
+    rng = np.random.default_rng(0)
+    return pd.concat(
+        pd.DataFrame(
+            {
+                "Region": region,
+                "Time": _hours(100),
+                "ENTSOE": rng.normal(90, 50, 100),
+                "BALMOREL": rng.normal(90, 25, 100),
+            }
+        )
+        for region in ["XX", "FR", "DE"]
+    )
+
+
+def test_price_duration_plot_has_a_panel_per_region():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from pybalmorel.backcasting.__main__ import plot_price_duration_curves
+
+    fig, axes = plot_price_duration_curves(_synthetic_prices(), "test")
+
+    assert [ax.get_title(loc="left") for ax in axes[1:]] == ["DE", "FR", "XX"]
+    assert all(ax.get_ylim() == (-60, 320) for ax in axes)
+
+
+@pytest.mark.parametrize(
+    "style, face, ink", [("light", "#fcfcfb", "#0b0b0b"), ("dark", "none", "#cdd6f4")]
+)
+def test_price_duration_plot_style(style, face, ink):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex, to_rgba
+    from pybalmorel.backcasting.__main__ import plot_price_duration_curves
+
+    fig, axes = plot_price_duration_curves(_synthetic_prices(), "test", style=style)
+
+    assert fig.get_facecolor() == to_rgba(face)
+    assert all(ax.get_facecolor() == to_rgba(face) for ax in axes)
+    assert to_hex(fig._suptitle.get_color()) == ink
+
+
+def test_plot_style_rejects_other_styles_and_restores_rcparams():
+    import matplotlib.pyplot as plt
+    from pybalmorel.backcasting.plotstyle import DARK_COLOR_OVERRIDES, colors, plot_style
+
+    with pytest.raises(ValueError, match="style must be 'light' or 'dark', not 'blue'"):
+        with plot_style("blue"):
+            pass
+
+    before = plt.rcParams.copy()
+    with plot_style("dark") as (tokens, fuel_colours):
+        assert plt.rcParams["figure.facecolor"] == "none"
+        assert fuel_colours == {**colors, **DARK_COLOR_OVERRIDES}
+    assert plt.rcParams == before
+
+
+@pytest.mark.parametrize("style", ["light", "dark"])
+def test_flow_duration_plot_uses_the_price_plot_colours(style):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex
+    from pybalmorel.backcasting.flows import plot_flow_duration_curves
+    from pybalmorel.backcasting.plotstyle import BALMOREL_COLOUR, ENTSOE_COLOUR
+
+    flows = pd.DataFrame(
+        {"ENTSOE": [100.0, 50.0, 0.0], "BALMOREL": [80.0, 80.0, 0.0]},
+        index=pd.MultiIndex.from_product(
+            [["DK1"], ["DE"], _hours(3)], names=["From", "To", "Time"]
+        ),
+    )
+
+    fig, axes = plot_flow_duration_curves(flows, style=style)
+
+    lines = axes[0, 0].get_lines()
+    assert [to_hex(line.get_color()) for line in lines] == [ENTSOE_COLOUR, BALMOREL_COLOUR]
+    assert [line.get_label() for line in lines] == ["ENTSO-E (observed)", "Balmorel"]
+
+
+def test_dark_generation_bars_use_the_dark_category_colours():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib.colors import to_hex, to_rgba
+    from pybalmorel.backcasting.__main__ import plot_bar_chart
+    from pybalmorel.backcasting.plotstyle import DARK_COLOR_OVERRIDES, THEMES
+
+    technologies = ["Fossil Liquid & Other Fossil", "Fossil Solid"]
+    generation = pd.DataFrame(
+        {"ENTSOE": [5.0, 3.0], "BALMOREL": [4.0, 2.0]},
+        index=pd.MultiIndex.from_product(
+            [["DE"], technologies, _hours(1)], names=["Region", "Technology", "Time"]
+        ),
+    )
+
+    fig, ax = plot_bar_chart(generation, ["Technology"], style="dark")
+
+    legend = ax.get_legend()
+    colours = {
+        text.get_text(): to_hex(handle.get_facecolor())
+        for handle, text in zip(legend.legend_handles, legend.get_texts())
+    }
+    assert colours == {technology: DARK_COLOR_OVERRIDES[technology] for technology in technologies}
+    assert all(bar.get_edgecolor() == to_rgba(THEMES["dark"]["surface"]) for bar in ax.patches)
+
+
+def test_generation_per_region_ticks_are_regions_with_balmorel_left_of_entsoe():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from pybalmorel.backcasting.__main__ import plot_bar_chart
+
+    technologies = ["Fossil Solid", "Wind"]
+    generation = pd.DataFrame(
+        {"ENTSOE": [5.0, 3.0, 7.0, 1.0], "BALMOREL": [4.0, 2.0, 6.0, 2.0]},
+        index=pd.MultiIndex.from_product(
+            [["DE", "DK"], technologies, _hours(1)], names=["Region", "Technology", "Time"]
+        ),
+    )
+
+    fig, ax = plot_bar_chart(generation, ["Technology"], per_region=True)
+
+    assert [label.get_text() for label in ax.get_xticklabels()] == ["DE", "DK"]
+    legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert legend_labels == technologies
+    # Bars of DE: Balmorel's stack left of the tick, ENTSO-E's right of it
+    tick = ax.get_xticks()[0]
+    de_bars = [bar for bar in ax.patches if abs(bar.get_x() + bar.get_width() / 2 - tick) < 0.5]
+    left = [bar.get_height() for bar in de_bars if bar.get_x() + bar.get_width() / 2 < tick]
+    right = [bar.get_height() for bar in de_bars if bar.get_x() + bar.get_width() / 2 > tick]
+    assert left == pytest.approx([4.0 / 1e6, 2.0 / 1e6])
+    assert right == pytest.approx([5.0 / 1e6, 3.0 / 1e6])
+    texts = [text.get_text() for text in ax.texts]
+    assert any("Left: Balmorel" in text and "Right: ENTSO-E" in text for text in texts)
+
+
+@pytest.mark.parametrize("style, corner_alpha", [("light", 1.0), ("dark", 0.0)])
+def test_price_duration_command_saves_in_the_output_dir(tmp_path, style, corner_alpha):
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.image as mpimg
+    from click.testing import CliRunner
+    from pybalmorel.backcasting.__main__ import main
+
+    scenario = tmp_path / "backcast"
+    (scenario / "backcastoutput").mkdir(parents=True)
+    _synthetic_prices().to_csv(scenario / "backcastoutput" / "prices.csv", index=False)
+    output_dir = tmp_path / "analysis" / "plots"
+
+    result = CliRunner().invoke(
+        main, ["price-duration", str(scenario), "--style", style, "--output-dir", str(output_dir)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert mpimg.imread(output_dir / "price_duration_curves.png")[0, 0, 3] == corner_alpha
+
+
+# %% ------------------------------- ###
+###    11. Thermal availability     ###
+### ------------------------------- ###
+
+ACRONYMS = {
+    "GCND": 224, "GBPR": 225, "GEXT": 226, "GSOLE": 236, "GSOLH": 237, "GWND": 238,
+    "COAL": 396, "LIGNITE": 397, "NATGAS": 395, "SUN": 400, "HYDROGEN": 401, "WIND": 402,
+}
+
+
+def _thermal_inputs(fuels: dict[str, tuple[str, str]], gkfx: list[tuple[str, str, float]]):
+    """GKFX, GDATA, RRRAAA and acronym names for technologies {name: (type, fuel)} at [(area, technology, MW)]."""
+    from pybalmorel.backcasting.thermal import ACRONYM_SCALE
+
+    names = {index * ACRONYM_SCALE: name for name, index in ACRONYMS.items()}
+    gdata = pd.DataFrame(
+        [
+            (technology, parameter, ACRONYMS[value] * ACRONYM_SCALE)
+            for technology, (technology_type, fuel) in fuels.items()
+            for parameter, value in (("GDTYPE", technology_type), ("GDFUEL", fuel))
+        ],
+        columns=["GGG", "GDATASET", "Value"],
+    )
+    gkfx = pd.DataFrame(
+        [("2023", area, technology, mw) for area, technology, mw in gkfx],
+        columns=["YYY", "AAA", "GGG", "Value"],
+    )
+    areas = sorted(set(gkfx["AAA"]))
+    rrraaa = pd.DataFrame({"RRR": [area.removesuffix("_A") for area in areas], "AAA": areas})
+    return gkfx, gdata, rrraaa, names
+
+
+def _outage(mrid, revision, start, end, nominal=500.0, available=0.0, docstatus="Active", kind="Unplanned outage"):
+    return {
+        "mrid": mrid,
+        "revision": revision,
+        "docstatus": docstatus,
+        "businesstype": kind,
+        "plant_type": "Fossil Hard coal",
+        "nominal_power": nominal,
+        "avail_qty": available,
+        "start": start,
+        "end": end,
+        "Region": "DE",
+    }
+
+
+def _coal_capacity(mw: float = 1000.0):
+    from pybalmorel.backcasting.thermal import group_capacity
+
+    return group_capacity(
+        *_thermal_inputs({"COAL_CND": ("GCND", "COAL")}, [("DE4-S_A", "COAL_CND", mw)]), 2023
+    )
+
+
+def test_thermal_groups_are_selected_by_acronym_name():
+    from pybalmorel.backcasting.thermal import group_capacity
+
+    inputs = _thermal_inputs(
+        {
+            "COAL_CND": ("GCND", "COAL"),
+            "LIG_EXT": ("GEXT", "LIGNITE"),
+            "GAS_BPR": ("GBPR", "NATGAS"),
+            "PV": ("GSOLE", "SUN"),
+        },
+        [("DE4-S_A", "COAL_CND", 600.0), ("DE4-W_A", "COAL_CND", 400.0), ("DE4-S_A", "LIG_EXT", 300.0),
+         ("FR_A", "GAS_BPR", 200.0), ("FR_A", "PV", 50.0)],
+    )
+
+    capacity = group_capacity(*inputs, 2023)
+    with_checks = group_capacity(*inputs, 2023, check_only=True)
+
+    assert capacity.groupby(["Region", "Group"]).Capacity.sum().to_dict() == {
+        ("DE", "HARDCOAL"): 1000.0, ("DE", "LIGNITE"): 300.0, ("FR", "GAS"): 200.0,
+    }
+    assert with_checks.query("Group == 'SOLAR'").Capacity.sum() == 50.0
+
+
+def test_unmapped_thermal_fuel_stops():
+    from pybalmorel.backcasting.thermal import group_capacity
+
+    inputs = _thermal_inputs({"H2_CND": ("GCND", "HYDROGEN")}, [("DE4-S_A", "H2_CND", 100.0)])
+
+    with pytest.raises(ValueError, match="HYDROGEN"):
+        group_capacity(*inputs, 2023)
+
+
+@pytest.mark.parametrize("installed, k", [(600.0, 0.6), (1500.0, 1.0)])
+def test_installed_capacity_scales_and_caps_the_rating(installed, k):
+    from pybalmorel.backcasting.thermal import thermal_ratings
+
+    installed = pd.Series({("DE", "HARDCOAL"): installed})
+
+    ratings = thermal_ratings(_coal_capacity(), installed, None)
+
+    assert ratings["k"].unique().tolist() == [k]
+    assert np.allclose(ratings["Rating"], k)
+
+
+def test_outage_lowers_its_week_by_lost_hours():
+    from pybalmorel.backcasting.thermal import latest_outages, thermal_ratings, weekly_outage_energy
+
+    monday = first_monday(2023) + pd.Timedelta(weeks=1)
+    outages = pd.DataFrame([_outage("a", 1, monday, monday + pd.Timedelta(days=2))])
+
+    energy = weekly_outage_energy(latest_outages(outages), 2023)
+    ratings = thermal_ratings(_coal_capacity(), pd.Series({("DE", "HARDCOAL"): 1000.0}), energy)
+
+    u = 500 * 48 / (1000 * 168)
+    week = ratings.set_index("Season")
+    assert week.loc["S02", "Forced"] == pytest.approx(u)
+    assert week.loc["S02", "Rating"] == pytest.approx(1 - u)
+    assert week.drop("S02")["Rating"].eq(1).all()
+
+
+def test_latest_revision_counts_once_and_withdrawn_events_count_nothing():
+    from pybalmorel.backcasting.thermal import latest_outages, weekly_outage_energy
+
+    monday = first_monday(2023)
+    outages = pd.DataFrame(
+        [
+            _outage("a", 1, monday, monday + pd.Timedelta(days=4)),
+            _outage("a", 2, monday, monday + pd.Timedelta(days=1)),
+            _outage("b", 1, monday, monday + pd.Timedelta(days=7)),
+            _outage("b", 2, monday, monday + pd.Timedelta(days=7), docstatus="Withdrawn"),
+        ]
+    )
+
+    energy = weekly_outage_energy(latest_outages(outages), 2023)
+
+    assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
+
+
+def test_duplicated_outage_row_counts_once():
+    from pybalmorel.backcasting.thermal import latest_outages, weekly_outage_energy
+
+    # ENTSO-E's 2023 download repeats 10,495 rows exactly (same event and revision)
+    monday = first_monday(2023)
+    outage = _outage("a", 1, monday, monday + pd.Timedelta(days=1))
+    outages = pd.DataFrame([outage, outage])
+
+    energy = weekly_outage_energy(latest_outages(outages), 2023)
+
+    assert energy.loc[("DE", "HARDCOAL", "S01"), "Forced"] == 500 * 24
+
+
+def test_outage_spanning_two_weeks_is_split_by_hours():
+    from pybalmorel.backcasting.thermal import latest_outages, weekly_outage_energy
+
+    sunday = first_monday(2023) + pd.Timedelta(days=6)
+    outages = pd.DataFrame(
+        [_outage("a", 1, sunday, sunday + pd.Timedelta(days=2), kind="Planned maintenance")]
+    )
+
+    energy = weekly_outage_energy(latest_outages(outages), 2023)
+
+    assert energy["Planned"].to_dict() == {
+        ("DE", "HARDCOAL", "S01"): 500 * 24, ("DE", "HARDCOAL", "S02"): 500 * 24,
+    }
+    assert energy["Forced"].eq(0).all()
+
+
+def test_zero_thermal_rating_is_eps(tmp_path):
+    from pybalmorel.backcasting.thermal import thermal_ratings, write_thermal_gkrate_override
+
+    capacity = _coal_capacity()
+    ratings = thermal_ratings(capacity, pd.Series({("DE", "HARDCOAL"): 0.0}), None)
+    write_thermal_gkrate_override(ratings, capacity, tmp_path)
+
+    text = (tmp_path / "GKRATE_THERMAL_ENTSOE.inc").read_text()
+    assert "GKRATE('DE4-S_A','COAL_CND','S01')=eps;" in text
+    assert "=0;" not in text
+    assert text.count("GKRATE(") == 52
+
+
+def test_group_without_installed_capacity_gets_no_rating():
+    from pybalmorel.backcasting.thermal import thermal_ratings
+
+    with pytest.warns(UserWarning, match="no ENTSO-E installed"):
+        ratings = thermal_ratings(_coal_capacity(), pd.Series(dtype=float), None)
+
+    assert ratings.empty
+
+
+def test_installed_capacity_sums_zones_of_a_region(tmp_path):
+    from pybalmorel.backcasting.thermal import group_installed, load_installed_capacity
+
+    for zone, coal in (("IT_NORD", 1000.0), ("IT_SUD", 200.0)):
+        pd.DataFrame(
+            {"Fossil Hard coal": [coal], "Biomass": [50.0]},
+            index=pd.DatetimeIndex(["2023-01-01 00:00+01:00"]),
+        ).to_csv(tmp_path / f"2023_{zone}_installed_generation_capacity.csv")
+    pd.DataFrame(
+        {"Fossil Gas": [300.0]}, index=pd.DatetimeIndex(["2023-01-01 00:00+01:00"])
+    ).to_csv(tmp_path / "2023_FR_installed_generation_capacity.csv")
+
+    installed = group_installed(
+        load_installed_capacity(tmp_path, 2023),
+        {"HARDCOAL": ("Fossil Hard coal",), "GAS": ("Fossil Gas",)},
+    )
+
+    assert installed.to_dict() == {("FR", "GAS"): 300.0, ("IT", "HARDCOAL"): 1200.0}
+
+
+# %% ------------------------------- ###
+###       12. Must-run floor        ###
+### ------------------------------- ###
+
+
+def _weekly_hours(week: int = 0, year: int = 2023) -> pd.DatetimeIndex:
+    return backcast_hours(year)[week * 168 : (week + 1) * 168]
+
+
+def _one_week_output(gas: np.ndarray, biomass: np.ndarray) -> pd.DataFrame:
+    hours = _weekly_hours()
+    return pd.DataFrame({("DE", "GAS"): gas, ("DE", "BIOMASS"): biomass}, index=hours).rename_axis(
+        columns=["Region", "Group"]
+    )
+
+
+def _one_week_prices(low_hours: int) -> pd.DataFrame:
+    price = np.full(168, 100.0)
+    price[:low_hours] = 10.0
+    return pd.DataFrame({"DE": price}, index=_weekly_hours())
+
+
+def test_min_hours_decide_the_floor_except_for_every_week_groups():
+    from pybalmorel.backcasting.mustrun import must_run_floors
+
+    output = _one_week_output(np.full(168, 2000.0), np.full(168, 3000.0))
+
+    floors = must_run_floors(output, _one_week_prices(3), 2023, min_hours=4).set_index("Group")
+
+    assert np.isnan(floors.loc["GAS", "Floor"])
+    assert floors.loc["BIOMASS", "Floor"] == 3000.0
+    assert floors.loc["GAS", "LowPriceHours"] == 3
+    # Weeks without data have no row
+    assert len(floors) == 2
+
+
+def test_floor_is_the_minimum_over_all_hours_of_the_week():
+    from pybalmorel.backcasting.mustrun import must_run_floors
+
+    gas = np.full(168, 2000.0)
+    gas[:4] = 1500.0  # the low-price hours
+    gas[100] = 800.0  # an hour at a high price
+    output = _one_week_output(gas, np.full(168, 3000.0))
+
+    floors = must_run_floors(output, _one_week_prices(4), 2023).set_index("Group")
+
+    assert floors.loc["GAS", "Floor"] == 800.0
+
+
+def test_week_with_too_little_data_or_a_tiny_floor_gets_none():
+    from pybalmorel.backcasting.mustrun import must_run_floors
+
+    gas = np.full(168, 2000.0)
+    gas[:90] = np.nan
+    output = _one_week_output(gas, np.full(168, 0.5))
+
+    floors = must_run_floors(output, _one_week_prices(10), 2023)
+
+    assert floors["Floor"].isna().all()
+
+
+def test_zones_of_a_region_are_summed_before_the_minimum(tmp_path):
+    from pybalmorel.backcasting.__main__ import load_observed_generation
+    from pybalmorel.backcasting.mustrun import group_output
+
+    hours = _weekly_hours()
+    north, south = np.full(168, 1000.0), np.full(168, 500.0)
+    north[0], south[1] = 0.0, 0.0
+    for zone, gas in (("IT_NORD", north), ("IT_SUD", south)):
+        pd.DataFrame({"Fossil Gas": gas}, index=hours).to_csv(tmp_path / f"2023_{zone}_generation.csv")
+
+    output = group_output(load_observed_generation(str(tmp_path), 2023))
+
+    assert output[("IT", "GAS")].min() == 500.0
+
+
+def test_region_price_is_weighted_by_zone_load():
+    from pybalmorel.backcasting.mustrun import region_prices
+
+    hours = _weekly_hours()[:2]
+    prices = pd.DataFrame({"IT-NORD": [10.0, 10.0], "IT-SUD": [100.0, 100.0], "FR": [50.0, 50.0]}, index=hours)
+    load = pd.DataFrame({"IT-NORD": [3000.0, np.nan], "IT-SUD": [1000.0, np.nan]}, index=hours)
+
+    regional = region_prices(prices, load)
+
+    assert regional["IT"].tolist() == [32.5, 55.0]
+    assert regional["FR"].tolist() == [50.0, 50.0]
+
+
+def _floors(rows: list[tuple[str, str, str, float]]) -> pd.DataFrame:
+    return pd.DataFrame(
+        [(region, group, season, floor, 10, 0.5) for region, group, season, floor in rows],
+        columns=["Region", "Group", "Season", "Floor", "LowPriceHours", "ObservedTWh"],
+    )
+
+
+def test_floor_above_available_capacity_is_capped_and_without_gkfx_dropped():
+    from pybalmorel.backcasting.mustrun import cap_floors
+
+    capacity = _coal_capacity(1000.0)
+    gkrate = pd.DataFrame(
+        {"AAA": ["DE4-S_A"], "GGG": ["COAL_CND"], "SSS": ["S01"], "Value": [0.5]}
+    )
+    floors = _floors(
+        [("DE", "HARDCOAL", "S01", 800.0), ("DE", "HARDCOAL", "S02", 800.0),
+         ("DE", "GAS", "S01", 300.0), ("XX", "GAS", "S01", 300.0)]
+    )
+
+    with pytest.warns(UserWarning) as warnings:
+        capped = cap_floors(floors, capacity, gkrate, ["DE4-S", "DE4-W"]).set_index(["Group", "Season"])
+
+    assert capped.loc[("HARDCOAL", "S01"), ["Floor", "K", "Capped"]].tolist() == [500.0, 500.0, True]
+    assert capped.loc[("HARDCOAL", "S02"), ["Floor", "Capped"]].tolist() == [800.0, False]
+    assert np.isnan(capped.loc[("GAS", "S01"), "Floor"])
+    assert set(capped["Region"]) == {"DE"}
+    messages = " ".join(str(warning.message) for warning in warnings)
+    assert "DE GAS" in messages and "capped" in messages
+
+
+def test_must_run_files_list_zones_groups_and_floors(tmp_path):
+    from pybalmorel.backcasting.mustrun import write_must_run_files
+
+    floors = _floors([("DE", "LIGNITE", "S01", 3000.0), ("DE", "BIOMASS", "S02", 3600.04), ("DK1", "GAS", "S01", np.nan)])
+
+    inc_files = write_must_run_files(floors, ["DE4-W", "DE4-E", "DK1"], ["LIGNITE", "WOODCHIPS", "STRAW"], tmp_path)
+
+    assert [inc_file.name for inc_file in inc_files][-1] == "MUSTRUN_FLOOR.inc"
+    read = lambda name: (tmp_path / f"{name}.inc").read_text()
+    assert "/\nDE\n/;" in read("MUSTRUN_ZONE")
+    assert "DE.(DE4-E,DE4-W)" in read("MUSTRUN_ZONE_RRR")
+    assert "/\nLIGNITE\nBIOMASS\n/;" in read("MUSTRUN_GROUP")
+    assert "BIOMASS.(WOODCHIPS,STRAW)" in read("MUSTRUN_GROUP_FFF")
+    assert "DE.BIOMASS.S02 3600.0\nDE.LIGNITE.S01 3000.0\n" in read("MUSTRUN_FLOOR")
+
+
+class _FakeModel:
+    def __init__(self, inputs: dict[str, pd.DataFrame]):
+        self.inputs = inputs
+
+    def get_input(self, symbol: str) -> pd.DataFrame:
+        return self.inputs[symbol]
+
+
+@pytest.mark.parametrize("threshold, written", [(-1000.0, False), (40.0, True)])
+def test_must_run_floor_writes_nothing_without_a_floor(tmp_path, monkeypatch, threshold, written):
+    import pybalmorel.backcasting.mustrun as mustrun
+
+    gkfx, gdata, rrraaa, names = _thermal_inputs({"GAS_CND": ("GCND", "NATGAS")}, [("DE4-S_A", "GAS_CND", 5000.0)])
+    model = _FakeModel(
+        {"GKFX": gkfx, "GDATA": gdata, "RRRAAA": rrraaa, "FFF": pd.DataFrame({"*": ["NATGAS"]}),
+         "GKRATE": pd.DataFrame(columns=["AAA", "GGG", "SSS", "Value"])}
+    )
+    monkeypatch.setattr(mustrun, "load_scenario_input", lambda *args, **kwargs: (model, names))
+    (tmp_path / "backcast" / "data").mkdir(parents=True)
+    hours = backcast_hours(2023)
+    generation = {"DE": pd.DataFrame({"Fossil Gas": 2000.0}, index=hours)}
+    prices = pd.DataFrame({"DE": 10.0}, index=hours)
+
+    with pytest.warns(UserWarning, match="GKRATE_THERMAL_ENTSOE"):
+        inc_files = mustrun.generate_must_run_floor(
+            tmp_path, "backcast", 2023, generation, prices, pd.DataFrame(), price_threshold=threshold
+        )
+
+    assert (tmp_path / "backcast" / "data" / "MUSTRUN_FLOOR.inc").exists() == written
+    assert bool(inc_files) == written
+    assert (tmp_path / "backcast" / "backcastoutput" / "must_run_floor.csv").exists()
+
+
+def test_nuclear_is_in_no_fuel_group():
+    from pybalmorel.backcasting.thermal import GROUP_FUELS, GROUP_PRODUCTION_TYPES
+
+    assert not any("NUCLEAR" in fuels for fuels in GROUP_FUELS.values())
+    assert not any("Nuclear" in types for types in GROUP_PRODUCTION_TYPES.values())
+
+
+# %% ------------------------------- ###
+###          13. VRE level          ###
+### ------------------------------- ###
+
+VRE_TECHNOLOGIES = {
+    "WT_ONS": ("GWND", "WIND"),
+    "WT_OFF": ("GWND", "WIND"),
+    "PV": ("GSOLE", "SUN"),
+    "SOLAR_HEAT": ("GSOLH", "SUN"),
+}
+
+
+def _vre_inputs(gkfx: list[tuple[str, str, float]], wndflh: dict[str, float], soleflh: dict[str, float] | None = None):
+    """GKFX, GDATA, RRRAAA, WNDFLH, SOLEFLH, GKRATE and acronym names; an area's region is its name up to the first '_'."""
+    gkfx_df, gdata, _, names = _thermal_inputs(VRE_TECHNOLOGIES, gkfx)
+    areas = sorted(set(gkfx_df["AAA"]) | set(wndflh) | set(soleflh or {}))
+    rrraaa = pd.DataFrame({"RRR": [area.split("_")[0] for area in areas], "AAA": areas})
+    flh = lambda values: pd.DataFrame({"AAA": list(values), "Value": list(values.values())})
+    gkrate = pd.DataFrame(columns=["AAA", "GGG", "SSS", "Value"])
+    return gkfx_df, gdata, rrraaa, flh(wndflh), flh(soleflh or {}), gkrate, names
+
+
+def _vre_factors(inputs, observed: dict[str, dict[str, float]], bounds=(0.6, 1.5)):
+    from pybalmorel.backcasting.vre import available_vre, flh_areas, scaled_flh, vre_factors
+
+    available = available_vre(*inputs, 2023)
+    observed = pd.DataFrame.from_dict(observed, orient="index").reindex(columns=["Solar", "Onshore", "Offshore"])
+    factors = vre_factors(available, observed, bounds)
+    scaled = scaled_flh(flh_areas(inputs[3], inputs[4], inputs[2]), factors)
+    return available, factors, scaled
+
+
+def test_observed_vre_sums_the_backcast_calendar():
+    from pybalmorel.backcasting.vre import observed_vre
+
+    hours = backcast_hours(2023)
+    generation = {"DE": pd.DataFrame({"Solar": 1000.0, "Wind Onshore": 2000.0}, index=hours)}
+
+    observed = observed_vre(generation, 2023)
+
+    assert observed.loc["DE", "Solar"] == pytest.approx(1000.0 * len(hours) / 1e6)
+    assert observed.loc["DE", "Onshore"] == pytest.approx(2.0 * observed.loc["DE", "Solar"])
+    assert np.isnan(observed.loc["DE", "Offshore"])
+
+
+def test_areas_of_a_region_and_kind_share_one_factor():
+    inputs = _vre_inputs(
+        [("DE4-N_A", "WT_ONS", 1000.0), ("DE4-S_A", "WT_ONS", 1000.0), ("DE4-S_A", "PV", 2000.0)],
+        {"DE4-N_A": 2000.0, "DE4-S_A": 3000.0},
+        {"DE4-S_A": 1000.0},
+    )
+
+    available, factors, scaled = _vre_factors(inputs, {"DE": {"Solar": 1.6, "Onshore": 4.0}})
+
+    factors = factors.set_index(["Region", "Kind"])
+    assert factors.loc[("DE", "Onshore"), "Factor"] == pytest.approx(0.8)
+    assert factors.loc[("DE", "Solar"), "Factor"] == pytest.approx(0.8)
+    onshore = scaled[scaled["Symbol"] == "WNDFLH"].set_index("Area")["NewFLH"]
+    assert onshore["DE4-N_A"] == pytest.approx(1600.0)
+    assert onshore["DE4-S_A"] / onshore["DE4-N_A"] == pytest.approx(1.5)
+    # Available output x factor is the observed output
+    capacity = available.merge(scaled[["Area", "Symbol", "NewFLH"]].assign(
+        Kind=lambda df: np.where(df["Symbol"] == "SOLEFLH", "Solar", "Onshore")), on=["Area", "Kind"])
+    scaled_twh = (capacity["Capacity"] * capacity["NewFLH"] * capacity["Rating"] / 1e6).groupby(capacity["Kind"]).sum()
+    assert scaled_twh.to_dict() == pytest.approx({"Onshore": 4.0, "Solar": 1.6})
+
+
+def test_rating_reduces_available_output():
+    gkfx, gdata, rrraaa, wndflh, soleflh, _, names = _vre_inputs([("DK1_A", "WT_ONS", 1000.0)], {"DK1_A": 3000.0})
+    gkrate = pd.DataFrame({"AAA": "DK1_A", "GGG": "WT_ONS", "SSS": ["S01", "S02"], "Value": [0.0, 0.48]})
+
+    available, _, _ = _vre_factors((gkfx, gdata, rrraaa, wndflh, soleflh, gkrate, names), {"DK1": {"Onshore": 3.0}})
+
+    # S01 at 0 (eps), S02 at 0.48 and 50 unset weeks at 1
+    assert available["Rating"].iloc[0] == pytest.approx(50.48 / 52)
+    assert available["Available"].iloc[0] == pytest.approx(3.0 * 50.48 / 52)
+
+
+def test_region_without_entsoe_offshore_gets_one_wind_factor():
+    inputs = _vre_inputs(
+        [("SE4_A", "WT_ONS", 1000.0), ("SE4_OFF_OFF_Existing_RG1", "WT_OFF", 500.0)],
+        {"SE4_A": 2000.0, "SE4_OFF_OFF_Existing_RG1": 4000.0},
+    )
+
+    _, factors, scaled = _vre_factors(inputs, {"SE4": {"Onshore": 4.8}})
+
+    assert factors[["Region", "Kind"]].values.tolist() == [["SE4", "Wind"]]
+    assert factors["Factor"].iloc[0] == pytest.approx(1.2)
+    assert scaled.set_index("Area")["NewFLH"].to_dict() == pytest.approx(
+        {"SE4_A": 2400.0, "SE4_OFF_OFF_Existing_RG1": 4800.0}
+    )
+
+
+def test_region_with_entsoe_offshore_keeps_separate_factors():
+    inputs = _vre_inputs(
+        [("DE4-N_A", "WT_ONS", 1000.0), ("DE4-N_OFF_VRE-OFF_SP316_RG1", "WT_OFF", 500.0)],
+        {"DE4-N_A": 2000.0, "DE4-N_OFF_VRE-OFF_SP316_RG1": 4000.0},
+    )
+    inputs[2].loc[inputs[2]["AAA"].str.contains("OFF"), "RRR"] = "DE4-N"
+
+    _, factors, _ = _vre_factors(inputs, {"DE": {"Onshore": 1.6, "Offshore": 2.4}})
+
+    assert factors.set_index("Kind")["Factor"].to_dict() == pytest.approx({"Onshore": 0.8, "Offshore": 1.2})
+
+
+def test_factor_outside_bounds_writes_nothing_and_warns(tmp_path):
+    from pybalmorel.backcasting.vre import write_flh_override
+
+    inputs = _vre_inputs([("IT_A", "PV", 1000.0)], {}, {"IT_A": 1000.0})
+
+    with pytest.warns(UserWarning, match="IT solar: factor 2.50"):
+        _, factors, scaled = _vre_factors(inputs, {"IT": {"Solar": 2.5}})
+
+    assert not factors["Written"].any()
+    assert scaled.empty
+    write_flh_override(scaled, factors, "SOLEFLH", 2023, tmp_path)
+    assert "SOLEFLH(" not in (tmp_path / "SOLEFLH_ENTSOE.inc").read_text()
+
+
+def test_region_without_generation_file_warns():
+    inputs = _vre_inputs([("NO3_A", "WT_ONS", 1000.0)], {"NO3_A": 3000.0})
+
+    with pytest.warns(UserWarning, match="NO3 .* no ENTSO-E generation file"):
+        _, factors, _ = _vre_factors(inputs, {"DE": {"Onshore": 1.0}})
+
+    assert not factors["Written"].any()
+
+
+def test_area_without_flh_warns_and_is_not_scaled():
+    inputs = _vre_inputs([("DE4-N_A", "WT_ONS", 1000.0), ("DE4-S_A", "WT_ONS", 700.0)], {"DE4-N_A": 2000.0})
+
+    with pytest.warns(UserWarning, match="DE4-S_A has 700 MW of GKFX but no WNDFLH"):
+        available, factors, scaled = _vre_factors(inputs, {"DE": {"Onshore": 1.6}})
+
+    assert factors["AvailableTWh"].iloc[0] == pytest.approx(2.0)
+    assert factors["GKFX"].iloc[0] == pytest.approx(1700.0)
+    assert scaled["Area"].tolist() == ["DE4-N_A"]
+
+
+def test_solar_heat_is_not_counted():
+    import warnings
+
+    inputs = _vre_inputs([("DK1_A", "PV", 1000.0), ("DK1_A", "SOLAR_HEAT", 5000.0)], {}, {"DK1_A": 1000.0})
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        available, factors, _ = _vre_factors(inputs, {"DK1": {"Solar": 0.9}})
+
+    assert available["Technology"].tolist() == ["PV"]
+    assert factors["Factor"].iloc[0] == pytest.approx(0.9)
+
+
+def test_rerun_on_the_scaled_input_writes_the_same_file(tmp_path):
+    from pybalmorel.backcasting.vre import write_flh_override
+
+    gkfx = [("DE4-N_A", "WT_ONS", 1000.0), ("DE4-S_A", "WT_ONS", 1000.0)]
+    observed = {"DE": {"Onshore": 4.0}}
+    _, factors, scaled = _vre_factors(_vre_inputs(gkfx, {"DE4-N_A": 2000.0, "DE4-S_A": 3000.0}), observed)
+    first = write_flh_override(scaled, factors, "WNDFLH", 2023, tmp_path)
+    first_text = (tmp_path / "WNDFLH_ENTSOE.inc").read_text()
+
+    rerun_flh = scaled.set_index("Area")["NewFLH"].to_dict()
+    _, factors, scaled = _vre_factors(_vre_inputs(gkfx, rerun_flh), observed)
+    write_flh_override(scaled, factors, "WNDFLH", 2023, tmp_path)
+
+    assert factors["Factor"].iloc[0] == pytest.approx(1.0)
+    assert (tmp_path / "WNDFLH_ENTSOE.inc").read_text() == first_text
+    assert "WNDFLH('DE4-N_A')=1600.0;" in first_text
+    assert first.name == "WNDFLH_ENTSOE.inc"
+
+
+def test_flh_include_is_appended_once(tmp_path):
+    from pybalmorel.backcasting.vre import append_flh_include
+
+    wndflh_inc = tmp_path / "WNDFLH.inc"
+    wndflh_inc.write_text("PARAMETER WNDFLH(AAA) /\nDK1_A 3000\n/;")
+
+    for _ in range(3):
+        append_flh_include(wndflh_inc, "WNDFLH")
+    append_flh_include(tmp_path / "SOLEFLH.inc", "SOLEFLH")
+
+    content = wndflh_inc.read_text()
+    assert content.startswith("PARAMETER WNDFLH(AAA) /\nDK1_A 3000\n/;\n")
+    assert content.count("$if     EXIST '../data/WNDFLH_ENTSOE.inc'") == 1
+    assert content.count("$if not EXIST '../data/WNDFLH_ENTSOE.inc' $INCLUDE '../../base/data/WNDFLH_ENTSOE.inc';") == 1
+    assert (tmp_path / "SOLEFLH.inc").read_text().startswith("$include '../../base/data/SOLEFLH.inc';\n")
+
+
+def test_offshore_areas_are_classified_by_name():
+    from pybalmorel.backcasting.vre import OFFSHORE_AREA
+
+    assert OFFSHORE_AREA.search("DE4-N_OFF_OFF_Existing_RG2")
+    assert OFFSHORE_AREA.search("IT_OFF2_VRE-OFF_bottom_fixed_SP316-HH155_RG1")
+    assert not OFFSHORE_AREA.search("DE4-N_VRE-ONS_SP335-HH100_RG1")
+    assert not OFFSHORE_AREA.search("DK1_A")
+
+
+# %% ------------------------------- ###
+###         14. Demand Level        ###
+### ------------------------------- ###
+
+HEATING_GWH = {"FC_OTH_HH_E_SH": 4000.0, "FC_OTH_HH_E_WH": 1000.0, "TI_EHG_EB": 500.0, "TI_EHG_EDHP": 500.0}
+
+
+def _balances(rows: dict[str, dict[str, float]]) -> pd.DataFrame:
+    from pybalmorel.backcasting.demand import HEATING
+    from pybalmorel.backcasting.eurostat import FINAL_CONSUMPTION
+
+    return pd.DataFrame.from_dict(rows, orient="index").reindex(columns=[FINAL_CONSUMPTION, *HEATING])
+
+
+def _de(rows: list[tuple[str, str, float]], year: str = "2023") -> pd.DataFrame:
+    return pd.DataFrame([(year, region, user, value) for region, user, value in rows], columns=["YYY", "RRR", "DEUSER", "Value"])
+
+
+def _disloss(losses: dict[str, float]) -> pd.DataFrame:
+    return pd.DataFrame({"RRR": list(losses), "Value": list(losses.values())})
+
+
+def test_decode_jsonstat_keeps_missing_cells_missing():
+    from pybalmorel.backcasting.eurostat import decode_jsonstat
+
+    response = {
+        "id": ["geo", "nrg_bal"],
+        "size": [2, 3],
+        "dimension": {
+            "geo": {"category": {"index": {"DE": 0, "EL": 1}}},
+            "nrg_bal": {"category": {"index": {"FC_E": 0, "TI_EHG_EB": 1, "TI_EHG_EDHP": 2}}},
+        },
+        "value": {"0": 464000.0, "2": 120.5, "4": 300.0},
+    }
+
+    decoded = decode_jsonstat(response)
+
+    assert decoded[["geo", "nrg_bal", "Value"]].values.tolist() == [
+        ["DE", "FC_E", 464000.0],
+        ["DE", "TI_EHG_EDHP", 120.5],
+        ["EL", "TI_EHG_EB", 300.0],
+    ]
+
+
+def test_cached_eurostat_file_is_used_without_a_request(tmp_path, monkeypatch):
+    import json
+
+    import pybalmorel.backcasting.eurostat as eurostat
+
+    response = {
+        "id": ["geo", "nrg_bal", "time"],
+        "size": [1, 1, 1],
+        "dimension": {
+            "geo": {"category": {"index": {"EL": 0}}},
+            "nrg_bal": {"category": {"index": {"FC_E": 0}}},
+            "time": {"category": {"index": {"2023": 0}}},
+        },
+        "value": {"0": 50000.0},
+    }
+    requests_made = []
+
+    def fake_download(url):
+        requests_made.append(url)
+        return response
+
+    monkeypatch.setattr(eurostat, "download_json", fake_download)
+
+    first = eurostat.fetch_eurostat("nrg_bal_c", 2023, tmp_path)
+    second = eurostat.fetch_eurostat("nrg_bal_c", 2023, tmp_path)
+
+    assert len(requests_made) == 1
+    assert "nrg_bal=FC_E&nrg_bal=TI_EHG_EB&nrg_bal=TI_EHG_EDHP" in requests_made[0]
+    assert json.loads((tmp_path / "2023_nrg_bal_c.json").read_text()) == response
+    assert first.values.tolist() == second.values.tolist() == [["GR", "FC_E", 50000.0]]
+
+
+def test_level_is_load_net_of_losses_less_heating():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    load = pd.Series({"DK1": 20e6})
+    balances = _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}})
+
+    levels, summary = demand_levels(
+        _de([("DK1", "RESE", 6e6), ("DK1", "OTHER", 12e6)]), _disloss({"DK1": 0.05}), load, balances, 2023
+    )
+
+    level = levels["Value"].sum()
+    heating = sum(HEATING_GWH.values()) * 1e3
+    assert level == pytest.approx(20e6 * 0.95 - heating)
+    # Balmorel's load with electric heating equal to Eurostat's is ENTSO-E's
+    assert (level + heating) / (1 - 0.05) == pytest.approx(load["DK1"])
+    assert levels.set_index("User")["Value"]["OTHER"] == pytest.approx(2 * levels.set_index("User")["Value"]["RESE"])
+    assert summary.iloc[0]["Written"]
+    assert summary.iloc[0]["Coverage"] == pytest.approx(20e6 * 0.95 / 19e6)
+
+
+def test_eurostat_basis_is_final_consumption_less_heating():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    levels, _ = demand_levels(
+        _de([("DK1", "OTHER", 12e6)]),
+        _disloss({"DK1": 0.05}),
+        pd.Series({"DK1": 20e6}),
+        _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}}),
+        2023,
+        basis="eurostat",
+    )
+
+    assert levels["Value"].sum() == pytest.approx(19e6 - 6e6)
+
+
+def test_shared_de_lu_load_is_split_by_final_consumption():
+    from pybalmorel.backcasting.demand import split_shared_load
+
+    balances = _balances({"DE": {"FC_E": 464000.0}, "LU": {"FC_E": 6000.0}})
+
+    load = split_shared_load(pd.Series({"DE": 470e6, "DK1": 20e6}), balances)
+
+    assert load["LU"] == pytest.approx(470e6 * 6 / 470)
+    assert load["DE"] + load["LU"] == pytest.approx(470e6)
+    assert load["DK1"] == 20e6
+
+
+def test_regions_and_users_keep_their_base_ratios():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    de = _de(
+        [("DE4-E", "RESE", 10e6), ("DE4-E", "OTHER", 30e6), ("DE4-N", "OTHER", 60e6),
+         ("DE4-S", "OTHER", 150e6), ("DE4-W", "OTHER", 200e6)]
+    )
+
+    levels, _ = demand_levels(
+        de, _disloss({}), pd.Series({"DE": 450e6}), _balances({"DE": {"FC_E": 460000.0, **HEATING_GWH}}), 2023
+    )
+
+    new = levels.set_index(["Region", "User"])["Value"]
+    assert new.sum() == pytest.approx(450e6 - 6e6)
+    base = de.set_index(["RRR", "DEUSER"])["Value"]
+    assert (new / new.sum()).to_dict() == pytest.approx((base / base.sum()).rename_axis(["Region", "User"]).to_dict())
+
+
+def test_country_of_several_canonical_regions_splits_heating_by_load():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    de = _de([("NO1", "OTHER", 30e6), ("NO2", "OTHER", 40e6)])
+
+    levels, summary = demand_levels(
+        de, _disloss({"NO1": 0.1, "NO2": 0.0}), pd.Series({"NO1": 40e6, "NO2": 60e6}),
+        _balances({"NO": {"FC_E": 90000.0, **HEATING_GWH}}), 2023,
+    )
+
+    new = levels.set_index("Region")["Value"]
+    assert new["NO1"] == pytest.approx(40e6 * 0.9 - 6e6 * 0.4)
+    assert new["NO2"] == pytest.approx(60e6 - 6e6 * 0.6)
+    assert summary.iloc[0]["DisLoss"] == pytest.approx(0.04)
+
+
+@pytest.mark.parametrize(
+    "eurostat, note",
+    [
+        ({"FC_E": 30000.0, **HEATING_GWH}, "coverage 0.67"),
+        ({**HEATING_GWH}, "no Eurostat final consumption"),
+        ({"FC_E": 19000.0}, "no Eurostat electricity for heating"),
+    ],
+)
+def test_country_that_fails_a_check_is_not_written(eurostat, note):
+    from pybalmorel.backcasting.demand import demand_levels
+
+    with pytest.warns(UserWarning, match=f"DK keeps the input data's DE: {note}"):
+        levels, summary = demand_levels(
+            _de([("DK1", "OTHER", 12e6), ("FR", "OTHER", 400e6)]), _disloss({}),
+            pd.Series({"DK1": 20e6, "FR": 420e6}),
+            _balances({"DK": eurostat, "FR": {"FC_E": 400000.0, **HEATING_GWH}}), 2023,
+        )
+
+    assert set(levels["Region"]) == {"FR"}
+    assert not summary.set_index("Country").loc["DK", "Written"]
+
+
+def test_country_without_entsoe_load_is_not_written():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    with pytest.warns(UserWarning, match="UK keeps the input data's DE: no ENTSO-E load"):
+        levels, _ = demand_levels(
+            _de([("UK", "OTHER", 300e6)]), _disloss({}), pd.Series(dtype=float), _balances({}), 2023
+        )
+
+    assert levels.empty
+
+
+def test_de_override_lines(tmp_path):
+    from pybalmorel.backcasting.demand import write_de_override
+
+    levels = pd.DataFrame({"Region": ["DE4-E", "DE4-E"], "User": ["RESE", "OTHER"], "Value": [123456789.04, 5.0]})
+
+    write_de_override(levels, 2023, "entsoe", tmp_path)
+
+    content = (tmp_path / "DE_ENTSOE.inc").read_text()
+    assert "DE('2023','DE4-E','OTHER')=5.0;\nDE('2023','DE4-E','RESE')=123456789.0;\n" in content
+    assert "ENTSO-E load net of distribution losses" in content
+
+
+def test_annual_load_fills_missing_hours_with_the_mean():
+    from pybalmorel.backcasting.demand import annual_load
+
+    hours = backcast_hours(2023)
+    observed = pd.DataFrame({"IE": 4000.0, "DK1": 2000.0}, index=hours)
+    observed.iloc[:1000, 0] = np.nan
+
+    with pytest.warns(UserWarning, match="IE misses 1000 of 8736 hours"):
+        load = annual_load(observed, 2023)
+
+    assert load.to_dict() == pytest.approx({"IE": 4000.0 * 8760, "DK1": 2000.0 * 8760})
+
+
+def test_annual_load_spans_balmorels_year_so_de_gives_back_the_observed_load():
+    from pybalmorel.backcasting.demand import annual_load
+
+    hours = backcast_hours(2023)
+    observed = pd.DataFrame({"FR": 1000.0}, index=hours)
+
+    de = annual_load(observed, 2023)["FR"]
+
+    # Balmorel spreads DE over 8760 hours (IHOURSINST), the Backcast Calendar has 8736 of them
+    assert de / 8760 * len(hours) == pytest.approx(observed["FR"].sum())
+
+
+# %% ------------------------------- ###
+###   15. Demand Level, model heat  ###
+### ------------------------------- ###
+
+
+def _write_load_results(path, rows: list[tuple[str, str, float]], scenario="backcast_R2023", year=2023, hours=None):
+    """balmorel_load.csv with each (Region, Category, MWh per hour) on every hour, as `format` writes it."""
+    from pybalmorel.backcasting.calendar import SEASONS, TERMS
+
+    hours = hours if hours is not None else [(s, t) for s in SEASONS for t in TERMS]
+    frame = pd.DataFrame(
+        [
+            {"Scenario": scenario, "Year": year, "Country": "X", "Region": region, "Season": s,
+             "Time": t, "Category": category, "Unit": "MWh", "Value": value}
+            for region, category, value in rows
+            for s, t in hours
+        ]
+    )
+    file = path / "balmorel_load.csv"
+    frame.to_csv(file, index=False)
+    return file
+
+
+def test_previous_run_heat_sums_each_category_per_region(tmp_path):
+    from pybalmorel.backcasting.demand import previous_run_heat
+
+    file = _write_load_results(
+        tmp_path,
+        [("DK1", "EXOGENOUS", 2.0), ("DK1", "ENDOGENOUS_ELECT2HEAT", 0.5), ("DK1", "TRANS_LOSSES", 0.1),
+         ("DK1", "DIST_LOSSES", 9.0), ("DK1", "ENDO_INTRASTO", 9.0), ("NO1", "EXOGENOUS", 1.0)],
+    )
+
+    previous = previous_run_heat(file, 2023)
+
+    assert previous.loc["DK1"].to_dict() == pytest.approx(
+        {"EXO": 2.0 * 8736, "E2H": 0.5 * 8736, "TLoss": 0.1 * 8736, "DLoss": 9.0 * 8736}
+    )
+    # A category without rows counts as 0
+    assert previous.loc["NO1"].to_dict() == pytest.approx({"EXO": 8736.0, "E2H": 0.0, "TLoss": 0.0, "DLoss": 0.0})
+    assert previous.attrs["scenario"] == "backcast_R2023"
+
+
+@pytest.mark.parametrize(
+    "kwargs, match",
+    [
+        ({"scenario": None}, "one scenario"),
+        ({"year": 2022}, "not 2023"),
+        ({"hours": [("S01", f"T{t:03d}") for t in range(1, 169)]}, "168 of the 8736"),
+    ],
+)
+def test_previous_run_heat_rejects_a_file_that_is_not_one_full_hourly_year(tmp_path, kwargs, match):
+    from pybalmorel.backcasting.demand import previous_run_heat
+
+    if kwargs.get("scenario", "x") is None:
+        file = _write_load_results(tmp_path, [("DK1", "EXOGENOUS", 1.0)])
+        frame = pd.read_csv(file)
+        frame.loc[frame.index[:10], "Scenario"] = "other"
+        frame.to_csv(file, index=False)
+    else:
+        file = _write_load_results(tmp_path, [("DK1", "EXOGENOUS", 1.0)], **kwargs)
+
+    with pytest.raises(ValueError, match=match):
+        previous_run_heat(file, 2023)
+
+
+def _previous(rows: dict[str, tuple[float, ...]], disloss: dict[str, float] | None = None) -> pd.DataFrame:
+    """Previous-run EXO, E2H, TLoss and DLoss per Balmorel region, in MWh over the 8736 hours.
+
+    Without a fourth value, DLoss is a run's losses on exogenous demand and
+    heating alone, (EXO + E2H) d/(1-d) with d from `disloss` (0 if not given).
+    """
+    frame = pd.DataFrame({region: values[:3] for region, values in rows.items()}, index=["EXO", "E2H", "TLoss"]).T
+    d = pd.Series(disloss or {}, dtype=float).reindex(frame.index).fillna(0.0)
+    own = (frame["EXO"] + frame["E2H"]) * d / (1 - d)
+    frame["DLoss"] = [values[3] if len(values) > 3 else own[region] for region, values in rows.items()]
+    return frame
+
+
+def test_model_heat_level_is_load_less_losses_and_the_previous_runs_heating():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    to_year = 8760 / 8736
+    load = pd.Series({"DK1": 20e6})
+    previous = _previous({"DK1": (14e6, 3e6, 0.2e6)}, {"DK1": 0.05})
+
+    levels, summary = demand_levels(
+        _de([("DK1", "RESE", 6e6), ("DK1", "OTHER", 12e6)]), _disloss({"DK1": 0.05}), load,
+        _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}}), 2023, heat="model", previous=previous,
+    )
+
+    x = levels["Value"].sum()
+    e2h, tloss = 3e6 * to_year, 0.2e6 * to_year
+    assert x == pytest.approx((20e6 - tloss) * 0.95 - e2h)
+    # With the previous run's heating and losses, Balmorel's load is ENTSO-E's
+    assert (x + e2h) / 0.95 + tloss == pytest.approx(load["DK1"])
+    row = summary.iloc[0]
+    assert row["HeatSource"] == "model"
+    assert row["E2H_TWh"] == pytest.approx(e2h / 1e6)
+    assert row["E2H_minus_H_TWh"] == pytest.approx((e2h - 6e6) / 1e6)
+    # What the previous run missed at final-consumption level
+    assert row["ResidualTWh"] == pytest.approx(((20e6 - tloss) * 0.95 - 14e6 * to_year - e2h) / 1e6)
+
+
+def test_model_heat_leaves_out_the_previous_runs_losses_on_wind_and_solar_output():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    to_year = 8760 / 8736
+    load = pd.Series({"DK1": 20e6})
+    # 0.3 TWh of DIST_LOSSES beyond those on exogenous demand and heating, e.g. 2% of 15 TWh of wind
+    own = (14e6 + 3e6) * 0.05 / 0.95
+    previous = _previous({"DK1": (14e6, 3e6, 0.2e6, own + 0.3e6)})
+
+    levels, summary = demand_levels(
+        _de([("DK1", "OTHER", 18e6)]), _disloss({"DK1": 0.05}), load,
+        _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}}), 2023, heat="model", previous=previous,
+    )
+
+    x = levels["Value"].sum()
+    e2h, tloss = 3e6 * to_year, 0.2e6 * to_year
+    other = (3e6 * 0.05 / 0.95 + 0.3e6) * to_year
+    assert summary.iloc[0]["OtherDistLossTWh"] == pytest.approx(other / 1e6)
+    # Balmorel's load as compared: EXO + E2H + DIST_LOSSES + TRANS_LOSSES, with the
+    # losses on the new EXO at d and the rest as in the previous run
+    assert x / 0.95 + e2h + other + tloss == pytest.approx(load["DK1"])
+
+
+def test_model_heat_sums_e2h_and_losses_over_de4_and_keeps_base_ratios():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    de = _de([("DE4-E", "OTHER", 40e6), ("DE4-N", "OTHER", 60e6), ("DE4-S", "OTHER", 150e6), ("DE4-W", "OTHER", 200e6)])
+    previous = _previous({"DE4-E": (1, 2e6, 0.1e6), "DE4-N": (1, 3e6, 0.2e6), "DE4-S": (1, 10e6, 0.3e6), "DE4-W": (1, 15e6, 0.4e6)})
+
+    levels, _ = demand_levels(
+        de, _disloss({}), pd.Series({"DE": 470e6}), _balances({"DE": {"FC_E": 460000.0, **HEATING_GWH}}), 2023,
+        heat="model", previous=previous,
+    )
+
+    new = levels.set_index("Region")["Value"]
+    assert new.sum() == pytest.approx(470e6 - (1e6 + 30e6) * 8760 / 8736)
+    base = de.set_index("RRR")["Value"]
+    assert (new / new.sum()).to_dict() == pytest.approx((base / base.sum()).to_dict())
+
+
+def test_model_heat_uses_each_norwegian_regions_own_e2h_and_losses():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    previous = _previous({"NO1": (1, 4e6, 0.1e6), "NO2": (1, 1e6, 0.0)}, {"NO1": 0.1})
+
+    levels, _ = demand_levels(
+        _de([("NO1", "OTHER", 30e6), ("NO2", "OTHER", 40e6)]), _disloss({"NO1": 0.1, "NO2": 0.0}),
+        pd.Series({"NO1": 40e6, "NO2": 60e6}), _balances({"NO": {"FC_E": 90000.0, **HEATING_GWH}}), 2023,
+        heat="model", previous=previous,
+    )
+
+    new = levels.set_index("Region")["Value"]
+    to_year = 8760 / 8736
+    assert new["NO1"] == pytest.approx((40e6 - 0.1e6 * to_year) * 0.9 - 4e6 * to_year)
+    assert new["NO2"] == pytest.approx(60e6 - 1e6 * to_year)
+
+
+def test_model_heat_writes_a_country_without_eurostat_data_unchecked():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    levels, summary = demand_levels(
+        _de([("CH", "OTHER", 50e6)]), _disloss({}), pd.Series({"CH": 60e6}), _balances({}), 2023,
+        heat="model", previous=_previous({"CH": (50e6, 2e6, 0.5e6)}),
+    )
+
+    assert levels["Value"].sum() == pytest.approx(60e6 - 2.5e6 * 8760 / 8736)
+    row = summary.set_index("Country").loc["CH"]
+    assert row["Written"]
+    assert "coverage not checked" in row["Note"]
+
+
+def test_model_heat_does_not_write_a_region_missing_from_the_previous_run():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    with pytest.warns(UserWarning, match="DK keeps the input data's DE: not in the previous run"):
+        levels, _ = demand_levels(
+            _de([("DK1", "OTHER", 12e6), ("FR", "OTHER", 400e6)]), _disloss({}),
+            pd.Series({"DK1": 20e6, "FR": 420e6}),
+            _balances({"DK": {"FC_E": 19000.0, **HEATING_GWH}, "FR": {"FC_E": 400000.0, **HEATING_GWH}}), 2023,
+            heat="model", previous=_previous({"FR": (380e6, 60e6, 1e6)}),
+        )
+
+    assert set(levels["Region"]) == {"FR"}
+
+
+def test_model_heat_needs_the_previous_run():
+    from pybalmorel.backcasting.demand import demand_levels
+
+    with pytest.raises(ValueError, match="previous run"):
+        demand_levels(_de([("DK1", "OTHER", 1.0)]), _disloss({}), pd.Series({"DK1": 2.0}), _balances({}), 2023, heat="model")
+
+
+def test_previous_run_check_warns_where_exo_is_not_the_current_level(tmp_path):
+    from pybalmorel.backcasting.demand import check_previous_run
+
+    (tmp_path / "DE_ENTSOE.inc").write_text(
+        "* header\nDE('2023','DK1','OTHER')=8760.0;\nDE('2023','DK1','RESE')=8760.0;\nDE('2023','FR','OTHER')=87600.0;\n"
+    )
+    # DK1 solved with this level (x 8736/8760); FR 5% off
+    previous = _previous({"DK1": (2 * 8736.0 * 1.005, 0, 0), "FR": (87360.0 * 0.95, 0, 0)})
+
+    with pytest.warns(UserWarning, match=r"did not solve with this DE_ENTSOE.inc.*FR") as record:
+        check_previous_run(previous, tmp_path / "DE_ENTSOE.inc", 2023)
+
+    assert "DK1" not in str(record[0].message)
+
+
+def test_wrapper_check_warns_when_an_addon_does_not_reapply_the_level(tmp_path):
+    from pybalmorel.backcasting.demand import check_de_wrappers
+
+    base, data = tmp_path / "base" / "data", tmp_path / "sc" / "data"
+    base.mkdir(parents=True), data.mkdir(parents=True)
+    (base / "INDUSTRY_DE.inc").write_text("")
+    (base / "INDIVUSERS_DE.inc").write_text("")
+    (data / "INDUSTRY_DE.inc").write_text("$include '../../base/data/INDUSTRY_DE.inc';\n$INCLUDE '../data/DE_ENTSOE.inc';\n")
+
+    with pytest.warns(UserWarning, match="INDIVUSERS_DE.inc") as record:
+        check_de_wrappers(data, base)
+    assert len(record) == 1
+
+    (data / "INDIVUSERS_DE.inc").write_text("$include '../../base/data/INDIVUSERS_DE.inc';\n")
+    with pytest.warns(UserWarning, match="INDIVUSERS_DE.inc"):
+        check_de_wrappers(data, base)
+
+
+def test_model_heat_header_names_the_previous_run(tmp_path):
+    from pybalmorel.backcasting.demand import write_de_override
+
+    levels = pd.DataFrame({"Region": ["DK1"], "User": ["OTHER"], "Value": [5.0]})
+
+    write_de_override(levels, 2023, "entsoe", tmp_path, heat="model", previous_scenario="backcast_R2023")
+
+    content = (tmp_path / "DE_ENTSOE.inc").read_text()
+    assert "other than on exogenous demand of backcast_R2023" in content
+    assert "ENDOGENOUS_ELECT2HEAT" in content

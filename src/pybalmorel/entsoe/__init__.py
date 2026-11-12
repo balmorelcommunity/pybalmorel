@@ -20,6 +20,7 @@ import re
 import pandas as pd
 import requests
 from pathlib import Path
+from warnings import warn
 from entsoe.entsoe import EntsoePandasClient
 from entsoe.exceptions import NoMatchingDataError
 from entsoe.mappings import NEIGHBOURS, lookup_area
@@ -96,6 +97,12 @@ bidding_zones = [
     "10Y1001A1001A75E",
     "10Y1001A1001A74G",
 ]
+
+# Bidding zone -> the smaller area its load is fetched for, so the load covers
+# only the Balmorel region: IE_SEM is all-island, but Balmorel has Northern
+# Ireland in UK, so IE's load is Ireland's control area (10YIE-1001A00010).
+# Prices, generation and flows stay on the bidding zone.
+load_zones = {"IE_SEM": "IE"}
 
 # Balmorel region name -> canonical name shared with an ENTSO-E zone,
 # for regions where Balmorel's resolution differs from ENTSO-E's
@@ -273,6 +280,21 @@ def find_transmission_file(
     )
 
 
+def read_flow_csv(csv_path: str | Path) -> pd.Series:
+    """Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.
+
+    Args:
+        csv_path (str | Path): The csv.
+
+    Returns:
+        pd.Series: Hourly flows.
+    """
+    temp = pd.read_csv(csv_path)
+    temp.columns = ["Time", "Value"]
+    temp.Time = pd.to_datetime(temp.Time, utc=True)
+    return temp.set_index("Time")["Value"].resample("1h").mean()
+
+
 def entsoe_subzones(canonical_region: str) -> list[str]:
     """The ENTSO-E bidding zones that collapse to `canonical_region`.
 
@@ -301,7 +323,7 @@ def neighbour_pairs(zones: list[str]) -> list[tuple[str, str]]:
     """The directed pairs of neighbouring zones, both within `zones`, to query flows for.
 
     Both directions are included, since NEIGHBOURS isn't symmetric (e.g. no AL
-    key). Zones are spelled as transmission-max-flow looks them up.
+    key). Zones are spelled as transmission-flow-limit looks them up.
 
     Args:
         zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.
@@ -426,6 +448,56 @@ def read_no_data_zones(path: str | Path, year: int, entsoe_query: str) -> set[st
     return {line for line in f.read_text().splitlines() if line}
 
 
+def query_zones(entsoe_query: str, zones: list[str]) -> list[str]:
+    """The zones to fetch `entsoe_query` for: `zones`, with load_zones swapped in for load.
+
+    Args:
+        entsoe_query (str): The query, e.g. 'load'.
+        zones (list[str]): ENTSO-E zone identifiers, e.g. bidding_zones.
+
+    Returns:
+        list[str]: The zones to query.
+    """
+    if entsoe_query != "load":
+        return list(zones)
+    return [load_zones.get(zone, zone) for zone in zones]
+
+
+def load_files(path: str | Path, year: int) -> list[Path]:
+    """The load csv's of `year`, without those of a bidding zone whose load is fetched for a smaller area.
+
+    A superseded file (e.g. '<year>_IE_SEM_load.csv', from before IE's load
+    was fetched for Ireland only) is never read, so a zone is not counted
+    twice. Its replacement missing is warned about, as that region then has
+    no load. Zones are matched by their file name token, not their EIC code,
+    since region 'IE' itself resolves to IE_SEM's code.
+
+    Args:
+        path (str | Path): Folder with the fetched load csv's.
+        year (int): The year.
+
+    Returns:
+        list[Path]: The load csv's to read, sorted.
+    """
+    files = sorted(Path(path).glob(f"{year}_*_load.csv"))
+    names = {file.name for file in files}
+    kept = []
+    for file in files:
+        zone = file.name.removeprefix(f"{year}_").removesuffix("_load.csv")
+        if zone not in load_zones:
+            kept.append(file)
+            continue
+        replacement = f"{year}_{load_zones[zone]}_load.csv"
+        if replacement not in names:
+            warn(
+                f"{file} is not read: {zone} covers more than the Balmorel region, so its load is fetched "
+                f"for {load_zones[zone]} instead, and {replacement} is missing. "
+                f"Run `python -m pybalmorel.backcasting download {path} {year} --query load`"
+            )
+
+    return kept
+
+
 def fetch_annual_transmission_data(
     entsoe_query, from_to_list, year, path, api_key, timeout: int = 120
 ):
@@ -463,3 +535,12 @@ def fetch_annual_transmission_data(
             # shouldn't stop the loop - rerun to retry
             print(f"Request failed for link {region_from}-{region_to}, rerun to retry")
             print(e)
+
+
+# ------------------------------- #
+#             3. Maps             #
+# ------------------------------- #
+
+# Imported last, as maps and profile build on the functions above
+from .maps import load_zone_geometries, plot_transmission_map, sum_crossborder_flows  # noqa: E402
+from .profile import EntsoeProfile, plot_profile, read_profile  # noqa: E402

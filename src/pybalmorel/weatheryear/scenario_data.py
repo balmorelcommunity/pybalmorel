@@ -14,7 +14,8 @@ Balmorel's override mechanism in the GREAT project
   per existing area CorRES has no profile for, and its catch-all borrows a wind
   area instead of DK2_NoDH.
 - Hydro files lose WEATHERYEAR's _WY suffix. The FLH files are scaling factors,
-  so the base values load first (under $onMulti) and are multiplied. The hydro
+  so the base values load first (under $onMulti) and are multiplied, unless
+  they are Absolute Hydro FLH, which replace the base value. The hydro
   profiles get base's catch-all for areas without a weather-year profile.
 - Demand is split by user in WEATHERYEAR but read as one DE_VAR_T.inc and one
   DH_VAR_T.inc. Each loads the base default first, since the weather year only
@@ -57,6 +58,9 @@ CONCAT_FILES = {
 }
 
 FLH_FACTOR_FILES = {"WTRRRFLH.inc", "WTRRSFLH.inc"}
+
+# Absolute Hydro FLH files (hydro_flh: mode: absolute) set the value, so they are not made multiplicative
+ABSOLUTE_FLH_HEADER = "* Absolute hydro FLH:"
 
 # TABLE files with areas as columns: a dropped area must be cut out of every row
 WIDE_TABLE_FILES = {"WND_VAR_T.inc", "SOLE_VAR_T.inc"}
@@ -232,7 +236,7 @@ def write_scenario_data(
             param = dest_name.removesuffix(".inc")
             text = (
                 f"$onMulti\n$include '{base_data_dir}/{param}.inc';\n$offMulti\n"
-                + _make_flh_multiplicative(text)
+                + (text if ABSOLUTE_FLH_HEADER in text else _make_flh_multiplicative(text))
             )
         outputs[dest_name] = _append(text, HYDRO_PROFILE_FALLBACKS.get(dest_name, ""))
 

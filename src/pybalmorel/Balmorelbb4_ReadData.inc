@@ -305,6 +305,10 @@ PARAMETER FUELPRICE_EXC(YYY,AAA,FFF)             "Fuel prices to be transferred 
 $ifi     exist "bb4datainc.inc" $include                   "bb4datainc.inc";
 $ifi not exist "bb4datainc.inc" $include  "../../base/model/bb4datainc.inc";
 
+* Hydro technology sets, assigned as in Balmorelbb4.inc
+IGHYRS(G) = YES$(GDATA(G,'GDTYPE') EQ GHYRS);
+IGHYRR(G) = YES$(GDATA(G,'GDTYPE') EQ GHYRR);
+
 * Save GDATA as csv, because it has string values that are converted to large integers
 execute_unload 'GDATA.gdx', GDATA;
-$call gdxdump GDATA.gdx output=GDATA.csv symb=GDATA format=csv
+execute 'gdxdump GDATA.gdx output=GDATA.csv symb=GDATA format=csv';

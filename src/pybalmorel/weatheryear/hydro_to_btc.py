@@ -24,6 +24,7 @@ from .balmorel_converters import (
     write_raw_and_scaled_csv,
 )
 from .config_models import HydroModuleConfig
+from .hydro_flh import absolute_flh, absolute_flh_assignment_lines, load_balmorel_hydro_inputs
 from .to_inc import build_inc_file_list_type
 
 
@@ -142,9 +143,19 @@ def _write_flh_inc_files(
     capdev_scaled_long_term_folder: str,
     capdev_scaled_full_year_folder: str,
     capdev_raw_folder: str,
+    absolute_header: str | None = None,
 ) -> None:
-    """Write annual and long-term hydro FLH-factor .inc and CSV outputs."""
-    df = to_balmorel_factor_assignment_lines(yearly_flh_series, symbol)
+    """Write annual and long-term hydro FLH .inc and CSV outputs.
+
+    Relative factors on the base FLH by default; with `absolute_header`, the
+    series are Absolute Hydro FLH, written as assignments after that header.
+    """
+    def to_lines(series: pd.Series) -> pd.DataFrame:
+        if absolute_header is None:
+            return to_balmorel_factor_assignment_lines(series, symbol)
+        return absolute_flh_assignment_lines(series, symbol, absolute_header)
+
+    df = to_lines(yearly_flh_series)
 
     build_inc_file_list_type(df, symbol, capdev_scaled_full_year_folder, filename=f"{symbol}_WY")
     build_inc_file_list_type(df, symbol, capdev_raw_folder, filename=f"{symbol}_WY")
@@ -154,7 +165,7 @@ def _write_flh_inc_files(
     yearly_flh_series.to_csv(os.path.join(capdev_raw_folder, csv_name))
     yearly_flh_series.to_csv(os.path.join(hd_raw_folder, csv_name))
 
-    df = to_balmorel_factor_assignment_lines(long_term_flh_series, symbol)
+    df = to_lines(long_term_flh_series)
     build_inc_file_list_type(df, symbol, capdev_scaled_long_term_folder, filename=f"{symbol}_WY")
     build_inc_file_list_type(df, symbol, hd_scaled_folder, filename=f"{symbol}_WY")
 
@@ -231,29 +242,39 @@ def create_hydro_inc(config_fn: str, year: int, output_folder: str) -> None:
 
     # FLH factors
     res_flh_year = df_res_flh_factors.loc[str(year)].iloc[0]
-    res_flh_long_term = df_res_flh_factors.mean()
-    _write_flh_inc_files(
-        yearly_flh_series=res_flh_year,
-        long_term_flh_series=res_flh_long_term,
-        symbol="WTRRSFLH",
-        csv_name="res_inflow_flh.csv",
-        hd_raw_folder=hd_raw_folder,
-        hd_scaled_folder=hd_scaled_folder,
-        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
-        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
-        capdev_raw_folder=capdev_raw_folder,
-    )
-
     ror_flh_year = df_ror_flh_factors.loc[str(year)].iloc[0]
-    ror_flh_long_term = df_ror_flh_factors.mean()
-    _write_flh_inc_files(
-        yearly_flh_series=ror_flh_year,
-        long_term_flh_series=ror_flh_long_term,
-        symbol="WTRRRFLH",
-        csv_name="ror_inflow_flh.csv",
-        hd_raw_folder=hd_raw_folder,
-        hd_scaled_folder=hd_scaled_folder,
-        capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
-        capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
-        capdev_raw_folder=capdev_raw_folder,
-    )
+    flh = {
+        "WTRRSFLH": (res_flh_year, df_res_flh_factors.mean()),
+        "WTRRRFLH": (ror_flh_year, df_ror_flh_factors.mean()),
+    }
+    absolute_header = None
+    if config.hydro_flh.mode == "absolute":
+        capacity, countries, flh_base = load_balmorel_hydro_inputs(config.hydro_flh)
+        flh = absolute_flh(
+            df_inflow_res,
+            df_inflow_ror,
+            res_flh_year,
+            ror_flh_year,
+            year,
+            capacity,
+            countries,
+            flh_base,
+        )
+        absolute_header = (
+            f"* Absolute hydro FLH: CorRES inflow energy / GKFX of {config.hydro_flh.scenario} "
+            f"in {config.hydro_flh.capacity_year} (see CONTEXT.md, ADR 0011)"
+        )
+
+    for symbol, csv_name in (("WTRRSFLH", "res_inflow_flh.csv"), ("WTRRRFLH", "ror_inflow_flh.csv")):
+        _write_flh_inc_files(
+            yearly_flh_series=flh[symbol][0],
+            long_term_flh_series=flh[symbol][1],
+            symbol=symbol,
+            csv_name=csv_name,
+            hd_raw_folder=hd_raw_folder,
+            hd_scaled_folder=hd_scaled_folder,
+            capdev_scaled_long_term_folder=capdev_scaled_long_term_folder,
+            capdev_scaled_full_year_folder=capdev_scaled_full_year_folder,
+            capdev_raw_folder=capdev_raw_folder,
+            absolute_header=absolute_header,
+        )

@@ -98,7 +98,7 @@ LOCAL_BALMOREL_DIR = "../Balmorel"
 
 [tool.pixi.feature.dev.tasks]
 test = { cmd = "pytest tests -s", description = "Run the test suite with print outputted to console" }
-_build = { cmd = "python -m build", description = "Build source and wheel distributions into dist/" }
+_build = { cmd = "rm -rf dist/* && python -m build", description = "Build source and wheel distributions into dist/" }
 publish = { depends-on = [
   "_build",
 ], cmd = "python -m twine upload dist/*", description = "Build and upload the package to PyPI" }
