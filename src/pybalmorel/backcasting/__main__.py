@@ -92,6 +92,7 @@ balmorel_to_category = {
     "CHP-EXTRACTION - LIGNITE": "Fossil Solid",
     "CONDENSING - COAL": "Fossil Solid",
     "CONDENSING - LIGNITE": "Fossil Solid",
+    "CONDENSING - PEAT": "Fossil Solid",
     "CHP-EXTRACTION - SHALE": "Fossil Solid",
     "CONDENSING - SHALE": "Fossil Solid",
     "BOILERS - COAL": "Fossil Solid",
