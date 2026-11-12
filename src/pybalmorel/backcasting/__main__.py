@@ -172,7 +172,10 @@ entsoe_to_category = {
 entsoe_queries = ["load", "day_ahead_prices", "generation", "crossborder_flows"]
 
 # ENTSO-E queries for thermal-availability, downloaded only on request
-entsoe_capacity_queries = ["installed_generation_capacity", "unavailability_of_generation_units"]
+entsoe_capacity_queries = [
+    "installed_generation_capacity",
+    "unavailability_of_generation_units",
+]
 
 # Balmorel load categories that are storage charging, which ENTSO-E's
 # Actual Total Load excludes
@@ -196,9 +199,44 @@ INCOMPLETE_GENERATION = {"CH"}
 
 # Order of the per-region panels of price-duration; other regions follow alphabetically
 PRICE_DURATION_REGION_ORDER = [
-    "DE", "FR", "NL", "BE", "AT", "CH", "PL", "CZ", "SK", "HU", "SI", "HR",
-    "DK1", "DK2", "NO1", "NO2", "NO3", "NO4", "NO5", "SE1", "SE2", "SE3", "SE4", "FI",
-    "EE", "LV", "LT", "ES", "PT", "IT", "GR", "IE", "BG", "RO", "RS", "MK", "AL", "ME",
+    "DE",
+    "FR",
+    "NL",
+    "BE",
+    "AT",
+    "CH",
+    "PL",
+    "CZ",
+    "SK",
+    "HU",
+    "SI",
+    "HR",
+    "DK1",
+    "DK2",
+    "NO1",
+    "NO2",
+    "NO3",
+    "NO4",
+    "NO5",
+    "SE1",
+    "SE2",
+    "SE3",
+    "SE4",
+    "FI",
+    "EE",
+    "LV",
+    "LT",
+    "ES",
+    "PT",
+    "IT",
+    "GR",
+    "IE",
+    "BG",
+    "RO",
+    "RS",
+    "MK",
+    "AL",
+    "ME",
 ]
 
 # ------------------------------- #
@@ -268,7 +306,11 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
     data = DataContainer(data_items)
 
     for data_item in data_items:
-        files = load_files(path, year) if data_item == "load" else sorted(path.glob(f"{year}_*_{data_item}.csv"))
+        files = (
+            load_files(path, year)
+            if data_item == "load"
+            else sorted(path.glob(f"{year}_*_{data_item}.csv"))
+        )
         if not files:
             warn(
                 f"No ENTSO-E {data_item} files for {year} in {path}, so its comparison will be empty. "
@@ -277,7 +319,9 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
             )
         for item in files:
             # Load data for a specific region
-            temp = format_entsoe_data(pd.read_csv(item), resampling, item, year, data_item)
+            temp = format_entsoe_data(
+                pd.read_csv(item), resampling, item, year, data_item
+            )
             setattr(
                 data,
                 data_item,
@@ -316,7 +360,9 @@ def load_observed_nuclear(entsoe_data_path: str, year: int) -> dict[str, pd.Seri
     """
     nuclear = {}
     for item in sorted(Path(entsoe_data_path).glob(f"{year}_*_generation.csv")):
-        df = format_entsoe_data(pd.read_csv(item, low_memory=False), "h", item, year, "generation")
+        df = format_entsoe_data(
+            pd.read_csv(item, low_memory=False), "h", item, year, "generation"
+        )
         if "Nuclear" not in df.columns or not df["Nuclear"].fillna(0).gt(0).any():
             continue
         region = canonical_region(df["Region"].iloc[0])
@@ -330,7 +376,9 @@ def load_observed_nuclear(entsoe_data_path: str, year: int) -> dict[str, pd.Seri
     return nuclear
 
 
-def load_observed_generation(entsoe_data_path: str, year: int) -> dict[str, pd.DataFrame]:
+def load_observed_generation(
+    entsoe_data_path: str, year: int
+) -> dict[str, pd.DataFrame]:
     """Hourly ENTSO-E output per canonical region and production type, from the generation csv's.
 
     Files of several zones in one canonical region are summed hour by hour.
@@ -345,13 +393,13 @@ def load_observed_generation(entsoe_data_path: str, year: int) -> dict[str, pd.D
     """
     generation = {}
     for item in sorted(Path(entsoe_data_path).glob(f"{year}_*_generation.csv")):
-        df = format_entsoe_data(pd.read_csv(item, low_memory=False), "h", item, year, "generation")
+        df = format_entsoe_data(
+            pd.read_csv(item, low_memory=False), "h", item, year, "generation"
+        )
         region = canonical_region(df["Region"].iloc[0])
         df = df.drop(columns="Region").set_index("Time")
         generation[region] = (
-            df
-            if region not in generation
-            else generation[region].add(df, fill_value=0)
+            df if region not in generation else generation[region].add(df, fill_value=0)
         )
 
     return generation
@@ -397,7 +445,10 @@ def load_observed_load(entsoe_data_path: str, year: int) -> pd.DataFrame:
         return pd.DataFrame()
 
     return pd.concat(
-        [format_entsoe_data(pd.read_csv(item), "h", item, year, "load") for item in files]
+        [
+            format_entsoe_data(pd.read_csv(item), "h", item, year, "load")
+            for item in files
+        ]
     ).pivot_table(index="Time", columns="Region", values="Value")
 
 
@@ -413,7 +464,9 @@ def format_balmorel_df(df: pd.DataFrame, year: int) -> pd.DataFrame:
         pd.DataFrame: Columns 'Time' (UTC timestamps), 'Region', optionally
             'Technology', and 'Value'.
     """
-    group_columns = ["Region", "Technology"] if "Technology" in df.columns else ["Region"]
+    group_columns = (
+        ["Region", "Technology"] if "Technology" in df.columns else ["Region"]
+    )
     df_out = df.groupby(group_columns + ["Season", "Time"], as_index=False)[
         "Value"
     ].sum()
@@ -434,9 +487,7 @@ def load_balmorel_data(
         "balmorel_generation.csv",
         "balmorel_flows.csv",
     ]
-    if (
-        not all(path.joinpath(file).exists() for file in cached_files)
-    ) or overwrite:
+    if (not all(path.joinpath(file).exists() for file in cached_files)) or overwrite:
         print(
             "Loading Balmorel timeseries results from .gdx file (may take a while - will be cached afterwards)"
         )
@@ -550,7 +601,9 @@ def map_technology_categories(
         energy = (
             df[df.Technology.isin(unmapped)].groupby("Technology")["Value"].sum() / 1e6
         ).sort_values(ascending=False)
-        listing = ", ".join(f"'{technology}' ({twh:.2f} TWh)" for technology, twh in energy.items())
+        listing = ", ".join(
+            f"'{technology}' ({twh:.2f} TWh)" for technology, twh in energy.items()
+        )
         message = f"{source} technologies without a category: {listing}."
         if not allow_unmapped:
             raise ValueError(
@@ -561,7 +614,9 @@ def map_technology_categories(
         warn(f"{message} They are compared as '{UNMAPPED_CATEGORY}'.")
 
     df = df.assign(Technology=df.Technology.map(mapping).fillna(UNMAPPED_CATEGORY))
-    return df.groupby(["Region", "Technology", "Time"], as_index=False).sum(numeric_only=True)
+    return df.groupby(["Region", "Technology", "Time"], as_index=False).sum(
+        numeric_only=True
+    )
 
 
 def balmorel_load_components(load: pd.DataFrame) -> pd.DataFrame:
@@ -623,7 +678,8 @@ def get_and_format_balmorel(
         ~balmorel_load.Category.isin(STORAGE_CHARGING_CATEGORIES)
     ]
     balmorel_load = format_balmorel_df(
-        aggregate_regions(balmorel_load, "sum", ["Season", "Time"], COMPARISON_REGIONS), year
+        aggregate_regions(balmorel_load, "sum", ["Season", "Time"], COMPARISON_REGIONS),
+        year,
     )
 
     # The cached balmorel_prices.csv stays in the Price Year, convert after reading it
@@ -633,7 +689,9 @@ def get_and_format_balmorel(
     )
     balmorel_elprices = balmorel_prices_in_year(balmorel_elprices, year)
     balmorel_generation = format_balmorel_df(
-        aggregate_regions(balmorel_generation, "sum", ["Season", "Time"], COMPARISON_REGIONS),
+        aggregate_regions(
+            balmorel_generation, "sum", ["Season", "Time"], COMPARISON_REGIONS
+        ),
         year,
     )
 
@@ -665,7 +723,9 @@ def get_and_format_balmorel(
     )
 
 
-def get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc, allow_unmapped: bool = False):
+def get_and_format_entsoe(
+    entsoe_data_path, year, elpriceaggfunc, allow_unmapped: bool = False
+):
     # Load
     entsoe_load, entsoe_elprices, entsoe_generation = load_entsoe_data(
         entsoe_data_path, year
@@ -677,7 +737,10 @@ def get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc, allow_unmapped
 
     # Generation of electricity
     entsoe_generation = (
-        entsoe_generation.pivot_table(index=["Time", "Region"]).stack().reset_index()
+        entsoe_generation.pivot_table(index=["Time", "Region"])
+        .stack()
+        .dropna()
+        .reset_index()
     )
     entsoe_generation.columns = ["Time", "Region", "Technology", "Value"]
     entsoe_generation = aggregate_regions(entsoe_generation, "sum", ["Time"])
@@ -746,7 +809,9 @@ def join_hourly(
         entsoe.set_index(["Region", "Time"])
         .rename(columns={"Value": "ENTSOE"})
         .join(
-            balmorel.rename(columns={"Value": "BALMOREL"}).set_index(["Region", "Time"]),
+            balmorel.rename(columns={"Value": "BALMOREL"}).set_index(
+                ["Region", "Time"]
+            ),
             how="inner",
         )
     )
@@ -781,7 +846,9 @@ def join_generation(
     generation = (
         entsoe.rename(columns={"Value": "ENTSOE"})
         .set_index(keys)
-        .join(balmorel.rename(columns={"Value": "BALMOREL"}).set_index(keys), how="outer")
+        .join(
+            balmorel.rename(columns={"Value": "BALMOREL"}).set_index(keys), how="outer"
+        )
         .reset_index()
     )
     reported = entsoe.loc[entsoe.Value.notna(), ["Region", "Time"]].drop_duplicates()
@@ -808,7 +875,9 @@ def load_components_table(
             categories that aren't excluded and holds ENTSO-E's annual load.
     """
     entsoe_annual = (
-        entsoe_load[entsoe_load.Time.isin(backcast_hours(year))].groupby("Region")["Value"].sum()
+        entsoe_load[entsoe_load.Time.isin(backcast_hours(year))]
+        .groupby("Region")["Value"]
+        .sum()
         / 1e6
     )
     totals = (
@@ -821,8 +890,12 @@ def load_components_table(
 
     return (
         pd.concat([components, totals], ignore_index=True)
-        .sort_values(["Region", "Category"], key=lambda col: col.replace("Total compared", "~"))
-        .reset_index(drop=True)[["Region", "Category", "BALMOREL", "Excluded", "ENTSOE"]]
+        .sort_values(
+            ["Region", "Category"], key=lambda col: col.replace("Total compared", "~")
+        )
+        .reset_index(drop=True)[
+            ["Region", "Category", "BALMOREL", "Excluded", "ENTSOE"]
+        ]
     )
 
 
@@ -888,7 +961,9 @@ def load_and_align(
         year,
     )
 
-    components_file = Path(balmorel_scenario_path).joinpath("backcastoutput/load_components.csv")
+    components_file = Path(balmorel_scenario_path).joinpath(
+        "backcastoutput/load_components.csv"
+    )
     load_components_table(balmorel_load_components_twh, entsoe_load, year).to_csv(
         components_file, index=False
     )
@@ -929,8 +1004,11 @@ def plot_bar_chart(
     """
     with plot_style(style) as (tokens, fuel_colours):
         bar_style = dict(
-            kind="bar", stacked=True, color=fuel_colours,
-            edgecolor=tokens["surface"], linewidth=0.5,
+            kind="bar",
+            stacked=True,
+            color=fuel_colours,
+            edgecolor=tokens["surface"],
+            linewidth=0.5,
         )
         if per_region and len(columns_to_keep) > 0:
             fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
@@ -942,14 +1020,24 @@ def plot_bar_chart(
             )
             # position=1 puts the bar's right edge on the tick, position=0 its left edge.
             # The legend takes Balmorel's segments only, one entry per category
-            df_agg["BALMOREL"].plot(ax=ax, position=1, width=0.4, legend=False, **bar_style)
+            df_agg["BALMOREL"].plot(
+                ax=ax, position=1, width=0.4, legend=False, **bar_style
+            )
             handles, labels = ax.get_legend_handles_labels()
-            df_agg["ENTSOE"].plot(ax=ax, position=0, width=0.4, legend=False, **bar_style)
+            df_agg["ENTSOE"].plot(
+                ax=ax, position=0, width=0.4, legend=False, **bar_style
+            )
             ax.legend(handles, labels, loc="center left", bbox_to_anchor=(1.01, 0.5))
             ax.set_xlim(-0.6, len(df_agg) - 0.4)
             ax.text(
-                0, 1.02, "Left: Balmorel, Right: ENTSO-E", transform=ax.transAxes,
-                ha="left", va="bottom", fontsize=10, color=tokens["ink2"],
+                0,
+                1.02,
+                "Left: Balmorel, Right: ENTSO-E",
+                transform=ax.transAxes,
+                ha="left",
+                va="bottom",
+                fontsize=10,
+                color=tokens["ink2"],
             )
         else:
             if per_region:
@@ -976,7 +1064,9 @@ def plot_bar_chart(
     return fig, ax
 
 
-def plot_price_profile(prices: pd.DataFrame, style: str = "light") -> tuple[Figure, Axes]:
+def plot_price_profile(
+    prices: pd.DataFrame, style: str = "light"
+) -> tuple[Figure, Axes]:
     """Daily mean prices of ENTSO-E and Balmorel over the Backcast Year.
 
     Args:
@@ -1004,7 +1094,9 @@ def plot_price_profile(prices: pd.DataFrame, style: str = "light") -> tuple[Figu
     return fig, ax
 
 
-def save_figure(fig: Figure, output_dir: Path, file_name: str, style: str, **kwargs) -> Path:
+def save_figure(
+    fig: Figure, output_dir: Path, file_name: str, style: str, **kwargs
+) -> Path:
     """Save a figure in output_dir, with a transparent background in the dark style.
 
     Args:
@@ -1067,8 +1159,12 @@ def plot_price_duration_curves(
         for column, colour, label in lines:
             x, y = duration_curve(df[column].to_numpy())
             ax.plot(
-                x, np.clip(y, y_low, y_high), color=colour, lw=2 if big else 1.4,
-                solid_capstyle="round", label=label,
+                x,
+                np.clip(y, y_low, y_high),
+                color=colour,
+                lw=2 if big else 1.4,
+                solid_capstyle="round",
+                label=label,
             )
         ax.set_ylim(y_low, y_high)
         ax.set_xlim(0, 100)
@@ -1080,28 +1176,46 @@ def plot_price_duration_curves(
         ax.spines["bottom"].set_color(tokens["axis"])
         ax.axhline(0, color=tokens["axis"], lw=0.8)
         ax.set_xticks([0, 50, 100])
-        ax.set_yticks([tick for tick in range(0, int(y_high) + 1, 100) if tick >= y_low])
+        ax.set_yticks(
+            [tick for tick in range(0, int(y_high) + 1, 100) if tick >= y_low]
+        )
         ax.tick_params(length=0, labelsize=9 if big else 7, colors=tokens["muted"])
         ax.set_title(
-            panel_title, loc="left", color=tokens["ink"], fontsize=12 if big else 9,
-            fontweight="bold", pad=3,
+            panel_title,
+            loc="left",
+            color=tokens["ink"],
+            fontsize=12 if big else 9,
+            fontweight="bold",
+            pad=3,
         )
         entsoe, balmorel = df["ENTSOE"], df["BALMOREL"]
         ax.text(
-            0.98, 0.97,
+            0.98,
+            0.97,
             f"mean {entsoe.mean():.0f} / {balmorel.mean():.0f}\n"
             f"std {entsoe.std():.0f} / {balmorel.std():.0f}\n"
             f"h ≤ 0: {(entsoe <= 0).sum()} / {(balmorel <= 0).sum()}",
-            transform=ax.transAxes, ha="right", va="top", fontsize=9 if big else 6.5,
-            color=tokens["ink2"], linespacing=1.25,
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+            fontsize=9 if big else 6.5,
+            color=tokens["ink2"],
+            linespacing=1.25,
         )
 
     with plot_style(style) as (tokens, _):
         face = "none" if style == "dark" else tokens["surface"]
         fig = plt.figure(figsize=(17, 13.5), facecolor=face)
         grid_spec = GridSpec(
-            6, n_columns, figure=fig, hspace=0.55, wspace=0.18,
-            left=0.04, right=0.99, top=0.9, bottom=0.04,
+            6,
+            n_columns,
+            figure=fig,
+            hspace=0.55,
+            wspace=0.18,
+            left=0.04,
+            right=0.99,
+            top=0.9,
+            bottom=0.04,
         )
         pooled = fig.add_subplot(grid_spec[0:2, 0:3])
         draw(pooled, prices, "All bidding zones (pooled region-hours)", big=True)
@@ -1111,7 +1225,9 @@ def plot_price_duration_curves(
         slots = [(row, col) for row in range(0, 2) for col in range(3, n_columns)]
         slots += [(row, col) for row in range(2, 6) for col in range(n_columns)]
         if len(order) > len(slots):
-            warn(f"Only the first {len(slots)} of {len(order)} regions fit in the price duration plot.")
+            warn(
+                f"Only the first {len(slots)} of {len(order)} regions fit in the price duration plot."
+            )
         axes = [pooled]
         for (row, col), region in zip(slots, order):
             ax = fig.add_subplot(grid_spec[row, col])
@@ -1119,24 +1235,41 @@ def plot_price_duration_curves(
             if col not in (0, 3):
                 ax.set_yticklabels([])
             axes.append(ax)
-        for row, col in slots[len(order):]:
+        for row, col in slots[len(order) :]:
             fig.add_subplot(grid_spec[row, col]).axis("off")
 
         n_outside = (
-            (prices[["ENTSOE", "BALMOREL"]] < y_low) | (prices[["ENTSOE", "BALMOREL"]] > y_high)
+            (prices[["ENTSOE", "BALMOREL"]] < y_low)
+            | (prices[["ENTSOE", "BALMOREL"]] > y_high)
         ).sum()
-        fig.suptitle(title, x=0.04, ha="left", fontsize=15, fontweight="bold", color=tokens["ink"], y=0.975)
+        fig.suptitle(
+            title,
+            x=0.04,
+            ha="left",
+            fontsize=15,
+            fontweight="bold",
+            color=tokens["ink"],
+            y=0.975,
+        )
         fig.text(
-            0.04, 0.935,
+            0.04,
+            0.935,
             "Balmorel prices converted from the Price Year to nominal euros of the Backcast Year. "
             f"Panel text: ENTSO-E / Balmorel. Y-axis clipped to [{y_low:g}, {y_high:g}] €/MWh "
             f"(ENTSO-E region-hours outside: {n_outside.ENTSOE}, Balmorel: {n_outside.BALMOREL}).",
-            fontsize=10, color=tokens["ink2"],
+            fontsize=10,
+            color=tokens["ink2"],
         )
         handles, labels = pooled.get_legend_handles_labels()
         fig.legend(
-            handles, labels, loc="upper right", bbox_to_anchor=(0.99, 0.975),
-            frameon=False, fontsize=10, ncol=2, labelcolor=tokens["ink"],
+            handles,
+            labels,
+            loc="upper right",
+            bbox_to_anchor=(0.99, 0.975),
+            frameon=False,
+            fontsize=10,
+            ncol=2,
+            labelcolor=tokens["ink"],
         )
 
     return fig, np.array(axes)
@@ -1318,7 +1451,9 @@ def generation(balmorel_scenario_path, style, output_dir):
     fig, _ = plot_bar_chart(generation, ["Technology"], style=style)
     save_figure(fig, output_dir, "generation.png", style, bbox_inches="tight")
     fig, _ = plot_bar_chart(generation, ["Technology"], per_region=True, style=style)
-    save_figure(fig, output_dir, "generation_per_region.png", style, bbox_inches="tight")
+    save_figure(
+        fig, output_dir, "generation_per_region.png", style, bbox_inches="tight"
+    )
 
 
 @main.command()
@@ -1369,7 +1504,10 @@ def price_duration(balmorel_scenario_path, ylim, style, output_dir):
     scenario = Path(balmorel_scenario_path).resolve().name
 
     fig, _ = plot_price_duration_curves(
-        prices, f"Price duration curves {year} — {scenario} vs ENTSO-E day-ahead", tuple(ylim), style
+        prices,
+        f"Price duration curves {year} — {scenario} vs ENTSO-E day-ahead",
+        tuple(ylim),
+        style,
     )
     path = save_figure(fig, output_dir, "price_duration_curves.png", style, dpi=130)
     print(f"Saved {path} with {prices.Region.nunique()} regions")
@@ -1543,7 +1681,13 @@ def thermal_availability(balmorel_scenario_path, entsoe_data_path, year, reload_
     help="Run ReadData again instead of reusing the cached <scenario>_input_data.gdx (takes a while).",
 )
 def must_run_floor(
-    balmorel_scenario_path, entsoe_data_path, year, price_threshold, min_hours, every_week, reload_input
+    balmorel_scenario_path,
+    entsoe_data_path,
+    year,
+    price_threshold,
+    min_hours,
+    every_week,
+    reload_input,
 ):
     """Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks.
 
@@ -1814,7 +1958,9 @@ def download(entsoe_data_path, year, queries):
                 query, neighbour_pairs(bidding_zones), year, path, api_key
             )
         else:
-            fetch_annual_data(query, year, query_zones(query, bidding_zones), path, api_key)
+            fetch_annual_data(
+                query, year, query_zones(query, bidding_zones), path, api_key
+            )
 
 
 @main.command(name="ttf-csv")
