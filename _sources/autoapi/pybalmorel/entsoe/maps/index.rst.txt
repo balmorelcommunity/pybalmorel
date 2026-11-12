@@ -1,0 +1,210 @@
+pybalmorel.entsoe.maps
+======================
+
+.. py:module:: pybalmorel.entsoe.maps
+
+.. autoapi-nested-parse::
+
+   ENTSO-E Transmission Map
+
+   Map of the physical cross-border flows fetched from the ENTSO-E transparency
+   platform, drawn on ENTSO-E's own bidding zones as entsoe-py names them
+   (e.g. 'DE_LU', 'DK_1', 'IT_NORD', 'IE_SEM'). Nothing is translated to
+   Balmorel regions or Canonical Region Names (see CONTEXT.md).
+
+   Created on 05.11.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.maps._entsoe_geojson_folder
+   pybalmorel.entsoe.maps._pybalmorel_geojson_folder
+   pybalmorel.entsoe.maps._fallback_geofiles
+   pybalmorel.entsoe.maps._unit_mwh
+   pybalmorel.entsoe.maps._zone_colour
+   pybalmorel.entsoe.maps._zone_edge_colour
+   pybalmorel.entsoe.maps._text_primary
+   pybalmorel.entsoe.maps._text_secondary
+   pybalmorel.entsoe.maps._halo
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.maps.zone_area_name
+   pybalmorel.entsoe.maps._to_brussels_time
+   pybalmorel.entsoe.maps.sum_crossborder_flows
+   pybalmorel.entsoe.maps.load_zone_geometries
+   pybalmorel.entsoe.maps._border_flows
+   pybalmorel.entsoe.maps._zone_anchor
+   pybalmorel.entsoe.maps._round_down
+   pybalmorel.entsoe.maps._format_flow
+   pybalmorel.entsoe.maps._period_label
+   pybalmorel.entsoe.maps.plot_transmission_map
+
+
+Module Contents
+---------------
+
+.. py:data:: _entsoe_geojson_folder
+
+.. py:data:: _pybalmorel_geojson_folder
+
+.. py:data:: _fallback_geofiles
+
+.. py:data:: _unit_mwh
+
+.. py:data:: _zone_colour
+   :value: '#e8e6e1'
+
+
+.. py:data:: _zone_edge_colour
+   :value: '#ffffff'
+
+
+.. py:data:: _text_primary
+   :value: '#0b0b0b'
+
+
+.. py:data:: _text_secondary
+   :value: '#52514e'
+
+
+.. py:data:: _halo
+
+.. py:function:: zone_area_name(zone: str) -> str
+
+   The entsoe-py area name of an ENTSO-E zone given by EIC code or area name.
+
+   Args:
+       zone (str): E.g. '10YDK-1--------W' or 'DK_1'.
+
+   Returns:
+       str: E.g. 'DK_1', or `zone` itself if entsoe-py doesn't know it.
+
+
+.. py:function:: _to_brussels_time(time: str | pandas.Timestamp) -> pandas.Timestamp
+
+   A timestamp, read as Brussels time unless it carries a time zone.
+
+
+.. py:function:: sum_crossborder_flows(path: str | pathlib.Path, year: int, start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None) -> pandas.DataFrame
+
+   The energy that physically flowed over each directed border between ENTSO-E zones.
+
+   Reads every '<year>_<from>-<to>_crossborder_flows.csv' in `path` (a pair
+   fetched under several spellings is read once), resamples it to hourly
+   mean MW and sums the hours from `start` up to, not including, `end`.
+   Missing hours count as no flow. Zones keep their entsoe-py area names:
+   nothing is translated to Balmorel regions.
+
+   Args:
+       path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The year the files are for.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as
+           Brussels time unless it has a time zone, e.g. '2024-01-15'. Defaults to None (start of the files).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the files).
+
+   Returns:
+       pd.DataFrame: Columns 'From', 'To' and 'Value' (MWh), one row per directed border.
+
+
+.. py:function:: load_zone_geometries(zones: list[str], year: int | None = None) -> geopandas.GeoSeries
+
+   Outlines of ENTSO-E bidding zones, in lon/lat (EPSG:4326).
+
+   Taken from the geojson files bundled with entsoe-py, and for zones it has
+   none for (e.g. GB, IE_SEM, LU, MT and the Western Balkans) from
+   pybalmorel's geofiles. GB is drawn with the UK's outline and IE_SEM with
+   Ireland's, so Northern Ireland appears under GB.
+
+   Args:
+       zones (list[str]): entsoe-py area names, e.g. ['DK_1', 'IT_NORD', 'GB'].
+       year (int | None, optional): The year to draw the zones for. Before 2021, the
+           Italian zones redrawn on 1 January 2021 get their earlier outline. Defaults to None (current outlines).
+
+   Returns:
+       gpd.GeoSeries: One (multi)polygon per zone, indexed by zone. Zones without
+           an outline are left out, with a warning.
+
+
+.. py:function:: _border_flows(flows: pandas.DataFrame) -> pandas.DataFrame
+
+   One row per border: 'ZoneA' < 'ZoneB', 'Net' (A to B minus B to A) and 'Gross' (both directions).
+
+   A direction without a file counts as no flow.
+
+
+.. py:function:: _zone_anchor(geometry: shapely.geometry.base.BaseGeometry) -> shapely.geometry.Point
+
+   Where a zone's lines meet: the centroid of its largest part, or a point inside that part
+   if the centroid falls outside it (e.g. a crescent-shaped zone).
+
+
+.. py:function:: _round_down(value: float) -> float
+
+   `value` rounded down to one significant figure, e.g. 44 -> 40, 0.37 -> 0.3.
+
+
+.. py:function:: _format_flow(flow: float) -> str
+
+   A line label: 44, 5.2, 0.37, or '<0.01' for a flow too small to matter on the map.
+
+
+.. py:function:: _period_label(year: int, start: str | pandas.Timestamp | None, end: str | pandas.Timestamp | None) -> str
+
+   E.g. '2024', or '15 Jan 2024 to 31 Jan 2024' for a part of the year, naming the last day included.
+
+
+.. py:function:: plot_transmission_map(path: str | pathlib.Path, year: int, value: str = 'net', start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, unit: str = 'TWh', ax: matplotlib.axes.Axes | None = None, extent: tuple[float, float, float, float] | None = (-11.0, 34.0, 33.0, 71.5), crs: str = 'EPSG:3035', line_show_min: float = 0.0, line_width_min: float = 0.5, line_width_max: float = 8.0, line_value_max: float | None = None, line_color: str = '#256abf', line_label_show: bool = False, zone_label_show: bool = True, zone_coordinates: dict[str, tuple[float, float]] | None = None, legend_loc: str = 'upper left', title: str | None = None) -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Map the physical cross-border flows fetched from ENTSO-E, between ENTSO-E's raw bidding zones.
+
+   Every border with a fetched '<year>_<from>-<to>_crossborder_flows.csv' in
+   `path` is drawn as a line between the two zones, its width proportional to
+   the energy that flowed over it. Zones are ENTSO-E's own (e.g. DE_LU, DK_1,
+   the Italian zones), not Balmorel regions. Flows are physical, so they
+   include loop flows.
+
+   Args:
+       path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The year to map.
+       value (str, optional): 'net' for the flow one way minus the other, with an arrow
+           towards the net importer, or 'gross' for both ways added. Defaults to 'net'.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels
+           time unless it has a time zone. Defaults to None (whole year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (whole year).
+       unit (str, optional): 'MWh', 'GWh' or 'TWh', for the legend, labels, `line_show_min`
+           and `line_value_max`. Defaults to 'TWh'.
+       ax (Axes | None, optional): Axes to draw on. Defaults to None (a new figure).
+       extent (tuple[float, float, float, float] | None, optional): (lon min, lat min, lon max,
+           lat max) to show. Zones partly outside are clipped, and their lines meet in the part
+           shown. None shows every zone. Defaults to (-11, 34, 33, 71.5).
+       crs (str, optional): The map projection. Defaults to 'EPSG:3035' (equal-area Europe).
+       line_show_min (float, optional): Borders with less flow than this, in `unit`, are not drawn. Defaults to 0.
+       line_width_min (float, optional): Narrowest line width, in points. Defaults to 0.5.
+       line_width_max (float, optional): Line width of `line_value_max`, in points. Defaults to 8.
+       line_value_max (float | None, optional): Flow drawn at `line_width_max`, in `unit`; set it
+           to compare several maps. Defaults to None (the largest flow on the map).
+       line_color (str, optional): Colour of the lines and arrows. Defaults to '#256abf'.
+       line_label_show (bool, optional): Write the flow next to each line. Defaults to False.
+       zone_label_show (bool, optional): Write each zone's name where its lines meet. Defaults to True.
+       zone_coordinates (dict[str, tuple[float, float]] | None, optional): (lon, lat) where a
+           zone's lines meet, overriding the centroid of its largest part, e.g. {'NO_4': (18.0, 68.5)}.
+           Also places zones without an outline. Defaults to None.
+       legend_loc (str, optional): Where the legend of line widths goes, as in matplotlib's
+           `Axes.legend`. Defaults to 'upper left'.
+       title (str | None, optional): The title. '' shows none. Defaults to None (describes the map).
+
+   Returns:
+       tuple[Figure, Axes]: The figure and axes of the map.
+
+

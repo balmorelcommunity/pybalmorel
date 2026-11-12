@@ -1,0 +1,181 @@
+pybalmorel.plotting.production_profile
+======================================
+
+.. py:module:: pybalmorel.plotting.production_profile
+
+.. autoapi-nested-parse::
+
+   Created on 28.05.2022
+
+   @author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics & Modelling)
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.plotting.production_profile.plot_profile
+   pybalmorel.plotting.production_profile.plot_profiles
+   pybalmorel.plotting.production_profile._set_plot_style
+   pybalmorel.plotting.production_profile._stack_order
+   pybalmorel.plotting.production_profile._select_timeslices
+   pybalmorel.plotting.production_profile._aggregate_price
+   pybalmorel.plotting.production_profile._prepare_profile_data
+   pybalmorel.plotting.production_profile._fill_area
+   pybalmorel.plotting.production_profile.single_profile_plot
+
+
+Module Contents
+---------------
+
+.. py:function:: plot_profile(MainResults, commodity: str, year: int, scenario: str | int = 0, columns: str = 'Technology', region: str = 'ALL', style: str = 'light', seasons: str | list[str] | None = None, terms: str | list[str] | None = None, price_aggregation: str = 'load-weighted') -> Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Plots the production profile of a commodity, in a year, for a certain scenario
+
+   By default the whole year is plotted. Use `seasons` and/or `terms` to plot
+   only part of it, e.g. `seasons='S02'` plots the second week in a model
+   with weekly seasons.
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str, optional): Defaults to the first scenario in MainResults.
+       columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+       region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+       style (str, optional): Plot style, light or dark. Defaults to 'light'.
+       seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
+       terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+       price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
+
+   Returns:
+       Figure, Axes: The figure and axes objects for further manipulations
+
+
+.. py:function:: plot_profiles(MainResults, commodity: str, year: int, scenario: str | int = 0, chunk_size: int = 168, columns: str = 'Technology', region: str = 'ALL', style: str = 'light', seasons: str | list[str] | None = None, terms: str | list[str] | None = None, price_aggregation: str = 'load-weighted') -> Tuple[List, List]
+
+   Plots the production profile of a commodity, in a year, for a certain scenario,
+   split into one figure per `chunk_size` timeslices
+
+   Use `seasons` and/or `terms` to only plot part of the year, e.g.
+   `seasons=['S02', 'S03']` with `chunk_size=168` gives one figure for each
+   of those two weeks in a model with weekly seasons of 168 terms.
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str, optional): Defaults to the first scenario in MainResults.
+       chunk_size (int, optional): How many timeslices per profile, defaults to 168
+       columns (str, optional): Technology or Fuel as . Defaults to 'Technology'.
+       region (str, optional): Which country, region or area to plot. Defaults to 'ALL'.
+       style (str, optional): Plot style, light or dark. Defaults to 'light'.
+       seasons (str | list[str] | None, optional): Season(s) to plot, e.g. 'S02' or ['S02', 'S03']. Defaults to None, which plots all seasons.
+       terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. ['T001', 'T002']. Defaults to None, which plots all terms.
+       price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). 'load-weighted' weights the price of each region by its demand in each timeslice, 'average' takes the simple mean. Defaults to 'load-weighted'.
+
+   Returns:
+       list[Figure], list[Axes]: The figure and axes objects for further manipulations
+
+
+.. py:function:: _set_plot_style(style: str) -> tuple[str, str]
+
+   Set the matplotlib style and return the matching face and demand line colours.
+
+   Args:
+       style (str): Plot style, 'light' or 'dark'.
+
+   Returns:
+       tuple[str, str]: Face colour and demand line colour.
+
+
+.. py:function:: _stack_order(production_columns: list[str], columns: str) -> list[str]
+
+   Order production columns from the bottom of the stack up, as the ENTSO-E profile stacks them.
+
+   Args:
+       production_columns (list[str]): The fuels or technologies to order.
+       columns (str): 'Fuel', which orders by `fuel_groups`, or 'Technology',
+           which orders by `technology_order`.
+
+   Returns:
+       list[str]: The columns in stacking order. Columns not listed in
+           `fuel_groups` or `technology_order` come last, in alphabetical order.
+
+
+.. py:function:: _select_timeslices(fD: pandas.DataFrame, fP: pandas.DataFrame, f: pandas.DataFrame, seasons: str | list[str] | None = None, terms: str | list[str] | None = None) -> tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+
+   Keep only the chosen seasons and terms of the demand, price and production data.
+
+   Args:
+       fD (pd.DataFrame): Demand, indexed by (season, term).
+       fP (pd.DataFrame): Price, with the same index as fD.
+       f (pd.DataFrame): Production and import per column, with the same index as fD.
+       seasons (str | list[str] | None, optional): Season(s) to keep. Defaults to None, which keeps all.
+       terms (str | list[str] | None, optional): Term(s) to keep. Defaults to None, which keeps all.
+
+   Returns:
+       tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: The filtered fD, fP and f.
+
+
+.. py:function:: _aggregate_price(prices: pandas.DataFrame, demand: pandas.DataFrame, node: str, price_aggregation: str) -> pandas.DataFrame
+
+   Aggregate the prices of several regions or areas to one price per timeslice.
+
+   Args:
+       prices (pd.DataFrame): Price per node and timeslice, in columns `node`,
+           'SSS', 'TTT' and 'Val'.
+       demand (pd.DataFrame): Demand per node and timeslice, in columns `node`,
+           'SSS', 'TTT' and 'Val'. Several rows per node and timeslice, e.g. one
+           per demand category, are summed.
+       node (str): The column with the nodes, 'RRR' for regions or 'AAA' for areas.
+       price_aggregation (str): 'load-weighted' weights the price of each node by
+           its demand, 'average' takes the simple mean over the nodes. Timeslices
+           without any demand get the simple mean.
+
+   Returns:
+       pd.DataFrame: The price, indexed by (season, term), in column 'Val'.
+
+
+.. py:function:: _prepare_profile_data(MainResults, commodity: str, year: int, scenario: str | int, columns: str, region: str, price_aggregation: str = 'load-weighted') -> tuple[str, str, str, str, str, pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]
+
+   Load and aggregate demand, price, production and import data for a profile plot.
+
+   Args:
+       MainResults (_type_): The MainResults class containing results
+       commodity (str): The commodity (Electricity, Heat or Hydrogen)
+       year (int): The model year to plot
+       scenario (str | int): Scenario name or index in MainResults.sc.
+       columns (str): Technology or Fuel.
+       region (str): Which country, region or area to plot, or 'ALL'.
+       price_aggregation (str, optional): 'load-weighted' or 'average', how to
+           aggregate the price over several regions (areas for heat). Defaults
+           to 'load-weighted'.
+
+   Returns:
+       tuple: scenario, commodity, region, year and price axis label (e.g.
+           'Load-Weighted Price'), followed by demand, price and production
+           DataFrames sharing the same sorted (season, term) index.
+
+
+.. py:function:: _fill_area(ax: matplotlib.axes.Axes, x: range, lower: numpy.ndarray, upper: numpy.ndarray, column: str, colours: dict[str, str]) -> matplotlib.collections.PolyCollection
+
+   Fill between lower and upper in the colour of a fuel or technology.
+
+   Args:
+       ax (Axes): The axes to draw on.
+       x (range): Timeslice positions.
+       lower (np.ndarray): Lower edge of the area, GW.
+       upper (np.ndarray): Upper edge of the area, GW.
+       column (str): The fuel or technology, used as label and colour key.
+       colours (dict[str, str]): Colour per fuel or technology. Columns without
+           one get matplotlib's next colour.
+
+   Returns:
+       PolyCollection: The filled area.
+
+
+.. py:function:: single_profile_plot(scenario, commodity, region, year, price_label, fD, fP, fc, f, c, demcolor)
+

@@ -1,0 +1,70 @@
+pybalmorel.economics.get_average_prices
+=======================================
+
+.. py:module:: pybalmorel.economics.get_average_prices
+
+.. autoapi-nested-parse::
+
+   Average Prices
+
+   Get average prices for static Balmorel backcasting input
+   Data input:
+   - Natural gas, scraped from: https://finance.yahoo.com/quote/TTF%3DF/history/  Unit is in € / MWh
+   - CO2: https://www.eex.com/en/market-data/market-data-hub/environmentals/eex-eua-primary-auction-spot-download Unit in €/tCO2
+   - Oil weekly: https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fenergy.ec.europa.eu%2Fdocument%2Fdownload%2F906e60ca-8b6a-44e7-8589-652854d2fd3f_en%3Ffilename%3DWeekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx&wdOrigin=BROWSELINK  Unit in €/t
+   - Coal: https://www.investing.com/commodities/rotterdam-coal-futures Unit in €/t
+
+   Lower heating values from https://www.engineeringtoolbox.com/fuels-higher-calorific-values-d_169.html#gsc.tab=0
+   - Heavy fuel oil 39 MJ/kg = 39 GJ/t
+   - Anthracite coal 32.6 MJ/kg = 32.6 GJ/t
+   - Bituminous coal 30.2 MJ/kg = 30.2 GJ/t
+
+   Bituminous coal is the most abundant form of coal, according to this source:
+   https://swannscoalsupplies.co.uk/blogs/news/what-are-the-four-different-types-of-coal
+
+   Created on 09.07.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.economics.get_average_prices.load_row
+   pybalmorel.economics.get_average_prices.format_oil_price_parameters
+   pybalmorel.economics.get_average_prices.main
+   pybalmorel.economics.get_average_prices.fueloil
+   pybalmorel.economics.get_average_prices.naturalgas
+   pybalmorel.economics.get_average_prices.coal
+
+
+Module Contents
+---------------
+
+.. py:function:: load_row(file_path: str, row: int, sheet_name: str, header: int | list)
+
+.. py:function:: format_oil_price_parameters(parameters: pandas.Series)
+
+.. py:function:: main()
+
+   Average price CLI: get average prices for oil, gas, coal.
+
+
+.. py:function:: fueloil(filepath: str = 'Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx')
+
+   Calculate average heavy fuel oil prices (€/GJ) from the oil bulletin excel.
+
+
+.. py:function:: naturalgas(filepath: str = 'natural_gas_TTF_2024.csv')
+
+   Calculate average TTF natural gas price (€/MWh) from CSV.
+
+
+.. py:function:: coal(filepath: str = 'Rotterdam Coal Futures Historical Data.csv')
+
+   Calculate average Rotterdam coal price (€/t and €/GJ) from CSV.
+
+

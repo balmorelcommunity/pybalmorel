@@ -1,0 +1,65 @@
+pybalmorel.economics.dea
+========================
+
+.. py:module:: pybalmorel.economics.dea
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.economics.dea.TechData
+
+
+Module Contents
+---------------
+
+.. py:class:: TechData
+
+   .. py:attribute:: files
+      :type:  dict
+
+
+   .. py:attribute:: path
+      :type:  str
+      :value: 'C:\\Users\\mathi\\gitRepos\\balmorel-preprocessing\\RawDataProcessing\\Data\\Technology Data'
+
+
+
+   .. py:method:: load(file: str)
+
+
+   .. py:method:: download_file(url, save_folder, filename=None)
+
+      Downloads a file from a given URL and saves it to a specified folder.
+      Args:
+          url (str): The URL of the file to download.
+          save_folder (str): The folder where the file should be saved.
+          filename (str, optional): The name to save the file as. If not provided, the filename is extracted from the URL.
+      Returns:
+          str: The full path to the saved file.
+      Raises:
+          requests.exceptions.RequestException: If the download fails.
+      Notes:
+          - The function ensures that the save folder exists.
+          - The file is downloaded in chunks to handle large files efficiently.
+      chunk_size:
+          The size of each chunk of data to be written to the file. In this case, it is set to 8192 bytes (8 KB).
+
+
+
+   .. py:method:: download_catalogue(file: str, save_to_folder: str = '.', domain: str = 'https://ens.dk/sites/ens.dk/files/Analyser/')
+
+      Downloads technology catalogue from DEA website
+
+      Args:
+          file (str): _description_
+          save_to_folder (str, optional): _description_. Defaults to '.'.
+          domain (_type_, optional): _description_. Defaults to "https://ens.dk/sites/ens.dk/files/Analyser/".
+
+
+
+   .. py:method:: download_all_catalogues(save_to_folder: str = '.')
+
+

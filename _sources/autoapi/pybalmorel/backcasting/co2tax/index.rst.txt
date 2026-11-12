@@ -1,0 +1,121 @@
+pybalmorel.backcasting.co2tax
+=============================
+
+.. py:module:: pybalmorel.backcasting.co2tax
+
+.. autoapi-nested-parse::
+
+   CO2 Tax
+
+   Convert EEX EUA primary-auction results (Balmorel's
+   backcast/historicalprices/) into Balmorel's season/term-resolved
+   TAX_CO2_ST(YYY,CCCRRRAAA,SSS,TTT) input (see the Balmorel repo's
+   docs/adr/0002-co2-tax-season-term-resolution.md).
+
+   Every country gets the EUA price unless overridden (e.g. the UK's own
+   carbon price, or 0 for countries without one). Prices are expressed in the
+   backcast Price Year (see pricelevel.py) and mapped onto the UTC Backcast
+   Calendar (see calendar.py).
+
+   Created on 15.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.co2tax.balmorel_countries
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.co2tax.find_eex_auction_file
+   pybalmorel.backcasting.co2tax.load_eex_auction_prices
+   pybalmorel.backcasting.co2tax.parse_co2_overrides
+   pybalmorel.backcasting.co2tax.write_co2_tax_override
+   pybalmorel.backcasting.co2tax.generate_co2_tax_override
+
+
+Module Contents
+---------------
+
+.. py:data:: balmorel_countries
+   :value: ['NORWAY', 'DENMARK', 'FINLAND', 'GERMANY', 'NETHERLANDS', 'SWEDEN', 'UNITED_KINGDOM',...
+
+
+.. py:function:: find_eex_auction_file(historicalprices_path: str | pathlib.Path, year: int) -> pathlib.Path
+
+   Find the EEX primary-auction report for `year` under historicalprices_path.
+
+   Args:
+       historicalprices_path (str | Path): Folder searched recursively.
+       year (int): The Backcast Year.
+
+   Returns:
+       Path: The .xlsx/.xls report.
+
+
+.. py:function:: load_eex_auction_prices(xlsx_path: str | pathlib.Path) -> pandas.Series
+
+   Load daily EUA primary-auction clearing prices in nominal EUR/tCO2.
+
+   Only successful auctions are used. Days with several auctions (e.g. the
+   EU, DE and PL auctions) get the mean of their clearing prices.
+
+   Args:
+       xlsx_path (str | Path): An EEX 'emission-spot-primary-market-auction-report'
+           file (header in the sixth row, columns 'Date', 'Status' and
+           'Auction Price €/tCO2').
+
+   Returns:
+       pd.Series: Daily nominal price in EUR/tCO2, indexed by calendar date.
+
+
+.. py:function:: parse_co2_overrides(overrides: list[str] | tuple[str, ...]) -> dict[str, float]
+
+   Parse 'COUNTRY=VALUE' strings into {CCC name: nominal EUR/tCO2}.
+
+   Args:
+       overrides (list[str] | tuple[str, ...]): e.g. ['UNITED_KINGDOM=85', 'SERBIA=0'].
+
+   Returns:
+       dict[str, float]: Validated overrides.
+
+
+.. py:function:: write_co2_tax_override(eua_grid: pandas.DataFrame, year: int, scenario_data_path: str | pathlib.Path, overrides: dict[str, float] | None = None) -> pybalmorel.classes.IncFile
+
+   Write TAX_CO2_ST.inc with the (S,T)-resolved EUA price for every country.
+
+   Args:
+       eua_grid (pd.DataFrame): (S,T) grid of the EUA price in Price Year EUR/tCO2.
+       year (int): The Backcast Year.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+       overrides (dict[str, float] | None, optional): {CCC name: flat price in
+           Price Year EUR/tCO2} replacing the EUA price. Defaults to None.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: generate_co2_tax_override(historicalprices_path: str | pathlib.Path, year: int, balmorel_scenario_path: str | pathlib.Path, overrides: dict[str, float] | None = None) -> None
+
+   Convert the EEX auction report for `year` into the scenario's TAX_CO2_ST.inc.
+
+   Warns (without changing anything) if the scenario's balopt.opt doesn't set
+   TAX_CO2_DOL=YYY_CCC_SSS_TTT, in which case Balmorel ignores TAX_CO2_ST.
+
+   Args:
+       historicalprices_path (str | Path): Path to backcast/historicalprices/.
+       year (int): The Backcast Year.
+       balmorel_scenario_path (str | Path): The scenario folder (e.g. .../backcast).
+       overrides (dict[str, float] | None, optional): {CCC name: flat nominal
+           EUR/tCO2 in `year`} replacing the EUA price. Defaults to None.
+
+

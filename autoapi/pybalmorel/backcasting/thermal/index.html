@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.thermal &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.vre" href="../vre/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.scenariochecks" href="../scenariochecks/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.thermal</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/thermal/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.thermal">
+<span id="pybalmorel-backcasting-thermal"></span><h1>pybalmorel.backcasting.thermal<a class="headerlink" href="#module-pybalmorel.backcasting.thermal" title="Link to this heading"></a></h1>
+<p>Thermal Availability</p>
+<p>Turn ENTSO-E’s installed generation capacity and outage reports into weekly
+GKRATE overrides (GKRATE_THERMAL_ENTSOE.inc) for the fossil, biomass and
+waste technologies of a Backcast: per canonical region, fuel group and
+Backcast Calendar week, the installed capacity as a share of GKFX (at most 1)
+less the share of it reported out of service (see CONTEXT.md). Observed
+output is never an input here, since the fossil mix is a Validation Metric;
+it only serves as a check in thermal_capacity.csv.</p>
+<p>Also defines the fuel groups and the technology selection by acronym name
+that the must-run floor shares.</p>
+<p>Created on 28.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.ACRONYM_SCALE" title="pybalmorel.backcasting.thermal.ACRONYM_SCALE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ACRONYM_SCALE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.THERMAL_TYPES" title="pybalmorel.backcasting.thermal.THERMAL_TYPES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">THERMAL_TYPES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.GROUP_FUELS" title="pybalmorel.backcasting.thermal.GROUP_FUELS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GROUP_FUELS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.GROUP_PRODUCTION_TYPES" title="pybalmorel.backcasting.thermal.GROUP_PRODUCTION_TYPES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GROUP_PRODUCTION_TYPES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.UNGROUPED_FUELS" title="pybalmorel.backcasting.thermal.UNGROUPED_FUELS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UNGROUPED_FUELS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.CHECK_ONLY_GROUPS" title="pybalmorel.backcasting.thermal.CHECK_ONLY_GROUPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CHECK_ONLY_GROUPS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.VOID_DOCSTATUS" title="pybalmorel.backcasting.thermal.VOID_DOCSTATUS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VOID_DOCSTATUS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.OUTAGE_KINDS" title="pybalmorel.backcasting.thermal.OUTAGE_KINDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OUTAGE_KINDS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.GKRATE_THERMAL_INCLUDE" title="pybalmorel.backcasting.thermal.GKRATE_THERMAL_INCLUDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GKRATE_THERMAL_INCLUDE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.acronym_names" title="pybalmorel.backcasting.thermal.acronym_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">acronym_names</span></code></a>(gdx_path[, system_directory]) → dict[float, str]</p></td>
+<td><p>The names of the GAMS acronyms in a GDX file, keyed by the value GAMS stores for them.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.acronym_name" title="pybalmorel.backcasting.thermal.acronym_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">acronym_name</span></code></a>(value, names) → str | None</p></td>
+<td><p>The name of the acronym stored as <cite>value</cite>, or None if it isn't one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.technology_fuels" title="pybalmorel.backcasting.thermal.technology_fuels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">technology_fuels</span></code></a>(gdata, names) → pandas.DataFrame</p></td>
+<td><p>GDTYPE and GDFUEL of every technology, by acronym name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.group_capacity" title="pybalmorel.backcasting.thermal.group_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_capacity</span></code></a>(gkfx, gdata, rrraaa, names, year[, ...]) → pandas.DataFrame</p></td>
+<td><p>The GKFX of <cite>year</cite> per area and technology of every fuel group, with its canonical region.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal._region_from_file" title="pybalmorel.backcasting.thermal._region_from_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_region_from_file</span></code></a>(path, year, query) → str</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.load_installed_capacity" title="pybalmorel.backcasting.thermal.load_installed_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_installed_capacity</span></code></a>(entsoe_data_path, year) → pandas.DataFrame</p></td>
+<td><p>ENTSO-E's installed generation capacity of <cite>year</cite> per canonical region and production type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.load_unavailability" title="pybalmorel.backcasting.thermal.load_unavailability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_unavailability</span></code></a>(entsoe_data_path, year) → pandas.DataFrame</p></td>
+<td><p>ENTSO-E's outage reports of generation units, with the canonical region of each file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.group_installed" title="pybalmorel.backcasting.thermal.group_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_installed</span></code></a>(installed, groups) → pandas.Series</p></td>
+<td><p>Installed capacity per canonical region and group; missing where no type of the group is reported.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.latest_outages" title="pybalmorel.backcasting.thermal.latest_outages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latest_outages</span></code></a>(unavailability) → pandas.DataFrame</p></td>
+<td><p>The outage periods of the latest revision of every event, without cancelled or withdrawn events.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.weekly_outage_energy" title="pybalmorel.backcasting.thermal.weekly_outage_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">weekly_outage_energy</span></code></a>(outages, year) → pandas.DataFrame</p></td>
+<td><p>Energy out of service (MWh) per region, group, kind and Backcast Calendar week.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.thermal_ratings" title="pybalmorel.backcasting.thermal.thermal_ratings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thermal_ratings</span></code></a>(capacity, installed, outage_energy) → pandas.DataFrame</p></td>
+<td><p>The weekly Thermal Availability per canonical region and group.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.capacity_check" title="pybalmorel.backcasting.thermal.capacity_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capacity_check</span></code></a>(capacity, installed, observed) → pandas.DataFrame</p></td>
+<td><p>Balmorel GKFX against ENTSO-E's installed capacity and observed output, per region and group.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.write_thermal_gkrate_override" title="pybalmorel.backcasting.thermal.write_thermal_gkrate_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_thermal_gkrate_override</span></code></a>(ratings, capacity, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write GKRATE_THERMAL_ENTSOE.inc with the weekly thermal ratings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.check_thermal_gkrate_include" title="pybalmorel.backcasting.thermal.check_thermal_gkrate_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_thermal_gkrate_include</span></code></a>(gkrate_inc_path) → None</p></td>
+<td><p>Warn if the scenario's GKRATE.inc doesn't include GKRATE_THERMAL_ENTSOE.inc.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.load_scenario_input" title="pybalmorel.backcasting.thermal.load_scenario_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_scenario_input</span></code></a>(balmorel_model_folder, scenario, ...) → tuple[pybalmorel.classes.Balmorel, dict[float, str]]</p></td>
+<td><p>Load a scenario's input data, warning if the cached GDX is stale, and its acronym names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.thermal.generate_thermal_availability" title="pybalmorel.backcasting.thermal.generate_thermal_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_thermal_availability</span></code></a>(balmorel_model_folder, ...) → pybalmorel.classes.IncFile | None</p></td>
+<td><p>Write GKRATE_THERMAL_ENTSOE.inc and backcastoutput/thermal_capacity.csv for a scenario.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.ACRONYM_SCALE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">ACRONYM_SCALE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e+301</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.ACRONYM_SCALE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.THERMAL_TYPES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">THERMAL_TYPES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('GCND',</span> <span class="pre">'GBPR',</span> <span class="pre">'GEXT')</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.THERMAL_TYPES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.GROUP_FUELS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">GROUP_FUELS</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.GROUP_FUELS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.GROUP_PRODUCTION_TYPES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">GROUP_PRODUCTION_TYPES</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.GROUP_PRODUCTION_TYPES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.UNGROUPED_FUELS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">UNGROUPED_FUELS</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.UNGROUPED_FUELS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.CHECK_ONLY_GROUPS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">CHECK_ONLY_GROUPS</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.CHECK_ONLY_GROUPS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.VOID_DOCSTATUS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">VOID_DOCSTATUS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('Cancelled',</span> <span class="pre">'Withdrawn')</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.VOID_DOCSTATUS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.OUTAGE_KINDS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">OUTAGE_KINDS</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.OUTAGE_KINDS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.GKRATE_THERMAL_INCLUDE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">GKRATE_THERMAL_INCLUDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;$if</span> <span class="pre">EXIST</span> <span class="pre">'../data/GKRATE_THERMAL_ENTSOE.inc'</span> <span class="pre">$INCLUDE</span> <span class="pre">'../data/GKRATE_THERMAL_ENTSOE.inc';&quot;</span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.GKRATE_THERMAL_INCLUDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.acronym_names">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">acronym_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdx_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.acronym_names" title="Link to this definition"></a></dt>
+<dd><p>The names of the GAMS acronyms in a GDX file, keyed by the value GAMS stores for them.</p>
+<p>A GAMS acronym is stored as its index times ACRONYM_SCALE, so e.g. GCND
+with index 224 is 2.24e303 in GDATA. Look values up with acronym_name.</p>
+<dl>
+<dt>Args:</dt><dd><p>gdx_path (str | Path): The GDX file, e.g. &lt;scenario&gt;_input_data.gdx.
+system_directory (str | None, optional): GAMS system directory, whose</p>
+<blockquote>
+<div><p>GDX library is used. Defaults to None.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>dict[float, str]: Acronym name per stored value.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.acronym_name">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">acronym_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.acronym_name" title="Link to this definition"></a></dt>
+<dd><p>The name of the acronym stored as <cite>value</cite>, or None if it isn’t one.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.technology_fuels">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">technology_fuels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.technology_fuels" title="Link to this definition"></a></dt>
+<dd><p>GDTYPE and GDFUEL of every technology, by acronym name.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+names (dict[float, str]): Output of acronym_names.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index ‘Technology’, columns ‘Type’ and ‘Fuel’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.group_capacity">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">group_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkfx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrraaa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.group_capacity" title="Link to this definition"></a></dt>
+<dd><p>The GKFX of <cite>year</cite> per area and technology of every fuel group, with its canonical region.</p>
+<p>Technologies are selected by the names of their GDTYPE (THERMAL_TYPES)
+and GDFUEL acronyms. Columns are taken by position, as get_input may
+name them after the raw GAMS domains.</p>
+<dl>
+<dt>Args:</dt><dd><p>gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+names (dict[float, str]): Output of acronym_names.
+year (int): The Backcast Year, the Y of GKFX.
+check_only (bool, optional): Also include CHECK_ONLY_GROUPS (solar</p>
+<blockquote>
+<div><p>and wind). Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If a thermal technology with GKFX &gt; 0 has a fuel that is</dt><dd><p>in no group and not in UNGROUPED_FUELS.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Area’, ‘Technology’, ‘BalmorelRegion’,</dt><dd><p>‘Region’ (canonical), ‘Fuel’, ‘Group’ and ‘Capacity’ (MW), for
+every grouped (area, technology) with GKFX &gt; 0.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal._region_from_file">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">_region_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal._region_from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.load_installed_capacity">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">load_installed_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.load_installed_capacity" title="Link to this definition"></a></dt>
+<dd><p>ENTSO-E’s installed generation capacity of <cite>year</cite> per canonical region and production type.</p>
+<p>Zones of one canonical region are summed. A production type a zone
+doesn’t report is missing, not 0.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str | Path): Folder with the installed_generation_capacity csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index canonical region, one column per production type (MW).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.load_unavailability">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">load_unavailability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.load_unavailability" title="Link to this definition"></a></dt>
+<dd><p>ENTSO-E’s outage reports of generation units, with the canonical region of each file.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str | Path): Folder with the unavailability_of_generation_units csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: The reports as entsoe-py returns them, plus ‘Region’.</dt><dd><p>Empty if there are no files.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.group_installed">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">group_installed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">installed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.group_installed" title="Link to this definition"></a></dt>
+<dd><p>Installed capacity per canonical region and group; missing where no type of the group is reported.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>installed (pd.DataFrame): Output of load_installed_capacity.
+groups (dict[str, tuple[str, …]]): ENTSO-E production types per group.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Index (Region, Group), MW.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.latest_outages">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">latest_outages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unavailability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.latest_outages" title="Link to this definition"></a></dt>
+<dd><p>The outage periods of the latest revision of every event, without cancelled or withdrawn events.</p>
+<p>Exact duplicate rows are dropped first: ENTSO-E’s download repeats some
+periods of the same event and revision (10,495 of 69,492 rows in 2023),
+which would otherwise count those outages twice.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>unavailability (pd.DataFrame): Output of load_unavailability.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Group’, ‘Kind’ (‘Planned’ or</dt><dd><p>‘Forced’), ‘Start’, ‘End’ (UTC) and ‘Lost’ (MW out of service),
+one row per period of an event.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.weekly_outage_energy">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">weekly_outage_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.weekly_outage_energy" title="Link to this definition"></a></dt>
+<dd><p>Energy out of service (MWh) per region, group, kind and Backcast Calendar week.</p>
+<p>Each period counts its MW out of service times its hours of overlap with
+the week.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>outages (pd.DataFrame): Output of latest_outages.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index (Region, Group, Season), columns ‘Planned’ and ‘Forced’ (MWh).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.thermal_ratings">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">thermal_ratings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outage_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.thermal_ratings" title="Link to this definition"></a></dt>
+<dd><p>The weekly Thermal Availability per canonical region and group.</p>
+<p>k = min(1, installed / GKFX); u = energy out of service in the week /
+(installed x 168); rating = k (1 - u), clipped to [0, 1]. A group without
+an installed capacity gets no rating. Without outage reports for a
+region, u is 0.</p>
+<dl>
+<dt>Args:</dt><dd><p>capacity (pd.DataFrame): Output of group_capacity.
+installed (pd.Series): Output of group_installed for GROUP_PRODUCTION_TYPES.
+outage_energy (pd.DataFrame | None): Output of weekly_outage_energy,</p>
+<blockquote>
+<div><p>or None if there are no outage reports at all.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Group’, ‘Season’, ‘GKFX’, ‘Installed’,</dt><dd><p>‘k’, ‘Planned’, ‘Forced’ (u of each kind) and ‘Rating’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.capacity_check">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">capacity_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">installed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.capacity_check" title="Link to this definition"></a></dt>
+<dd><p>Balmorel GKFX against ENTSO-E’s installed capacity and observed output, per region and group.</p>
+<p>The observed maximum and 99th percentile are a check only, never an input.</p>
+<dl>
+<dt>Args:</dt><dd><p>capacity (pd.DataFrame): Output of group_capacity with check_only=True.
+installed (pd.DataFrame): Output of load_installed_capacity.
+observed (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per</p>
+<blockquote>
+<div><p>canonical region, one column per production type.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Group’, ‘GKFX’, ‘Installed’, ‘Ratio’</dt><dd><p>(installed / GKFX), ‘ObservedMax’ and ‘ObservedP99’ (MW).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.write_thermal_gkrate_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">write_thermal_gkrate_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.write_thermal_gkrate_override" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_THERMAL_ENTSOE.inc with the weekly thermal ratings.</p>
+<p>Every technology of a group in an area gets its region’s rating of the group.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>ratings (pd.DataFrame): Output of thermal_ratings.
+capacity (pd.DataFrame): Output of group_capacity.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.check_thermal_gkrate_include">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">check_thermal_gkrate_include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkrate_inc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.check_thermal_gkrate_include" title="Link to this definition"></a></dt>
+<dd><p>Warn if the scenario’s GKRATE.inc doesn’t include GKRATE_THERMAL_ENTSOE.inc.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gkrate_inc_path (str | Path): Path to the scenario’s GKRATE.inc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.load_scenario_input">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">load_scenario_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.Balmorel" title="pybalmorel.classes.Balmorel"><span class="pre">pybalmorel.classes.Balmorel</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.load_scenario_input" title="Link to this definition"></a></dt>
+<dd><p>Load a scenario’s input data, warning if the cached GDX is stale, and its acronym names.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario.
+gams_system_directory (str | None): GAMS system directory.
+reload_input (bool): Run ReadData again instead of reusing the cached input GDX.
+ignore (tuple[str, …], optional): Data files the stale-cache check</p>
+<blockquote>
+<div><p>ignores, e.g. the override the caller writes. Defaults to ().</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[Balmorel, dict[float, str]]: The model with the input data</dt><dd><p>loaded, and the output of acronym_names.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.thermal.generate_thermal_availability">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.thermal.</span></span><span class="sig-name descname"><span class="pre">generate_thermal_availability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.thermal.generate_thermal_availability" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_THERMAL_ENTSOE.inc and backcastoutput/thermal_capacity.csv for a scenario.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the override for.
+year (int): The Backcast Year.
+entsoe_data_path (str | Path): Folder with the installed capacity and</p>
+<blockquote>
+<div><p>outage csv’s (from <cite>download</cite>).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>observed (dict[str, pd.DataFrame]): Hourly ENTSO-E output per</dt><dd><p>canonical region and production type, for the capacity check.</p>
+</dd>
+</dl>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile | None: The saved IncFile instance, or None without installed capacity.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../scenariochecks/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.scenariochecks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../vre/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.vre" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

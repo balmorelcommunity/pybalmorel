@@ -1,0 +1,401 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.vre &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.classes" href="../../classes/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.thermal" href="../thermal/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.vre</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/vre/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.vre">
+<span id="pybalmorel-backcasting-vre"></span><h1>pybalmorel.backcasting.vre<a class="headerlink" href="#module-pybalmorel.backcasting.vre" title="Link to this heading"></a></h1>
+<p>VRE Level</p>
+<p>Scale the weather year’s wind and solar full-load hours per canonical region
+and kind (solar, onshore, offshore) so that the output Balmorel can produce in
+the Backcast Year equals ENTSO-E’s reported output (see CONTEXT.md and ADR
+0012). The hourly profiles and the spread between a region’s areas stay as
+the weather year wrote them. Writes WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc
+and appends their $include to the scenario’s WNDFLH.inc and SOLEFLH.inc.</p>
+<p>Created on 28.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.FACTOR_BOUNDS" title="pybalmorel.backcasting.vre.FACTOR_BOUNDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FACTOR_BOUNDS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.KIND_PRODUCTION_TYPES" title="pybalmorel.backcasting.vre.KIND_PRODUCTION_TYPES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KIND_PRODUCTION_TYPES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.WIND" title="pybalmorel.backcasting.vre.WIND"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WIND</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.KIND_SYMBOLS" title="pybalmorel.backcasting.vre.KIND_SYMBOLS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KIND_SYMBOLS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.OFFSHORE_AREA" title="pybalmorel.backcasting.vre.OFFSHORE_AREA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OFFSHORE_AREA</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.observed_vre" title="pybalmorel.backcasting.vre.observed_vre"><code class="xref py py-obj docutils literal notranslate"><span class="pre">observed_vre</span></code></a>(generation, year) → pandas.DataFrame</p></td>
+<td><p>ENTSO-E's solar, onshore and offshore output per canonical region over the Backcast Calendar.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.flh_areas" title="pybalmorel.backcasting.vre.flh_areas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flh_areas</span></code></a>(wndflh, soleflh, rrraaa) → pandas.DataFrame</p></td>
+<td><p>Every area with wind or solar full-load hours, with its canonical region and kind.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.available_vre" title="pybalmorel.backcasting.vre.available_vre"><code class="xref py py-obj docutils literal notranslate"><span class="pre">available_vre</span></code></a>(gkfx, gdata, rrraaa, wndflh, soleflh, ...) → pandas.DataFrame</p></td>
+<td><p>Balmorel's wind and solar PV capacity of <cite>year</cite> per area and technology, with its available output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.vre_factors" title="pybalmorel.backcasting.vre.vre_factors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vre_factors</span></code></a>(available, observed[, bounds]) → pandas.DataFrame</p></td>
+<td><p>The factor per canonical region and kind that makes Balmorel's available output ENTSO-E's.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.scaled_flh" title="pybalmorel.backcasting.vre.scaled_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaled_flh</span></code></a>(areas, factors) → pandas.DataFrame</p></td>
+<td><p>The scaled full-load hours of every area of a region and kind with a written factor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.write_flh_override" title="pybalmorel.backcasting.vre.write_flh_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_flh_override</span></code></a>(scaled, factors, symbol, year, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write &lt;symbol&gt;_ENTSOE.inc with the scaled full-load hours of one symbol.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.append_flh_include" title="pybalmorel.backcasting.vre.append_flh_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_flh_include</span></code></a>(flh_inc_path, symbol) → None</p></td>
+<td><p>Idempotently append the scenario-fallback $include of &lt;symbol&gt;_ENTSOE.inc (see ADR 0006).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.vre.generate_vre_flh" title="pybalmorel.backcasting.vre.generate_vre_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_vre_flh</span></code></a>(balmorel_model_folder, scenario, ...) → list[pybalmorel.classes.IncFile]</p></td>
+<td><p>Write WNDFLH_ENTSOE.inc, SOLEFLH_ENTSOE.inc and backcastoutput/vre_flh.csv for a scenario.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.FACTOR_BOUNDS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">FACTOR_BOUNDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.6,</span> <span class="pre">1.5)</span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.FACTOR_BOUNDS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.KIND_PRODUCTION_TYPES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">KIND_PRODUCTION_TYPES</span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.KIND_PRODUCTION_TYPES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.WIND">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">WIND</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Wind'</span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.WIND" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.KIND_SYMBOLS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">KIND_SYMBOLS</span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.KIND_SYMBOLS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.OFFSHORE_AREA">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">OFFSHORE_AREA</span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.OFFSHORE_AREA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.observed_vre">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">observed_vre</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.observed_vre" title="Link to this definition"></a></dt>
+<dd><p>ENTSO-E’s solar, onshore and offshore output per canonical region over the Backcast Calendar.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per</dt><dd><p>canonical region, one column per production type.</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index canonical region, columns ‘Solar’, ‘Onshore’ and</dt><dd><p>‘Offshore’ (TWh). A kind the region doesn’t report is NaN.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.flh_areas">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">flh_areas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wndflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">soleflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrraaa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.flh_areas" title="Link to this definition"></a></dt>
+<dd><p>Every area with wind or solar full-load hours, with its canonical region and kind.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>wndflh (pd.DataFrame): WNDFLH from get_input, ending in (AAA, Value).
+soleflh (pd.DataFrame): SOLEFLH from get_input, ending in (AAA, Value).
+rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘Area’, ‘Symbol’, ‘Region’, ‘Kind’ and ‘FLH’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.available_vre">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">available_vre</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkfx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrraaa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wndflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">soleflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gkrate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.available_vre" title="Link to this definition"></a></dt>
+<dd><p>Balmorel’s wind and solar PV capacity of <cite>year</cite> per area and technology, with its available output.</p>
+<p>Wind is every technology with fuel WIND; solar PV every technology of
+type GSOLE with fuel SUN, so solar heat isn’t counted. Available output is
+GKFX x FLH x the mean weekly GKRATE (1 where unset). An area with GKFX
+and no full-load hours warns and counts for nothing.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+wndflh (pd.DataFrame): WNDFLH from get_input, ending in (AAA, Value).
+soleflh (pd.DataFrame): SOLEFLH from get_input, ending in (AAA, Value).
+gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).
+names (dict[float, str]): Output of thermal.acronym_names.
+year (int): The Backcast Year, the Y of GKFX.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Area’, ‘Technology’, ‘Region’, ‘Kind’,</dt><dd><p>‘Capacity’ (MW), ‘FLH’, ‘Rating’ and ‘Available’ (TWh).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.vre_factors">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">vre_factors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">available</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">FACTOR_BOUNDS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.vre_factors" title="Link to this definition"></a></dt>
+<dd><p>The factor per canonical region and kind that makes Balmorel’s available output ENTSO-E’s.</p>
+<p>Where ENTSO-E reports no offshore output for a region with Balmorel
+offshore capacity, onshore and offshore share one factor (kind ‘Wind’),
+since ENTSO-E books small offshore farms as onshore. A factor outside
+<cite>bounds</cite>, or of a region without ENTSO-E generation data, is not written
+and warns.</p>
+<dl>
+<dt>Args:</dt><dd><p>available (pd.DataFrame): Output of available_vre.
+observed (pd.DataFrame): Output of observed_vre.
+bounds (tuple[float, float], optional): Lowest and highest factor</p>
+<blockquote>
+<div><p>written. Defaults to FACTOR_BOUNDS.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Kind’, ‘GKFX’ (MW), ‘AvailableTWh’,</dt><dd><p>‘ObservedTWh’, ‘Factor’ and ‘Written’, one row per region and
+kind with Balmorel capacity.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.scaled_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">scaled_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.scaled_flh" title="Link to this definition"></a></dt>
+<dd><p>The scaled full-load hours of every area of a region and kind with a written factor.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>areas (pd.DataFrame): Output of flh_areas.
+factors (pd.DataFrame): Output of vre_factors.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Area’, ‘Symbol’, ‘Region’, ‘Kind’, ‘FLH’,</dt><dd><p>‘Factor’ and ‘NewFLH’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.write_flh_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">write_flh_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scaled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.write_flh_override" title="Link to this definition"></a></dt>
+<dd><p>Write &lt;symbol&gt;_ENTSOE.inc with the scaled full-load hours of one symbol.</p>
+<p>The file is written even without lines, since the scenario’s include
+falls back to base’s file where it is missing. The header lists the
+observed output each region and kind is scaled to, not the factor, so a
+rerun on the scaled input data writes the same file.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>scaled (pd.DataFrame): Output of scaled_flh.
+factors (pd.DataFrame): Output of vre_factors.
+symbol (str): ‘WNDFLH’ or ‘SOLEFLH’.
+year (int): The Backcast Year.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.append_flh_include">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">append_flh_include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flh_inc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.append_flh_include" title="Link to this definition"></a></dt>
+<dd><p>Idempotently append the scenario-fallback $include of &lt;symbol&gt;_ENTSOE.inc (see ADR 0006).</p>
+<p>A scenario without its own &lt;symbol&gt;.inc gets one that loads base’s first.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>flh_inc_path (str | Path): Path to the scenario’s WNDFLH.inc or SOLEFLH.inc.
+symbol (str): ‘WNDFLH’ or ‘SOLEFLH’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.vre.generate_vre_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.vre.</span></span><span class="sig-name descname"><span class="pre">generate_vre_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">FACTOR_BOUNDS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.vre.generate_vre_flh" title="Link to this definition"></a></dt>
+<dd><p>Write WNDFLH_ENTSOE.inc, SOLEFLH_ENTSOE.inc and backcastoutput/vre_flh.csv for a scenario.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the overrides for.
+year (int): The Backcast Year.
+generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output per</p>
+<blockquote>
+<div><p>canonical region and production type.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>bounds (tuple[float, float], optional): Lowest and highest factor</dt><dd><p>written. Defaults to FACTOR_BOUNDS.</p>
+</dd>
+</dl>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>list[IncFile]: The saved WNDFLH and SOLEFLH IncFile instances.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../thermal/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.thermal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../classes/index.html" class="btn btn-neutral float-right" title="pybalmorel.classes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+eel_dashboard
+=============
+
+.. py:module:: eel_dashboard
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   eel_dashboard.get_wkdir
+   eel_dashboard.create_incfile
+   eel_dashboard.create_sets
+   eel_dashboard.create_CCCRRRAAA
+   eel_dashboard.create_setconnection
+   eel_dashboard.create_incfiles
+   eel_dashboard.interactive_geofilemaker
+
+
+Module Contents
+---------------
+
+.. py:function:: get_wkdir()
+
+.. py:function:: create_incfile(unique_processing)
+
+   The general wrapper for creating and saving .inc files, 
+   because the creating of the IncFile class and saving it is the same everytime.
+   The unique processing of the .body content differs, however. 
+
+   Args:
+     unique_processing (func): The unique processing per case
+     **incfile_kwargs: Keyword arguments to pass to IncFile
+
+
+.. py:function:: create_sets(inc_file, geo_nodes_layer2: dict)
+
+.. py:function:: create_CCCRRRAAA(inc_file, geo_nodes: dict)
+
+.. py:function:: create_setconnection(inc_file, geo_nodes_layer1: dict)
+
+.. py:function:: create_incfiles(output: Tuple[str, dict], path: str, set_prefix: str = '')
+
+.. py:function:: interactive_geofilemaker()
+

@@ -1,0 +1,83 @@
+pybalmorel.backcasting.plotstyle
+================================
+
+.. py:module:: pybalmorel.backcasting.plotstyle
+
+.. autoapi-nested-parse::
+
+   Plot Style
+
+   Colours and themes of the backcast validation plots: the ENTSO-E and
+   Balmorel line colours, the technology category colours, and a light and a
+   dark theme. The dark theme uses Catppuccin Mocha colours on a transparent
+   background, so the plots sit on the background of a dark slide.
+
+   Created on 09.11.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.plotstyle.ENTSOE_COLOUR
+   pybalmorel.backcasting.plotstyle.BALMOREL_COLOUR
+   pybalmorel.backcasting.plotstyle.UNMAPPED_CATEGORY
+   pybalmorel.backcasting.plotstyle.colors
+   pybalmorel.backcasting.plotstyle.DARK_COLOR_OVERRIDES
+   pybalmorel.backcasting.plotstyle.THEMES
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.plotstyle.plot_style
+
+
+Module Contents
+---------------
+
+.. py:data:: ENTSOE_COLOUR
+   :value: '#2a78d6'
+
+
+.. py:data:: BALMOREL_COLOUR
+   :value: '#eb6834'
+
+
+.. py:data:: UNMAPPED_CATEGORY
+   :value: 'Unmapped'
+
+
+.. py:data:: colors
+
+.. py:data:: DARK_COLOR_OVERRIDES
+
+.. py:data:: THEMES
+
+.. py:function:: plot_style(style: str = 'light') -> collections.abc.Generator[tuple[dict[str, str], dict[str, str]], None, None]
+
+   Theme the plots drawn inside the context.
+
+   'light' keeps matplotlib's defaults, so the plots look as they did
+   before the themes. 'dark' starts from matplotlib's dark_background,
+   colours text, ticks, spines, grid and legends with the dark tokens, and
+   makes the figure and axes backgrounds transparent. Save a dark figure
+   with transparent=True.
+
+   Args:
+       style (str, optional): 'light' or 'dark'. Defaults to 'light'.
+
+   Raises:
+       ValueError: If style is neither 'light' nor 'dark'.
+
+   Yields:
+       tuple[dict[str, str], dict[str, str]]: The theme's colour tokens, and
+           the category colours with DARK_COLOR_OVERRIDES applied in 'dark'.
+
+

@@ -1,0 +1,128 @@
+pybalmorel.backcasting.eurostat
+===============================
+
+.. py:module:: pybalmorel.backcasting.eurostat
+
+.. autoapi-nested-parse::
+
+   Eurostat Energy Balances
+
+   Fetch the Eurostat statistics the Demand Level needs from the public
+   dissemination API (no key): final electricity consumption and electric
+   boilers and heat pumps in district heating (nrg_bal_c), and households'
+   electricity for space and water heating (nrg_d_hhq). Responses are JSON-stat
+   and cached as <eurostat-data-path>/<year>_<dataset>.json, so a dataset is
+   only fetched once per year.
+
+   Created on 28.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.eurostat.EUROSTAT_API
+   pybalmorel.backcasting.eurostat.FINAL_CONSUMPTION
+   pybalmorel.backcasting.eurostat.HEATING_BALANCES
+   pybalmorel.backcasting.eurostat.DATASET_BALANCES
+   pybalmorel.backcasting.eurostat.GEO_TRANSLATION
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.eurostat.decode_jsonstat
+   pybalmorel.backcasting.eurostat.eurostat_url
+   pybalmorel.backcasting.eurostat.download_json
+   pybalmorel.backcasting.eurostat.fetch_eurostat
+   pybalmorel.backcasting.eurostat.electricity_balances
+
+
+Module Contents
+---------------
+
+.. py:data:: EUROSTAT_API
+   :value: 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data'
+
+
+.. py:data:: FINAL_CONSUMPTION
+   :value: 'FC_E'
+
+
+.. py:data:: HEATING_BALANCES
+
+.. py:data:: DATASET_BALANCES
+
+.. py:data:: GEO_TRANSLATION
+
+.. py:function:: decode_jsonstat(response: dict) -> pandas.DataFrame
+
+   Decode a JSON-stat 2.0 dataset into one row per cell with a value.
+
+   Eurostat's 'value' is sparse: a dict from the flat, row-major index over
+   the dimensions in 'id' to the value. Cells without a value are left out.
+
+   Args:
+       response (dict): The parsed JSON-stat response.
+
+   Returns:
+       pd.DataFrame: One column per dimension (holding its category codes)
+           and 'Value'.
+
+
+.. py:function:: eurostat_url(dataset: str, year: int) -> str
+
+   The dissemination API URL of a dataset's electricity balances in GWh for `year`.
+
+   Args:
+       dataset (str): 'nrg_bal_c' or 'nrg_d_hhq'.
+       year (int): The Backcast Year.
+
+   Returns:
+       str: The URL.
+
+
+.. py:function:: download_json(url: str) -> dict
+
+   GET a JSON response.
+
+   Args:
+       url (str): The URL.
+
+   Returns:
+       dict: The parsed response.
+
+
+.. py:function:: fetch_eurostat(dataset: str, year: int, eurostat_data_path: str | pathlib.Path) -> pandas.DataFrame
+
+   A dataset's electricity balances for `year`, from the cache or else the dissemination API.
+
+   Args:
+       dataset (str): 'nrg_bal_c' or 'nrg_d_hhq'.
+       year (int): The Backcast Year.
+       eurostat_data_path (str | Path): The cache folder.
+
+   Returns:
+       pd.DataFrame: Columns 'Country' (Balmorel's code, e.g. 'GR' for
+           Eurostat's 'EL'), 'Balance' and 'GWh'.
+
+
+.. py:function:: electricity_balances(year: int, eurostat_data_path: str | pathlib.Path) -> pandas.DataFrame
+
+   Final electricity consumption and the four electricity-for-heat balances per country.
+
+   Args:
+       year (int): The Backcast Year.
+       eurostat_data_path (str | Path): The cache folder.
+
+   Returns:
+       pd.DataFrame: Index country, one column per balance code (GWh). A
+           value Eurostat doesn't report is NaN.
+
+

@@ -1,0 +1,239 @@
+pybalmorel.backcasting.flows
+============================
+
+.. py:module:: pybalmorel.backcasting.flows
+
+.. autoapi-nested-parse::
+
+   Flows
+
+   Analyse transmission flows in ENTSO-E data: the Observed Flow Limit XKFX
+   overrides (docs/adr/0005, 0006, 0010) and the validation of Balmorel's flows
+   against ENTSO-E's, both aggregated to Canonical Region Names (see CONTEXT.md)
+
+   Created on 09.07.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.flows.OBSERVED_FLOW_PERCENTILE
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.flows.get_current_borders
+   pybalmorel.backcasting.flows.compute_entsoe_transmission_overrides
+   pybalmorel.backcasting.flows.write_xkfx_override
+   pybalmorel.backcasting.flows.append_xkfx_include
+   pybalmorel.backcasting.flows.generate_transmission_flow_limit_overrides
+   pybalmorel.backcasting.flows.canonical_region
+   pybalmorel.backcasting.flows.load_entsoe_flows
+   pybalmorel.backcasting.flows.observed_flow_limits
+   pybalmorel.backcasting.flows.format_balmorel_flows
+   pybalmorel.backcasting.flows.align_flows
+   pybalmorel.backcasting.flows.flow_statistics
+   pybalmorel.backcasting.flows.plot_flow_duration_curves
+
+
+Module Contents
+---------------
+
+.. py:data:: OBSERVED_FLOW_PERCENTILE
+   :value: 99.0
+
+
+.. py:function:: get_current_borders(balmorel_model_folder: str | pathlib.Path, scenario: str, gams_system_directory: str | None = None) -> pandas.DataFrame
+
+   The non-zero XKFX borders currently defined for a Balmorel scenario.
+
+   Reads XKFX through GAMS (via Balmorel.load_incfiles/.get_input) rather than
+   parsing XKFX.inc, since it is a hand-formatted GAMS TABLE not safe to parse
+   with a text-based parser (see docs/adr/0006).
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to read XKFX from.
+       gams_system_directory (str | None, optional): GAMS system directory.
+
+   Returns:
+       pd.DataFrame: Columns 'RegionFrom', 'RegionTo' for every non-zero border.
+
+
+.. py:function:: compute_entsoe_transmission_overrides(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, entsoe_data_path: str | pathlib.Path, api_key: str, gams_system_directory: str | None = None, percentile: float = OBSERVED_FLOW_PERCENTILE) -> tuple[pandas.DataFrame, list[tuple[str, str]]]
+
+   Compute Observed Flow Limit XKFX overrides for a Balmorel scenario's borders.
+
+   Borders are read from the scenario's current XKFX (see get_current_borders).
+   Internal links that ENTSO-E can't distinguish (both sides sharing a canonical
+   name, e.g. DE4-N <-> DE4-W) are left out untouched, per docs/adr/0006. Where
+   several ENTSO-E zones collapse to one Balmorel region, their flows are summed
+   hour by hour before the percentile is taken (see observed_flow_limits); where
+   several Balmorel regions collapse to one ENTSO-E zone, the limit is split
+   evenly across them.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to read/derive borders for.
+       year (int): The backcast target year.
+       entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv's from.
+       api_key (str): ENTSO-E transparency platform API key.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       percentile (float, optional): Percentile of the hourly flow, in percent.
+           100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
+
+   Returns:
+       tuple[pd.DataFrame, list[tuple[str, str]]]: Overrides (Year, RegionFrom,
+           RegionTo, Value) and the ENTSO-E zone pairs that could not be fetched.
+
+
+.. py:function:: write_xkfx_override(overrides: pandas.DataFrame, scenario_data_path: str | pathlib.Path, percentile: float = OBSERVED_FLOW_PERCENTILE) -> pybalmorel.classes.IncFile
+
+   Write XKFX_ENTSOE.inc with the ENTSO-E-derived transmission overrides.
+
+   Args:
+       overrides (pd.DataFrame): Output of compute_entsoe_transmission_overrides.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+       percentile (float, optional): The percentile the overrides were computed
+           with, written in the file header. Defaults to OBSERVED_FLOW_PERCENTILE.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: append_xkfx_include(xkfx_inc_path: str | pathlib.Path) -> None
+
+   Idempotently append the scenario-fallback $include for XKFX_ENTSOE.inc.
+
+   Args:
+       xkfx_inc_path (str | Path): Path to the scenario's XKFX.inc.
+
+
+.. py:function:: generate_transmission_flow_limit_overrides(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, entsoe_data_path: str | pathlib.Path, api_key: str, gams_system_directory: str | None = None, percentile: float = OBSERVED_FLOW_PERCENTILE) -> None
+
+   Fetch ENTSO-E flows and write the XKFX_ENTSOE.inc backcast overrides.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to generate overrides for.
+       year (int): The backcast target year.
+       entsoe_data_path (str | Path): Folder to fetch/read ENTSO-E csv's from.
+       api_key (str): ENTSO-E transparency platform API key.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       percentile (float, optional): Percentile of the hourly flow, in percent.
+           100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
+
+
+.. py:function:: canonical_region(name: str) -> str
+
+   The Canonical Region Name of a Balmorel region or any ENTSO-E zone spelling.
+
+
+.. py:function:: load_entsoe_flows(entsoe_data_path: str | pathlib.Path, year: int) -> pandas.DataFrame
+
+   Hourly ENTSO-E physical flows per directed canonical border.
+
+   Each file is resampled to hourly means (MW, i.e. MWh per hour), then
+   summed over every ENTSO-E zone pair that collapses to the same canonical
+   border (e.g. the Italian sub-zones). Internal links, where both sides
+   share a canonical name, are dropped. A pair fetched under several zone
+   spellings (e.g. 'DK_1' and '10YDK-1--------W') is read once.
+
+   Args:
+       entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Columns 'From', 'To', 'Time' (UTC) and 'Value', restricted
+           to the Backcast Calendar.
+
+
+.. py:function:: observed_flow_limits(entsoe_data_path: str | pathlib.Path, year: int, percentile: float = OBSERVED_FLOW_PERCENTILE) -> pandas.Series
+
+   The Observed Flow Limit per directed canonical border (see CONTEXT.md, ADR 0010).
+
+   The percentile is taken over the hours with flow in that direction, on the
+   hourly series summed over every ENTSO-E zone pair of the border (see
+   load_entsoe_flows). Over all hours, a rarely used direction would get a
+   limit near 0. A direction without any flowing hour gets 0.
+
+   Args:
+       entsoe_data_path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The Backcast Year.
+       percentile (float, optional): Percentile of the hourly flow, in percent.
+           100 gives the maximum. Defaults to OBSERVED_FLOW_PERCENTILE.
+
+   Returns:
+       pd.Series: Limit in MW, indexed by ('From', 'To').
+
+
+.. py:function:: format_balmorel_flows(df: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Hourly Balmorel flows per directed canonical border.
+
+   Args:
+       df (pd.DataFrame): X_FLOW_YCRST from MainResults ('From', 'To',
+           'Season', 'Time', 'Value').
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Columns 'Time' (UTC), 'From', 'To' and 'Value'.
+
+
+.. py:function:: align_flows(entsoe_flows: pandas.DataFrame, balmorel_flows: pandas.DataFrame, limits: pandas.Series | None = None) -> pandas.DataFrame
+
+   Join ENTSO-E and Balmorel flows on every border both datasets know.
+
+   A border counts as known to Balmorel if it appears in either direction in
+   its results. Hours Balmorel leaves out of the GDX are zero flow, so they
+   are filled with 0 rather than dropped - dropping them would bias every
+   statistic towards the hours Balmorel used the border.
+
+   Args:
+       entsoe_flows (pd.DataFrame): Output of load_entsoe_flows.
+       balmorel_flows (pd.DataFrame): Output of format_balmorel_flows.
+       limits (pd.Series | None, optional): Observed Flow Limit per border (see
+           observed_flow_limits), added as a 'Limit' column. Defaults to None.
+
+   Returns:
+       pd.DataFrame: Index ('From', 'To', 'Time'), columns 'ENTSOE', 'BALMOREL'
+           and, if limits are given, 'Limit'.
+
+
+.. py:function:: flow_statistics(flows: pandas.DataFrame, tolerance: float = 0.01) -> pandas.DataFrame
+
+   Per-border comparison of Balmorel and ENTSO-E flows.
+
+   Args:
+       flows (pd.DataFrame): Output of align_flows, optionally with a 'Limit'
+           column (Observed Flow Limit, see observed_flow_limits).
+       tolerance (float, optional): Relative distance to the limit that still
+           counts as 'at the limit'. Defaults to 0.01.
+
+   Returns:
+       pd.DataFrame: Indexed by ('From', 'To'), with annual energy (TWh),
+           correlation, RMSE (MW) and, if 'Limit' is given, the share of
+           hours at the limit in each dataset.
+
+
+.. py:function:: plot_flow_duration_curves(flows: pandas.DataFrame, ncols: int = 6, style: str = 'light') -> tuple[matplotlib.figure.Figure, numpy.ndarray]
+
+   Duration curves of ENTSO-E and Balmorel flows, one subplot per directed border.
+
+   Args:
+       flows (pd.DataFrame): Output of align_flows.
+       ncols (int, optional): Subplot columns. Defaults to 6.
+       style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
+
+   Returns:
+       tuple[Figure, np.ndarray]: The figure and its axes.
+
+

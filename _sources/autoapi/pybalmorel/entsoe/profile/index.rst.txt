@@ -1,0 +1,303 @@
+pybalmorel.entsoe.profile
+=========================
+
+.. py:module:: pybalmorel.entsoe.profile
+
+.. autoapi-nested-parse::
+
+   ENTSO-E Production Profile
+
+   Hourly electricity production per production type, load, net import and
+   day-ahead price of one or more ENTSO-E bidding zones, read from the csv's
+   fetched from the ENTSO-E transparency platform. Zones keep ENTSO-E's own
+   names (e.g. 'DK_1', 'DE_LU', 'IT_NORD'): nothing is translated to Balmorel
+   regions (see CONTEXT.md).
+
+   Created on 05.11.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.profile.production_groups
+   pybalmorel.entsoe.profile._other_group
+   pybalmorel.entsoe.profile.group_colours
+   pybalmorel.entsoe.profile._net_import_colour
+   pybalmorel.entsoe.profile._load_colour
+   pybalmorel.entsoe.profile._price_colour
+   pybalmorel.entsoe.profile._grid_colour
+   pybalmorel.entsoe.profile._text_secondary
+   pybalmorel.entsoe.profile._time_zone
+   pybalmorel.entsoe.profile._max_hours_with_edges
+   pybalmorel.entsoe.profile._zones_inside
+   pybalmorel.entsoe.profile._no_data_reason
+   pybalmorel.entsoe.profile._not_downloaded_reason
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.profile.EntsoeProfile
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.profile._selects_all
+   pybalmorel.entsoe.profile._resolve_zones
+   pybalmorel.entsoe.profile._zone_files
+   pybalmorel.entsoe.profile._read_generation_csv
+   pybalmorel.entsoe.profile._read_series_csv
+   pybalmorel.entsoe.profile._missing_files
+   pybalmorel.entsoe.profile._missing_data_message
+   pybalmorel.entsoe.profile._zones_with_data
+   pybalmorel.entsoe.profile._load_weighted_price
+   pybalmorel.entsoe.profile._format_hours
+   pybalmorel.entsoe.profile.read_profile
+   pybalmorel.entsoe.profile._scope_line
+   pybalmorel.entsoe.profile._missing_by_zone
+   pybalmorel.entsoe.profile._print_scope
+   pybalmorel.entsoe.profile._group_production
+   pybalmorel.entsoe.profile._style_axes
+   pybalmorel.entsoe.profile.plot_profile
+
+
+Module Contents
+---------------
+
+.. py:data:: production_groups
+
+.. py:data:: _other_group
+   :value: 'Oil & other'
+
+
+.. py:data:: group_colours
+
+.. py:data:: _net_import_colour
+   :value: '#96b9fc'
+
+
+.. py:data:: _load_colour
+   :value: '#0b0b0b'
+
+
+.. py:data:: _price_colour
+   :value: '#e34948'
+
+
+.. py:data:: _grid_colour
+   :value: '#e8e6e1'
+
+
+.. py:data:: _text_secondary
+   :value: '#52514e'
+
+
+.. py:data:: _time_zone
+   :value: 'Europe/Brussels'
+
+
+.. py:data:: _max_hours_with_edges
+   :value: 336
+
+
+.. py:data:: _zones_inside
+
+.. py:class:: EntsoeProfile
+
+   Hourly ENTSO-E data of a set of bidding zones, indexed by hour in Brussels time.
+
+   Args:
+       zones (list[str]): entsoe-py area names of the zones, e.g. ['DK_1'].
+       generation (pd.DataFrame): Production (MW) per ENTSO-E production type, summed over the zones.
+       load (pd.Series): Actual load (MW), summed over the zones.
+       price (pd.Series | None): Day-ahead price (€/MWh), weighted by load over the zones
+           with prices. None if none of the zones have prices.
+       net_import (pd.Series | None): Physical flow into the zones minus out of them (MW),
+           leaving out flows between them. None without crossborder_flows csv's for the zones.
+
+
+   .. py:attribute:: zones
+      :type:  list[str]
+
+
+   .. py:attribute:: generation
+      :type:  pandas.DataFrame
+
+
+   .. py:attribute:: load
+      :type:  pandas.Series
+
+
+   .. py:attribute:: price
+      :type:  pandas.Series | None
+
+
+   .. py:attribute:: net_import
+      :type:  pandas.Series | None
+
+
+.. py:function:: _selects_all(zones: str | list[str]) -> bool
+
+   Whether `zones` is 'all' (or ['all'], as from a comma-separated command line argument).
+
+
+.. py:function:: _resolve_zones(zones: str | list[str]) -> dict[str, str]
+
+   {EIC code: entsoe-py area name} of `zones`, with a canonical region like 'IT' split into its bidding zones.
+
+
+.. py:function:: _zone_files(path: pathlib.Path, year: int, entsoe_query: str) -> dict[str, pathlib.Path]
+
+   {EIC code: file} of the '<year>_<zone>_<entsoe_query>.csv' files, a zone saved under several spellings read once.
+
+
+.. py:function:: _read_generation_csv(csv_path: pathlib.Path) -> pandas.DataFrame
+
+   Hourly mean production (MW) per production type from one generation csv, indexed by UTC time.
+
+   Files with two header rows also hold consumption (e.g. pumping) as 'Actual
+   Consumption', which is left out, so only 'Actual Aggregated' is kept.
+
+
+.. py:function:: _read_series_csv(csv_path: pathlib.Path) -> pandas.Series
+
+   Hourly mean of the first column of a load or day_ahead_prices csv, indexed by UTC time.
+
+
+.. py:data:: _no_data_reason
+   :value: 'ENTSO-E has no data for it'
+
+
+.. py:data:: _not_downloaded_reason
+   :value: 'not downloaded'
+
+
+.. py:function:: _missing_files(zones: dict[str, str], files: dict[str, dict[str, pathlib.Path]], path: pathlib.Path, year: int) -> list[tuple[str, str, str]]
+
+   (query, EIC code, reason) of each generation or load csv missing for `zones`.
+
+
+.. py:function:: _missing_data_message(missing: list[tuple[str, str, str]], zones: dict[str, str], path: pathlib.Path, year: int) -> str
+
+   The error for `missing` csv's (see _missing_files), with the commands that download them.
+
+
+.. py:function:: _zones_with_data(files: dict[str, dict[str, pathlib.Path]], path: pathlib.Path, year: int) -> tuple[dict[str, str], dict[str, str]]
+
+   The zones of `path` with both generation and load csv's, and why the other zones were left out.
+
+   The other zones are those with only one of the two, or listed in a
+   generation or load '_nodata.txt' file.
+
+   Returns:
+       tuple[dict[str, str], dict[str, str]]: {EIC code: area name} of the zones with
+           both, sorted by name, and {area name: reason} of the zones left out.
+
+
+.. py:function:: _load_weighted_price(prices: pandas.DataFrame, loads: pandas.DataFrame) -> pandas.Series
+
+   The price of each hour, weighted by the load of the zones with both a price and a load that hour.
+
+
+.. py:function:: _format_hours(missing: int, hours: int) -> str
+
+   E.g. 'all 168 hours', or '6 of 168 hours missing'.
+
+
+.. py:function:: read_profile(path: str | pathlib.Path, year: int, zones: str | list[str], start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, verbose: bool = True) -> EntsoeProfile
+
+   Hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.
+
+   Reads the '<year>_<zone>_<query>.csv' files of `path` for the generation,
+   load and day_ahead_prices queries, and the crossborder_flows files of the
+   borders of the zones. Several zones are summed, except their prices, which
+   are weighted by load. An hour missing for any of the zones is NaN in
+   the summed generation or load. Generation and load are required for
+   every zone; prices and flows are used if they were downloaded. With
+   `verbose`, the zones, period and data found are printed.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year the files are for.
+       zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. 'DK1', 'DK_1' or
+           '10YDK-1--------W'. A canonical region with several bidding zones, e.g. 'IT',
+           means all of them. 'all' means every zone in `path` with generation and load
+           in the period; the other zones are left out and listed in the printout.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels
+           time unless it has a time zone, e.g. '2023-06-26'. Defaults to None (start of the year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the year).
+       verbose (bool, optional): Print the scope of the data. Defaults to True.
+
+   Raises:
+       Exception: If generation or load is missing for any of the zones, in the files
+           or in the period. With 'all', if no zone has both.
+
+   Returns:
+       EntsoeProfile: The hourly data, indexed by hour in Brussels time.
+
+
+.. py:function:: _scope_line(label: str, text: str) -> list[str]
+
+   A line of the scope printout, wrapped below its text column.
+
+
+.. py:function:: _missing_by_zone(missing: pandas.DataFrame, zone_names: dict[str, str]) -> str
+
+   E.g. 'missing for BA (414), MK (96) and 3 more zones', the zones with most missing hours first.
+
+
+.. py:function:: _print_scope(profile: EntsoeProfile, zone_names: dict[str, str], left_out: dict[str, str], files: dict[str, dict[str, pathlib.Path]], price_zones: pandas.Index, hours: pandas.DatetimeIndex, missing: dict[str, pandas.DataFrame], neighbours: set[str], year: int) -> None
+
+   Print which zones, hours and data a profile covers.
+
+
+.. py:function:: _group_production(generation: pandas.DataFrame) -> pandas.DataFrame
+
+   Production (MW) per group of `group_colours`, in stacking order, without empty groups.
+
+   A group without data in an hour counts as 0, unless no type has data that
+   hour: then the hour stays NaN, so it is drawn as a gap rather than a dip to 0.
+
+
+.. py:function:: _style_axes(ax: matplotlib.axes.Axes) -> None
+
+   Recessive axes: no top or right spine, hairline horizontal grid behind the data.
+
+
+.. py:function:: plot_profile(path: str | pathlib.Path, year: int, zones: str | list[str], start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, title: str | None = None) -> tuple[matplotlib.figure.Figure, numpy.ndarray]
+
+   Plot the hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.
+
+   Production is stacked per group of production types (see
+   `production_groups`), with net import on top and net export below zero,
+   and load drawn as a line. The day-ahead price, if downloaded, is drawn
+   in a panel below. Hours without data are left as gaps. Raises if
+   generation or load of any of the zones is missing, and prints the zones,
+   period and data found (see `read_profile`).
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year the files are for.
+       zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. 'DK1', 'DK_1' or
+           '10YDK-1--------W'. A canonical region with several bidding zones, e.g. 'IT',
+           means all of them. 'all' means every zone in `path` with generation and load.
+       start (str | pd.Timestamp | None, optional): First hour to plot, read as Brussels
+           time unless it has a time zone, e.g. '2023-06-26'. Defaults to None (start of the year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before, e.g. '2023-07-03'.
+           Defaults to None (end of the year).
+       title (str | None, optional): Defaults to None (the zones and period).
+
+   Returns:
+       tuple[Figure, np.ndarray]: The figure, and its axes: production, then price if plotted.
+
+

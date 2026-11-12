@@ -1,0 +1,415 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.mustrun &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.nuclear" href="../nuclear/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.fuelprices" href="../fuelprices/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.mustrun</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/mustrun/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.mustrun">
+<span id="pybalmorel-backcasting-mustrun"></span><h1>pybalmorel.backcasting.mustrun<a class="headerlink" href="#module-pybalmorel.backcasting.mustrun" title="Link to this heading"></a></h1>
+<p>Must-run Floor</p>
+<p>Turn ENTSO-E’s observed generation and day-ahead prices into the data of
+Balmorel’s MUSTRUN addon: per canonical region, fuel group and Backcast
+Calendar week, the lowest hourly output the group kept in a week where it
+would have paid to stop (see CONTEXT.md). Writes MUSTRUN_ZONE.inc,
+MUSTRUN_ZONE_RRR.inc, MUSTRUN_GROUP.inc, MUSTRUN_GROUP_FFF.inc and, last,
+MUSTRUN_FLOOR.inc, whose existence switches the addon on.</p>
+<p>Created on 28.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.PRICE_THRESHOLD" title="pybalmorel.backcasting.mustrun.PRICE_THRESHOLD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PRICE_THRESHOLD</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.MIN_HOURS" title="pybalmorel.backcasting.mustrun.MIN_HOURS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MIN_HOURS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.EVERY_WEEK_GROUPS" title="pybalmorel.backcasting.mustrun.EVERY_WEEK_GROUPS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EVERY_WEEK_GROUPS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.MIN_FLOOR" title="pybalmorel.backcasting.mustrun.MIN_FLOOR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MIN_FLOOR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.MUSTRUN_FILES" title="pybalmorel.backcasting.mustrun.MUSTRUN_FILES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MUSTRUN_FILES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.GENERATED_HEADER" title="pybalmorel.backcasting.mustrun.GENERATED_HEADER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GENERATED_HEADER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.group_output" title="pybalmorel.backcasting.mustrun.group_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_output</span></code></a>(generation) → pandas.DataFrame</p></td>
+<td><p>Hourly observed output per canonical region and fuel group.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.region_prices" title="pybalmorel.backcasting.mustrun.region_prices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region_prices</span></code></a>(prices, load) → pandas.DataFrame</p></td>
+<td><p>Hourly day-ahead price per canonical region, weighted by the load of its zones.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.must_run_floors" title="pybalmorel.backcasting.mustrun.must_run_floors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">must_run_floors</span></code></a>(output, prices, year[, ...]) → pandas.DataFrame</p></td>
+<td><p>The observed must-run floor per canonical region, fuel group and Backcast Calendar week.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.available_capacity" title="pybalmorel.backcasting.mustrun.available_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">available_capacity</span></code></a>(capacity, gkrate) → pandas.DataFrame</p></td>
+<td><p>Available capacity K = sum of GKFX x GKRATE per canonical region, group and week.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.cap_floors" title="pybalmorel.backcasting.mustrun.cap_floors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cap_floors</span></code></a>(floors, capacity, gkrate, balmorel_regions) → pandas.DataFrame</p></td>
+<td><p>Cap the floors at Balmorel's available capacity, and drop those Balmorel can't meet at all.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun._set_file" title="pybalmorel.backcasting.mustrun._set_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_set_file</span></code></a>(declaration, members) → str</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.write_must_run_files" title="pybalmorel.backcasting.mustrun.write_must_run_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_must_run_files</span></code></a>(floors, balmorel_regions, fuels, ...) → list[pybalmorel.classes.IncFile]</p></td>
+<td><p>Write the five MUSTRUN files, MUSTRUN_FLOOR.inc last, since it switches the addon on.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.floor_summary" title="pybalmorel.backcasting.mustrun.floor_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">floor_summary</span></code></a>(floors) → pandas.DataFrame</p></td>
+<td><p>Per zone and group: weeks floored, floor min/median/max (GW), floored and observed TWh.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.mustrun.generate_must_run_floor" title="pybalmorel.backcasting.mustrun.generate_must_run_floor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_must_run_floor</span></code></a>(balmorel_model_folder, ...[, ...]) → list[pybalmorel.classes.IncFile]</p></td>
+<td><p>Write the MUSTRUN files and backcastoutput/must_run_floor.csv for a scenario.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.PRICE_THRESHOLD">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">PRICE_THRESHOLD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">40.0</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.PRICE_THRESHOLD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.MIN_HOURS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">MIN_HOURS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.MIN_HOURS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.EVERY_WEEK_GROUPS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">EVERY_WEEK_GROUPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('BIOMASS',</span> <span class="pre">'WASTE')</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.EVERY_WEEK_GROUPS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.MIN_FLOOR">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">MIN_FLOOR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.MIN_FLOOR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.MUSTRUN_FILES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">MUSTRUN_FILES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('MUSTRUN_ZONE',</span> <span class="pre">'MUSTRUN_ZONE_RRR',</span> <span class="pre">'MUSTRUN_GROUP',</span> <span class="pre">'MUSTRUN_GROUP_FFF',</span> <span class="pre">'MUSTRUN_FLOOR')</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.MUSTRUN_FILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.GENERATED_HEADER">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">GENERATED_HEADER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Multiline-String</span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.GENERATED_HEADER" title="Link to this definition"></a></dt>
+<dd><details><summary>Show Value</summary><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""* Must-run floor from ENTSO-E output in low-price weeks (see CONTEXT.md) - generated, do not hand-edit</span>
+<span class="sd">"""</span>
+</pre></div>
+</div>
+</details></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.group_output">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">group_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.group_output" title="Link to this definition"></a></dt>
+<dd><p>Hourly observed output per canonical region and fuel group.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per</dt><dd><p>canonical region, one column per production type, with the
+zones of a region already summed.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index UTC hour, columns (Region, Group), MW. A group</dt><dd><p>none of whose production types a region reports is left out.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.region_prices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">region_prices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.region_prices" title="Link to this definition"></a></dt>
+<dd><p>Hourly day-ahead price per canonical region, weighted by the load of its zones.</p>
+<p>An hour without load for any priced zone of the region takes the plain mean.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>prices (pd.DataFrame): Hourly price (€/MWh) indexed by UTC hour, one column per zone.
+load (pd.DataFrame): Hourly load (MW) indexed by UTC hour, one column per zone.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index UTC hour, one column per canonical region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.must_run_floors">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">must_run_floors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">PRICE_THRESHOLD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MIN_HOURS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">every_week</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EVERY_WEEK_GROUPS</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.must_run_floors" title="Link to this definition"></a></dt>
+<dd><p>The observed must-run floor per canonical region, fuel group and Backcast Calendar week.</p>
+<p>The floor is the week’s lowest hourly output over all its hours, for
+every-week groups and for weeks with at least <cite>min_hours</cite> hours priced at
+or below <cite>price_threshold</cite>. A week with less than half its hours of
+output data gets no floor, nor does a floor below MIN_FLOOR.</p>
+<dl>
+<dt>Args:</dt><dd><p>output (pd.DataFrame): Output of group_output.
+prices (pd.DataFrame): Output of region_prices.
+year (int): The Backcast Year.
+price_threshold (float, optional): Nominal €/MWh. Defaults to PRICE_THRESHOLD.
+min_hours (int, optional): Low-price hours a week needs. Defaults to MIN_HOURS.
+every_week (tuple[str, …], optional): Groups floored every week.</p>
+<blockquote>
+<div><p>Defaults to EVERY_WEEK_GROUPS.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Group’, ‘Season’, ‘Floor’ (MW, NaN</dt><dd><p>without one), ‘LowPriceHours’ and ‘ObservedTWh’, one row per
+region, group and week with output data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.available_capacity">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">available_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gkrate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.available_capacity" title="Link to this definition"></a></dt>
+<dd><p>Available capacity K = sum of GKFX x GKRATE per canonical region, group and week.</p>
+<p>Where GKRATE is not set, the rating is 1. A stored 0 is GAMS eps, since
+a GDX file doesn’t store zeros, so it counts as 0.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>capacity (pd.DataFrame): Output of thermal.group_capacity.
+gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘Region’, ‘Group’, ‘Season’ and ‘K’ (MW).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.cap_floors">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">cap_floors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">floors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gkrate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.cap_floors" title="Link to this definition"></a></dt>
+<dd><p>Cap the floors at Balmorel’s available capacity, and drop those Balmorel can’t meet at all.</p>
+<p>Floors of a canonical region without a Balmorel region are dropped. A
+group without GKFX in a region gets no floor and a warning; a floor
+above K is capped and warns.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>floors (pd.DataFrame): Output of must_run_floors.
+capacity (pd.DataFrame): Output of thermal.group_capacity.
+gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).
+balmorel_regions (list[str]): The scenario’s RRR.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: <cite>floors</cite> of the modelled regions, with ‘K’ (MW) and ‘Capped’ added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun._set_file">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">_set_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declaration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">members</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun._set_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.write_must_run_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">write_must_run_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">floors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fuels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.write_must_run_files" title="Link to this definition"></a></dt>
+<dd><p>Write the five MUSTRUN files, MUSTRUN_FLOOR.inc last, since it switches the addon on.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>floors (pd.DataFrame): Output of cap_floors; rows without a floor are ignored.
+balmorel_regions (list[str]): The scenario’s RRR, to list the regions of each zone.
+fuels (list[str]): The scenario’s FFF; group fuels outside it are left out.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[IncFile]: The saved IncFile instances, in the order written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.floor_summary">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">floor_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">floors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.floor_summary" title="Link to this definition"></a></dt>
+<dd><p>Per zone and group: weeks floored, floor min/median/max (GW), floored and observed TWh.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>floors (pd.DataFrame): Output of must_run_floors or cap_floors.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index (Region, Group), sorted by floored TWh, largest first.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.mustrun.generate_must_run_floor">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.mustrun.</span></span><span class="sig-name descname"><span class="pre">generate_must_run_floor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">PRICE_THRESHOLD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">MIN_HOURS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">every_week</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EVERY_WEEK_GROUPS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.mustrun.generate_must_run_floor" title="Link to this definition"></a></dt>
+<dd><p>Write the MUSTRUN files and backcastoutput/must_run_floor.csv for a scenario.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the floor for.
+year (int): The Backcast Year.
+generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output per</p>
+<blockquote>
+<div><p>canonical region and production type.</p>
+</div></blockquote>
+<p>prices (pd.DataFrame): Hourly day-ahead price per zone.
+load (pd.DataFrame): Hourly load per zone, to weight the prices of a region’s zones.
+price_threshold (float, optional): Nominal €/MWh. Defaults to PRICE_THRESHOLD.
+min_hours (int, optional): Low-price hours a week needs. Defaults to MIN_HOURS.
+every_week (tuple[str, …], optional): Groups floored every week.</p>
+<blockquote>
+<div><p>Defaults to EVERY_WEEK_GROUPS.</p>
+</div></blockquote>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If an every-week group isn’t a fuel group.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[IncFile]: The saved IncFile instances; empty if no floor qualifies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../fuelprices/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.fuelprices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../nuclear/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.nuclear" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

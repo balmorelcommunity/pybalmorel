@@ -1,0 +1,909 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.__main__ &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.calendar" href="../calendar/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.__main__</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/__main__/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.__main__">
+<span id="pybalmorel-backcasting-main"></span><h1>pybalmorel.backcasting.__main__<a class="headerlink" href="#module-pybalmorel.backcasting.__main__" title="Link to this heading"></a></h1>
+<p>Validation through Backcasting</p>
+<p>Download data from ENTSO-E and compare to Balmorel simulation of similar year</p>
+<p>Created on 24.06.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.balmorel_to_category" title="pybalmorel.backcasting.__main__.balmorel_to_category"><code class="xref py py-obj docutils literal notranslate"><span class="pre">balmorel_to_category</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.entsoe_to_category" title="pybalmorel.backcasting.__main__.entsoe_to_category"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_to_category</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.entsoe_queries" title="pybalmorel.backcasting.__main__.entsoe_queries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_queries</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.entsoe_capacity_queries" title="pybalmorel.backcasting.__main__.entsoe_capacity_queries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">entsoe_capacity_queries</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.STORAGE_CHARGING_CATEGORIES" title="pybalmorel.backcasting.__main__.STORAGE_CHARGING_CATEGORIES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">STORAGE_CHARGING_CATEGORIES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.COMPARED_INSIDE" title="pybalmorel.backcasting.__main__.COMPARED_INSIDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COMPARED_INSIDE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.COMPARISON_REGIONS" title="pybalmorel.backcasting.__main__.COMPARISON_REGIONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COMPARISON_REGIONS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.INCOMPLETE_GENERATION" title="pybalmorel.backcasting.__main__.INCOMPLETE_GENERATION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">INCOMPLETE_GENERATION</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.PRICE_DURATION_REGION_ORDER" title="pybalmorel.backcasting.__main__.PRICE_DURATION_REGION_ORDER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PRICE_DURATION_REGION_ORDER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.style_option" title="pybalmorel.backcasting.__main__.style_option"><code class="xref py py-obj docutils literal notranslate"><span class="pre">style_option</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.output_dir_option" title="pybalmorel.backcasting.__main__.output_dir_option"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_dir_option</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.DataContainer" title="pybalmorel.backcasting.__main__.DataContainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataContainer</span></code></a></p></td>
+<td><p>Container for ENTSO-E data.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.format_entsoe_region_name" title="pybalmorel.backcasting.__main__.format_entsoe_region_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_entsoe_region_name</span></code></a>(path, year, parameter)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.format_entsoe_data" title="pybalmorel.backcasting.__main__.format_entsoe_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_entsoe_data</span></code></a>(df, resampling, filepath, year, ...)</p></td>
+<td><p>Format ENTSO-E data</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_entsoe_data" title="pybalmorel.backcasting.__main__.load_entsoe_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_entsoe_data</span></code></a>(entsoe_data_path, year[, resampling])</p></td>
+<td><p>Load the csvs for <cite>year</cite></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_observed_nuclear" title="pybalmorel.backcasting.__main__.load_observed_nuclear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_observed_nuclear</span></code></a>(entsoe_data_path, year) → dict[str, pandas.Series]</p></td>
+<td><p>Hourly ENTSO-E nuclear output per canonical region, from the generation csv's.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_observed_generation" title="pybalmorel.backcasting.__main__.load_observed_generation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_observed_generation</span></code></a>(entsoe_data_path, year) → dict[str, pandas.DataFrame]</p></td>
+<td><p>Hourly ENTSO-E output per canonical region and production type, from the generation csv's.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_observed_prices" title="pybalmorel.backcasting.__main__.load_observed_prices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_observed_prices</span></code></a>(entsoe_data_path, year) → pandas.DataFrame</p></td>
+<td><p>Hourly ENTSO-E day-ahead price per bidding zone, from the day_ahead_prices csv's.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_observed_load" title="pybalmorel.backcasting.__main__.load_observed_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_observed_load</span></code></a>(entsoe_data_path, year) → pandas.DataFrame</p></td>
+<td><p>Hourly ENTSO-E actual load per bidding zone, from the load csv's.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.format_balmorel_df" title="pybalmorel.backcasting.__main__.format_balmorel_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_balmorel_df</span></code></a>(df, year) → pandas.DataFrame</p></td>
+<td><p>Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_balmorel_data" title="pybalmorel.backcasting.__main__.load_balmorel_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_balmorel_data</span></code></a>(scenario_name, ...)</p></td>
+<td><p>Load df from MainResults</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.calculate_statistics" title="pybalmorel.backcasting.__main__.calculate_statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_statistics</span></code></a>(df[, timeslicing, per_region])</p></td>
+<td><p>Get std. dev, mean, max etc...</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.aggregate_regions" title="pybalmorel.backcasting.__main__.aggregate_regions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aggregate_regions</span></code></a>(df, aggfunc, time_columns[, translation])</p></td>
+<td><p>Aggregate DE4, IT-* etc, or the regions of <cite>translation</cite></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.map_technology_categories" title="pybalmorel.backcasting.__main__.map_technology_categories"><code class="xref py py-obj docutils literal notranslate"><span class="pre">map_technology_categories</span></code></a>(df, mapping, source[, ...]) → pandas.DataFrame</p></td>
+<td><p>Map 'Technology' onto the overarching categories and sum per region, category and hour.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.balmorel_load_components" title="pybalmorel.backcasting.__main__.balmorel_load_components"><code class="xref py py-obj docutils literal notranslate"><span class="pre">balmorel_load_components</span></code></a>(load) → pandas.DataFrame</p></td>
+<td><p>Annual Balmorel load (TWh) per region and load category.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.balmorel_prices_in_year" title="pybalmorel.backcasting.__main__.balmorel_prices_in_year"><code class="xref py py-obj docutils literal notranslate"><span class="pre">balmorel_prices_in_year</span></code></a>(prices, year) → pandas.DataFrame</p></td>
+<td><p>Convert Balmorel's prices from the Price Year (€2016) to nominal euros of <cite>year</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.get_and_format_balmorel" title="pybalmorel.backcasting.__main__.get_and_format_balmorel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_and_format_balmorel</span></code></a>(balmorel_scenario, ...[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.get_and_format_entsoe" title="pybalmorel.backcasting.__main__.get_and_format_entsoe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_and_format_entsoe</span></code></a>(entsoe_data_path, year, ...[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.join_hourly" title="pybalmorel.backcasting.__main__.join_hourly"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_hourly</span></code></a>(entsoe, balmorel, year, quantity) → pandas.DataFrame</p></td>
+<td><p>Join hourly ENTSO-E and Balmorel values on (Region, Time), keeping the hours both have.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.join_generation" title="pybalmorel.backcasting.__main__.join_generation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join_generation</span></code></a>(entsoe, balmorel, regions, year) → pandas.DataFrame</p></td>
+<td><p>Join hourly generation per category on the full grid of the Backcast Calendar.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_components_table" title="pybalmorel.backcasting.__main__.load_components_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_components_table</span></code></a>(components, entsoe_load, year) → pandas.DataFrame</p></td>
+<td><p>Balmorel's annual load per category next to ENTSO-E's annual load, per region.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.load_and_align" title="pybalmorel.backcasting.__main__.load_and_align"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_and_align</span></code></a>(balmorel_scenario, ...[, percentile, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.plot_bar_chart" title="pybalmorel.backcasting.__main__.plot_bar_chart"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_bar_chart</span></code></a>(df[, columns_to_keep, per_region, style]) → tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]</p></td>
+<td><p>Stacked bars of ENTSO-E's and Balmorel's annual generation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.plot_price_profile" title="pybalmorel.backcasting.__main__.plot_price_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_price_profile</span></code></a>(prices[, style]) → tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]</p></td>
+<td><p>Daily mean prices of ENTSO-E and Balmorel over the Backcast Year.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.save_figure" title="pybalmorel.backcasting.__main__.save_figure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_figure</span></code></a>(fig, output_dir, file_name, style, **kwargs) → pathlib.Path</p></td>
+<td><p>Save a figure in output_dir, with a transparent background in the dark style.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.plot_price_duration_curves" title="pybalmorel.backcasting.__main__.plot_price_duration_curves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_price_duration_curves</span></code></a>(prices, title[, ylim, style]) → tuple[matplotlib.figure.Figure, numpy.ndarray]</p></td>
+<td><p>Price duration curves of ENTSO-E and Balmorel, pooled and per region.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.main" title="pybalmorel.backcasting.__main__.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.format" title="pybalmorel.backcasting.__main__.format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format</span></code></a>(balmorel_scenario, balmorel_scenario_path, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.statistics" title="pybalmorel.backcasting.__main__.statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">statistics</span></code></a>(balmorel_scenario_path)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.generation" title="pybalmorel.backcasting.__main__.generation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generation</span></code></a>(balmorel_scenario_path, style, output_dir)</p></td>
+<td><p>Plot ENTSO-E vs Balmorel annual generation per technology category.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.prices" title="pybalmorel.backcasting.__main__.prices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prices</span></code></a>(balmorel_scenario_path, style, output_dir)</p></td>
+<td><p>Plot daily mean ENTSO-E vs Balmorel prices, saved as prices.png.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.price_duration" title="pybalmorel.backcasting.__main__.price_duration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">price_duration</span></code></a>(balmorel_scenario_path, ylim, style, ...)</p></td>
+<td><p>Plot price duration curves of Balmorel vs ENTSO-E, pooled and per region.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.flows" title="pybalmorel.backcasting.__main__.flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flows</span></code></a>(balmorel_scenario_path, style, output_dir)</p></td>
+<td><p>Plot duration curves of Balmorel vs ENTSO-E flows per directed border.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.transmission_flow_limit" title="pybalmorel.backcasting.__main__.transmission_flow_limit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transmission_flow_limit</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write XKFX_ENTSOE.inc: backcast transmission overrides from the ENTSO-E Observed Flow Limit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.nuclear_availability" title="pybalmorel.backcasting.__main__.nuclear_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuclear_availability</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write GKRATE_ENTSOE.inc: weekly Nuclear Availability from ENTSO-E nuclear output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.thermal_availability" title="pybalmorel.backcasting.__main__.thermal_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">thermal_availability</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write GKRATE_THERMAL_ENTSOE.inc: weekly Thermal Availability from ENTSO-E capacity and outages.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.must_run_floor" title="pybalmorel.backcasting.__main__.must_run_floor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">must_run_floor</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.demand_profile" title="pybalmorel.backcasting.__main__.demand_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demand_profile</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.demand_level" title="pybalmorel.backcasting.__main__.demand_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demand_level</span></code></a>(balmorel_scenario_path, entsoe_data_path, ...)</p></td>
+<td><p>Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.vre_flh" title="pybalmorel.backcasting.__main__.vre_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vre_flh</span></code></a>(balmorel_scenario_path, entsoe_data_path, ...)</p></td>
+<td><p>Write WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc: VRE full-load hours scaled to ENTSO-E output.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.download" title="pybalmorel.backcasting.__main__.download"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download</span></code></a>(entsoe_data_path, year, queries)</p></td>
+<td><p>Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for <cite>format</cite> and <cite>transmission-flow-limit</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.ttf_csv" title="pybalmorel.backcasting.__main__.ttf_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ttf_csv</span></code></a>(html_path, historicalprices_path)</p></td>
+<td><p>Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_&lt;year&gt;.csv.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.fuelprices" title="pybalmorel.backcasting.__main__.fuelprices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fuelprices</span></code></a>(balmorel_scenario_path, ...)</p></td>
+<td><p>Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.__main__.co2_tax" title="pybalmorel.backcasting.__main__.co2_tax"><code class="xref py py-obj docutils literal notranslate"><span class="pre">co2_tax</span></code></a>(balmorel_scenario_path, historicalprices_path, ...)</p></td>
+<td><p>Write TAX_CO2_ST.inc: (S,T)-resolved historical CO2 tax for backcasting.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.balmorel_to_category">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">balmorel_to_category</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.balmorel_to_category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.entsoe_to_category">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">entsoe_to_category</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.entsoe_to_category" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.entsoe_queries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">entsoe_queries</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['load',</span> <span class="pre">'day_ahead_prices',</span> <span class="pre">'generation',</span> <span class="pre">'crossborder_flows']</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.entsoe_queries" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.entsoe_capacity_queries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">entsoe_capacity_queries</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['installed_generation_capacity',</span> <span class="pre">'unavailability_of_generation_units']</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.entsoe_capacity_queries" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.STORAGE_CHARGING_CATEGORIES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">STORAGE_CHARGING_CATEGORIES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('ENDO_INTRASTO',)</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.STORAGE_CHARGING_CATEGORIES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.COMPARED_INSIDE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">COMPARED_INSIDE</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.COMPARED_INSIDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.COMPARISON_REGIONS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">COMPARISON_REGIONS</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.COMPARISON_REGIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.INCOMPLETE_GENERATION">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">INCOMPLETE_GENERATION</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.INCOMPLETE_GENERATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.PRICE_DURATION_REGION_ORDER">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">PRICE_DURATION_REGION_ORDER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['DE',</span> <span class="pre">'FR',</span> <span class="pre">'NL',</span> <span class="pre">'BE',</span> <span class="pre">'AT',</span> <span class="pre">'CH',</span> <span class="pre">'PL',</span> <span class="pre">'CZ',</span> <span class="pre">'SK',</span> <span class="pre">'HU',</span> <span class="pre">'SI',</span> <span class="pre">'HR',</span> <span class="pre">'DK1',</span> <span class="pre">'DK2',</span> <span class="pre">'NO1',...</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.PRICE_DURATION_REGION_ORDER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.DataContainer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">DataContainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_items</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.DataContainer" title="Link to this definition"></a></dt>
+<dd><p>Container for ENTSO-E data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.format_entsoe_region_name">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">format_entsoe_region_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.format_entsoe_region_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.format_entsoe_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">format_entsoe_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.format_entsoe_data" title="Link to this definition"></a></dt>
+<dd><p>Format ENTSO-E data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_entsoe_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_entsoe_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'h'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_entsoe_data" title="Link to this definition"></a></dt>
+<dd><p>Load the csvs for <cite>year</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_observed_nuclear">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_observed_nuclear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_observed_nuclear" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E nuclear output per canonical region, from the generation csv’s.</p>
+<p>Files of several zones in one canonical region are summed hour by hour. A
+file without a ‘Nuclear’ column, or with only NaN or zeros in it, has no
+nuclear.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str): Folder with the fetched generation csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict[str, pd.Series]: Nuclear output (MW) indexed by UTC hour, per region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_observed_generation">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_observed_generation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_observed_generation" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E output per canonical region and production type, from the generation csv’s.</p>
+<p>Files of several zones in one canonical region are summed hour by hour.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str): Folder with the fetched generation csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>dict[str, pd.DataFrame]: Output (MW) indexed by UTC hour, one column</dt><dd><p>per production type, per region.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_observed_prices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_observed_prices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_observed_prices" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E day-ahead price per bidding zone, from the day_ahead_prices csv’s.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str): Folder with the fetched day_ahead_prices csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Price (nominal €/MWh) indexed by UTC hour, one column per zone.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_observed_load">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_observed_load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_observed_load" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E actual load per bidding zone, from the load csv’s.</p>
+<p>IE’s load is Ireland’s control area, not the all-island IE_SEM zone (see
+pybalmorel.entsoe.load_zones).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe_data_path (str): Folder with the fetched load csv’s.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Load (MW) indexed by UTC hour, one column per zone.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.format_balmorel_df">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">format_balmorel_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.format_balmorel_df" title="Link to this definition"></a></dt>
+<dd><p>Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>df (pd.DataFrame): MainResults symbol with ‘Region’, ‘Season’, ‘Time’</dt><dd><p>and ‘Value’ columns, optionally ‘Technology’.</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Time’ (UTC timestamps), ‘Region’, optionally</dt><dd><p>‘Technology’, and ‘Value’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_balmorel_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_balmorel_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scenario_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_folder_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_balmorel_data" title="Link to this definition"></a></dt>
+<dd><p>Load df from MainResults</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.calculate_statistics">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">calculate_statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeslicing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.calculate_statistics" title="Link to this definition"></a></dt>
+<dd><p>Get std. dev, mean, max etc…</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.aggregate_regions">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">aggregate_regions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggfunc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">translation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">bidding_zone_translation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.aggregate_regions" title="Link to this definition"></a></dt>
+<dd><p>Aggregate DE4, IT-* etc, or the regions of <cite>translation</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.map_technology_categories">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">map_technology_categories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unmapped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.map_technology_categories" title="Link to this definition"></a></dt>
+<dd><p>Map ‘Technology’ onto the overarching categories and sum per region, category and hour.</p>
+<p>A technology missing from <cite>mapping</cite> is never dropped: it raises, or with
+<cite>allow_unmapped</cite> it is compared as UNMAPPED_CATEGORY.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>df (pd.DataFrame): Hourly generation (MW) with columns ‘Region’,</dt><dd><p>‘Technology’, ‘Time’ and ‘Value’.</p>
+</dd>
+</dl>
+<p>mapping (dict[str, str]): Technology -&gt; category, e.g. entsoe_to_category.
+source (str): ‘Balmorel’ or ‘ENTSO-E’, named in the error.
+allow_unmapped (bool, optional): Put unmapped technologies in</p>
+<blockquote>
+<div><p>UNMAPPED_CATEGORY instead of raising. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If a technology is not in <cite>mapping</cite> and <cite>allow_unmapped</cite> is False.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘Region’, ‘Technology’, ‘Time’ and ‘Value’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.balmorel_load_components">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">balmorel_load_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.balmorel_load_components" title="Link to this definition"></a></dt>
+<dd><p>Annual Balmorel load (TWh) per region and load category.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>load (pd.DataFrame): EL_DEMAND_YCRST of the Backcast Year, with</dt><dd><p>‘Region’, ‘Category’ and ‘Value’ (MW per hour).</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’ (DE4-* and LU as DE, IT-* as IT, see</dt><dd><p>COMPARISON_REGIONS), ‘Category’,
+‘BALMOREL’ (TWh) and ‘Excluded’ (True for storage charging, which
+the comparison leaves out).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.balmorel_prices_in_year">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">balmorel_prices_in_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.balmorel_prices_in_year" title="Link to this definition"></a></dt>
+<dd><p>Convert Balmorel’s prices from the Price Year (€2016) to nominal euros of <cite>year</cite>.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>prices (pd.DataFrame): Balmorel prices with a ‘Value’ column.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: A copy of <cite>prices</cite> with ‘Value’ in nominal euros of <cite>year</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.get_and_format_balmorel">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">get_and_format_balmorel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elpriceaggfunc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unmapped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.get_and_format_balmorel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.get_and_format_entsoe">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">get_and_format_entsoe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elpriceaggfunc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unmapped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.get_and_format_entsoe" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.join_hourly">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">join_hourly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.join_hourly" title="Link to this definition"></a></dt>
+<dd><p>Join hourly ENTSO-E and Balmorel values on (Region, Time), keeping the hours both have.</p>
+<p>Warns, per region in both, when either side has fewer hours than the
+Backcast Calendar, since the comparison then leaves those hours out.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe (pd.DataFrame): Columns ‘Region’, ‘Time’ and ‘Value’.
+balmorel (pd.DataFrame): Columns ‘Region’, ‘Time’ and ‘Value’.
+year (int): The Backcast Year.
+quantity (str): What is joined, e.g. ‘load’, named in the warning.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index (Region, Time), columns ‘ENTSOE’ and ‘BALMOREL’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.join_generation">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">join_generation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.join_generation" title="Link to this definition"></a></dt>
+<dd><p>Join hourly generation per category on the full grid of the Backcast Calendar.</p>
+<p>MainResults leaves out zeros, so a category Balmorel has no row for in an
+hour produced 0. ENTSO-E’s missing categories are 0 too, but only in
+hours where ENTSO-E reports some generation for the region; a region-hour
+without any ENTSO-E generation is left out on both sides, and so are the
+regions in INCOMPLETE_GENERATION.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>entsoe (pd.DataFrame): Columns ‘Region’, ‘Technology’, ‘Time’ and ‘Value’.
+balmorel (pd.DataFrame): Columns ‘Region’, ‘Technology’, ‘Time’ and ‘Value’.
+regions (set[str]): The regions both datasets have.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index (Region, Technology, Time), columns ‘ENTSOE’ and ‘BALMOREL’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_components_table">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_components_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">components</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_components_table" title="Link to this definition"></a></dt>
+<dd><p>Balmorel’s annual load per category next to ENTSO-E’s annual load, per region.</p>
+<dl>
+<dt>Args:</dt><dd><p>components (pd.DataFrame): Output of balmorel_load_components.
+entsoe_load (pd.DataFrame): Hourly ENTSO-E load (MW) with ‘Region’,</p>
+<blockquote>
+<div><p>‘Time’ and ‘Value’.</p>
+</div></blockquote>
+<p>year (int): The Backcast Year; ENTSO-E is summed over its Backcast Calendar.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Region’, ‘Category’, ‘BALMOREL’, ‘Excluded’ and</dt><dd><p>‘ENTSOE’ (TWh). Per region, a ‘Total compared’ row sums the
+categories that aren’t excluded and holds ENTSO-E’s annual load.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.load_and_align">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">load_and_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elpriceaggfunc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">OBSERVED_FLOW_PERCENTILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unmapped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.load_and_align" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.plot_bar_chart">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">plot_bar_chart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns_to_keep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'light'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">matplotlib.axes.Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.plot_bar_chart" title="Link to this definition"></a></dt>
+<dd><p>Stacked bars of ENTSO-E’s and Balmorel’s annual generation.</p>
+<p>Each stack segment has a thin edge in the theme’s surface colour, so
+neighbouring segments of similar colour stay apart.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>df (pd.DataFrame): Index (Region, Technology, Time), columns ‘ENTSOE’</dt><dd><p>and ‘BALMOREL’ in MWh, as in generation.csv.</p>
+</dd>
+<dt>columns_to_keep (list, optional): Index levels the bars are stacked</dt><dd><p>by, e.g. [‘Technology’]. Defaults to [].</p>
+</dd>
+<dt>per_region (bool, optional): Draw a pair of bars per region instead</dt><dd><p>of one pair in total, Balmorel’s left of the region’s tick and
+ENTSO-E’s right of it. Defaults to False.</p>
+</dd>
+</dl>
+<p>style (str, optional): ‘light’ or ‘dark’, see plot_style. Defaults to ‘light’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, Axes]: The figure and its axes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.plot_price_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">plot_price_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'light'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">matplotlib.axes.Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.plot_price_profile" title="Link to this definition"></a></dt>
+<dd><p>Daily mean prices of ENTSO-E and Balmorel over the Backcast Year.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>prices (pd.DataFrame): Columns or index levels ‘Time’, ‘ENTSOE’ and</dt><dd><p>‘BALMOREL’ (nominal €/MWh of the Backcast Year), as in prices.csv.</p>
+</dd>
+</dl>
+<p>style (str, optional): ‘light’ or ‘dark’, see plot_style. Defaults to ‘light’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, Axes]: The figure and its axes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.save_figure">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">save_figure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.figure.Figure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.save_figure" title="Link to this definition"></a></dt>
+<dd><p>Save a figure in output_dir, with a transparent background in the dark style.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fig (Figure): The figure to save.
+output_dir (Path): Folder to save in, created if missing.
+file_name (str): File name, e.g. ‘prices.png’.
+style (str): The style the figure was drawn in, ‘light’ or ‘dark’.
+<a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs: Passed on to Figure.savefig, e.g. dpi or bbox_inches.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Path: The saved file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.plot_price_duration_curves">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">plot_price_duration_curves</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(-60,</span> <span class="pre">320)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'light'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.plot_price_duration_curves" title="Link to this definition"></a></dt>
+<dd><p>Price duration curves of ENTSO-E and Balmorel, pooled and per region.</p>
+<p>One large panel pools all region-hours; small multiples follow per region
+in PRICE_DURATION_REGION_ORDER, then any other region alphabetically.
+Every panel has the same, clipped y-range; the subtitle says how many
+region-hours each side has outside it.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>prices (pd.DataFrame): Columns ‘Region’, ‘ENTSOE’ and ‘BALMOREL’</dt><dd><p>(nominal €/MWh of the Backcast Year), as in prices.csv.</p>
+</dd>
+</dl>
+<p>title (str): Figure title.
+ylim (tuple[float, float], optional): Y-range in €/MWh. Defaults to (-60, 320).
+style (str, optional): ‘light’ or ‘dark’, see plot_style. ‘light’ has an</p>
+<blockquote>
+<div><p>off-white background, ‘dark’ a transparent one. Defaults to ‘light’.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, np.ndarray]: The figure and its axes, pooled panel first.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.style_option">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">style_option</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.style_option" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.output_dir_option">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">output_dir_option</span></span><a class="headerlink" href="#pybalmorel.backcasting.__main__.output_dir_option" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.main">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.format">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elpriceaggfunc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unmapped</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.format" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.statistics">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.statistics" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.generation">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">generation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.generation" title="Link to this definition"></a></dt>
+<dd><p>Plot ENTSO-E vs Balmorel annual generation per technology category.</p>
+<p>Saves generation.png, in total, and generation_per_region.png.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.prices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">prices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.prices" title="Link to this definition"></a></dt>
+<dd><p>Plot daily mean ENTSO-E vs Balmorel prices, saved as prices.png.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.price_duration">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">price_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.price_duration" title="Link to this definition"></a></dt>
+<dd><p>Plot price duration curves of Balmorel vs ENTSO-E, pooled and per region.</p>
+<p>Reads &lt;balmorel-scenario-path&gt;/backcastoutput/prices.csv from <cite>format</cite>, in
+nominal euros of the Backcast Year, and saves price_duration_curves.png.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.flows" title="Link to this definition"></a></dt>
+<dd><p>Plot duration curves of Balmorel vs ENTSO-E flows per directed border.</p>
+<p>Saves flow_duration_curves.png.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.transmission_flow_limit">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">transmission_flow_limit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.transmission_flow_limit" title="Link to this definition"></a></dt>
+<dd><p>Write XKFX_ENTSOE.inc: backcast transmission overrides from the ENTSO-E Observed Flow Limit.</p>
+<p>Reads the scenario’s current XKFX borders, fetches matching ENTSO-E
+cross-border flows for YEAR, and writes/updates
+&lt;balmorel-scenario-path&gt;/data/XKFX_ENTSOE.inc plus the $include in XKFX.inc.
+See CONTEXT.md and docs/adr/0005, 0006, 0010.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.nuclear_availability">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">nuclear_availability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.nuclear_availability" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_ENTSOE.inc: weekly Nuclear Availability from ENTSO-E nuclear output.</p>
+<p>Per country and Backcast Calendar week: the highest hourly nuclear output
+in the generation csv’s under ENTSOE_DATA_PATH (from <cite>download –query
+generation</cite>), divided by the country’s nuclear GKFX in YEAR, clipped at 1.
+Writes &lt;balmorel-scenario-path&gt;/data/GKRATE_ENTSOE.inc, which the scenario’s
+GKRATE.inc must include. See CONTEXT.md.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.thermal_availability">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">thermal_availability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.thermal_availability" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_THERMAL_ENTSOE.inc: weekly Thermal Availability from ENTSO-E capacity and outages.</p>
+<p>Per country, fuel group and Backcast Calendar week: ENTSO-E’s installed
+capacity in YEAR as a share of the group’s GKFX (at most 1), less the share
+reported out of service that week (from <cite>download –query
+installed_generation_capacity –query unavailability_of_generation_units</cite>).
+Writes &lt;balmorel-scenario-path&gt;/data/GKRATE_THERMAL_ENTSOE.inc, which the
+scenario’s GKRATE.inc must include, and backcastoutput/thermal_capacity.csv,
+which checks GKFX against installed capacity and observed output. See CONTEXT.md.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.must_run_floor">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">must_run_floor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hours</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">every_week</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.must_run_floor" title="Link to this definition"></a></dt>
+<dd><p>Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks.</p>
+<p>Per country, fuel group and Backcast Calendar week: the lowest hourly
+output in the generation csv’s under ENTSOE_DATA_PATH, for weeks with at
+least MIN_HOURS day-ahead prices at or below PRICE_THRESHOLD, and for the
+–every-week groups in all weeks. Capped at Balmorel’s available capacity,
+so run thermal-availability first. Writes MUSTRUN_ZONE, MUSTRUN_ZONE_RRR,
+MUSTRUN_GROUP, MUSTRUN_GROUP_FFF and, last, MUSTRUN_FLOOR (.inc) to
+&lt;balmorel-scenario-path&gt;/data/; MUSTRUN_FLOOR.inc switches Balmorel’s
+MUSTRUN addon on. See CONTEXT.md.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.demand_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">demand_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.demand_profile" title="Link to this definition"></a></dt>
+<dd><p>Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load.</p>
+<p>Per Balmorel region with electricity demand: the hourly ENTSO-E load of
+its canonical region in YEAR (from <cite>download –query load</cite>) on the
+Backcast Calendar, as DE_VAR_T for the users OTHER and RESE. Implausible
+hours are interpolated. Writes &lt;balmorel-scenario-path&gt;/data/DE_VAR_T_ENTSOE.inc
+and appends its $include to the scenario’s DE_VAR_T.inc. Rerun after
+writing new weather-year data, which overwrites DE_VAR_T.inc. See CONTEXT.md.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.demand_level">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">demand_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eurostat_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_results</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.demand_level" title="Link to this definition"></a></dt>
+<dd><p>Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.</p>
+<p>Per region: ENTSO-E’s load in YEAR (from <cite>download –query load</cite>) less
+what the previous backcast run added on top of DE: its transmission
+losses, the electricity it used for heat (ENDOGENOUS_ELECT2HEAT), and
+its distribution losses on anything but exogenous demand (on that
+heating, and on wind and solar output); all net of Balmorel’s
+distribution losses. That heating responds to prices, so solve, <cite>format</cite>, and run this again for
+as long as the printed residual keeps falling. With –heat eurostat (the
+first run of a new backcast year), Eurostat’s electricity for household
+space and water heating and for district heating is left out instead.
+Split over regions and users by the input data’s DE. Eurostat responses
+are fetched once and cached. Writes &lt;balmorel-scenario-path&gt;/data/DE_ENTSOE.inc,
+which the scenario’s DE.inc, INDUSTRY_DE.inc and INDIVUSERS_DE.inc must
+include, and backcastoutput/demand_level.csv. See CONTEXT.md and
+docs/adr/0015.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.vre_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">vre_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.vre_flh" title="Link to this definition"></a></dt>
+<dd><p>Write WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc: VRE full-load hours scaled to ENTSO-E output.</p>
+<p>Per country and kind (solar, onshore, offshore): one factor that makes
+Balmorel’s available output in YEAR (GKFX x FLH x GKRATE) equal ENTSO-E’s
+reported output (from <cite>download –query generation</cite>), applied to the
+full-load hours of every area of that country and kind. Writes both files
+to &lt;balmorel-scenario-path&gt;/data/, appends their $include to the
+scenario’s WNDFLH.inc and SOLEFLH.inc, and writes backcastoutput/vre_flh.csv.
+Rerun after every weather-year run, which overwrites WNDFLH.inc and
+SOLEFLH.inc. See CONTEXT.md.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.download">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entsoe_data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queries</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.download" title="Link to this definition"></a></dt>
+<dd><p>Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for <cite>format</cite> and <cite>transmission-flow-limit</cite>.</p>
+<p>Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
+every neighbouring pair of them. IE’s load is fetched for Ireland’s
+control area instead of the all-island IE_SEM zone. Files already downloaded, and pairs
+ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
+failed requests.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.ttf_csv">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">ttf_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">html_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historicalprices_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.ttf_csv" title="Link to this definition"></a></dt>
+<dd><p>Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_&lt;year&gt;.csv.</p>
+<p>HTML_PATH is the page <a class="reference external" href="https://finance.yahoo.com/quote/TTF%3DF/history/">https://finance.yahoo.com/quote/TTF%3DF/history/</a>
+saved from a browser, covering any number of years. One CSV per year is
+written to HISTORICALPRICES_PATH in the format the fuelprices command reads.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.fuelprices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">fuelprices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historicalprices_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.fuelprices" title="Link to this definition"></a></dt>
+<dd><p>Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical
+NATGAS/COAL prices for backcasting.</p>
+<p>Reads HISTORICALPRICES_PATH’s CSVs, converts them to the Price Year
+(EUR2016, bundled HICP and EUR/USD tables), maps them onto the UTC Backcast
+Calendar and writes &lt;balmorel-scenario-path&gt;/data/FUELPRICE.inc and
+FUELPRICE_CONSTANT.inc. See docs/adr/0001-fuelprice-season-term-resolution.md
+in the Balmorel repo. Warns if balopt.opt doesn’t set
+FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT (it is never edited).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.__main__.co2_tax">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.__main__.</span></span><span class="sig-name descname"><span class="pre">co2_tax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_scenario_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historicalprices_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co2_overrides</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.backcasting.__main__.co2_tax" title="Link to this definition"></a></dt>
+<dd><p>Write TAX_CO2_ST.inc: (S,T)-resolved historical CO2 tax for backcasting.</p>
+<p>Reads the EEX EUA primary-auction report for YEAR under
+HISTORICALPRICES_PATH, converts it to the Price Year (EUR2016), maps it onto
+the UTC Backcast Calendar and writes &lt;balmorel-scenario-path&gt;/data/TAX_CO2_ST.inc.
+See docs/adr/0002-co2-tax-season-term-resolution.md in the Balmorel repo.
+Warns if balopt.opt doesn’t set TAX_CO2_DOL=YYY_CCC_SSS_TTT (it is never edited).</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../calendar/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.calendar" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.nuclear &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.plotstyle" href="../plotstyle/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.mustrun" href="../mustrun/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.nuclear</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/nuclear/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.nuclear">
+<span id="pybalmorel-backcasting-nuclear"></span><h1>pybalmorel.backcasting.nuclear<a class="headerlink" href="#module-pybalmorel.backcasting.nuclear" title="Link to this heading"></a></h1>
+<p>Nuclear Availability</p>
+<p>Turn ENTSO-E’s observed nuclear output into weekly GKRATE overrides
+(GKRATE_ENTSOE.inc) for a Backcast: per country and Backcast Calendar week,
+the highest hourly nuclear output divided by the country’s nuclear GKFX,
+clipped at 1 (see CONTEXT.md). Reuses the override-file pattern of
+docs/adr/0006; the scenario’s GKRATE.inc includes the file itself.</p>
+<p>Created on 22.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.RATING_DECIMALS" title="pybalmorel.backcasting.nuclear.RATING_DECIMALS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RATING_DECIMALS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.nuclear_capacity" title="pybalmorel.backcasting.nuclear.nuclear_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuclear_capacity</span></code></a>(gkfx, gdata, fdata, rrraaa, year) → pandas.DataFrame</p></td>
+<td><p>The nuclear GKFX of <cite>year</cite> per area and technology, with its canonical region.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.nuclear_ratings" title="pybalmorel.backcasting.nuclear.nuclear_ratings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nuclear_ratings</span></code></a>(observed, capacity, year) → pandas.DataFrame</p></td>
+<td><p>The weekly Nuclear Availability per canonical region.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.format_rating" title="pybalmorel.backcasting.nuclear.format_rating"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_rating</span></code></a>(rating) → str</p></td>
+<td><p>A GAMS value for a rating; anything that rounds to 0 is 'eps', since Balmorel reads 0 as 1.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.write_gkrate_override" title="pybalmorel.backcasting.nuclear.write_gkrate_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_gkrate_override</span></code></a>(ratings, capacity, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write GKRATE_ENTSOE.inc with the weekly nuclear ratings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.check_gkrate_include" title="pybalmorel.backcasting.nuclear.check_gkrate_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_gkrate_include</span></code></a>(gkrate_inc_path) → None</p></td>
+<td><p>Warn if the scenario's GKRATE.inc doesn't include GKRATE_ENTSOE.inc.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.check_input_cache" title="pybalmorel.backcasting.nuclear.check_input_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_input_cache</span></code></a>(input_gdx, scenario_data_path[, ignore]) → None</p></td>
+<td><p>Warn if a scenario data file is newer than the cached input GDX, which then misses it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.nuclear.generate_nuclear_availability" title="pybalmorel.backcasting.nuclear.generate_nuclear_availability"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_nuclear_availability</span></code></a>(balmorel_model_folder, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write GKRATE_ENTSOE.inc for a Balmorel scenario from observed nuclear output.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.RATING_DECIMALS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">RATING_DECIMALS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.RATING_DECIMALS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.nuclear_capacity">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">nuclear_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkfx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rrraaa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.nuclear_capacity" title="Link to this definition"></a></dt>
+<dd><p>The nuclear GKFX of <cite>year</cite> per area and technology, with its canonical region.</p>
+<p>Nuclear technologies are those whose GDATA(G,’GDFUEL’) equals
+FDATA(‘NUCLEAR’,’FDACRONYM’). Both are GAMS acronyms that get_input returns
+as the same large float, so the two values are compared rather than
+hard-coded. Columns are taken by position, as get_input may name them after
+the raw GAMS domains.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+fdata (pd.DataFrame): FDATA from get_input, ending in (FFF, FDATASET, Value).
+rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+year (int): The Backcast Year, the Y of GKFX.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Area’, ‘Technology’, ‘Region’ (canonical) and</dt><dd><p>‘Capacity’ (MW), for every nuclear (area, technology) with GKFX &gt; 0.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.nuclear_ratings">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">nuclear_ratings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.nuclear_ratings" title="Link to this definition"></a></dt>
+<dd><p>The weekly Nuclear Availability per canonical region.</p>
+<p>The rating of week s is the highest hourly nuclear output in that week of
+the Backcast Calendar divided by the region’s summed nuclear GKFX. Missing
+hours are ignored. Weeks without any data after the region’s last week
+with data are a closure and get 0, since ENTSO-E stops reporting a closed
+fleet; any other week without data gets NaN. Ratings above 1 are clipped.
+All of these are reported.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>observed (dict[str, pd.Series]): Hourly nuclear output (MW) per</dt><dd><p>canonical region, indexed by timezone-aware timestamps.</p>
+</dd>
+</dl>
+<p>capacity (pd.DataFrame): Output of nuclear_capacity.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index ‘S01’..’S52’, one column per region that has both</dt><dd><p>nuclear GKFX and observed nuclear output.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.format_rating">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">format_rating</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rating</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.format_rating" title="Link to this definition"></a></dt>
+<dd><p>A GAMS value for a rating; anything that rounds to 0 is ‘eps’, since Balmorel reads 0 as 1.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.write_gkrate_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">write_gkrate_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.write_gkrate_override" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_ENTSOE.inc with the weekly nuclear ratings.</p>
+<p>Every nuclear technology in an area gets its country’s rating, since
+ENTSO-E only reports nuclear output per bidding zone. Weeks without data
+get no line.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>ratings (pd.DataFrame): Output of nuclear_ratings.
+capacity (pd.DataFrame): Output of nuclear_capacity.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.check_gkrate_include">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">check_gkrate_include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkrate_inc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.check_gkrate_include" title="Link to this definition"></a></dt>
+<dd><p>Warn if the scenario’s GKRATE.inc doesn’t include GKRATE_ENTSOE.inc.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gkrate_inc_path (str | Path): Path to the scenario’s GKRATE.inc.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.check_input_cache">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">check_input_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_gdx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.check_input_cache" title="Link to this definition"></a></dt>
+<dd><p>Warn if a scenario data file is newer than the cached input GDX, which then misses it.</p>
+<dl>
+<dt>Args:</dt><dd><p>input_gdx (Path): The cached &lt;scenario&gt;_input_data.gdx.
+scenario_data_path (Path): The scenario’s ‘data’ folder.
+ignore (tuple[str, …], optional): File names not to check, e.g. the</p>
+<blockquote>
+<div><p>override file the caller writes itself. Defaults to ().</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.nuclear.generate_nuclear_availability">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.nuclear.</span></span><span class="sig-name descname"><span class="pre">generate_nuclear_availability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.nuclear.generate_nuclear_availability" title="Link to this definition"></a></dt>
+<dd><p>Write GKRATE_ENTSOE.inc for a Balmorel scenario from observed nuclear output.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the override for.
+year (int): The Backcast Year.
+observed (dict[str, pd.Series]): Hourly nuclear output (MW) per</p>
+<blockquote>
+<div><p>canonical region.</p>
+</div></blockquote>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../mustrun/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.mustrun" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../plotstyle/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.plotstyle" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

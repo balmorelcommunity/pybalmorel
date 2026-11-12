@@ -1,0 +1,606 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Handover: demand level net of the model’s own electric heating &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/css_options.css?v=313b1874" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=02f2166e"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Handover: demand level net of the model’s own electric heating</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/handover-backcast-demand-level-model-heat.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="handover-demand-level-net-of-the-model-s-own-electric-heating">
+<span id="handover-demand-level-net-of-the-models-own-electric-heating"></span><h1>Handover: demand level net of the model’s own electric heating<a class="headerlink" href="#handover-demand-level-net-of-the-model-s-own-electric-heating" title="Link to this heading"></a></h1>
+<p>From the Balmorel <code class="docutils literal notranslate"><span class="pre">backcast</span></code> branch (2023 backcast, 2026-11-03). This
+follows <code class="docutils literal notranslate"><span class="pre">handover-backcast-demand-level.md</span></code> (variant (a′), implemented as
+<code class="docutils literal notranslate"><span class="pre">demand-level</span></code>). It changes which heating the level leaves out: the
+electricity the previous backcast run used for heat, instead of Eurostat’s
+figure. It also fixes an 8760/8736-hour mismatch, and adds an optional
+hourly refinement to <code class="docutils literal notranslate"><span class="pre">demand-profile</span></code>.</p>
+<blockquote>
+<div><p><strong>Status (2026-11-10): implemented</strong> as <code class="docutils literal notranslate"><span class="pre">demand-level</span> <span class="pre">--heat</span> <span class="pre">model</span></code>
+(the default), with <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code> for the first run of a new year.
+See ADR 0015 and <code class="docutils literal notranslate"><span class="pre">docs/preprocessing/preparing_backcast.md</span></code>. Differences
+from this spec: CH is written (coverage unchecked), the residual is
+reported but no stop rule is enforced, the summary’s <code class="docutils literal notranslate"><span class="pre">BaseTWh</span></code> is
+<code class="docutils literal notranslate"><span class="pre">InputTWh</span></code>, and step 2 (the hourly refinement) is deferred. On
+2026-11-11 the formula below was corrected to
+<code class="docutils literal notranslate"><span class="pre">X_k</span> <span class="pre">=</span> <span class="pre">(L_k</span> <span class="pre">−</span> <span class="pre">T_k</span> <span class="pre">−</span> <span class="pre">E_k</span> <span class="pre">−</span> <span class="pre">O_k)(1</span> <span class="pre">−</span> <span class="pre">d_k)</span></code>: Balmorel’s <code class="docutils literal notranslate"><span class="pre">DIST_LOSSES</span></code> also
+holds losses on its electric heating and on wind and solar output
+(<code class="docutils literal notranslate"><span class="pre">DISLOSS_E_AG</span></code>, 6.7 TWh in the compared countries), which this spec
+missed, so the residual disagreed with the load comparison by 7.3 TWh.</p>
+<p><strong>Earlier status: not built.</strong> This file was never committed, and
+it was restored from the 2026-11-03 session. The tables below come
+from <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> of 2026-10-29, which was solved before the
+wrappers. <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> of 2026-11-04 was solved with the wrappers
+and the current (a′) <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>, so it can serve as iteration 0.
+In it, Balmorel’s load is 2,694.7 TWh against ENTSO-E’s 2,699.6. The
+per-country gaps add up to 175 TWh in absolute terms, nearly all of it
+E2H − H: IT +50.6 (E2H − H +45.5), FR −25.5 (−24.7), NO −13.5 (−13.6),
+and CH −11.6, which is on its base level. All runs before the
+thermal-outage fix of 2026-11-09 must be rerun anyway; that rerun can
+be iteration 0.</p>
+</div></blockquote>
+<section id="what-happened">
+<h2>What happened<a class="headerlink" href="#what-happened" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> (solved 2026-10-29) was the first run with <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>.
+Balmorel’s load came out 369 TWh below ENTSO-E’s (2,276 against 2,645 TWh).
+The worst countries were FR −77, DE −49, IT −43 and ES −39. Generation was
+correspondingly low.</p>
+<p><strong>Cause: the heating was subtracted twice.</strong> <code class="docutils literal notranslate"><span class="pre">backcast/data/DE.inc</span></code> applies
+<code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> while <code class="docutils literal notranslate"><span class="pre">DE</span></code> is read. <code class="docutils literal notranslate"><span class="pre">bb4datainc.inc</span></code> then runs the
+<code class="docutils literal notranslate"><span class="pre">deadditions</span></code> hook:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">INDUSTRY_DE.inc</span></code> subtracts <code class="docutils literal notranslate"><span class="pre">DE1_IND</span></code> from <code class="docutils literal notranslate"><span class="pre">PII</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">INDIVUSERS_DE.inc</span></code> subtracts <code class="docutils literal notranslate"><span class="pre">DE1_INDIVHEATING</span></code> from <code class="docutils literal notranslate"><span class="pre">RESE</span></code> and <code class="docutils literal notranslate"><span class="pre">OTHER</span></code>.</p></li>
+</ul>
+<p>Each clamps at 0. In the <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE</span></code> regions that removed another 509 TWh
+(175 + 334) from a level that was already net of Eurostat heating (238
+TWh). A minimal GAMS script (<code class="docutils literal notranslate"><span class="pre">DE.inc</span></code> plus the two hooks) reproduces the
+solved <code class="docutils literal notranslate"><span class="pre">EXOGENOUS</span></code> × 8760/8736 to 0.0 TWh in all 47 regions. So
+<code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> and <code class="docutils literal notranslate"><span class="pre">DE_VAR_T_ENTSOE.inc</span></code> themselves load correctly. The
+clamps had also zeroed <code class="docutils literal notranslate"><span class="pre">RESE</span></code> in IT, ES, PT, FIN and EE, and <code class="docutils literal notranslate"><span class="pre">PII</span></code> in DK1,
+DK2, LV and LT. Those zeros were carried into <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>, because
+<code class="docutils literal notranslate"><span class="pre">demand-level</span></code> splits users by the post-addon <code class="docutils literal notranslate"><span class="pre">DE</span></code> shares in the input GDX.</p>
+<p><strong>Balmorel side (done).</strong> <code class="docutils literal notranslate"><span class="pre">backcast/data/INDUSTRY_DE.inc</span></code> and
+<code class="docutils literal notranslate"><span class="pre">backcast/data/INDIVUSERS_DE.inc</span></code> are new wrappers. Each includes base’s
+file of the same name, then <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> again. The addons resolve
+<code class="docutils literal notranslate"><span class="pre">../data/&lt;X&gt;_DE.inc</span></code> before base’s, so <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> is now final
+whichever addon is on. Verified with the minimal script:</p>
+<ul class="simple">
+<li><p>All 121 <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE</span></code> cells are final.</p></li>
+<li><p>The 18 other (region, user) cells are unchanged.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE</span></code> regions sum to 2,279.4 TWh after the hooks, against
+1,771.9 before. IE was 36.2 then, from the all-island <code class="docutils literal notranslate"><span class="pre">IE_SEM</span></code>. With
+Ireland’s control area it is 29.1, and the total is 2,272.4.</p></li>
+</ul>
+</section>
+<section id="why-a-is-not-enough">
+<h2>Why (a′) is not enough<a class="headerlink" href="#why-a-is-not-enough" title="Link to this heading"></a></h2>
+<p>(a′) leaves out Eurostat’s electricity for heating, <code class="docutils literal notranslate"><span class="pre">H</span></code>: household space
+and water heating, plus electric boilers and heat pumps in district
+heating. Balmorel’s <code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code> (E2H) covers more than that:
+industrial process heat, services heating, and individual users in
+<code class="docutils literal notranslate"><span class="pre">INDIVUSERS_DH</span></code> / <code class="docutils literal notranslate"><span class="pre">DH_TERTIARY</span></code>. Under (a′) each country’s load gap is
+therefore <code class="docutils literal notranslate"><span class="pre">(E2H</span> <span class="pre">−</span> <span class="pre">H)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">−</span> <span class="pre">d)</span></code> plus transmission losses. That mixes a
+heating scope difference into every country’s load, and from there into
+generation, prices and flows. In <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>, E2H − H is IT +49.5,
+DE +32.3, ES +31.0 and FR +17.9 TWh (Europe +131). In the 2026-10-28 run
+IT was already +45.</p>
+<p>Option C takes the heating out with the same scope Balmorel adds it back:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>X_k = (L_k − T_k) × (1 − d_k) − E_k
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">L_k</span></code> is ENTSO-E’s load of canonical region <code class="docutils literal notranslate"><span class="pre">k</span></code> over the Backcast
+Calendar, as now.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">T_k</span></code> and <code class="docutils literal notranslate"><span class="pre">E_k</span></code> are the previous run’s <code class="docutils literal notranslate"><span class="pre">TRANS_LOSSES</span></code> and
+<code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code>, summed over the 8736 hours and over <code class="docutils literal notranslate"><span class="pre">k</span></code>’s
+Balmorel regions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">d_k</span></code> is <code class="docutils literal notranslate"><span class="pre">DISLOSS_E</span></code>, as now.</p></li>
+</ul>
+<p>Balmorel’s compared load is <code class="docutils literal notranslate"><span class="pre">(EXO</span> <span class="pre">+</span> <span class="pre">E2H)</span> <span class="pre">/</span> <span class="pre">(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">+</span> <span class="pre">T</span></code>. With <code class="docutils literal notranslate"><span class="pre">EXO</span> <span class="pre">=</span> <span class="pre">X</span></code> and
+unchanged E2H and T, it equals <code class="docutils literal notranslate"><span class="pre">L</span></code> exactly. E2H against <code class="docutils literal notranslate"><span class="pre">H</span></code> stays a
+Validation Metric, now outside the load.</p>
+<section id="e2h-moves-with-the-price-so-this-iterates">
+<h3>E2H moves with the price, so this iterates<a class="headerlink" href="#e2h-moves-with-the-price-so-this-iterates" title="Link to this heading"></a></h3>
+<p>E2H is endogenous. Lower exogenous demand means lower prices, and so more
+electric heating. From the 2026-10-28 run to <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>:</p>
+<ul class="simple">
+<li><p>EXO fell 476 TWh (2,243 → 1,767).</p></li>
+<li><p>E2H rose 140 TWh (229 → 369).</p></li>
+<li><p>That is about −0.3 TWh of E2H per TWh of EXO.</p></li>
+</ul>
+<p>This is only a rough figure. The same commit also changed thermal
+availability, VRE levels and the must-run floor. Per country it varies a
+lot: FR −0.37, DE −0.19, IT −0.06, ES −0.59, SE −0.46, NO −0.34. IT’s E2H
+barely moves, so its excess is structural (capacity or heat-demand
+allocation) rather than a price effect.</p>
+<p><strong>Projections that hold E2H fixed are therefore misleading.</strong> Honouring
+(a′) with E2H fixed at 369 would overshoot by +167 TWh. Once E2H falls
+back towards its 2026-10-28 level (about 229 at an EXO of about 2,243),
+that overshoot mostly disappears. The plain fixed-point iteration
+<code class="docutils literal notranslate"><span class="pre">X_{n+1}</span> <span class="pre">=</span> <span class="pre">(L</span> <span class="pre">−</span> <span class="pre">T)(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">−</span> <span class="pre">E_n</span></code> converges whenever −1 &lt; slope ≤ 0. The
+error shrinks by |slope| each run. Assuming the aggregate slope of −0.3 and
+starting from <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Run</p></th>
+<th class="head"><p>X (TWh)</p></th>
+<th class="head"><p>E2H</p></th>
+<th class="head"><p>Load gap at final-consumption level</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>2,122</p></td>
+<td><p>263</p></td>
+<td><p>−106</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>2,229</p></td>
+<td><p>231</p></td>
+<td><p>−32</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>2,260</p></td>
+<td><p>221</p></td>
+<td><p>−10</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>2,270</p></td>
+<td><p>218</p></td>
+<td><p>−3</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Starting point:</strong> the fixed point lies close to (a′), because E2H there
+(~218) is close to <code class="docutils literal notranslate"><span class="pre">H</span></code> (238). The first <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">model</span></code> iteration should
+therefore take E2H from a run solved with the wrappers and the current
+(a′) <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>, not from <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>. <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>’s E2H is
+inflated by its double-subtracted EXO. From a wrapper run, one or two <code class="docutils literal notranslate"><span class="pre">C</span></code>
+iterations should be enough. Mostly they move demand between countries:
+IT down by about 45, FR up by about 25.</p>
+</section>
+</section>
+<section id="change">
+<h2>Change<a class="headerlink" href="#change" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Option <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat|model</span></code></strong> on <code class="docutils literal notranslate"><span class="pre">demand-level</span></code>, default <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">eurostat</span></code> is today’s (a′): <code class="docutils literal notranslate"><span class="pre">X_c</span> <span class="pre">=</span> <span class="pre">L_c(1</span> <span class="pre">−</span> <span class="pre">d_c)</span> <span class="pre">−</span> <span class="pre">H_c</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model</span></code> is option C.</p></li>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">--load-results</span> <span class="pre">&lt;path&gt;</span></code> (default
+<code class="docutils literal notranslate"><span class="pre">&lt;scenario&gt;/backcastoutput/balmorel_load.csv</span></code>, which <code class="docutils literal notranslate"><span class="pre">format</span></code> writes).
+It is required for <code class="docutils literal notranslate"><span class="pre">model</span></code>. If the file is missing, the error should
+say: “run <code class="docutils literal notranslate"><span class="pre">format</span></code> on a solved backcast first, or use <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code> for the first run of a new backcast year”.</p></li>
+</ul>
+</li>
+<li><p><strong>Read the previous run</strong> with a new function in <code class="docutils literal notranslate"><span class="pre">demand.py</span></code>,
+<code class="docutils literal notranslate"><span class="pre">previous_run_heat(load_results,</span> <span class="pre">year)</span> <span class="pre">-&gt;</span> <span class="pre">pd.DataFrame</span></code>, indexed by
+Balmorel region with columns <code class="docutils literal notranslate"><span class="pre">EXO</span></code>, <code class="docutils literal notranslate"><span class="pre">E2H</span></code> and <code class="docutils literal notranslate"><span class="pre">TLoss</span></code>, all in MWh over
+the 8736 hours.</p>
+<ul class="simple">
+<li><p>The file has one row per (Region, Season, Time, Category) with
+non-zero <code class="docutils literal notranslate"><span class="pre">Value</span></code>. Zero hours are dropped, so a region can have fewer
+than 8736 rows (108 in R2023).</p></li>
+<li><p>Require exactly one <code class="docutils literal notranslate"><span class="pre">Scenario</span></code> and <code class="docutils literal notranslate"><span class="pre">Year</span> <span class="pre">==</span> <span class="pre">year</span></code>. Require 52 × 168
+distinct (Season, Time) pairs across the whole file, which means an
+hourly full-year run. A full-year run with <code class="docutils literal notranslate"><span class="pre">T_full</span></code> has a seventh of
+that.</p></li>
+<li><p>Categories: <code class="docutils literal notranslate"><span class="pre">EXOGENOUS</span></code>, <code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code>, <code class="docutils literal notranslate"><span class="pre">TRANS_LOSSES</span></code>. A
+missing category counts as 0. Ignore <code class="docutils literal notranslate"><span class="pre">ENDO_INTRASTO</span></code> and
+<code class="docutils literal notranslate"><span class="pre">DIST_LOSSES</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong>Consistency check, before <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> is overwritten.</strong> Per
+region in the current <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>, compare <code class="docutils literal notranslate"><span class="pre">EXO</span></code> with its <code class="docutils literal notranslate"><span class="pre">DE</span></code> ×
+8736/8760.</p>
+<ul class="simple">
+<li><p>Where they differ by more than 1%, warn: “the previous run did not
+solve with this DE_ENTSOE.inc. The INDUSTRY_DE/INDIVUSERS_DE wrappers
+may be missing, or the file was regenerated since. Its E2H may be far
+from this level’s.”</p></li>
+<li><p>Against <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> this fires for every region (1,767 against
+2,266 TWh). That is intended: R2023 is not a valid starting point.</p></li>
+<li><p>Also warn if the scenario has no <code class="docutils literal notranslate"><span class="pre">data/INDUSTRY_DE.inc</span></code> or
+<code class="docutils literal notranslate"><span class="pre">data/INDIVUSERS_DE.inc</span></code> that includes <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>, as is already
+done for <code class="docutils literal notranslate"><span class="pre">DE.inc</span></code>. Check only addons whose base file exists in
+<code class="docutils literal notranslate"><span class="pre">base/data</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong>Level per canonical region</strong> (<code class="docutils literal notranslate"><span class="pre">model</span></code>):
+<code class="docutils literal notranslate"><span class="pre">X_k</span> <span class="pre">=</span> <span class="pre">NetLoad_k</span> <span class="pre">−</span> <span class="pre">TLoss_k</span> <span class="pre">×</span> <span class="pre">(1</span> <span class="pre">−</span> <span class="pre">d_k)</span> <span class="pre">−</span> <span class="pre">E2H_k</span></code>, where <code class="docutils literal notranslate"><span class="pre">NetLoad_k</span> <span class="pre">=</span> <span class="pre">L_k(1</span> <span class="pre">−</span> <span class="pre">d_k)</span></code> as today.</p>
+<ul class="simple">
+<li><p>E2H and T are per Balmorel region, so sum them over <code class="docutils literal notranslate"><span class="pre">k</span></code>’s regions
+(DE4-*), and use them directly for NO1-5, SE1-4 and DK1-2. No load
+share split of heat is needed, unlike <code class="docutils literal notranslate"><span class="pre">H</span></code>.</p></li>
+<li><p>DE_LU: LU is its own Balmorel region with its own E2H. The LU share
+of the DE_LU load is split by <code class="docutils literal notranslate"><span class="pre">FC_E</span></code> as now. Then subtract each
+region’s own E2H and T.</p></li>
+<li><p>Keep the coverage check, and the fallback to base for countries
+without ENTSO-E load or with coverage outside the bounds (AL, and UK
+and CH, which have no Eurostat data). Under <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">H</span></code> is no longer
+needed, so only the coverage check needs Eurostat. Skip that check
+where <code class="docutils literal notranslate"><span class="pre">FC_E</span></code> is missing, and say so in <code class="docutils literal notranslate"><span class="pre">Note</span></code>. CH, which has ENTSO-E
+load, is then written too.</p></li>
+<li><p>Then split within <code class="docutils literal notranslate"><span class="pre">k</span></code> and over <code class="docutils literal notranslate"><span class="pre">DEUSER</span></code> as now.</p></li>
+</ul>
+</li>
+<li><p><strong>Hours: write <code class="docutils literal notranslate"><span class="pre">DE</span> <span class="pre">=</span> <span class="pre">X</span> <span class="pre">×</span> <span class="pre">8760</span> <span class="pre">/</span> <span class="pre">8736</span></code></strong>, for both <code class="docutils literal notranslate"><span class="pre">--heat</span></code> values.
+Balmorel’s <code class="docutils literal notranslate"><span class="pre">EXOGENOUS</span></code> summed over the 8736 modelled hours equals
+<code class="docutils literal notranslate"><span class="pre">DE</span> <span class="pre">×</span> <span class="pre">8736/8760</span></code> (verified to 0.0 TWh). <code class="docutils literal notranslate"><span class="pre">L</span></code> is summed over the same
+8736 hours. Today’s <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> is therefore 0.27% too low,
+6.2 TWh for Europe.</p></li>
+<li><p><strong>User shares.</strong> Once the input GDX is rebuilt with the wrappers in
+place (<code class="docutils literal notranslate"><span class="pre">--reload-input</span></code>), its <code class="docutils literal notranslate"><span class="pre">DE</span></code> for the <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE</span></code> regions <em>is</em> the
+previous <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>. The user split then stays at its fixed point,
+which is harmless. <code class="docutils literal notranslate"><span class="pre">BaseTWh</span></code> then means “previous level”, not base,
+though. Label the column <code class="docutils literal notranslate"><span class="pre">InputTWh</span></code>, or document this. The <code class="docutils literal notranslate"><span class="pre">RESE</span></code>/<code class="docutils literal notranslate"><span class="pre">PII</span></code>
+zeros inherited from the clamps are also harmless: <code class="docutils literal notranslate"><span class="pre">OTHER</span></code> and <code class="docutils literal notranslate"><span class="pre">RESE</span></code>
+get the same profile, and step 2 below makes the hourly sum right
+regardless of the split. Don’t fix them unless step 2 is skipped.</p></li>
+<li><p><strong>Summary (<code class="docutils literal notranslate"><span class="pre">backcastoutput/demand_level.csv</span></code>).</strong></p>
+<ul class="simple">
+<li><p>Keep every current column, including the Eurostat <code class="docutils literal notranslate"><span class="pre">H</span></code> parts.</p></li>
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">HeatSource</span></code> (<code class="docutils literal notranslate"><span class="pre">eurostat</span></code> or <code class="docutils literal notranslate"><span class="pre">model</span></code>), <code class="docutils literal notranslate"><span class="pre">PrevExoTWh</span></code>, <code class="docutils literal notranslate"><span class="pre">E2H_TWh</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TransLossTWh</span></code>, <code class="docutils literal notranslate"><span class="pre">E2H_minus_H_TWh</span></code>, and <code class="docutils literal notranslate"><span class="pre">ResidualTWh</span></code> =
+<code class="docutils literal notranslate"><span class="pre">(L</span> <span class="pre">−</span> <span class="pre">T)(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">−</span> <span class="pre">EXO</span> <span class="pre">−</span> <span class="pre">E2H</span></code> (what the previous run missed, at
+final-consumption level).</p></li>
+<li><p>Print the Europe total of <code class="docutils literal notranslate"><span class="pre">ResidualTWh</span></code> and the sum of its absolute
+values. These are the convergence measure: iterate until they are
+below about 10 TWh.</p></li>
+</ul>
+</li>
+<li><p><strong>Header of <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code></strong> under <code class="docutils literal notranslate"><span class="pre">model</span></code>:</p>
+<div class="highlight-gams notranslate"><div class="highlight"><pre><span></span>* Electricity demand level for 2023: ENTSO-E load less transmission losses, net of
+* distribution losses, less the electricity &lt;run&gt; used for heat
+* (ENDOGENOUS_ELECT2HEAT, see CONTEXT.md) - generated, do not hand-edit
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;run&gt;</span></code> is the <code class="docutils literal notranslate"><span class="pre">Scenario</span></code> column of <code class="docutils literal notranslate"><span class="pre">balmorel_load.csv</span></code>.</p>
+</li>
+</ol>
+<p>Option, only if convergence is slow: <code class="docutils literal notranslate"><span class="pre">--relaxation</span> <span class="pre">ω</span></code>, with <code class="docutils literal notranslate"><span class="pre">X_new</span> <span class="pre">=</span> <span class="pre">EXO_prev</span> <span class="pre">+</span> <span class="pre">ω(X_C</span> <span class="pre">−</span> <span class="pre">EXO_prev)</span></code>. A value of <code class="docutils literal notranslate"><span class="pre">ω</span> <span class="pre">=</span> <span class="pre">1</span></code> gives the plain update.
+Newton would be <code class="docutils literal notranslate"><span class="pre">ω</span> <span class="pre">=</span> <span class="pre">1/(1</span> <span class="pre">+</span> <span class="pre">slope)</span></code> ≈ 1.4. But IT’s slope is about 0, so
+ω &gt; 1 overshoots there. Don’t add it unless needed.</p>
+</section>
+<section id="step-2-residual-demand-profile-demand-profile-heat-model">
+<span id="step-2-residual-demand-profile-demand-profile---heat-model"></span><h2>Step 2: residual demand profile (<code class="docutils literal notranslate"><span class="pre">demand-profile</span> <span class="pre">--heat</span> <span class="pre">model</span></code>)<a class="headerlink" href="#step-2-residual-demand-profile-demand-profile-heat-model" title="Link to this heading"></a></h2>
+<p>Today the Observed Demand Profile is ENTSO-E’s total load, including
+heating. Balmorel puts E2H’s own heating shape on top of it. In
+<code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> the monthly Balmorel/ENTSO-E ratio was 0.93 in January
+and 0.80 in summer. Part of that is the double-subtraction level error,
+but a winter-heavy E2H on a winter-heavy profile also bends the shape.
+Option: <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">none|model</span></code> (default <code class="docutils literal notranslate"><span class="pre">none</span></code>, today’s behaviour), with the
+same <code class="docutils literal notranslate"><span class="pre">--load-results</span></code>.</p>
+<p>For a canonical region <code class="docutils literal notranslate"><span class="pre">k</span></code> that has an ENTSO-E profile, at hour <code class="docutils literal notranslate"><span class="pre">h</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>R_k,h = L_k,h × (1 − T_k / L_k) × (1 − d_k) − Ē_k,h − P_k,h
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Ē_k,h</span></code>: the previous run’s E2H over <code class="docutils literal notranslate"><span class="pre">k</span></code>’s regions, averaged over hour
+<code class="docutils literal notranslate"><span class="pre">h</span></code>’s day. A day is the 24-term block T001–T024, T025–T048, … within each
+season; S01 T001 is 00:00 UTC on a Monday (<code class="docutils literal notranslate"><span class="pre">calendar.py</span></code>). The daily
+mean keeps the seasonal and weekly heating pattern but drops E2H’s
+intraday dispatch. That dispatch is a price response, and feeding it
+back would make the profile oscillate between runs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">P_k,h</span></code>: <code class="docutils literal notranslate"><span class="pre">PII</span></code>’s exogenous hours from the input data: <code class="docutils literal notranslate"><span class="pre">DE(PII)</span></code> ×
+<code class="docutils literal notranslate"><span class="pre">DE_VAR_T(PII,h)</span></code> / Σ_h <code class="docutils literal notranslate"><span class="pre">DE_VAR_T(PII,h)</span></code>, summed over <code class="docutils literal notranslate"><span class="pre">k</span></code>’s regions,
+over the 8736 hours. <code class="docutils literal notranslate"><span class="pre">demand-profile</span></code> writes only <code class="docutils literal notranslate"><span class="pre">OTHER</span></code>/<code class="docutils literal notranslate"><span class="pre">RESE</span></code>, so this
+shape must be what <code class="docutils literal notranslate"><span class="pre">OTHER</span> <span class="pre">+</span> <span class="pre">RESE</span></code> add to <code class="docutils literal notranslate"><span class="pre">PII</span></code>.</p></li>
+<li><p>Then <code class="docutils literal notranslate"><span class="pre">Σ_h</span> <span class="pre">R_k,h</span> <span class="pre">=</span> <span class="pre">X_k</span> <span class="pre">−</span> <span class="pre">X_PII,k</span></code>, consistent with step 1.</p></li>
+<li><p>Clean as now: hours below <code class="docutils literal notranslate"><span class="pre">PLAUSIBLE_LOW</span></code> × median are interpolated.
+More than <code class="docutils literal notranslate"><span class="pre">MAX_IMPLAUSIBLE_SHARE</span></code> such hours means the residual is
+unreliable. Warn, and keep the total-load profile for that region.</p></li>
+<li><p>All of <code class="docutils literal notranslate"><span class="pre">k</span></code>’s regions get <code class="docutils literal notranslate"><span class="pre">R_k</span></code> (DE4-* as now). Regions on the input-data
+fallback (UK, CY, LU, MT and TR; AL and BA when their ENTSO-E data fail) get no residual
+treatment.</p></li>
+<li><p>Add to the report line: the source, the hours interpolated, and
+<code class="docutils literal notranslate"><span class="pre">winter/summer</span> <span class="pre">ratio</span> <span class="pre">before</span> <span class="pre">→</span> <span class="pre">after</span></code>.</p></li>
+</ul>
+<p>Run it with the same <code class="docutils literal notranslate"><span class="pre">balmorel_load.csv</span></code> as <code class="docutils literal notranslate"><span class="pre">demand-level</span></code>. The level and
+shape then come from one run.</p>
+</section>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">previous_run_heat</span></code>: sparse rows sum per region; a missing category is
+0; it rejects two scenarios, a wrong year, and a file with fewer than
+8736 (S,T).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model</span></code>, one region: <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">=</span> <span class="pre">(L</span> <span class="pre">−</span> <span class="pre">T)(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">−</span> <span class="pre">E</span></code>. With E2H and T unchanged,
+<code class="docutils literal notranslate"><span class="pre">X/(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">+</span> <span class="pre">E/(1</span> <span class="pre">−</span> <span class="pre">d)</span> <span class="pre">+</span> <span class="pre">T</span> <span class="pre">=</span> <span class="pre">L</span></code>.</p></li>
+<li><p>DE4-*: E2H and T are summed over the four, and base’s ratios between
+them are kept.</p></li>
+<li><p>NO1-5: each region uses its own E2H and T, and there is no load share
+split.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DE</span></code> written = <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">×</span> <span class="pre">8760/8736</span></code> under both <code class="docutils literal notranslate"><span class="pre">--heat</span></code> values.</p></li>
+<li><p>The consistency warning fires when <code class="docutils literal notranslate"><span class="pre">EXO</span></code> differs from <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE</span></code> ×
+8736/8760 by more than 1%, and stays silent within it.</p></li>
+<li><p>The wrapper warning fires when <code class="docutils literal notranslate"><span class="pre">data/INDIVUSERS_DE.inc</span></code> is missing, and
+when it doesn’t include <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code> is unchanged apart from the hours factor.</p></li>
+<li><p>Residual profile: the daily mean of a toy E2H; <code class="docutils literal notranslate"><span class="pre">PII</span></code> subtracted;
+<code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">R</span> <span class="pre">=</span> <span class="pre">X</span> <span class="pre">−</span> <span class="pre">X_PII</span></code>; more than 2% non-positive hours falls back to total
+load.</p></li>
+</ul>
+</section>
+<section id="verification">
+<h2>Verification<a class="headerlink" href="#verification" title="Link to this heading"></a></h2>
+<p>From the Balmorel root:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">pybalmorel</span><span class="o">.</span><span class="n">backcasting</span> <span class="n">demand</span><span class="o">-</span><span class="n">level</span> <span class="n">backcast</span> <span class="n">backcast</span><span class="o">/</span><span class="n">entsoedata</span> <span class="mi">2023</span> <span class="o">--</span><span class="n">heat</span> <span class="n">model</span>
+</pre></div>
+</div>
+<p>Against <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>’s <code class="docutils literal notranslate"><span class="pre">balmorel_load.csv</span></code>, this should warn (step 3)
+and give the values below. They are in TWh over 8736 hours; <code class="docutils literal notranslate"><span class="pre">DE</span></code> is ×
+8760/8736.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Country</p></th>
+<th class="head"><p>L</p></th>
+<th class="head"><p>T</p></th>
+<th class="head"><p>E2H</p></th>
+<th class="head"><p>H</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">DE</span></code> (a′) now</p></th>
+<th class="head"><p>X (C)</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">DE</span></code> (C)</p></th>
+<th class="head"><p>C − (a′)</p></th>
+<th class="head"><p>E2H − H</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IT</p></td>
+<td><p>275.6</p></td>
+<td><p>4.2</p></td>
+<td><p>59.6</p></td>
+<td><p>10.1</p></td>
+<td><p>251.7</p></td>
+<td><p>198.3</p></td>
+<td><p>198.8</p></td>
+<td><p>−52.9</p></td>
+<td><p>+49.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>DE</p></td>
+<td><p>456.1</p></td>
+<td><p>3.6</p></td>
+<td><p>55.0</p></td>
+<td><p>22.8</p></td>
+<td><p>411.4</p></td>
+<td><p>375.7</p></td>
+<td><p>376.7</p></td>
+<td><p>−34.6</p></td>
+<td><p>+32.3</p></td>
+</tr>
+<tr class="row-even"><td><p>ES</p></td>
+<td><p>228.9</p></td>
+<td><p>0.7</p></td>
+<td><p>41.2</p></td>
+<td><p>10.2</p></td>
+<td><p>207.2</p></td>
+<td><p>175.6</p></td>
+<td><p>176.0</p></td>
+<td><p>−31.2</p></td>
+<td><p>+31.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>FR</p></td>
+<td><p>424.7</p></td>
+<td><p>0.8</p></td>
+<td><p>88.5</p></td>
+<td><p>70.6</p></td>
+<td><p>332.8</p></td>
+<td><p>314.2</p></td>
+<td><p>315.1</p></td>
+<td><p>−17.7</p></td>
+<td><p>+17.9</p></td>
+</tr>
+<tr class="row-even"><td><p>SE</p></td>
+<td><p>130.3</p></td>
+<td><p>2.6</p></td>
+<td><p>26.2</p></td>
+<td><p>20.3</p></td>
+<td><p>102.6</p></td>
+<td><p>94.2</p></td>
+<td><p>94.5</p></td>
+<td><p>−8.1</p></td>
+<td><p>+5.9</p></td>
+</tr>
+<tr class="row-odd"><td><p>BE</p></td>
+<td><p>78.7</p></td>
+<td><p>0.7</p></td>
+<td><p>11.7</p></td>
+<td><p>5.3</p></td>
+<td><p>69.5</p></td>
+<td><p>62.4</p></td>
+<td><p>62.6</p></td>
+<td><p>−6.9</p></td>
+<td><p>+6.4</p></td>
+</tr>
+<tr class="row-even"><td><p>NO</p></td>
+<td><p>134.1</p></td>
+<td><p>0.8</p></td>
+<td><p>24.0</p></td>
+<td><p>29.3</p></td>
+<td><p>98.1</p></td>
+<td><p>102.6</p></td>
+<td><p>102.9</p></td>
+<td><p>+4.7</p></td>
+<td><p>−5.3</p></td>
+</tr>
+<tr class="row-odd"><td><p>RS</p></td>
+<td><p>33.6</p></td>
+<td><p>0.0</p></td>
+<td><p>0.4</p></td>
+<td><p>5.9</p></td>
+<td><p>26.1</p></td>
+<td><p>31.5</p></td>
+<td><p>31.6</p></td>
+<td><p>+5.5</p></td>
+<td><p>−5.4</p></td>
+</tr>
+<tr class="row-even"><td><p>AT</p></td>
+<td><p>58.1</p></td>
+<td><p>0.2</p></td>
+<td><p>3.4</p></td>
+<td><p>8.1</p></td>
+<td><p>47.1</p></td>
+<td><p>51.6</p></td>
+<td><p>51.7</p></td>
+<td><p>+4.6</p></td>
+<td><p>−4.7</p></td>
+</tr>
+<tr class="row-odd"><td><p>30 countries</p></td>
+<td><p>2,637.4</p></td>
+<td><p>20.0</p></td>
+<td><p>369.2</p></td>
+<td><p>237.9</p></td>
+<td><p>2,272.4</p></td>
+<td><p>2,122.0</p></td>
+<td><p>2,127.8</p></td>
+<td><p>−144.6</p></td>
+<td><p>+131.3</p></td>
+</tr>
+</tbody>
+</table>
+<p>IE (not shown) is L 32.4 and <code class="docutils literal notranslate"><span class="pre">DE</span></code> (a′) 29.1, from Ireland’s control area
+rather than the all-island <code class="docutils literal notranslate"><span class="pre">IE_SEM</span></code>. These numbers check the arithmetic only. Don’t solve the backcast with
+them, for the reason given under “Starting point”.</p>
+</section>
+<section id="notes-for-the-user">
+<h2>Notes for the user<a class="headerlink" href="#notes-for-the-user" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Run order:</strong></p>
+<ol class="arabic simple">
+<li><p>Solve the backcast with the wrappers and the current (a′)
+<code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>. This is iteration 0. It also confirms the wrapper fix
+in a solve.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">format</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">demand-level</span> <span class="pre">--heat</span> <span class="pre">model</span></code> (and optionally <code class="docutils literal notranslate"><span class="pre">demand-profile</span> <span class="pre">--heat</span> <span class="pre">model</span></code>).</p></li>
+<li><p>Solve, and repeat steps 2-4 until the residual is below about 10 TWh.</p></li>
+</ol>
+</li>
+<li><p><strong>What stays evidence:</strong> after convergence, a country’s total load (and,
+with step 2, its shape) matches ENTSO-E by construction. The evidence on
+demand is then E2H against Eurostat <code class="docutils literal notranslate"><span class="pre">H</span></code> per country. Read it knowing the
+scopes differ: E2H also covers industry and services. <code class="docutils literal notranslate"><span class="pre">E2H_minus_H_TWh</span></code>
+in the summary is that metric. The supply side (generation mix, prices,
+flows) no longer carries demand errors.</p></li>
+<li><p><strong>Transmission losses</strong> move with flows too. They are small (20 TWh for
+Europe) and converge with E2H.</p></li>
+</ul>
+</section>
+<section id="glossary-context-md-backcasting-section">
+<span id="glossary-contextmd-backcasting-section"></span><h2>Glossary (<code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code>, Backcasting section)<a class="headerlink" href="#glossary-context-md-backcasting-section" title="Link to this heading"></a></h2>
+<p>Replace the <strong>Demand level</strong> entry once <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">model</span></code> is the default:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gs">**Demand level**</span>:
+The annual exogenous electricity demand (<span class="sb">`DE`</span>) of a region in the backcast year: its ENTSO-E load over the Backcast Calendar less the previous backcast run's transmission losses, net of Balmorel's distribution losses, less the electricity the previous run used for heat (<span class="sb">`ENDOGENOUS_ELECT2HEAT`</span>), which Balmorel adds back endogenously. Because that heating responds to prices, the level is iterated over runs until Balmorel's load matches ENTSO-E's. Taken from ENTSO-E's load rather than Eurostat's final consumption because the two differ in coverage (DE: ENTSO-E sees 7% less). Written as <span class="sb">`DE`</span> overrides to <span class="sb">`DE_ENTSOE.inc`</span>, which the backcast applies after the INDUSTRY and INDIVUSERS addons have adjusted <span class="sb">`DE`</span>. A calibration input: a country's total load is not evidence, its electric heating is (against Eurostat's electricity for heating).
+<span class="ge">_Avoid_</span>: Final consumption (Eurostat's figure, with different coverage); Demand (ambiguous)
+</pre></div>
+</div>
+<p>The Balmorel <code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code> gets the same entry; keep the two in step.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

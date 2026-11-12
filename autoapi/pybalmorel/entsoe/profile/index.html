@@ -1,0 +1,557 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.entsoe.profile &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.formatting" href="../../formatting/index.html" />
+    <link rel="prev" title="pybalmorel.entsoe.maps" href="../maps/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.entsoe</a></li>
+      <li class="breadcrumb-item active">pybalmorel.entsoe.profile</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/entsoe/profile/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.entsoe.profile">
+<span id="pybalmorel-entsoe-profile"></span><h1>pybalmorel.entsoe.profile<a class="headerlink" href="#module-pybalmorel.entsoe.profile" title="Link to this heading"></a></h1>
+<p>ENTSO-E Production Profile</p>
+<p>Hourly electricity production per production type, load, net import and
+day-ahead price of one or more ENTSO-E bidding zones, read from the csv’s
+fetched from the ENTSO-E transparency platform. Zones keep ENTSO-E’s own
+names (e.g. ‘DK_1’, ‘DE_LU’, ‘IT_NORD’): nothing is translated to Balmorel
+regions (see CONTEXT.md).</p>
+<p>Created on 05.11.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile.production_groups" title="pybalmorel.entsoe.profile.production_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">production_groups</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._other_group" title="pybalmorel.entsoe.profile._other_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_other_group</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile.group_colours" title="pybalmorel.entsoe.profile.group_colours"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_colours</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._net_import_colour" title="pybalmorel.entsoe.profile._net_import_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_net_import_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._load_colour" title="pybalmorel.entsoe.profile._load_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._price_colour" title="pybalmorel.entsoe.profile._price_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_price_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._grid_colour" title="pybalmorel.entsoe.profile._grid_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_grid_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._text_secondary" title="pybalmorel.entsoe.profile._text_secondary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_text_secondary</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._time_zone" title="pybalmorel.entsoe.profile._time_zone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_time_zone</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._max_hours_with_edges" title="pybalmorel.entsoe.profile._max_hours_with_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_max_hours_with_edges</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._zones_inside" title="pybalmorel.entsoe.profile._zones_inside"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zones_inside</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._no_data_reason" title="pybalmorel.entsoe.profile._no_data_reason"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_no_data_reason</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._not_downloaded_reason" title="pybalmorel.entsoe.profile._not_downloaded_reason"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_not_downloaded_reason</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile.EntsoeProfile" title="pybalmorel.entsoe.profile.EntsoeProfile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EntsoeProfile</span></code></a></p></td>
+<td><p>Hourly ENTSO-E data of a set of bidding zones, indexed by hour in Brussels time.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._selects_all" title="pybalmorel.entsoe.profile._selects_all"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_selects_all</span></code></a>(zones) → bool</p></td>
+<td><p>Whether <cite>zones</cite> is 'all' (or ['all'], as from a comma-separated command line argument).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._resolve_zones" title="pybalmorel.entsoe.profile._resolve_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_resolve_zones</span></code></a>(zones) → dict[str, str]</p></td>
+<td><p>{EIC code: entsoe-py area name} of <cite>zones</cite>, with a canonical region like 'IT' split into its bidding zones.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._zone_files" title="pybalmorel.entsoe.profile._zone_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zone_files</span></code></a>(path, year, entsoe_query) → dict[str, pathlib.Path]</p></td>
+<td><p>{EIC code: file} of the '&lt;year&gt;_&lt;zone&gt;_&lt;entsoe_query&gt;.csv' files, a zone saved under several spellings read once.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._read_generation_csv" title="pybalmorel.entsoe.profile._read_generation_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_read_generation_csv</span></code></a>(csv_path) → pandas.DataFrame</p></td>
+<td><p>Hourly mean production (MW) per production type from one generation csv, indexed by UTC time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._read_series_csv" title="pybalmorel.entsoe.profile._read_series_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_read_series_csv</span></code></a>(csv_path) → pandas.Series</p></td>
+<td><p>Hourly mean of the first column of a load or day_ahead_prices csv, indexed by UTC time.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._missing_files" title="pybalmorel.entsoe.profile._missing_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_missing_files</span></code></a>(zones, files, path, year) → list[tuple[str, str, str]]</p></td>
+<td><p>(query, EIC code, reason) of each generation or load csv missing for <cite>zones</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._missing_data_message" title="pybalmorel.entsoe.profile._missing_data_message"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_missing_data_message</span></code></a>(missing, zones, path, year) → str</p></td>
+<td><p>The error for <cite>missing</cite> csv's (see _missing_files), with the commands that download them.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._zones_with_data" title="pybalmorel.entsoe.profile._zones_with_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zones_with_data</span></code></a>(files, path, year) → tuple[dict[str, str], dict[str, str]]</p></td>
+<td><p>The zones of <cite>path</cite> with both generation and load csv's, and why the other zones were left out.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._load_weighted_price" title="pybalmorel.entsoe.profile._load_weighted_price"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_weighted_price</span></code></a>(prices, loads) → pandas.Series</p></td>
+<td><p>The price of each hour, weighted by the load of the zones with both a price and a load that hour.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._format_hours" title="pybalmorel.entsoe.profile._format_hours"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_format_hours</span></code></a>(missing, hours) → str</p></td>
+<td><p>E.g. 'all 168 hours', or '6 of 168 hours missing'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile.read_profile" title="pybalmorel.entsoe.profile.read_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_profile</span></code></a>(path, year, zones[, start, end, verbose]) → EntsoeProfile</p></td>
+<td><p>Hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._scope_line" title="pybalmorel.entsoe.profile._scope_line"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_scope_line</span></code></a>(label, text) → list[str]</p></td>
+<td><p>A line of the scope printout, wrapped below its text column.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._missing_by_zone" title="pybalmorel.entsoe.profile._missing_by_zone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_missing_by_zone</span></code></a>(missing, zone_names) → str</p></td>
+<td><p>E.g. 'missing for BA (414), MK (96) and 3 more zones', the zones with most missing hours first.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._print_scope" title="pybalmorel.entsoe.profile._print_scope"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_print_scope</span></code></a>(profile, zone_names, left_out, files, ...) → None</p></td>
+<td><p>Print which zones, hours and data a profile covers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._group_production" title="pybalmorel.entsoe.profile._group_production"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_group_production</span></code></a>(generation) → pandas.DataFrame</p></td>
+<td><p>Production (MW) per group of <cite>group_colours</cite>, in stacking order, without empty groups.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile._style_axes" title="pybalmorel.entsoe.profile._style_axes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_style_axes</span></code></a>(ax) → None</p></td>
+<td><p>Recessive axes: no top or right spine, hairline horizontal grid behind the data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.profile.plot_profile" title="pybalmorel.entsoe.profile.plot_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_profile</span></code></a>(path, year, zones[, start, end, title]) → tuple[matplotlib.figure.Figure, numpy.ndarray]</p></td>
+<td><p>Plot the hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.production_groups">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">production_groups</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.production_groups" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._other_group">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_other_group</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Oil</span> <span class="pre">&amp;</span> <span class="pre">other'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._other_group" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.group_colours">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">group_colours</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.group_colours" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._net_import_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_net_import_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#96b9fc'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._net_import_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._load_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_load_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#0b0b0b'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._load_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._price_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_price_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#e34948'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._price_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._grid_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_grid_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#e8e6e1'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._grid_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._text_secondary">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_text_secondary</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#52514e'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._text_secondary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._time_zone">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_time_zone</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Europe/Brussels'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._time_zone" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._max_hours_with_edges">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_max_hours_with_edges</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">336</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._max_hours_with_edges" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._zones_inside">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_zones_inside</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._zones_inside" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">EntsoeProfile</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E data of a set of bidding zones, indexed by hour in Brussels time.</p>
+<dl>
+<dt>Args:</dt><dd><p>zones (list[str]): entsoe-py area names of the zones, e.g. [‘DK_1’].
+generation (pd.DataFrame): Production (MW) per ENTSO-E production type, summed over the zones.
+load (pd.Series): Actual load (MW), summed over the zones.
+price (pd.Series | None): Day-ahead price (€/MWh), weighted by load over the zones</p>
+<blockquote>
+<div><p>with prices. None if none of the zones have prices.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>net_import (pd.Series | None): Physical flow into the zones minus out of them (MW),</dt><dd><p>leaving out flows between them. None without crossborder_flows csv’s for the zones.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile.zones">
+<span class="sig-name descname"><span class="pre">zones</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile.zones" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile.generation">
+<span class="sig-name descname"><span class="pre">generation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile.generation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pandas.Series</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile.price">
+<span class="sig-name descname"><span class="pre">price</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile.price" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.EntsoeProfile.net_import">
+<span class="sig-name descname"><span class="pre">net_import</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.EntsoeProfile.net_import" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._selects_all">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_selects_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._selects_all" title="Link to this definition"></a></dt>
+<dd><p>Whether <cite>zones</cite> is ‘all’ (or [‘all’], as from a comma-separated command line argument).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._resolve_zones">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_resolve_zones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._resolve_zones" title="Link to this definition"></a></dt>
+<dd><p>{EIC code: entsoe-py area name} of <cite>zones</cite>, with a canonical region like ‘IT’ split into its bidding zones.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._zone_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_zone_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entsoe_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._zone_files" title="Link to this definition"></a></dt>
+<dd><p>{EIC code: file} of the ‘&lt;year&gt;_&lt;zone&gt;_&lt;entsoe_query&gt;.csv’ files, a zone saved under several spellings read once.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._read_generation_csv">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_read_generation_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._read_generation_csv" title="Link to this definition"></a></dt>
+<dd><p>Hourly mean production (MW) per production type from one generation csv, indexed by UTC time.</p>
+<p>Files with two header rows also hold consumption (e.g. pumping) as ‘Actual
+Consumption’, which is left out, so only ‘Actual Aggregated’ is kept.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._read_series_csv">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_read_series_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._read_series_csv" title="Link to this definition"></a></dt>
+<dd><p>Hourly mean of the first column of a load or day_ahead_prices csv, indexed by UTC time.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._no_data_reason">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_no_data_reason</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ENTSO-E</span> <span class="pre">has</span> <span class="pre">no</span> <span class="pre">data</span> <span class="pre">for</span> <span class="pre">it'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._no_data_reason" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._not_downloaded_reason">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_not_downloaded_reason</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'not</span> <span class="pre">downloaded'</span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._not_downloaded_reason" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._missing_files">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_missing_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._missing_files" title="Link to this definition"></a></dt>
+<dd><p>(query, EIC code, reason) of each generation or load csv missing for <cite>zones</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._missing_data_message">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_missing_data_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._missing_data_message" title="Link to this definition"></a></dt>
+<dd><p>The error for <cite>missing</cite> csv’s (see _missing_files), with the commands that download them.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._zones_with_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_zones_with_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._zones_with_data" title="Link to this definition"></a></dt>
+<dd><p>The zones of <cite>path</cite> with both generation and load csv’s, and why the other zones were left out.</p>
+<p>The other zones are those with only one of the two, or listed in a
+generation or load ‘_nodata.txt’ file.</p>
+<dl class="simple">
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[dict[str, str], dict[str, str]]: {EIC code: area name} of the zones with</dt><dd><p>both, sorted by name, and {area name: reason} of the zones left out.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._load_weighted_price">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_load_weighted_price</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._load_weighted_price" title="Link to this definition"></a></dt>
+<dd><p>The price of each hour, weighted by the load of the zones with both a price and a load that hour.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._format_hours">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_format_hours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._format_hours" title="Link to this definition"></a></dt>
+<dd><p>E.g. ‘all 168 hours’, or ‘6 of 168 hours missing’.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.read_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">read_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pybalmorel.entsoe.profile.EntsoeProfile" title="pybalmorel.entsoe.profile.EntsoeProfile"><span class="pre">EntsoeProfile</span></a></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.read_profile" title="Link to this definition"></a></dt>
+<dd><p>Hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.</p>
+<p>Reads the ‘&lt;year&gt;_&lt;zone&gt;_&lt;query&gt;.csv’ files of <cite>path</cite> for the generation,
+load and day_ahead_prices queries, and the crossborder_flows files of the
+borders of the zones. Several zones are summed, except their prices, which
+are weighted by load. An hour missing for any of the zones is NaN in
+the summed generation or load. Generation and load are required for
+every zone; prices and flows are used if they were downloaded. With
+<cite>verbose</cite>, the zones, period and data found are printed.</p>
+<dl>
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched csv’s.
+year (int): The year the files are for.
+zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. ‘DK1’, ‘DK_1’ or</p>
+<blockquote>
+<div><p>‘10YDK-1——–W’. A canonical region with several bidding zones, e.g. ‘IT’,
+means all of them. ‘all’ means every zone in <cite>path</cite> with generation and load
+in the period; the other zones are left out and listed in the printout.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels</dt><dd><p>time unless it has a time zone, e.g. ‘2023-06-26’. Defaults to None (start of the year).</p>
+</dd>
+</dl>
+<p>end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the year).
+verbose (bool, optional): Print the scope of the data. Defaults to True.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>Exception: If generation or load is missing for any of the zones, in the files</dt><dd><p>or in the period. With ‘all’, if no zone has both.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>EntsoeProfile: The hourly data, indexed by hour in Brussels time.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._scope_line">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_scope_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._scope_line" title="Link to this definition"></a></dt>
+<dd><p>A line of the scope printout, wrapped below its text column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._missing_by_zone">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_missing_by_zone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._missing_by_zone" title="Link to this definition"></a></dt>
+<dd><p>E.g. ‘missing for BA (414), MK (96) and 3 more zones’, the zones with most missing hours first.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._print_scope">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_print_scope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pybalmorel.entsoe.profile.EntsoeProfile" title="pybalmorel.entsoe.profile.EntsoeProfile"><span class="pre">EntsoeProfile</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DatetimeIndex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._print_scope" title="Link to this definition"></a></dt>
+<dd><p>Print which zones, hours and data a profile covers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._group_production">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_group_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">generation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._group_production" title="Link to this definition"></a></dt>
+<dd><p>Production (MW) per group of <cite>group_colours</cite>, in stacking order, without empty groups.</p>
+<p>A group without data in an hour counts as 0, unless no type has data that
+hour: then the hour stays NaN, so it is drawn as a gap rather than a dip to 0.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile._style_axes">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">_style_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile._style_axes" title="Link to this definition"></a></dt>
+<dd><p>Recessive axes: no top or right spine, hairline horizontal grid behind the data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.profile.plot_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.profile.</span></span><span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.profile.plot_profile" title="Link to this definition"></a></dt>
+<dd><p>Plot the hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.</p>
+<p>Production is stacked per group of production types (see
+<cite>production_groups</cite>), with net import on top and net export below zero,
+and load drawn as a line. The day-ahead price, if downloaded, is drawn
+in a panel below. Hours without data are left as gaps. Raises if
+generation or load of any of the zones is missing, and prints the zones,
+period and data found (see <cite>read_profile</cite>).</p>
+<dl>
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched csv’s.
+year (int): The year the files are for.
+zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. ‘DK1’, ‘DK_1’ or</p>
+<blockquote>
+<div><p>‘10YDK-1——–W’. A canonical region with several bidding zones, e.g. ‘IT’,
+means all of them. ‘all’ means every zone in <cite>path</cite> with generation and load.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>start (str | pd.Timestamp | None, optional): First hour to plot, read as Brussels</dt><dd><p>time unless it has a time zone, e.g. ‘2023-06-26’. Defaults to None (start of the year).</p>
+</dd>
+<dt>end (str | pd.Timestamp | None, optional): Hour to stop before, e.g. ‘2023-07-03’.</dt><dd><p>Defaults to None (end of the year).</p>
+</dd>
+</dl>
+<p>title (str | None, optional): Defaults to None (the zones and period).</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, np.ndarray]: The figure, and its axes: production, then price if plotted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../maps/index.html" class="btn btn-neutral float-left" title="pybalmorel.entsoe.maps" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../formatting/index.html" class="btn btn-neutral float-right" title="pybalmorel.formatting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

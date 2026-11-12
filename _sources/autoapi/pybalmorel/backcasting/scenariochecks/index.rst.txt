@@ -1,0 +1,88 @@
+pybalmorel.backcasting.scenariochecks
+=====================================
+
+.. py:module:: pybalmorel.backcasting.scenariochecks
+
+.. autoapi-nested-parse::
+
+   Scenario Checks
+
+   Read-only checks that a Balmorel backcast scenario will actually use the
+   inputs pybalmorel generates for it. Nothing here edits the scenario - it
+   only warns (see docs/adr/0006: pybalmorel writes data files, never options).
+
+   Created on 15.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.scenariochecks.resolve_scenario_file
+   pybalmorel.backcasting.scenariochecks.read_setglobal
+   pybalmorel.backcasting.scenariochecks.check_balopt_option
+   pybalmorel.backcasting.scenariochecks.check_hardcoded_fuelprices
+
+
+Module Contents
+---------------
+
+.. py:function:: resolve_scenario_file(balmorel_scenario_path: str | pathlib.Path, folder: str, file_name: str) -> pathlib.Path | None
+
+   The file Balmorel reads for a scenario: its own copy, else the base one.
+
+   Args:
+       balmorel_scenario_path (str | Path): The scenario folder (e.g. .../backcast).
+       folder (str): 'model' or 'data'.
+       file_name (str): e.g. 'balopt.opt'.
+
+   Returns:
+       Path | None: The resolved file, or None if neither exists.
+
+
+.. py:function:: read_setglobal(balopt_path: str | pathlib.Path, option: str) -> str | None
+
+   The value the last `$setglobal <option>` line in a balopt file sets.
+
+   Args:
+       balopt_path (str | Path): Path to balopt.opt.
+       option (str): The global name, e.g. 'FUELPRICE_DOL'.
+
+   Returns:
+       str | None: The value, or None if the option is never set.
+
+
+.. py:function:: check_balopt_option(balmorel_scenario_path: str | pathlib.Path, option: str, expected: str) -> bool
+
+   Warn if the scenario's balopt.opt doesn't set `option` to `expected`.
+
+   Args:
+       balmorel_scenario_path (str | Path): The scenario folder.
+       option (str): The global name, e.g. 'TAX_CO2_DOL'.
+       expected (str): The required value, e.g. 'YYY_CCC_SSS_TTT'.
+
+   Returns:
+       bool: True if the option is set as expected.
+
+
+.. py:function:: check_hardcoded_fuelprices(balmorel_scenario_path: str | pathlib.Path, fuels: list[str], file_name: str = 'HYDROGEN_FUELPRICE.inc') -> list[str]
+
+   Warn about uncommented lines in an include file that name any of `fuels`.
+
+   HYDROGEN_FUELPRICE.inc assigns FUELPRICE_HYDROGEN, which overrides
+   IFUELPRICE wherever it is nonzero - a hardcoded COAL or NATGAS price there
+   silently replaces the generated FUELPRICE.inc.
+
+   Args:
+       balmorel_scenario_path (str | Path): The scenario folder.
+       fuels (list[str]): FFF fuel names to look for, e.g. ['NATGAS', 'COAL'].
+       file_name (str, optional): The include to check. Defaults to 'HYDROGEN_FUELPRICE.inc'.
+
+   Returns:
+       list[str]: The offending lines (stripped).
+
+

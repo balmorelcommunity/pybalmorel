@@ -1,0 +1,203 @@
+pybalmorel.backcasting.vre
+==========================
+
+.. py:module:: pybalmorel.backcasting.vre
+
+.. autoapi-nested-parse::
+
+   VRE Level
+
+   Scale the weather year's wind and solar full-load hours per canonical region
+   and kind (solar, onshore, offshore) so that the output Balmorel can produce in
+   the Backcast Year equals ENTSO-E's reported output (see CONTEXT.md and ADR
+   0012). The hourly profiles and the spread between a region's areas stay as
+   the weather year wrote them. Writes WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc
+   and appends their $include to the scenario's WNDFLH.inc and SOLEFLH.inc.
+
+   Created on 28.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.vre.FACTOR_BOUNDS
+   pybalmorel.backcasting.vre.KIND_PRODUCTION_TYPES
+   pybalmorel.backcasting.vre.WIND
+   pybalmorel.backcasting.vre.KIND_SYMBOLS
+   pybalmorel.backcasting.vre.OFFSHORE_AREA
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.vre.observed_vre
+   pybalmorel.backcasting.vre.flh_areas
+   pybalmorel.backcasting.vre.available_vre
+   pybalmorel.backcasting.vre.vre_factors
+   pybalmorel.backcasting.vre.scaled_flh
+   pybalmorel.backcasting.vre.write_flh_override
+   pybalmorel.backcasting.vre.append_flh_include
+   pybalmorel.backcasting.vre.generate_vre_flh
+
+
+Module Contents
+---------------
+
+.. py:data:: FACTOR_BOUNDS
+   :value: (0.6, 1.5)
+
+
+.. py:data:: KIND_PRODUCTION_TYPES
+
+.. py:data:: WIND
+   :value: 'Wind'
+
+
+.. py:data:: KIND_SYMBOLS
+
+.. py:data:: OFFSHORE_AREA
+
+.. py:function:: observed_vre(generation: dict[str, pandas.DataFrame], year: int) -> pandas.DataFrame
+
+   ENTSO-E's solar, onshore and offshore output per canonical region over the Backcast Calendar.
+
+   Args:
+       generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per
+           canonical region, one column per production type.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index canonical region, columns 'Solar', 'Onshore' and
+           'Offshore' (TWh). A kind the region doesn't report is NaN.
+
+
+.. py:function:: flh_areas(wndflh: pandas.DataFrame, soleflh: pandas.DataFrame, rrraaa: pandas.DataFrame) -> pandas.DataFrame
+
+   Every area with wind or solar full-load hours, with its canonical region and kind.
+
+   Args:
+       wndflh (pd.DataFrame): WNDFLH from get_input, ending in (AAA, Value).
+       soleflh (pd.DataFrame): SOLEFLH from get_input, ending in (AAA, Value).
+       rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+
+   Returns:
+       pd.DataFrame: Columns 'Area', 'Symbol', 'Region', 'Kind' and 'FLH'.
+
+
+.. py:function:: available_vre(gkfx: pandas.DataFrame, gdata: pandas.DataFrame, rrraaa: pandas.DataFrame, wndflh: pandas.DataFrame, soleflh: pandas.DataFrame, gkrate: pandas.DataFrame, names: dict[float, str], year: int) -> pandas.DataFrame
+
+   Balmorel's wind and solar PV capacity of `year` per area and technology, with its available output.
+
+   Wind is every technology with fuel WIND; solar PV every technology of
+   type GSOLE with fuel SUN, so solar heat isn't counted. Available output is
+   GKFX x FLH x the mean weekly GKRATE (1 where unset). An area with GKFX
+   and no full-load hours warns and counts for nothing.
+
+   Args:
+       gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+       gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+       rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+       wndflh (pd.DataFrame): WNDFLH from get_input, ending in (AAA, Value).
+       soleflh (pd.DataFrame): SOLEFLH from get_input, ending in (AAA, Value).
+       gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).
+       names (dict[float, str]): Output of thermal.acronym_names.
+       year (int): The Backcast Year, the Y of GKFX.
+
+   Returns:
+       pd.DataFrame: Columns 'Area', 'Technology', 'Region', 'Kind',
+           'Capacity' (MW), 'FLH', 'Rating' and 'Available' (TWh).
+
+
+.. py:function:: vre_factors(available: pandas.DataFrame, observed: pandas.DataFrame, bounds: tuple[float, float] = FACTOR_BOUNDS) -> pandas.DataFrame
+
+   The factor per canonical region and kind that makes Balmorel's available output ENTSO-E's.
+
+   Where ENTSO-E reports no offshore output for a region with Balmorel
+   offshore capacity, onshore and offshore share one factor (kind 'Wind'),
+   since ENTSO-E books small offshore farms as onshore. A factor outside
+   `bounds`, or of a region without ENTSO-E generation data, is not written
+   and warns.
+
+   Args:
+       available (pd.DataFrame): Output of available_vre.
+       observed (pd.DataFrame): Output of observed_vre.
+       bounds (tuple[float, float], optional): Lowest and highest factor
+           written. Defaults to FACTOR_BOUNDS.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Kind', 'GKFX' (MW), 'AvailableTWh',
+           'ObservedTWh', 'Factor' and 'Written', one row per region and
+           kind with Balmorel capacity.
+
+
+.. py:function:: scaled_flh(areas: pandas.DataFrame, factors: pandas.DataFrame) -> pandas.DataFrame
+
+   The scaled full-load hours of every area of a region and kind with a written factor.
+
+   Args:
+       areas (pd.DataFrame): Output of flh_areas.
+       factors (pd.DataFrame): Output of vre_factors.
+
+   Returns:
+       pd.DataFrame: Columns 'Area', 'Symbol', 'Region', 'Kind', 'FLH',
+           'Factor' and 'NewFLH'.
+
+
+.. py:function:: write_flh_override(scaled: pandas.DataFrame, factors: pandas.DataFrame, symbol: str, year: int, scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write <symbol>_ENTSOE.inc with the scaled full-load hours of one symbol.
+
+   The file is written even without lines, since the scenario's include
+   falls back to base's file where it is missing. The header lists the
+   observed output each region and kind is scaled to, not the factor, so a
+   rerun on the scaled input data writes the same file.
+
+   Args:
+       scaled (pd.DataFrame): Output of scaled_flh.
+       factors (pd.DataFrame): Output of vre_factors.
+       symbol (str): 'WNDFLH' or 'SOLEFLH'.
+       year (int): The Backcast Year.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: append_flh_include(flh_inc_path: str | pathlib.Path, symbol: str) -> None
+
+   Idempotently append the scenario-fallback $include of <symbol>_ENTSOE.inc (see ADR 0006).
+
+   A scenario without its own <symbol>.inc gets one that loads base's first.
+
+   Args:
+       flh_inc_path (str | Path): Path to the scenario's WNDFLH.inc or SOLEFLH.inc.
+       symbol (str): 'WNDFLH' or 'SOLEFLH'.
+
+
+.. py:function:: generate_vre_flh(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, generation: dict[str, pandas.DataFrame], bounds: tuple[float, float] = FACTOR_BOUNDS, gams_system_directory: str | None = None, reload_input: bool = False) -> list[pybalmorel.classes.IncFile]
+
+   Write WNDFLH_ENTSOE.inc, SOLEFLH_ENTSOE.inc and backcastoutput/vre_flh.csv for a scenario.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the overrides for.
+       year (int): The Backcast Year.
+       generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output per
+           canonical region and production type.
+       bounds (tuple[float, float], optional): Lowest and highest factor
+           written. Defaults to FACTOR_BOUNDS.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+
+   Returns:
+       list[IncFile]: The saved WNDFLH and SOLEFLH IncFile instances.
+
+

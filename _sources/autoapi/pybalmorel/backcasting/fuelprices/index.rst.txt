@@ -1,0 +1,175 @@
+pybalmorel.backcasting.fuelprices
+=================================
+
+.. py:module:: pybalmorel.backcasting.fuelprices
+
+.. autoapi-nested-parse::
+
+   Fuel Prices
+
+   Convert collected historical fuel price series (Balmorel's
+   backcast/historicalprices/) into Balmorel's season/term-resolved
+   FUELPRICE(YYY,AAA,FFF,SSS,TTT) input (see the Balmorel repo's
+   docs/adr/0001-fuelprice-season-term-resolution.md).
+
+   Only NATGAS and COAL are converted here - CO2 belongs to TAX_CO2_ST (see
+   co2tax.py), and oil is not covered yet. Prices are expressed in the
+   backcast Price Year (see pricelevel.py) and mapped onto the UTC Backcast
+   Calendar (see calendar.py).
+
+   Created on 13.08.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.fuelprices.GAS_MWH_TO_GJ
+   pybalmorel.backcasting.fuelprices.COAL_LHV_GJ_PER_TONNE
+   pybalmorel.backcasting.fuelprices.TTF_CSV_COLUMNS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.fuelprices._clean_numeric
+   pybalmorel.backcasting.fuelprices.load_ttf_gas_prices
+   pybalmorel.backcasting.fuelprices.load_rotterdam_coal_prices
+   pybalmorel.backcasting.fuelprices.split_yahoo_ttf_html
+   pybalmorel.backcasting.fuelprices.write_fuelprice_override
+   pybalmorel.backcasting.fuelprices.write_fuelprice_constant_override
+   pybalmorel.backcasting.fuelprices.generate_fuelprice_overrides
+
+
+Module Contents
+---------------
+
+.. py:data:: GAS_MWH_TO_GJ
+   :value: 3.6
+
+
+.. py:data:: COAL_LHV_GJ_PER_TONNE
+   :value: 30.2
+
+
+.. py:function:: _clean_numeric(series: pandas.Series) -> pandas.Series
+
+   Strip thousands separators/quotes from a numeric-looking string column.
+
+
+.. py:function:: load_ttf_gas_prices(csv_path: str | pathlib.Path, year: int) -> pandas.Series
+
+   Load daily TTF natural gas prices, converted to nominal EUR/GJ.
+
+   Args:
+       csv_path (str | Path): Path to the Yahoo Finance TTF=F export
+           (columns include 'Date' with no year, e.g. 'Dec 30', and 'Adj Close'
+           in EUR/MWh).
+       year (int): Calendar year the file covers, used to complete 'Date'.
+
+   Returns:
+       pd.Series: Daily nominal price in EUR/GJ, indexed by calendar date.
+
+
+.. py:function:: load_rotterdam_coal_prices(csv_path: str | pathlib.Path, lhv_gj_per_tonne: float = COAL_LHV_GJ_PER_TONNE) -> pandas.Series
+
+   Load daily Rotterdam coal futures prices, converted to nominal USD/GJ.
+
+   Args:
+       csv_path (str | Path): Path to the investing.com Rotterdam Coal Futures
+           export (columns include 'Date' as MM/DD/YYYY and 'Price' in USD/t).
+       lhv_gj_per_tonne (float, optional): Lower heating value used to convert
+           USD/t to USD/GJ. Defaults to 30.2 (bituminous coal).
+
+   Returns:
+       pd.Series: Daily nominal price in USD/GJ, indexed by calendar date.
+
+
+.. py:data:: TTF_CSV_COLUMNS
+   :value: ['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+
+
+.. py:function:: split_yahoo_ttf_html(html_path: str | pathlib.Path, output_dir: str | pathlib.Path) -> list[pathlib.Path]
+
+   Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_<year>.csv files.
+
+   Yahoo Finance only offers its CSV download to paying users, but a saved
+   copy of https://finance.yahoo.com/quote/TTF%3DF/history/ (any date range,
+   e.g. several years) holds the same table. Each calendar year in it is
+   written as one CSV in the format load_ttf_gas_prices reads: 'Date' without
+   the year (e.g. 'Dec 30') and Volume without thousands separators.
+
+   Args:
+       html_path (str | Path): The saved Yahoo Finance history page (.html).
+       output_dir (str | Path): Folder to write natural_gas_TTF_<year>.csv to,
+           typically Balmorel's backcast/historicalprices/. Existing files are
+           overwritten.
+
+   Returns:
+       list[Path]: The written CSV files, one per year.
+
+
+.. py:function:: write_fuelprice_override(fuel_grids: dict[str, pandas.DataFrame], year: int, scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write FUELPRICE.inc with (S,T)-resolved historical fuel prices.
+
+   Written as scenario-local 'data/FUELPRICE.inc', which bb4datainc.inc reads
+   ahead of base/data/FUELPRICE.inc (and that fallback's own separate
+   FUELPRICE_%SCNAME%.inc indirection) - see docs/adr/0001 in the Balmorel
+   repo. Requires FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT to be set in the
+   scenario's balopt.opt (not done here), and FUELPRICE_CONSTANT.inc (see
+   write_fuelprice_constant_override) to list every other fuel, or the model
+   densely populates IFUELPRICE for every fuel in FFF.
+
+   Args:
+       fuel_grids (dict[str, pd.DataFrame]): {FFF fuel name: (S,T) grid},
+           e.g. {'NATGAS': ..., 'COAL': ...} as returned by daily_to_backcast_grid.
+       year (int): The backcast year these prices apply to.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: write_fuelprice_constant_override(resolved_fuels: list[str], scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write FUELPRICE_CONSTANT.inc flagging every fuel except resolved_fuels as annual-only.
+
+   Keeps IFUELPRICE's dense (S,T) broadcast limited to the fuels that actually
+   have historical daily data - required for FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT
+   to be affordable (see docs/adr/0001, 'FUELPRICE_CONSTANT' section).
+
+   Args:
+       resolved_fuels (list[str]): FFF fuel names with real (S,T) data, e.g.
+           ['NATGAS', 'COAL'] - excluded from the constant set.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: generate_fuelprice_overrides(historicalprices_path: str | pathlib.Path, year: int, balmorel_scenario_path: str | pathlib.Path) -> None
+
+   Convert backcast/historicalprices/ into FUELPRICE.inc + FUELPRICE_CONSTANT.inc.
+
+   Only NATGAS and COAL get real (S,T)-resolved prices - CO2 belongs to
+   TAX_CO2_ST (see co2tax.py), and oil is not covered yet. Every other fuel is
+   flagged constant (see docs/adr/0001 in the Balmorel repo). Prices are
+   converted to the Price Year with the bundled HICP and EUR/USD tables.
+
+   Warns (without changing anything) if the scenario's balopt.opt doesn't set
+   FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT, or if HYDROGEN_FUELPRICE.inc hardcodes
+   NATGAS/COAL prices - in both cases Balmorel would ignore this override.
+
+   Args:
+       historicalprices_path (str | Path): Path to backcast/historicalprices/.
+       year (int): The Backcast Year.
+       balmorel_scenario_path (str | Path): The scenario folder (e.g. .../backcast).
+
+

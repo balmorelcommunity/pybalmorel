@@ -1,0 +1,58 @@
+pybalmorel.weatheryear.cop_to_btc
+=================================
+
+.. py:module:: pybalmorel.weatheryear.cop_to_btc
+
+.. autoapi-nested-parse::
+
+   Create Balmorel COP .inc files from COP-model CSV outputs.
+
+   This module converts COP time series into HourlyDispatch and CapDev formats,
+   and writes annual COP factor .inc files for non-ground heat-pump technologies.
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.cop_to_btc._COP_TYPES
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.cop_to_btc._write_cop_timeseries_inc_files
+   pybalmorel.weatheryear.cop_to_btc._write_cop_factor_inc_files
+   pybalmorel.weatheryear.cop_to_btc.create_cop_inc
+
+
+Module Contents
+---------------
+
+.. py:data:: _COP_TYPES
+   :type:  dict[str, str]
+
+.. py:function:: _write_cop_timeseries_inc_files(df_raw: pandas.DataFrame, df_scaled: pandas.DataFrame, cop_type: str, technology_name: str, hd_raw_folder: str, hd_scaled_folder: str, capdev_scaled_long_term_folder: str, capdev_scaled_full_year_folder: str, capdev_raw_folder: str, config: pybalmorel.weatheryear.config_models.CopModuleConfig, time_df: pandas.DataFrame) -> None
+
+   Write HourlyDispatch and CapDev COP .inc files for one COP type.
+
+
+.. py:function:: _write_cop_factor_inc_files(correction_factors_df: pandas.DataFrame, year: int, cop_type: str, technology_name: str, hd_raw_folder: str, hd_scaled_folder: str, capdev_scaled_long_term_folder: str, capdev_scaled_full_year_folder: str, capdev_raw_folder: str) -> None
+
+   Write annual and long-term COP correction-factor .inc files.
+
+
+.. py:function:: create_cop_inc(config_fn: str, year: int, output_folder: str) -> None
+
+   Create COP-related Balmorel .inc files for one weather year.
+
+   Args:
+       config_fn: Path to YAML config file.
+       year: Weather year to process.
+       output_folder: Root output directory.
+
+

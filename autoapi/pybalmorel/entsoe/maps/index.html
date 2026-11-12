@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.entsoe.maps &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.entsoe.profile" href="../profile/index.html" />
+    <link rel="prev" title="pybalmorel.entsoe" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.entsoe</a></li>
+      <li class="breadcrumb-item active">pybalmorel.entsoe.maps</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/entsoe/maps/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.entsoe.maps">
+<span id="pybalmorel-entsoe-maps"></span><h1>pybalmorel.entsoe.maps<a class="headerlink" href="#module-pybalmorel.entsoe.maps" title="Link to this heading"></a></h1>
+<p>ENTSO-E Transmission Map</p>
+<p>Map of the physical cross-border flows fetched from the ENTSO-E transparency
+platform, drawn on ENTSO-E’s own bidding zones as entsoe-py names them
+(e.g. ‘DE_LU’, ‘DK_1’, ‘IT_NORD’, ‘IE_SEM’). Nothing is translated to
+Balmorel regions or Canonical Region Names (see CONTEXT.md).</p>
+<p>Created on 05.11.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._entsoe_geojson_folder" title="pybalmorel.entsoe.maps._entsoe_geojson_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_entsoe_geojson_folder</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._pybalmorel_geojson_folder" title="pybalmorel.entsoe.maps._pybalmorel_geojson_folder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_pybalmorel_geojson_folder</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._fallback_geofiles" title="pybalmorel.entsoe.maps._fallback_geofiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_fallback_geofiles</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._unit_mwh" title="pybalmorel.entsoe.maps._unit_mwh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_unit_mwh</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._zone_colour" title="pybalmorel.entsoe.maps._zone_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zone_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._zone_edge_colour" title="pybalmorel.entsoe.maps._zone_edge_colour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zone_edge_colour</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._text_primary" title="pybalmorel.entsoe.maps._text_primary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_text_primary</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._text_secondary" title="pybalmorel.entsoe.maps._text_secondary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_text_secondary</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._halo" title="pybalmorel.entsoe.maps._halo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_halo</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps.zone_area_name" title="pybalmorel.entsoe.maps.zone_area_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zone_area_name</span></code></a>(zone) → str</p></td>
+<td><p>The entsoe-py area name of an ENTSO-E zone given by EIC code or area name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._to_brussels_time" title="pybalmorel.entsoe.maps._to_brussels_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_to_brussels_time</span></code></a>(time) → pandas.Timestamp</p></td>
+<td><p>A timestamp, read as Brussels time unless it carries a time zone.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps.sum_crossborder_flows" title="pybalmorel.entsoe.maps.sum_crossborder_flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sum_crossborder_flows</span></code></a>(path, year[, start, end]) → pandas.DataFrame</p></td>
+<td><p>The energy that physically flowed over each directed border between ENTSO-E zones.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps.load_zone_geometries" title="pybalmorel.entsoe.maps.load_zone_geometries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_zone_geometries</span></code></a>(zones[, year]) → geopandas.GeoSeries</p></td>
+<td><p>Outlines of ENTSO-E bidding zones, in lon/lat (EPSG:4326).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._border_flows" title="pybalmorel.entsoe.maps._border_flows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_border_flows</span></code></a>(flows) → pandas.DataFrame</p></td>
+<td><p>One row per border: 'ZoneA' &lt; 'ZoneB', 'Net' (A to B minus B to A) and 'Gross' (both directions).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._zone_anchor" title="pybalmorel.entsoe.maps._zone_anchor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_zone_anchor</span></code></a>(geometry) → shapely.geometry.Point</p></td>
+<td><p>Where a zone's lines meet: the centroid of its largest part, or a point inside that part</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._round_down" title="pybalmorel.entsoe.maps._round_down"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_round_down</span></code></a>(value) → float</p></td>
+<td><p><cite>value</cite> rounded down to one significant figure, e.g. 44 -&gt; 40, 0.37 -&gt; 0.3.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._format_flow" title="pybalmorel.entsoe.maps._format_flow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_format_flow</span></code></a>(flow) → str</p></td>
+<td><p>A line label: 44, 5.2, 0.37, or '&lt;0.01' for a flow too small to matter on the map.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps._period_label" title="pybalmorel.entsoe.maps._period_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_period_label</span></code></a>(year, start, end) → str</p></td>
+<td><p>E.g. '2024', or '15 Jan 2024 to 31 Jan 2024' for a part of the year, naming the last day included.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.entsoe.maps.plot_transmission_map" title="pybalmorel.entsoe.maps.plot_transmission_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_transmission_map</span></code></a>(path, year[, value, start, end, ...]) → tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]</p></td>
+<td><p>Map the physical cross-border flows fetched from ENTSO-E, between ENTSO-E's raw bidding zones.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._entsoe_geojson_folder">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_entsoe_geojson_folder</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._entsoe_geojson_folder" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._pybalmorel_geojson_folder">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_pybalmorel_geojson_folder</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._pybalmorel_geojson_folder" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._fallback_geofiles">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_fallback_geofiles</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._fallback_geofiles" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._unit_mwh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_unit_mwh</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._unit_mwh" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._zone_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_zone_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#e8e6e1'</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._zone_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._zone_edge_colour">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_zone_edge_colour</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#ffffff'</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._zone_edge_colour" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._text_primary">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_text_primary</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#0b0b0b'</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._text_primary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._text_secondary">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_text_secondary</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#52514e'</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._text_secondary" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._halo">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_halo</span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._halo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps.zone_area_name">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">zone_area_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps.zone_area_name" title="Link to this definition"></a></dt>
+<dd><p>The entsoe-py area name of an ENTSO-E zone given by EIC code or area name.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>zone (str): E.g. ‘10YDK-1——–W’ or ‘DK_1’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: E.g. ‘DK_1’, or <cite>zone</cite> itself if entsoe-py doesn’t know it.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._to_brussels_time">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_to_brussels_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Timestamp</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._to_brussels_time" title="Link to this definition"></a></dt>
+<dd><p>A timestamp, read as Brussels time unless it carries a time zone.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps.sum_crossborder_flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">sum_crossborder_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps.sum_crossborder_flows" title="Link to this definition"></a></dt>
+<dd><p>The energy that physically flowed over each directed border between ENTSO-E zones.</p>
+<p>Reads every ‘&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_crossborder_flows.csv’ in <cite>path</cite> (a pair
+fetched under several spellings is read once), resamples it to hourly
+mean MW and sums the hours from <cite>start</cite> up to, not including, <cite>end</cite>.
+Missing hours count as no flow. Zones keep their entsoe-py area names:
+nothing is translated to Balmorel regions.</p>
+<dl>
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched crossborder_flows csv’s.
+year (int): The year the files are for.
+start (str | pd.Timestamp | None, optional): First hour to include, read as</p>
+<blockquote>
+<div><p>Brussels time unless it has a time zone, e.g. ‘2024-01-15’. Defaults to None (start of the files).</p>
+</div></blockquote>
+<p>end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the files).</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Columns ‘From’, ‘To’ and ‘Value’ (MWh), one row per directed border.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps.load_zone_geometries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">load_zone_geometries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">geopandas.GeoSeries</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps.load_zone_geometries" title="Link to this definition"></a></dt>
+<dd><p>Outlines of ENTSO-E bidding zones, in lon/lat (EPSG:4326).</p>
+<p>Taken from the geojson files bundled with entsoe-py, and for zones it has
+none for (e.g. GB, IE_SEM, LU, MT and the Western Balkans) from
+pybalmorel’s geofiles. GB is drawn with the UK’s outline and IE_SEM with
+Ireland’s, so Northern Ireland appears under GB.</p>
+<dl>
+<dt>Args:</dt><dd><p>zones (list[str]): entsoe-py area names, e.g. [‘DK_1’, ‘IT_NORD’, ‘GB’].
+year (int | None, optional): The year to draw the zones for. Before 2021, the</p>
+<blockquote>
+<div><p>Italian zones redrawn on 1 January 2021 get their earlier outline. Defaults to None (current outlines).</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>gpd.GeoSeries: One (multi)polygon per zone, indexed by zone. Zones without</dt><dd><p>an outline are left out, with a warning.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._border_flows">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_border_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._border_flows" title="Link to this definition"></a></dt>
+<dd><p>One row per border: ‘ZoneA’ &lt; ‘ZoneB’, ‘Net’ (A to B minus B to A) and ‘Gross’ (both directions).</p>
+<p>A direction without a file counts as no flow.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._zone_anchor">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_zone_anchor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">shapely.geometry.base.BaseGeometry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">shapely.geometry.Point</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._zone_anchor" title="Link to this definition"></a></dt>
+<dd><p>Where a zone’s lines meet: the centroid of its largest part, or a point inside that part
+if the centroid falls outside it (e.g. a crescent-shaped zone).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._round_down">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_round_down</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._round_down" title="Link to this definition"></a></dt>
+<dd><p><cite>value</cite> rounded down to one significant figure, e.g. 44 -&gt; 40, 0.37 -&gt; 0.3.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._format_flow">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_format_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._format_flow" title="Link to this definition"></a></dt>
+<dd><p>A line label: 44, 5.2, 0.37, or ‘&lt;0.01’ for a flow too small to matter on the map.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps._period_label">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">_period_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps._period_label" title="Link to this definition"></a></dt>
+<dd><p>E.g. ‘2024’, or ‘15 Jan 2024 to 31 Jan 2024’ for a part of the year, naming the last day included.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.entsoe.maps.plot_transmission_map">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.entsoe.maps.</span></span><span class="sig-name descname"><span class="pre">plot_transmission_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pandas.Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'TWh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(-11.0,</span> <span class="pre">34.0,</span> <span class="pre">33.0,</span> <span class="pre">71.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'EPSG:3035'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_show_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_width_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_width_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_value_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'#256abf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_label_show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_label_show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_loc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'upper</span> <span class="pre">left'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">matplotlib.axes.Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.entsoe.maps.plot_transmission_map" title="Link to this definition"></a></dt>
+<dd><p>Map the physical cross-border flows fetched from ENTSO-E, between ENTSO-E’s raw bidding zones.</p>
+<p>Every border with a fetched ‘&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_crossborder_flows.csv’ in
+<cite>path</cite> is drawn as a line between the two zones, its width proportional to
+the energy that flowed over it. Zones are ENTSO-E’s own (e.g. DE_LU, DK_1,
+the Italian zones), not Balmorel regions. Flows are physical, so they
+include loop flows.</p>
+<dl>
+<dt>Args:</dt><dd><p>path (str | Path): Folder with the fetched crossborder_flows csv’s.
+year (int): The year to map.
+value (str, optional): ‘net’ for the flow one way minus the other, with an arrow</p>
+<blockquote>
+<div><p>towards the net importer, or ‘gross’ for both ways added. Defaults to ‘net’.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels</dt><dd><p>time unless it has a time zone. Defaults to None (whole year).</p>
+</dd>
+</dl>
+<p>end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (whole year).
+unit (str, optional): ‘MWh’, ‘GWh’ or ‘TWh’, for the legend, labels, <cite>line_show_min</cite></p>
+<blockquote>
+<div><p>and <cite>line_value_max</cite>. Defaults to ‘TWh’.</p>
+</div></blockquote>
+<p>ax (Axes | None, optional): Axes to draw on. Defaults to None (a new figure).
+extent (tuple[float, float, float, float] | None, optional): (lon min, lat min, lon max,</p>
+<blockquote>
+<div><p>lat max) to show. Zones partly outside are clipped, and their lines meet in the part
+shown. None shows every zone. Defaults to (-11, 34, 33, 71.5).</p>
+</div></blockquote>
+<p>crs (str, optional): The map projection. Defaults to ‘EPSG:3035’ (equal-area Europe).
+line_show_min (float, optional): Borders with less flow than this, in <cite>unit</cite>, are not drawn. Defaults to 0.
+line_width_min (float, optional): Narrowest line width, in points. Defaults to 0.5.
+line_width_max (float, optional): Line width of <cite>line_value_max</cite>, in points. Defaults to 8.
+line_value_max (float | None, optional): Flow drawn at <cite>line_width_max</cite>, in <cite>unit</cite>; set it</p>
+<blockquote>
+<div><p>to compare several maps. Defaults to None (the largest flow on the map).</p>
+</div></blockquote>
+<p>line_color (str, optional): Colour of the lines and arrows. Defaults to ‘#256abf’.
+line_label_show (bool, optional): Write the flow next to each line. Defaults to False.
+zone_label_show (bool, optional): Write each zone’s name where its lines meet. Defaults to True.
+zone_coordinates (dict[str, tuple[float, float]] | None, optional): (lon, lat) where a</p>
+<blockquote>
+<div><p>zone’s lines meet, overriding the centroid of its largest part, e.g. {‘NO_4’: (18.0, 68.5)}.
+Also places zones without an outline. Defaults to None.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>legend_loc (str, optional): Where the legend of line widths goes, as in matplotlib’s</dt><dd><p><cite>Axes.legend</cite>. Defaults to ‘upper left’.</p>
+</dd>
+</dl>
+<p>title (str | None, optional): The title. ‘’ shows none. Defaults to None (describes the map).</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[Figure, Axes]: The figure and axes of the map.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="pybalmorel.entsoe" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../profile/index.html" class="btn btn-neutral float-right" title="pybalmorel.entsoe.profile" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

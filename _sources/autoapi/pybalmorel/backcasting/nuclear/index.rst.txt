@@ -1,0 +1,153 @@
+pybalmorel.backcasting.nuclear
+==============================
+
+.. py:module:: pybalmorel.backcasting.nuclear
+
+.. autoapi-nested-parse::
+
+   Nuclear Availability
+
+   Turn ENTSO-E's observed nuclear output into weekly GKRATE overrides
+   (GKRATE_ENTSOE.inc) for a Backcast: per country and Backcast Calendar week,
+   the highest hourly nuclear output divided by the country's nuclear GKFX,
+   clipped at 1 (see CONTEXT.md). Reuses the override-file pattern of
+   docs/adr/0006; the scenario's GKRATE.inc includes the file itself.
+
+   Created on 22.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.nuclear.RATING_DECIMALS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.nuclear.nuclear_capacity
+   pybalmorel.backcasting.nuclear.nuclear_ratings
+   pybalmorel.backcasting.nuclear.format_rating
+   pybalmorel.backcasting.nuclear.write_gkrate_override
+   pybalmorel.backcasting.nuclear.check_gkrate_include
+   pybalmorel.backcasting.nuclear.check_input_cache
+   pybalmorel.backcasting.nuclear.generate_nuclear_availability
+
+
+Module Contents
+---------------
+
+.. py:data:: RATING_DECIMALS
+   :value: 4
+
+
+.. py:function:: nuclear_capacity(gkfx: pandas.DataFrame, gdata: pandas.DataFrame, fdata: pandas.DataFrame, rrraaa: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   The nuclear GKFX of `year` per area and technology, with its canonical region.
+
+   Nuclear technologies are those whose GDATA(G,'GDFUEL') equals
+   FDATA('NUCLEAR','FDACRONYM'). Both are GAMS acronyms that get_input returns
+   as the same large float, so the two values are compared rather than
+   hard-coded. Columns are taken by position, as get_input may name them after
+   the raw GAMS domains.
+
+   Args:
+       gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+       gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+       fdata (pd.DataFrame): FDATA from get_input, ending in (FFF, FDATASET, Value).
+       rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+       year (int): The Backcast Year, the Y of GKFX.
+
+   Returns:
+       pd.DataFrame: Columns 'Area', 'Technology', 'Region' (canonical) and
+           'Capacity' (MW), for every nuclear (area, technology) with GKFX > 0.
+
+
+.. py:function:: nuclear_ratings(observed: dict[str, pandas.Series], capacity: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   The weekly Nuclear Availability per canonical region.
+
+   The rating of week s is the highest hourly nuclear output in that week of
+   the Backcast Calendar divided by the region's summed nuclear GKFX. Missing
+   hours are ignored. Weeks without any data after the region's last week
+   with data are a closure and get 0, since ENTSO-E stops reporting a closed
+   fleet; any other week without data gets NaN. Ratings above 1 are clipped.
+   All of these are reported.
+
+   Args:
+       observed (dict[str, pd.Series]): Hourly nuclear output (MW) per
+           canonical region, indexed by timezone-aware timestamps.
+       capacity (pd.DataFrame): Output of nuclear_capacity.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index 'S01'..'S52', one column per region that has both
+           nuclear GKFX and observed nuclear output.
+
+
+.. py:function:: format_rating(rating: float) -> str
+
+   A GAMS value for a rating; anything that rounds to 0 is 'eps', since Balmorel reads 0 as 1.
+
+
+.. py:function:: write_gkrate_override(ratings: pandas.DataFrame, capacity: pandas.DataFrame, scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write GKRATE_ENTSOE.inc with the weekly nuclear ratings.
+
+   Every nuclear technology in an area gets its country's rating, since
+   ENTSO-E only reports nuclear output per bidding zone. Weeks without data
+   get no line.
+
+   Args:
+       ratings (pd.DataFrame): Output of nuclear_ratings.
+       capacity (pd.DataFrame): Output of nuclear_capacity.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: check_gkrate_include(gkrate_inc_path: str | pathlib.Path) -> None
+
+   Warn if the scenario's GKRATE.inc doesn't include GKRATE_ENTSOE.inc.
+
+   Args:
+       gkrate_inc_path (str | Path): Path to the scenario's GKRATE.inc.
+
+
+.. py:function:: check_input_cache(input_gdx: pathlib.Path, scenario_data_path: pathlib.Path, ignore: tuple[str, ...] = ()) -> None
+
+   Warn if a scenario data file is newer than the cached input GDX, which then misses it.
+
+   Args:
+       input_gdx (Path): The cached <scenario>_input_data.gdx.
+       scenario_data_path (Path): The scenario's 'data' folder.
+       ignore (tuple[str, ...], optional): File names not to check, e.g. the
+           override file the caller writes itself. Defaults to ().
+
+
+.. py:function:: generate_nuclear_availability(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, observed: dict[str, pandas.Series], gams_system_directory: str | None = None, reload_input: bool = False) -> pybalmorel.classes.IncFile
+
+   Write GKRATE_ENTSOE.inc for a Balmorel scenario from observed nuclear output.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the override for.
+       year (int): The Backcast Year.
+       observed (dict[str, pd.Series]): Hourly nuclear output (MW) per
+           canonical region.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+

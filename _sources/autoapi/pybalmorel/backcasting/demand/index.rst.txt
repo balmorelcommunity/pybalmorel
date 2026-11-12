@@ -1,0 +1,466 @@
+pybalmorel.backcasting.demand
+=============================
+
+.. py:module:: pybalmorel.backcasting.demand
+
+.. autoapi-nested-parse::
+
+   Observed Demand Profiles
+
+   Turn ENTSO-E's actual load into DE_VAR_T overrides (DE_VAR_T_ENTSOE.inc) for
+   a Backcast: the hourly load of the Backcast Year on the Backcast Calendar,
+   for the exogenous electricity users OTHER and RESE of every region. Balmorel
+   scales DE_VAR_T to the annual DE, so only the shape matters. Reuses the
+   override-file pattern of docs/adr/0006 and appends the $include to the
+   scenario's DE_VAR_T.inc itself.
+
+   Implausible or missing hours are interpolated. A region with too many of
+   them takes its profile from the input data instead, with the same cleaning,
+   or keeps it unchanged if that fails too.
+
+   Also sets the annual level of that demand, the Demand Level (DE_ENTSOE.inc):
+   ENTSO-E's annual load less what the previous backcast run added on top of DE
+   (its transmission losses, electricity for heat, and distribution losses on
+   anything but exogenous demand), net of Balmorel's distribution losses
+   (`heat='model'`, docs/adr/0015).
+   That heating responds to prices, so the level is iterated over runs. The
+   first run of a new Backcast Year takes Eurostat's electricity for heating
+   instead (`heat='eurostat'`).
+
+   Created on 26.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.demand.PLAUSIBLE_LOW
+   pybalmorel.backcasting.demand.PLAUSIBLE_HIGH
+   pybalmorel.backcasting.demand.MAX_IMPLAUSIBLE_SHARE
+   pybalmorel.backcasting.demand.DEMAND_USERS
+   pybalmorel.backcasting.demand.DE_VAR_T_INCLUDE
+   pybalmorel.backcasting.demand.DEMAND_LEVEL_BASES
+   pybalmorel.backcasting.demand.COVERAGE_BOUNDS
+   pybalmorel.backcasting.demand.SHARED_LOAD
+   pybalmorel.backcasting.demand.BALMOREL_YEAR_HOURS
+   pybalmorel.backcasting.demand.HEATING
+   pybalmorel.backcasting.demand.HEAT_SOURCES
+   pybalmorel.backcasting.demand.PREVIOUS_RUN_CATEGORIES
+   pybalmorel.backcasting.demand.PREVIOUS_RUN_TOLERANCE
+   pybalmorel.backcasting.demand.DE_ADDONS
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.demand.sum_zones
+   pybalmorel.backcasting.demand.grid_to_profile
+   pybalmorel.backcasting.demand.current_profiles
+   pybalmorel.backcasting.demand.clean_profile
+   pybalmorel.backcasting.demand.demand_profiles
+   pybalmorel.backcasting.demand.country_of
+   pybalmorel.backcasting.demand.annual_load
+   pybalmorel.backcasting.demand.split_shared_load
+   pybalmorel.backcasting.demand.previous_run_heat
+   pybalmorel.backcasting.demand.demand_levels
+   pybalmorel.backcasting.demand.check_previous_run
+   pybalmorel.backcasting.demand.check_de_wrappers
+   pybalmorel.backcasting.demand.write_de_var_t_override
+   pybalmorel.backcasting.demand.append_de_var_t_include
+   pybalmorel.backcasting.demand.write_de_override
+   pybalmorel.backcasting.demand.load_input_data
+   pybalmorel.backcasting.demand.generate_demand_level
+   pybalmorel.backcasting.demand.generate_demand_profile
+
+
+Module Contents
+---------------
+
+.. py:data:: PLAUSIBLE_LOW
+   :value: 0.2
+
+
+.. py:data:: PLAUSIBLE_HIGH
+   :value: 3.0
+
+
+.. py:data:: MAX_IMPLAUSIBLE_SHARE
+   :value: 0.02
+
+
+.. py:data:: DEMAND_USERS
+   :value: ('OTHER', 'RESE')
+
+
+.. py:data:: DE_VAR_T_INCLUDE
+   :value: "$if EXIST '../data/DE_VAR_T_ENTSOE.inc' $INCLUDE '../data/DE_VAR_T_ENTSOE.inc';"
+
+
+.. py:data:: DEMAND_LEVEL_BASES
+   :value: ('entsoe', 'eurostat')
+
+
+.. py:data:: COVERAGE_BOUNDS
+   :value: (0.8, 1.3)
+
+
+.. py:data:: SHARED_LOAD
+
+.. py:data:: BALMOREL_YEAR_HOURS
+   :value: 8760
+
+
+.. py:data:: HEATING
+
+.. py:data:: HEAT_SOURCES
+   :value: ('eurostat', 'model')
+
+
+.. py:data:: PREVIOUS_RUN_CATEGORIES
+
+.. py:data:: PREVIOUS_RUN_TOLERANCE
+   :value: 0.01
+
+
+.. py:data:: DE_ADDONS
+   :value: ('INDUSTRY_DE.inc', 'INDIVUSERS_DE.inc')
+
+
+.. py:function:: sum_zones(zones: pandas.DataFrame) -> pandas.DataFrame
+
+   Sum hourly ENTSO-E load of bidding zones to their canonical region.
+
+   An hour missing in one zone is missing for the region, so a partial sum
+   is never taken for the region's load.
+
+   Args:
+       zones (pd.DataFrame): Hourly load (MW), one column per zone (any
+           spelling canonical_region knows, e.g. 'IT-NORD' or 'DK1').
+
+   Returns:
+       pd.DataFrame: Hourly load (MW), one column per canonical region.
+
+
+.. py:function:: grid_to_profile(grid: pandas.DataFrame) -> pandas.Series
+
+   Flatten an S x T grid into a series indexed by (Season, Term), keeping missing hours.
+
+   Args:
+       grid (pd.DataFrame): Index 'S01'..'S52', columns 'T001'..'T168'.
+
+   Returns:
+       pd.Series: 8736 values in (S,T) order.
+
+
+.. py:function:: current_profiles(de_var_t: pandas.DataFrame, user: str = DEMAND_USERS[0]) -> pandas.DataFrame
+
+   The DE_VAR_T profile of `user` per region, from the scenario's input data.
+
+   Columns are taken by position, as get_input may name them after the raw
+   GAMS domains.
+
+   Args:
+       de_var_t (pd.DataFrame): DE_VAR_T from get_input, ending in
+           (RRR, DEUSER, SSS, TTT, Value).
+       user (str, optional): The demand user. Defaults to 'OTHER'.
+
+   Returns:
+       pd.DataFrame: Index (Season, Term) in (S,T) order, one column per region.
+
+
+.. py:function:: clean_profile(profile: pandas.Series) -> tuple[pandas.Series, int]
+
+   Interpolate the implausible or missing hours of a profile.
+
+   An hour is implausible outside PLAUSIBLE_LOW-PLAUSIBLE_HIGH times the
+   profile's median.
+
+   Args:
+       profile (pd.Series): Values in (S,T) order.
+
+   Returns:
+       tuple[pd.Series, int]: The cleaned profile and the number of hours replaced.
+
+
+.. py:function:: demand_profiles(regions: list[str], observed: pandas.DataFrame, current: pandas.DataFrame, year: int) -> tuple[dict[str, pandas.Series], list[str]]
+
+   The observed demand profile per Balmorel region, with a report line per region.
+
+   A region takes the ENTSO-E load of its canonical region, so DE4-* take
+   DE's. If that is missing or has more than MAX_IMPLAUSIBLE_SHARE
+   implausible or missing hours, it takes its current profile from the input
+   data instead, with the same cleaning. A region where both fail gets no
+   profile and keeps its current one unchanged, which is warned about.
+
+   Args:
+       regions (list[str]): Balmorel regions with electricity demand.
+       observed (pd.DataFrame): Hourly ENTSO-E load (MW) per canonical region,
+           indexed by timezone-aware timestamps (output of sum_zones).
+       current (pd.DataFrame): Output of current_profiles.
+       year (int): The Backcast Year.
+
+   Returns:
+       tuple[dict[str, pd.Series], list[str]]: Profile in (S,T) order per
+           region, and one report line per region.
+
+
+.. py:function:: country_of(region: str) -> str
+
+   The country code of a Balmorel region or canonical region, e.g. 'NO' for 'NO3' and 'DE' for 'DE4-E'.
+
+
+.. py:function:: annual_load(observed: pandas.DataFrame, year: int) -> pandas.Series
+
+   ENTSO-E's load per canonical region over Balmorel's year (MWh).
+
+   The mean hourly load over the Backcast Calendar times Balmorel's 8760
+   hours, so that a DE built on it gives back the observed load in the
+   calendar's 8736 hours, and is on the same annual footing as Eurostat's
+   heating and final consumption. Missing hours are filled with the mean, so
+   a gap doesn't lower the level.
+
+   Args:
+       observed (pd.DataFrame): Hourly load (MW) per canonical region (output of sum_zones).
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.Series: Index canonical region. A region without any hour is NaN.
+
+
+.. py:function:: split_shared_load(load: pandas.Series, balances: pandas.DataFrame) -> pandas.Series
+
+   Split the load of a canonical region covering several countries (DE_LU) by Eurostat final consumption.
+
+   Args:
+       load (pd.Series): Output of annual_load.
+       balances (pd.DataFrame): Output of eurostat.electricity_balances.
+
+   Returns:
+       pd.Series: The load with one entry per country of SHARED_LOAD.
+
+
+.. py:function:: previous_run_heat(load_results: str | pathlib.Path, year: int) -> pandas.DataFrame
+
+   The previous backcast run's exogenous load, electric heating and losses per region.
+
+   Args:
+       load_results (str | Path): balmorel_load.csv of one solved backcast,
+           as `format` writes it (MWh per hour on the Backcast Calendar).
+       year (int): The Backcast Year.
+
+   Raises:
+       ValueError: If the file holds more than one scenario, another year,
+           or not every hour of the Backcast Calendar.
+
+   Returns:
+       pd.DataFrame: 'EXO', 'E2H', 'TLoss' and 'DLoss' (MWh over the
+           calendar's 8736 hours) per Balmorel region, with the scenario in
+           attrs['scenario'].
+
+
+.. py:function:: demand_levels(de: pandas.DataFrame, disloss: pandas.DataFrame, load: pandas.Series, balances: pandas.DataFrame, year: int, basis: str = 'entsoe', coverage_bounds: tuple[float, float] = COVERAGE_BOUNDS, heat: str = 'eurostat', previous: pandas.DataFrame | None = None) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   The Demand Level of `year` per region and user, with a summary per country.
+
+   With `heat='eurostat'`, per country c, with L its ENTSO-E load, d its
+   load-weighted DISLOSS_E and H its Eurostat electricity for heating, the
+   level is L(1-d) - H ('entsoe') or FC_E - H ('eurostat'). A country with
+   several canonical regions (NO1-5) gets L_r(1-d_r) - H L_r/L per region
+   ('entsoe') or its level split by L_r(1-d_r) ('eurostat').
+
+   With `heat='model'` (basis 'entsoe' only), per canonical region k, with
+   T_k, E_k and O_k the previous run's transmission losses, electricity for
+   heat (ENDOGENOUS_ELECT2HEAT) and distribution losses on anything but
+   exogenous demand (DIST_LOSSES less EXO d_r/(1-d_r) per region r: on
+   electric heating, and on wind and solar output through DISLOSS_E_AG),
+   summed over its Balmorel regions and scaled from the calendar's 8736
+   hours to Balmorel's 8760, the level is (L_k - T_k - E_k - O_k)(1 - d_k).
+   Balmorel's load as compared, EXO + E2H + DIST_LOSSES + TRANS_LOSSES, is
+   then ENTSO-E's if the run's heating and losses stay as they were, so the
+   level is iterated.
+
+   Within a canonical region (DE4-*) and then over the users, the level is
+   split by the shares of `de`, so a rerun on its own output keeps them. A
+   country is not written, and warns, without ENTSO-E load, if
+   L(1-d)/FC_E is outside `coverage_bounds`, if a level is not positive,
+   and with 'eurostat' heat without Eurostat final consumption or heating,
+   or with 'model' heat if a region is not in the previous run. With 'model'
+   heat, a country without Eurostat final consumption (CH) is written with
+   its coverage unchecked.
+
+   Args:
+       de (pd.DataFrame): DE from get_input, ending in (YYY, RRR, DEUSER, Value).
+       disloss (pd.DataFrame): DISLOSS_E from get_input, ending in (RRR, Value).
+           A region without one has no losses.
+       load (pd.Series): Output of split_shared_load (MWh per canonical region or country).
+       balances (pd.DataFrame): Output of eurostat.electricity_balances (GWh).
+       year (int): The Backcast Year.
+       basis (str, optional): 'entsoe' or 'eurostat'. Defaults to 'entsoe'.
+       coverage_bounds (tuple[float, float], optional): Lowest and highest
+           L(1-d)/FC_E written. Defaults to COVERAGE_BOUNDS.
+       heat (str, optional): 'eurostat' or 'model', where the heating left
+           out comes from. Defaults to 'eurostat'.
+       previous (pd.DataFrame | None, optional): Output of previous_run_heat.
+           Needed for 'model' heat; with 'eurostat' heat it only fills the
+           previous-run columns of the summary.
+
+   Returns:
+       tuple[pd.DataFrame, pd.DataFrame]: The level per 'Region' and 'User'
+           ('Value', MWh) of the countries written, and the summary per
+           country (TWh). 'InputTWh' is the input data's DE, which after a
+           first run is the previous level. 'ResidualTWh' is the model-heat
+           level less the previous run's exogenous load: what that run's
+           load missed ENTSO-E's by, net of distribution losses.
+
+
+.. py:function:: check_previous_run(previous: pandas.DataFrame, de_entsoe_path: str | pathlib.Path, year: int) -> None
+
+   Warn where the previous run's exogenous load isn't the Demand Level it should have solved with.
+
+   The previous run's EXOGENOUS over the calendar's 8736 hours is DE x
+   8736/8760. A region more than PREVIOUS_RUN_TOLERANCE off means that run
+   solved with another DE_ENTSOE.inc (or none), so its heating and losses
+   belong to another level.
+
+   Args:
+       previous (pd.DataFrame): Output of previous_run_heat.
+       de_entsoe_path (str | Path): The scenario's current DE_ENTSOE.inc.
+       year (int): The Backcast Year.
+
+
+.. py:function:: check_de_wrappers(data_path: str | pathlib.Path, base_data_path: str | pathlib.Path) -> None
+
+   Warn if a DE addon of base runs without the scenario re-applying DE_ENTSOE.inc after it.
+
+   The INDUSTRY and INDIVUSERS addons adjust DE after DE.inc, so the
+   scenario needs its own INDUSTRY_DE.inc and INDIVUSERS_DE.inc that include
+   base's and then DE_ENTSOE.inc again. Otherwise Balmorel solves with
+   another DE than the Demand Level.
+
+   Args:
+       data_path (str | Path): The scenario's 'data' folder.
+       base_data_path (str | Path): base/data.
+
+
+.. py:function:: write_de_var_t_override(profiles: dict[str, pandas.Series], report: list[str], year: int, scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write DE_VAR_T_ENTSOE.inc with the observed demand profiles.
+
+   The first of DEMAND_USERS gets the values, the others are set equal to it.
+
+   Args:
+       profiles (dict[str, pd.Series]): Output of demand_profiles.
+       report (list[str]): Report lines of demand_profiles, written in the header.
+       year (int): The Backcast Year.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: append_de_var_t_include(de_var_t_inc_path: str | pathlib.Path, base_data_dir: str = '../../base/data') -> None
+
+   Idempotently append the $include of DE_VAR_T_ENTSOE.inc to the scenario's DE_VAR_T.inc.
+
+   A scenario without its own DE_VAR_T.inc gets one that loads base's first.
+
+   Args:
+       de_var_t_inc_path (str | Path): Path to the scenario's DE_VAR_T.inc.
+       base_data_dir (str, optional): GAMS path, relative to the scenario's
+           model/ folder, of the base data. Defaults to '../../base/data'.
+
+
+.. py:function:: write_de_override(levels: pandas.DataFrame, year: int, basis: str, scenario_data_path: str | pathlib.Path, heat: str = 'eurostat', previous_scenario: str | None = None) -> pybalmorel.classes.IncFile
+
+   Write DE_ENTSOE.inc with the Demand Level of `year`.
+
+   Args:
+       levels (pd.DataFrame): The levels of demand_levels.
+       year (int): The Backcast Year.
+       basis (str): 'entsoe' or 'eurostat'.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+       heat (str, optional): 'eurostat' or 'model'. Defaults to 'eurostat'.
+       previous_scenario (str | None, optional): The run the heating came
+           from, named in the header with 'model' heat.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: load_input_data(balmorel_model_folder: str | pathlib.Path, scenario: str, gams_system_directory: str | None, reload_input: bool, ignore: tuple[str, ...]) -> pybalmorel.classes.Balmorel
+
+   Load a scenario's input data, warning if the cached GDX is stale.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario.
+       gams_system_directory (str | None): GAMS system directory.
+       reload_input (bool): Run ReadData again instead of reusing the cached input GDX.
+       ignore (tuple[str, ...]): Data files the stale-cache check ignores.
+
+   Returns:
+       Balmorel: The model with the input data loaded.
+
+
+.. py:function:: generate_demand_level(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, zones: pandas.DataFrame, eurostat_data_path: str | pathlib.Path | None = None, basis: str = 'entsoe', coverage_bounds: tuple[float, float] = COVERAGE_BOUNDS, gams_system_directory: str | None = None, reload_input: bool = False, heat: str = 'model', load_results: str | pathlib.Path | None = None) -> pybalmorel.classes.IncFile
+
+   Write DE_ENTSOE.inc and backcastoutput/demand_level.csv for a Balmorel scenario.
+
+   The scenario's DE.inc must include DE_ENTSOE.inc after base's DE.inc, and
+   its INDUSTRY_DE.inc and INDIVUSERS_DE.inc again after base's. With 'model'
+   heat, the heating and transmission losses come from the previous run's
+   balmorel_load.csv, which must be the run that solved with the scenario's
+   current DE_ENTSOE.inc (warned about if not). Its residual is printed, for
+   the user to decide whether to iterate again.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the override for.
+       year (int): The Backcast Year.
+       zones (pd.DataFrame): Hourly ENTSO-E load (MW) per bidding zone,
+           indexed by timezone-aware timestamps.
+       eurostat_data_path (str | Path | None, optional): Cache folder of the
+           Eurostat responses. Defaults to <scenario>/eurostatdata.
+       basis (str, optional): 'entsoe' or 'eurostat'. Defaults to 'entsoe'.
+       coverage_bounds (tuple[float, float], optional): Lowest and highest
+           L(1-d)/FC_E written. Defaults to COVERAGE_BOUNDS.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+       heat (str, optional): 'model' takes the heating from the previous
+           run, 'eurostat' from Eurostat (the first run of a new Backcast
+           Year). Defaults to 'model'.
+       load_results (str | Path | None, optional): The previous run's
+           balmorel_load.csv. Defaults to <scenario>/backcastoutput/balmorel_load.csv.
+
+   Raises:
+       FileNotFoundError: With 'model' heat, if there is no previous run.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: generate_demand_profile(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, zones: pandas.DataFrame, gams_system_directory: str | None = None, reload_input: bool = False) -> pybalmorel.classes.IncFile
+
+   Write DE_VAR_T_ENTSOE.inc for a Balmorel scenario from observed ENTSO-E load.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the override for.
+       year (int): The Backcast Year.
+       zones (pd.DataFrame): Hourly ENTSO-E load (MW) per bidding zone,
+           indexed by timezone-aware timestamps.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+

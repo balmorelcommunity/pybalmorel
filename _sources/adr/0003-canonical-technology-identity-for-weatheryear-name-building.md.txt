@@ -1,0 +1,16 @@
+# Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity
+
+`GGG_renewable`, `INVDATASET_renewable`, and `AAA_renewable` are three different Balmorel set domains (per-vintage generators, investment-option groups, and region-technology pairs) that legitimately need different string spellings for the same underlying technology — but `build_GGG`, `build_INVDATASET`, and `build_AAA` in `additional_inc.py` each independently hardcoded their own f-string template for that same `(turbine/PV model, resource grade, onshore/offshore, region)` tuple, with no shared source of truth. This already caused one real bug (a `SP316-HHHH155` vs `SP316-HH155` spelling divergence), and is the direct cause of `INVDATA` linking an area computed under one spelling (`IE_VRE-ONS_SP335-HH100_RG1`) to an investment option built under another (`GNR_WT-SP335-HH100_ONS_RG1_Y-2020`) for what is meant to be the same technology.
+
+We decided to extract a single per-technology identity helper (`_template_for` plus the `_WIND_TEMPLATES`/`_SOLAR_TEMPLATES` tables) that each of the three builders calls to produce their (deliberately different) name strings, rather than accept the risk of three independently hand-maintained templates drifting apart again.
+
+We initially also planned to consolidate `build_INVDATA_renewable`'s `AAA_renewable`-based regex-substring bridge to `INVDATASET_renewable` onto `build_ALLOWEDINV`'s `GGG_renewable`-based matching, on the assumption that it duplicated the same linking task. Reading the actual implementation showed this assumption was wrong: `build_AAA`'s templates always nest the `INVDATASET_renewable` string directly inside the corresponding `AAA_renewable` string by construction (region + "_" + that string for wind, region + "_VRE-" + that string for solar), so `build_INVDATA_renewable`'s plain containment check is already exact and correct — it isn't duplicating `build_ALLOWEDINV`'s logic, it's solving a different problem (linking every real region to an investment option, vs. `build_ALLOWEDINV` finding which literal generator members belong to one representative region). We left this matching mechanism as-is and only removed the dead, always-no-op `.replace("ONSVRE_", "").replace("OFFSVRE_", "")` call and switched `str.contains` from `regex=True` to `regex=False`, since no metacharacter-sensitive matching was ever needed.
+
+## Considered options
+
+- **Keep three independent templates, add a cross-consistency test asserting they stay in sync.** Rejected — this treats a structural duplication as a testing problem rather than removing the duplication itself; a test only catches drift after the fact instead of making it impossible.
+- **Rebuild `build_INVDATA_renewable` on `build_ALLOWEDINV`'s GGG-based matching.** Rejected after reading the actual code — the two functions solve genuinely different linking problems (see above), and forcing them onto one mechanism would only add complexity without fixing anything that was actually broken.
+
+## Consequences
+
+- `GGG_renewable`, `INVDATASET_renewable`, and `AAA_renewable` keep their distinct spellings (`GNR_WT-...`, `VRE-ONS_...`, `<region>_VRE-ONS_...`) — this is not a move toward one shared string across all three sets, only toward one shared source of truth for the parts of those strings that should never disagree.

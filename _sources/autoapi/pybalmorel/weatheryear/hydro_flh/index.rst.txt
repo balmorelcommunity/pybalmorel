@@ -1,0 +1,244 @@
+pybalmorel.weatheryear.hydro_flh
+================================
+
+.. py:module:: pybalmorel.weatheryear.hydro_flh
+
+.. autoapi-nested-parse::
+
+   Absolute Hydro FLH
+
+   Hydro full-load hours as CorRES inflow energy divided by the Balmorel capacity
+   that receives it (`hydro_flh: mode: absolute`), instead of a factor on
+   Balmorel's base FLH. Run-of-river energy above the run-of-river capacity moves
+   to the same area's reservoir, and countries whose CorRES inflow fails a
+   plausibility check, or that CorRES covers only partly or not at all, get the
+   Hydro Inflow Fallback (see CONTEXT.md, ADR 0011).
+
+   Everything but load_balmorel_hydro_inputs works on DataFrames, so it can be
+   tested without GAMS.
+
+   Created on 22.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.hydro_flh.RESERVOIR
+   pybalmorel.weatheryear.hydro_flh.RUN_OF_RIVER
+   pybalmorel.weatheryear.hydro_flh.HYDRO_SYMBOLS
+   pybalmorel.weatheryear.hydro_flh.PLAUSIBLE_DEVIATION
+   pybalmorel.weatheryear.hydro_flh.HOURS_PER_YEAR
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.weatheryear.hydro_flh.region_country
+   pybalmorel.weatheryear.hydro_flh.hydro_capacity
+   pybalmorel.weatheryear.hydro_flh.area_countries
+   pybalmorel.weatheryear.hydro_flh.base_flh
+   pybalmorel.weatheryear.hydro_flh.load_balmorel_hydro_inputs
+   pybalmorel.weatheryear.hydro_flh.yearly_energy
+   pybalmorel.weatheryear.hydro_flh.move_spilled_run_of_river
+   pybalmorel.weatheryear.hydro_flh.missing_columns
+   pybalmorel.weatheryear.hydro_flh.plausibility_failures
+   pybalmorel.weatheryear.hydro_flh.country_factor
+   pybalmorel.weatheryear.hydro_flh.fallback_flh
+   pybalmorel.weatheryear.hydro_flh.absolute_flh
+   pybalmorel.weatheryear.hydro_flh.absolute_flh_assignment_lines
+
+
+Module Contents
+---------------
+
+.. py:data:: RESERVOIR
+   :value: 'WTRRSFLH'
+
+
+.. py:data:: RUN_OF_RIVER
+   :value: 'WTRRRFLH'
+
+
+.. py:data:: HYDRO_SYMBOLS
+
+.. py:data:: PLAUSIBLE_DEVIATION
+   :value: 0.2
+
+
+.. py:data:: HOURS_PER_YEAR
+   :value: 8760
+
+
+.. py:function:: region_country(region: str) -> str
+
+   The country of a Balmorel region: its first two letters ('DE4-E' -> 'DE', 'FIN' -> 'FI', 'NO1' -> 'NO').
+
+
+.. py:function:: hydro_capacity(gkfx: pandas.DataFrame, ighyrs: pandas.DataFrame, ighyrr: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   The reservoir and run-of-river GKFX per area in `year`.
+
+   Columns are taken by position, as get_input may name them after the raw
+   GAMS domains.
+
+   Args:
+       gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+       ighyrs (pd.DataFrame): IGHYRS from get_input, ending in G.
+       ighyrr (pd.DataFrame): IGHYRR from get_input, ending in G.
+       year (int): The Y of GKFX.
+
+   Returns:
+       pd.DataFrame: Index area, columns 'WTRRSFLH' (reservoir) and
+           'WTRRRFLH' (run-of-river), MW.
+
+
+.. py:function:: area_countries(rrraaa: pandas.DataFrame) -> pandas.Series
+
+   The country of every area, from RRRAAA (from get_input, ending in (RRR, AAA)).
+
+
+.. py:function:: base_flh(wtrrsflh: pandas.DataFrame, wtrrrflh: pandas.DataFrame) -> pandas.DataFrame
+
+   Balmorel's base FLH per area, from WTRRSFLH and WTRRRFLH (from get_input, ending in (AAA, Value)).
+
+
+.. py:function:: load_balmorel_hydro_inputs(config: pybalmorel.weatheryear.config_models.HydroFlhConfig, gams_system_directory: str | None = None) -> tuple[pandas.DataFrame, pandas.Series, pandas.DataFrame]
+
+   Read hydro capacity, area countries and base FLH from the Balmorel model.
+
+   Capacity and countries come from `config.scenario`, the base FLH from the
+   'base' scenario, since the scenario's own FLH files are the ones being written.
+
+   Args:
+       config (HydroFlhConfig): The absolute-mode config.
+       gams_system_directory (str | None, optional): GAMS system directory.
+
+   Returns:
+       tuple[pd.DataFrame, pd.Series, pd.DataFrame]: Output of hydro_capacity,
+           area_countries and base_flh.
+
+
+.. py:function:: yearly_energy(inflow: pandas.DataFrame) -> pandas.DataFrame
+
+   The inflow energy per year and area (MWh), from hourly mean MW.
+
+
+.. py:function:: move_spilled_run_of_river(res: pandas.DataFrame, ror: pandas.DataFrame, capacity: pandas.DataFrame) -> tuple[pandas.DataFrame, pandas.DataFrame]
+
+   The yearly energies after moving run-of-river energy Balmorel can't take to the reservoir.
+
+   Per year and area, the spill is the run-of-river inflow above the
+   run-of-river capacity, summed over the hours (all of it without
+   run-of-river capacity). With reservoir capacity in the area it moves to
+   the reservoir; without, it stays and is reported.
+
+   Args:
+       res (pd.DataFrame): Hourly reservoir inflow (MW) per area.
+       ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area.
+       capacity (pd.DataFrame): Output of hydro_capacity.
+
+   Returns:
+       tuple[pd.DataFrame, pd.DataFrame]: Yearly reservoir and run-of-river
+           energy (MWh), index year, one column per area.
+
+
+.. py:function:: missing_columns(res: pandas.DataFrame, ror: pandas.DataFrame, capacity: pandas.DataFrame) -> dict[str, list[str]]
+
+   The (area, type) pairs with hydro capacity but no CorRES column, per symbol.
+
+
+.. py:function:: plausibility_failures(res: pandas.DataFrame, ror: pandas.DataFrame, capacity: pandas.DataFrame, countries: pandas.Series, reference: dict[str, float]) -> dict[str, str]
+
+   The countries whose CorRES inflow fails the plausibility check, with the reason.
+
+   A country fails if a reservoir column equals the run-of-river column of
+   the same area, if a column equals another area's column in either file,
+   if its long-term CorRES energy is more than PLAUSIBLE_DEVIATION from the
+   reference, or if CorRES covers its hydro capacity only partly or not at
+   all. A country missing from the reference can't be checked on its level
+   and is reported.
+
+   Args:
+       res (pd.DataFrame): Hourly reservoir inflow (MW) per area.
+       ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area.
+       capacity (pd.DataFrame): Output of hydro_capacity.
+       countries (pd.Series): Output of area_countries.
+       reference (dict[str, float]): Long-term Natural-Inflow Hydro per country (TWh/yr).
+
+   Returns:
+       dict[str, str]: Failing country -> reason.
+
+
+.. py:function:: country_factor(res: pandas.DataFrame, ror: pandas.DataFrame, areas: list[str], year: int) -> float
+
+   The relative factor of a country's CorRES inflow in `year`: its energy in `year` / its long-term mean.
+
+   1 if the country has no CorRES column.
+
+
+.. py:function:: fallback_flh(country: str, capacity: pandas.DataFrame, countries: pandas.Series, flh_base: pandas.DataFrame, factors: dict[str, pandas.Series], missing_factor: float, reference: dict[str, float]) -> pandas.DataFrame
+
+   The Hydro Inflow Fallback FLH for every hydro area and type of a country.
+
+   FLH_a,t = E_c x f_a,t x FLHbase_a,t / sum over the country of (FLHbase x K),
+   with E_c the reference long-term energy and f the relative factor of the
+   year: the pair's own, or the country's for a pair without a CorRES column
+   (1 in the long-term files). A missing FLHbase counts as 0, so that pair
+   gets no line. A country without a reference value gets FLHbase x f.
+
+   Args:
+       country (str): The country.
+       capacity (pd.DataFrame): Output of hydro_capacity.
+       countries (pd.Series): Output of area_countries.
+       flh_base (pd.DataFrame): Output of base_flh.
+       factors (dict[str, pd.Series]): The relative factor per area with a
+           CorRES column, for each symbol.
+       missing_factor (float): The factor for pairs without a CorRES column.
+       reference (dict[str, float]): Long-term Natural-Inflow Hydro per country (TWh/yr).
+
+   Returns:
+       pd.DataFrame: Index area, one column per symbol, NaN where the area
+           has no capacity or base FLH of that type.
+
+
+.. py:function:: absolute_flh(res: pandas.DataFrame, ror: pandas.DataFrame, res_factors: pandas.Series, ror_factors: pandas.Series, year: int, capacity: pandas.DataFrame, countries: pandas.Series, flh_base: pandas.DataFrame, reference: dict[str, float] = hydro_natural_inflow_twh) -> dict[str, tuple[pandas.Series, pandas.Series]]
+
+   The Absolute Hydro FLH of `year` and of the long term, per symbol.
+
+   Args:
+       res (pd.DataFrame): Hourly reservoir inflow (MW) per area, all years.
+       ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area, all years.
+       res_factors (pd.Series): The relative reservoir factor of `year` per area.
+       ror_factors (pd.Series): The relative run-of-river factor of `year` per area.
+       year (int): The weather year.
+       capacity (pd.DataFrame): Output of hydro_capacity.
+       countries (pd.Series): Output of area_countries.
+       flh_base (pd.DataFrame): Output of base_flh.
+       reference (dict[str, float], optional): Long-term Natural-Inflow Hydro
+           per country (TWh/yr). Defaults to the bundled table.
+
+   Returns:
+       dict[str, tuple[pd.Series, pd.Series]]: Symbol -> (FLH of `year`,
+           long-term FLH), indexed by area. Areas without a value get no line.
+
+
+.. py:function:: absolute_flh_assignment_lines(series: pandas.Series, symbol: str, header: str) -> pandas.DataFrame
+
+   Balmorel assignment lines setting `symbol` per area, after a header comment.
+
+   Args:
+       series (pd.Series): FLH per area.
+       symbol (str): 'WTRRSFLH' or 'WTRRRFLH'.
+       header (str): Comment line saying how the values were made.
+
+   Returns:
+       pd.DataFrame: A single column (symbol) of lines, for build_inc_file_list_type.
+
+

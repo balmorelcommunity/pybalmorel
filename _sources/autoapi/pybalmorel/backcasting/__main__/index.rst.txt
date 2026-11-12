@@ -1,0 +1,578 @@
+pybalmorel.backcasting.__main__
+===============================
+
+.. py:module:: pybalmorel.backcasting.__main__
+
+.. autoapi-nested-parse::
+
+   Validation through Backcasting
+
+   Download data from ENTSO-E and compare to Balmorel simulation of similar year
+
+   Created on 24.06.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.balmorel_to_category
+   pybalmorel.backcasting.__main__.entsoe_to_category
+   pybalmorel.backcasting.__main__.entsoe_queries
+   pybalmorel.backcasting.__main__.entsoe_capacity_queries
+   pybalmorel.backcasting.__main__.STORAGE_CHARGING_CATEGORIES
+   pybalmorel.backcasting.__main__.COMPARED_INSIDE
+   pybalmorel.backcasting.__main__.COMPARISON_REGIONS
+   pybalmorel.backcasting.__main__.INCOMPLETE_GENERATION
+   pybalmorel.backcasting.__main__.PRICE_DURATION_REGION_ORDER
+   pybalmorel.backcasting.__main__.style_option
+   pybalmorel.backcasting.__main__.output_dir_option
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.DataContainer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.__main__.format_entsoe_region_name
+   pybalmorel.backcasting.__main__.format_entsoe_data
+   pybalmorel.backcasting.__main__.load_entsoe_data
+   pybalmorel.backcasting.__main__.load_observed_nuclear
+   pybalmorel.backcasting.__main__.load_observed_generation
+   pybalmorel.backcasting.__main__.load_observed_prices
+   pybalmorel.backcasting.__main__.load_observed_load
+   pybalmorel.backcasting.__main__.format_balmorel_df
+   pybalmorel.backcasting.__main__.load_balmorel_data
+   pybalmorel.backcasting.__main__.calculate_statistics
+   pybalmorel.backcasting.__main__.aggregate_regions
+   pybalmorel.backcasting.__main__.map_technology_categories
+   pybalmorel.backcasting.__main__.balmorel_load_components
+   pybalmorel.backcasting.__main__.balmorel_prices_in_year
+   pybalmorel.backcasting.__main__.get_and_format_balmorel
+   pybalmorel.backcasting.__main__.get_and_format_entsoe
+   pybalmorel.backcasting.__main__.join_hourly
+   pybalmorel.backcasting.__main__.join_generation
+   pybalmorel.backcasting.__main__.load_components_table
+   pybalmorel.backcasting.__main__.load_and_align
+   pybalmorel.backcasting.__main__.plot_bar_chart
+   pybalmorel.backcasting.__main__.plot_price_profile
+   pybalmorel.backcasting.__main__.save_figure
+   pybalmorel.backcasting.__main__.plot_price_duration_curves
+   pybalmorel.backcasting.__main__.main
+   pybalmorel.backcasting.__main__.format
+   pybalmorel.backcasting.__main__.statistics
+   pybalmorel.backcasting.__main__.generation
+   pybalmorel.backcasting.__main__.prices
+   pybalmorel.backcasting.__main__.price_duration
+   pybalmorel.backcasting.__main__.flows
+   pybalmorel.backcasting.__main__.transmission_flow_limit
+   pybalmorel.backcasting.__main__.nuclear_availability
+   pybalmorel.backcasting.__main__.thermal_availability
+   pybalmorel.backcasting.__main__.must_run_floor
+   pybalmorel.backcasting.__main__.demand_profile
+   pybalmorel.backcasting.__main__.demand_level
+   pybalmorel.backcasting.__main__.vre_flh
+   pybalmorel.backcasting.__main__.download
+   pybalmorel.backcasting.__main__.ttf_csv
+   pybalmorel.backcasting.__main__.fuelprices
+   pybalmorel.backcasting.__main__.co2_tax
+
+
+Module Contents
+---------------
+
+.. py:data:: balmorel_to_category
+
+.. py:data:: entsoe_to_category
+
+.. py:data:: entsoe_queries
+   :value: ['load', 'day_ahead_prices', 'generation', 'crossborder_flows']
+
+
+.. py:data:: entsoe_capacity_queries
+   :value: ['installed_generation_capacity', 'unavailability_of_generation_units']
+
+
+.. py:data:: STORAGE_CHARGING_CATEGORIES
+   :value: ('ENDO_INTRASTO',)
+
+
+.. py:data:: COMPARED_INSIDE
+
+.. py:data:: COMPARISON_REGIONS
+
+.. py:data:: INCOMPLETE_GENERATION
+
+.. py:data:: PRICE_DURATION_REGION_ORDER
+   :value: ['DE', 'FR', 'NL', 'BE', 'AT', 'CH', 'PL', 'CZ', 'SK', 'HU', 'SI', 'HR', 'DK1', 'DK2', 'NO1',...
+
+
+.. py:class:: DataContainer(data_items)
+
+   Container for ENTSO-E data.
+
+
+.. py:function:: format_entsoe_region_name(path, year, parameter)
+
+.. py:function:: format_entsoe_data(df, resampling: str, filepath: pathlib.Path, year: int, parameter: str)
+
+   Format ENTSO-E data
+
+
+.. py:function:: load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = 'h')
+
+   Load the csvs for `year`
+
+
+.. py:function:: load_observed_nuclear(entsoe_data_path: str, year: int) -> dict[str, pandas.Series]
+
+   Hourly ENTSO-E nuclear output per canonical region, from the generation csv's.
+
+   Files of several zones in one canonical region are summed hour by hour. A
+   file without a 'Nuclear' column, or with only NaN or zeros in it, has no
+   nuclear.
+
+   Args:
+       entsoe_data_path (str): Folder with the fetched generation csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       dict[str, pd.Series]: Nuclear output (MW) indexed by UTC hour, per region.
+
+
+.. py:function:: load_observed_generation(entsoe_data_path: str, year: int) -> dict[str, pandas.DataFrame]
+
+   Hourly ENTSO-E output per canonical region and production type, from the generation csv's.
+
+   Files of several zones in one canonical region are summed hour by hour.
+
+   Args:
+       entsoe_data_path (str): Folder with the fetched generation csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       dict[str, pd.DataFrame]: Output (MW) indexed by UTC hour, one column
+           per production type, per region.
+
+
+.. py:function:: load_observed_prices(entsoe_data_path: str, year: int) -> pandas.DataFrame
+
+   Hourly ENTSO-E day-ahead price per bidding zone, from the day_ahead_prices csv's.
+
+   Args:
+       entsoe_data_path (str): Folder with the fetched day_ahead_prices csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Price (nominal €/MWh) indexed by UTC hour, one column per zone.
+
+
+.. py:function:: load_observed_load(entsoe_data_path: str, year: int) -> pandas.DataFrame
+
+   Hourly ENTSO-E actual load per bidding zone, from the load csv's.
+
+   IE's load is Ireland's control area, not the all-island IE_SEM zone (see
+   pybalmorel.entsoe.load_zones).
+
+   Args:
+       entsoe_data_path (str): Folder with the fetched load csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Load (MW) indexed by UTC hour, one column per zone.
+
+
+.. py:function:: format_balmorel_df(df: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Sum Balmorel results per region (and technology) and map (S,T) onto UTC time.
+
+   Args:
+       df (pd.DataFrame): MainResults symbol with 'Region', 'Season', 'Time'
+           and 'Value' columns, optionally 'Technology'.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Columns 'Time' (UTC timestamps), 'Region', optionally
+           'Technology', and 'Value'.
+
+
+.. py:function:: load_balmorel_data(scenario_name: str, scenario_folder_path: str, year: int, overwrite: bool)
+
+   Load df from MainResults
+
+
+.. py:function:: calculate_statistics(df: pandas.DataFrame, timeslicing: int = 0, per_region: bool = False)
+
+   Get std. dev, mean, max etc...
+
+
+.. py:function:: aggregate_regions(df: pandas.DataFrame, aggfunc: str, time_columns: list, translation: dict[str, str] = bidding_zone_translation)
+
+   Aggregate DE4, IT-* etc, or the regions of `translation`
+
+
+.. py:function:: map_technology_categories(df: pandas.DataFrame, mapping: dict[str, str], source: str, allow_unmapped: bool = False) -> pandas.DataFrame
+
+   Map 'Technology' onto the overarching categories and sum per region, category and hour.
+
+   A technology missing from `mapping` is never dropped: it raises, or with
+   `allow_unmapped` it is compared as UNMAPPED_CATEGORY.
+
+   Args:
+       df (pd.DataFrame): Hourly generation (MW) with columns 'Region',
+           'Technology', 'Time' and 'Value'.
+       mapping (dict[str, str]): Technology -> category, e.g. entsoe_to_category.
+       source (str): 'Balmorel' or 'ENTSO-E', named in the error.
+       allow_unmapped (bool, optional): Put unmapped technologies in
+           UNMAPPED_CATEGORY instead of raising. Defaults to False.
+
+   Raises:
+       ValueError: If a technology is not in `mapping` and `allow_unmapped` is False.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Technology', 'Time' and 'Value'.
+
+
+.. py:function:: balmorel_load_components(load: pandas.DataFrame) -> pandas.DataFrame
+
+   Annual Balmorel load (TWh) per region and load category.
+
+   Args:
+       load (pd.DataFrame): EL_DEMAND_YCRST of the Backcast Year, with
+           'Region', 'Category' and 'Value' (MW per hour).
+
+   Returns:
+       pd.DataFrame: Columns 'Region' (DE4-* and LU as DE, IT-* as IT, see
+           COMPARISON_REGIONS), 'Category',
+           'BALMOREL' (TWh) and 'Excluded' (True for storage charging, which
+           the comparison leaves out).
+
+
+.. py:function:: balmorel_prices_in_year(prices: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Convert Balmorel's prices from the Price Year (€2016) to nominal euros of `year`.
+
+   Args:
+       prices (pd.DataFrame): Balmorel prices with a 'Value' column.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: A copy of `prices` with 'Value' in nominal euros of `year`.
+
+
+.. py:function:: get_and_format_balmorel(balmorel_scenario, balmorel_scenario_path, year, elpriceaggfunc, overwrite, allow_unmapped: bool = False)
+
+.. py:function:: get_and_format_entsoe(entsoe_data_path, year, elpriceaggfunc, allow_unmapped: bool = False)
+
+.. py:function:: join_hourly(entsoe: pandas.DataFrame, balmorel: pandas.DataFrame, year: int, quantity: str) -> pandas.DataFrame
+
+   Join hourly ENTSO-E and Balmorel values on (Region, Time), keeping the hours both have.
+
+   Warns, per region in both, when either side has fewer hours than the
+   Backcast Calendar, since the comparison then leaves those hours out.
+
+   Args:
+       entsoe (pd.DataFrame): Columns 'Region', 'Time' and 'Value'.
+       balmorel (pd.DataFrame): Columns 'Region', 'Time' and 'Value'.
+       year (int): The Backcast Year.
+       quantity (str): What is joined, e.g. 'load', named in the warning.
+
+   Returns:
+       pd.DataFrame: Index (Region, Time), columns 'ENTSOE' and 'BALMOREL'.
+
+
+.. py:function:: join_generation(entsoe: pandas.DataFrame, balmorel: pandas.DataFrame, regions: set[str], year: int) -> pandas.DataFrame
+
+   Join hourly generation per category on the full grid of the Backcast Calendar.
+
+   MainResults leaves out zeros, so a category Balmorel has no row for in an
+   hour produced 0. ENTSO-E's missing categories are 0 too, but only in
+   hours where ENTSO-E reports some generation for the region; a region-hour
+   without any ENTSO-E generation is left out on both sides, and so are the
+   regions in INCOMPLETE_GENERATION.
+
+   Args:
+       entsoe (pd.DataFrame): Columns 'Region', 'Technology', 'Time' and 'Value'.
+       balmorel (pd.DataFrame): Columns 'Region', 'Technology', 'Time' and 'Value'.
+       regions (set[str]): The regions both datasets have.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index (Region, Technology, Time), columns 'ENTSOE' and 'BALMOREL'.
+
+
+.. py:function:: load_components_table(components: pandas.DataFrame, entsoe_load: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Balmorel's annual load per category next to ENTSO-E's annual load, per region.
+
+   Args:
+       components (pd.DataFrame): Output of balmorel_load_components.
+       entsoe_load (pd.DataFrame): Hourly ENTSO-E load (MW) with 'Region',
+           'Time' and 'Value'.
+       year (int): The Backcast Year; ENTSO-E is summed over its Backcast Calendar.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Category', 'BALMOREL', 'Excluded' and
+           'ENTSOE' (TWh). Per region, a 'Total compared' row sums the
+           categories that aren't excluded and holds ENTSO-E's annual load.
+
+
+.. py:function:: load_and_align(balmorel_scenario: str, balmorel_scenario_path: str, entsoe_data_path: str, year: int, elpriceaggfunc: str, overwrite: bool, percentile: float = OBSERVED_FLOW_PERCENTILE, allow_unmapped: bool = False)
+
+.. py:function:: plot_bar_chart(df: pandas.DataFrame, columns_to_keep: list = [], per_region: bool = False, style: str = 'light') -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Stacked bars of ENTSO-E's and Balmorel's annual generation.
+
+   Each stack segment has a thin edge in the theme's surface colour, so
+   neighbouring segments of similar colour stay apart.
+
+   Args:
+       df (pd.DataFrame): Index (Region, Technology, Time), columns 'ENTSOE'
+           and 'BALMOREL' in MWh, as in generation.csv.
+       columns_to_keep (list, optional): Index levels the bars are stacked
+           by, e.g. ['Technology']. Defaults to [].
+       per_region (bool, optional): Draw a pair of bars per region instead
+           of one pair in total, Balmorel's left of the region's tick and
+           ENTSO-E's right of it. Defaults to False.
+       style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
+
+   Returns:
+       tuple[Figure, Axes]: The figure and its axes.
+
+
+.. py:function:: plot_price_profile(prices: pandas.DataFrame, style: str = 'light') -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Daily mean prices of ENTSO-E and Balmorel over the Backcast Year.
+
+   Args:
+       prices (pd.DataFrame): Columns or index levels 'Time', 'ENTSOE' and
+           'BALMOREL' (nominal €/MWh of the Backcast Year), as in prices.csv.
+       style (str, optional): 'light' or 'dark', see plot_style. Defaults to 'light'.
+
+   Returns:
+       tuple[Figure, Axes]: The figure and its axes.
+
+
+.. py:function:: save_figure(fig: matplotlib.figure.Figure, output_dir: pathlib.Path, file_name: str, style: str, **kwargs) -> pathlib.Path
+
+   Save a figure in output_dir, with a transparent background in the dark style.
+
+   Args:
+       fig (Figure): The figure to save.
+       output_dir (Path): Folder to save in, created if missing.
+       file_name (str): File name, e.g. 'prices.png'.
+       style (str): The style the figure was drawn in, 'light' or 'dark'.
+       **kwargs: Passed on to Figure.savefig, e.g. dpi or bbox_inches.
+
+   Returns:
+       Path: The saved file.
+
+
+.. py:function:: plot_price_duration_curves(prices: pandas.DataFrame, title: str, ylim: tuple[float, float] = (-60, 320), style: str = 'light') -> tuple[matplotlib.figure.Figure, numpy.ndarray]
+
+   Price duration curves of ENTSO-E and Balmorel, pooled and per region.
+
+   One large panel pools all region-hours; small multiples follow per region
+   in PRICE_DURATION_REGION_ORDER, then any other region alphabetically.
+   Every panel has the same, clipped y-range; the subtitle says how many
+   region-hours each side has outside it.
+
+   Args:
+       prices (pd.DataFrame): Columns 'Region', 'ENTSOE' and 'BALMOREL'
+           (nominal €/MWh of the Backcast Year), as in prices.csv.
+       title (str): Figure title.
+       ylim (tuple[float, float], optional): Y-range in €/MWh. Defaults to (-60, 320).
+       style (str, optional): 'light' or 'dark', see plot_style. 'light' has an
+           off-white background, 'dark' a transparent one. Defaults to 'light'.
+
+   Returns:
+       tuple[Figure, np.ndarray]: The figure and its axes, pooled panel first.
+
+
+.. py:data:: style_option
+
+.. py:data:: output_dir_option
+
+.. py:function:: main()
+
+.. py:function:: format(balmorel_scenario, balmorel_scenario_path, entsoe_data_path, year, elpriceaggfunc, overwrite, percentile, allow_unmapped)
+
+.. py:function:: statistics(balmorel_scenario_path)
+
+.. py:function:: generation(balmorel_scenario_path, style, output_dir)
+
+   Plot ENTSO-E vs Balmorel annual generation per technology category.
+
+   Saves generation.png, in total, and generation_per_region.png.
+
+
+.. py:function:: prices(balmorel_scenario_path, style, output_dir)
+
+   Plot daily mean ENTSO-E vs Balmorel prices, saved as prices.png.
+
+
+.. py:function:: price_duration(balmorel_scenario_path, ylim, style, output_dir)
+
+   Plot price duration curves of Balmorel vs ENTSO-E, pooled and per region.
+
+   Reads <balmorel-scenario-path>/backcastoutput/prices.csv from `format`, in
+   nominal euros of the Backcast Year, and saves price_duration_curves.png.
+
+
+.. py:function:: flows(balmorel_scenario_path, style, output_dir)
+
+   Plot duration curves of Balmorel vs ENTSO-E flows per directed border.
+
+   Saves flow_duration_curves.png.
+
+
+.. py:function:: transmission_flow_limit(balmorel_scenario_path, entsoe_data_path, year, percentile)
+
+   Write XKFX_ENTSOE.inc: backcast transmission overrides from the ENTSO-E Observed Flow Limit.
+
+   Reads the scenario's current XKFX borders, fetches matching ENTSO-E
+   cross-border flows for YEAR, and writes/updates
+   <balmorel-scenario-path>/data/XKFX_ENTSOE.inc plus the $include in XKFX.inc.
+   See CONTEXT.md and docs/adr/0005, 0006, 0010.
+
+
+.. py:function:: nuclear_availability(balmorel_scenario_path, entsoe_data_path, year, reload_input)
+
+   Write GKRATE_ENTSOE.inc: weekly Nuclear Availability from ENTSO-E nuclear output.
+
+   Per country and Backcast Calendar week: the highest hourly nuclear output
+   in the generation csv's under ENTSOE_DATA_PATH (from `download --query
+   generation`), divided by the country's nuclear GKFX in YEAR, clipped at 1.
+   Writes <balmorel-scenario-path>/data/GKRATE_ENTSOE.inc, which the scenario's
+   GKRATE.inc must include. See CONTEXT.md.
+
+
+.. py:function:: thermal_availability(balmorel_scenario_path, entsoe_data_path, year, reload_input)
+
+   Write GKRATE_THERMAL_ENTSOE.inc: weekly Thermal Availability from ENTSO-E capacity and outages.
+
+   Per country, fuel group and Backcast Calendar week: ENTSO-E's installed
+   capacity in YEAR as a share of the group's GKFX (at most 1), less the share
+   reported out of service that week (from `download --query
+   installed_generation_capacity --query unavailability_of_generation_units`).
+   Writes <balmorel-scenario-path>/data/GKRATE_THERMAL_ENTSOE.inc, which the
+   scenario's GKRATE.inc must include, and backcastoutput/thermal_capacity.csv,
+   which checks GKFX against installed capacity and observed output. See CONTEXT.md.
+
+
+.. py:function:: must_run_floor(balmorel_scenario_path, entsoe_data_path, year, price_threshold, min_hours, every_week, reload_input)
+
+   Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks.
+
+   Per country, fuel group and Backcast Calendar week: the lowest hourly
+   output in the generation csv's under ENTSOE_DATA_PATH, for weeks with at
+   least MIN_HOURS day-ahead prices at or below PRICE_THRESHOLD, and for the
+   --every-week groups in all weeks. Capped at Balmorel's available capacity,
+   so run thermal-availability first. Writes MUSTRUN_ZONE, MUSTRUN_ZONE_RRR,
+   MUSTRUN_GROUP, MUSTRUN_GROUP_FFF and, last, MUSTRUN_FLOOR (.inc) to
+   <balmorel-scenario-path>/data/; MUSTRUN_FLOOR.inc switches Balmorel's
+   MUSTRUN addon on. See CONTEXT.md.
+
+
+.. py:function:: demand_profile(balmorel_scenario_path, entsoe_data_path, year, reload_input)
+
+   Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load.
+
+   Per Balmorel region with electricity demand: the hourly ENTSO-E load of
+   its canonical region in YEAR (from `download --query load`) on the
+   Backcast Calendar, as DE_VAR_T for the users OTHER and RESE. Implausible
+   hours are interpolated. Writes <balmorel-scenario-path>/data/DE_VAR_T_ENTSOE.inc
+   and appends its $include to the scenario's DE_VAR_T.inc. Rerun after
+   writing new weather-year data, which overwrites DE_VAR_T.inc. See CONTEXT.md.
+
+
+.. py:function:: demand_level(balmorel_scenario_path, entsoe_data_path, year, basis, coverage_bounds, eurostat_data_path, reload_input, heat, load_results)
+
+   Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.
+
+   Per region: ENTSO-E's load in YEAR (from `download --query load`) less
+   what the previous backcast run added on top of DE: its transmission
+   losses, the electricity it used for heat (ENDOGENOUS_ELECT2HEAT), and
+   its distribution losses on anything but exogenous demand (on that
+   heating, and on wind and solar output); all net of Balmorel's
+   distribution losses. That heating responds to prices, so solve, `format`, and run this again for
+   as long as the printed residual keeps falling. With --heat eurostat (the
+   first run of a new backcast year), Eurostat's electricity for household
+   space and water heating and for district heating is left out instead.
+   Split over regions and users by the input data's DE. Eurostat responses
+   are fetched once and cached. Writes <balmorel-scenario-path>/data/DE_ENTSOE.inc,
+   which the scenario's DE.inc, INDUSTRY_DE.inc and INDIVUSERS_DE.inc must
+   include, and backcastoutput/demand_level.csv. See CONTEXT.md and
+   docs/adr/0015.
+
+
+.. py:function:: vre_flh(balmorel_scenario_path, entsoe_data_path, year, bounds, reload_input)
+
+   Write WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc: VRE full-load hours scaled to ENTSO-E output.
+
+   Per country and kind (solar, onshore, offshore): one factor that makes
+   Balmorel's available output in YEAR (GKFX x FLH x GKRATE) equal ENTSO-E's
+   reported output (from `download --query generation`), applied to the
+   full-load hours of every area of that country and kind. Writes both files
+   to <balmorel-scenario-path>/data/, appends their $include to the
+   scenario's WNDFLH.inc and SOLEFLH.inc, and writes backcastoutput/vre_flh.csv.
+   Rerun after every weather-year run, which overwrites WNDFLH.inc and
+   SOLEFLH.inc. See CONTEXT.md.
+
+
+.. py:function:: download(entsoe_data_path, year, queries)
+
+   Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-flow-limit`.
+
+   Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
+   every neighbouring pair of them. IE's load is fetched for Ireland's
+   control area instead of the all-island IE_SEM zone. Files already downloaded, and pairs
+   ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
+   failed requests.
+
+
+.. py:function:: ttf_csv(html_path, historicalprices_path)
+
+   Split a saved Yahoo Finance TTF=F history page into natural_gas_TTF_<year>.csv.
+
+   HTML_PATH is the page https://finance.yahoo.com/quote/TTF%3DF/history/
+   saved from a browser, covering any number of years. One CSV per year is
+   written to HISTORICALPRICES_PATH in the format the fuelprices command reads.
+
+
+.. py:function:: fuelprices(balmorel_scenario_path, historicalprices_path, year)
+
+   Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: (S,T)-resolved historical
+   NATGAS/COAL prices for backcasting.
+
+   Reads HISTORICALPRICES_PATH's CSVs, converts them to the Price Year
+   (EUR2016, bundled HICP and EUR/USD tables), maps them onto the UTC Backcast
+   Calendar and writes <balmorel-scenario-path>/data/FUELPRICE.inc and
+   FUELPRICE_CONSTANT.inc. See docs/adr/0001-fuelprice-season-term-resolution.md
+   in the Balmorel repo. Warns if balopt.opt doesn't set
+   FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT (it is never edited).
+
+
+.. py:function:: co2_tax(balmorel_scenario_path, historicalprices_path, year, co2_overrides)
+
+   Write TAX_CO2_ST.inc: (S,T)-resolved historical CO2 tax for backcasting.
+
+   Reads the EEX EUA primary-auction report for YEAR under
+   HISTORICALPRICES_PATH, converts it to the Price Year (EUR2016), maps it onto
+   the UTC Backcast Calendar and writes <balmorel-scenario-path>/data/TAX_CO2_ST.inc.
+   See docs/adr/0002-co2-tax-season-term-resolution.md in the Balmorel repo.
+   Warns if balopt.opt doesn't set TAX_CO2_DOL=YYY_CCC_SSS_TTT (it is never edited).
+
+

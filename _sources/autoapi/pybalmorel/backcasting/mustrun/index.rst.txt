@@ -1,0 +1,231 @@
+pybalmorel.backcasting.mustrun
+==============================
+
+.. py:module:: pybalmorel.backcasting.mustrun
+
+.. autoapi-nested-parse::
+
+   Must-run Floor
+
+   Turn ENTSO-E's observed generation and day-ahead prices into the data of
+   Balmorel's MUSTRUN addon: per canonical region, fuel group and Backcast
+   Calendar week, the lowest hourly output the group kept in a week where it
+   would have paid to stop (see CONTEXT.md). Writes MUSTRUN_ZONE.inc,
+   MUSTRUN_ZONE_RRR.inc, MUSTRUN_GROUP.inc, MUSTRUN_GROUP_FFF.inc and, last,
+   MUSTRUN_FLOOR.inc, whose existence switches the addon on.
+
+   Created on 28.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.mustrun.PRICE_THRESHOLD
+   pybalmorel.backcasting.mustrun.MIN_HOURS
+   pybalmorel.backcasting.mustrun.EVERY_WEEK_GROUPS
+   pybalmorel.backcasting.mustrun.MIN_FLOOR
+   pybalmorel.backcasting.mustrun.MUSTRUN_FILES
+   pybalmorel.backcasting.mustrun.GENERATED_HEADER
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.mustrun.group_output
+   pybalmorel.backcasting.mustrun.region_prices
+   pybalmorel.backcasting.mustrun.must_run_floors
+   pybalmorel.backcasting.mustrun.available_capacity
+   pybalmorel.backcasting.mustrun.cap_floors
+   pybalmorel.backcasting.mustrun._set_file
+   pybalmorel.backcasting.mustrun.write_must_run_files
+   pybalmorel.backcasting.mustrun.floor_summary
+   pybalmorel.backcasting.mustrun.generate_must_run_floor
+
+
+Module Contents
+---------------
+
+.. py:data:: PRICE_THRESHOLD
+   :value: 40.0
+
+
+.. py:data:: MIN_HOURS
+   :value: 4
+
+
+.. py:data:: EVERY_WEEK_GROUPS
+   :value: ('BIOMASS', 'WASTE')
+
+
+.. py:data:: MIN_FLOOR
+   :value: 1.0
+
+
+.. py:data:: MUSTRUN_FILES
+   :value: ('MUSTRUN_ZONE', 'MUSTRUN_ZONE_RRR', 'MUSTRUN_GROUP', 'MUSTRUN_GROUP_FFF', 'MUSTRUN_FLOOR')
+
+
+.. py:data:: GENERATED_HEADER
+   :value: Multiline-String
+
+   .. raw:: html
+
+      <details><summary>Show Value</summary>
+
+   .. code-block:: python
+
+      """* Must-run floor from ENTSO-E output in low-price weeks (see CONTEXT.md) - generated, do not hand-edit
+      """
+
+   .. raw:: html
+
+      </details>
+
+
+
+.. py:function:: group_output(generation: dict[str, pandas.DataFrame]) -> pandas.DataFrame
+
+   Hourly observed output per canonical region and fuel group.
+
+   Args:
+       generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per
+           canonical region, one column per production type, with the
+           zones of a region already summed.
+
+   Returns:
+       pd.DataFrame: Index UTC hour, columns (Region, Group), MW. A group
+           none of whose production types a region reports is left out.
+
+
+.. py:function:: region_prices(prices: pandas.DataFrame, load: pandas.DataFrame) -> pandas.DataFrame
+
+   Hourly day-ahead price per canonical region, weighted by the load of its zones.
+
+   An hour without load for any priced zone of the region takes the plain mean.
+
+   Args:
+       prices (pd.DataFrame): Hourly price (€/MWh) indexed by UTC hour, one column per zone.
+       load (pd.DataFrame): Hourly load (MW) indexed by UTC hour, one column per zone.
+
+   Returns:
+       pd.DataFrame: Index UTC hour, one column per canonical region.
+
+
+.. py:function:: must_run_floors(output: pandas.DataFrame, prices: pandas.DataFrame, year: int, price_threshold: float = PRICE_THRESHOLD, min_hours: int = MIN_HOURS, every_week: tuple[str, ...] = EVERY_WEEK_GROUPS) -> pandas.DataFrame
+
+   The observed must-run floor per canonical region, fuel group and Backcast Calendar week.
+
+   The floor is the week's lowest hourly output over all its hours, for
+   every-week groups and for weeks with at least `min_hours` hours priced at
+   or below `price_threshold`. A week with less than half its hours of
+   output data gets no floor, nor does a floor below MIN_FLOOR.
+
+   Args:
+       output (pd.DataFrame): Output of group_output.
+       prices (pd.DataFrame): Output of region_prices.
+       year (int): The Backcast Year.
+       price_threshold (float, optional): Nominal €/MWh. Defaults to PRICE_THRESHOLD.
+       min_hours (int, optional): Low-price hours a week needs. Defaults to MIN_HOURS.
+       every_week (tuple[str, ...], optional): Groups floored every week.
+           Defaults to EVERY_WEEK_GROUPS.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Group', 'Season', 'Floor' (MW, NaN
+           without one), 'LowPriceHours' and 'ObservedTWh', one row per
+           region, group and week with output data.
+
+
+.. py:function:: available_capacity(capacity: pandas.DataFrame, gkrate: pandas.DataFrame) -> pandas.DataFrame
+
+   Available capacity K = sum of GKFX x GKRATE per canonical region, group and week.
+
+   Where GKRATE is not set, the rating is 1. A stored 0 is GAMS eps, since
+   a GDX file doesn't store zeros, so it counts as 0.
+
+   Args:
+       capacity (pd.DataFrame): Output of thermal.group_capacity.
+       gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Group', 'Season' and 'K' (MW).
+
+
+.. py:function:: cap_floors(floors: pandas.DataFrame, capacity: pandas.DataFrame, gkrate: pandas.DataFrame, balmorel_regions: list[str]) -> pandas.DataFrame
+
+   Cap the floors at Balmorel's available capacity, and drop those Balmorel can't meet at all.
+
+   Floors of a canonical region without a Balmorel region are dropped. A
+   group without GKFX in a region gets no floor and a warning; a floor
+   above K is capped and warns.
+
+   Args:
+       floors (pd.DataFrame): Output of must_run_floors.
+       capacity (pd.DataFrame): Output of thermal.group_capacity.
+       gkrate (pd.DataFrame): GKRATE from get_input, ending in (AAA, G, SSS, Value).
+       balmorel_regions (list[str]): The scenario's RRR.
+
+   Returns:
+       pd.DataFrame: `floors` of the modelled regions, with 'K' (MW) and 'Capped' added.
+
+
+.. py:function:: _set_file(declaration: str, members: list[str]) -> str
+
+.. py:function:: write_must_run_files(floors: pandas.DataFrame, balmorel_regions: list[str], fuels: list[str], scenario_data_path: str | pathlib.Path) -> list[pybalmorel.classes.IncFile]
+
+   Write the five MUSTRUN files, MUSTRUN_FLOOR.inc last, since it switches the addon on.
+
+   Args:
+       floors (pd.DataFrame): Output of cap_floors; rows without a floor are ignored.
+       balmorel_regions (list[str]): The scenario's RRR, to list the regions of each zone.
+       fuels (list[str]): The scenario's FFF; group fuels outside it are left out.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       list[IncFile]: The saved IncFile instances, in the order written.
+
+
+.. py:function:: floor_summary(floors: pandas.DataFrame) -> pandas.DataFrame
+
+   Per zone and group: weeks floored, floor min/median/max (GW), floored and observed TWh.
+
+   Args:
+       floors (pd.DataFrame): Output of must_run_floors or cap_floors.
+
+   Returns:
+       pd.DataFrame: Index (Region, Group), sorted by floored TWh, largest first.
+
+
+.. py:function:: generate_must_run_floor(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, generation: dict[str, pandas.DataFrame], prices: pandas.DataFrame, load: pandas.DataFrame, price_threshold: float = PRICE_THRESHOLD, min_hours: int = MIN_HOURS, every_week: tuple[str, ...] = EVERY_WEEK_GROUPS, gams_system_directory: str | None = None, reload_input: bool = False) -> list[pybalmorel.classes.IncFile]
+
+   Write the MUSTRUN files and backcastoutput/must_run_floor.csv for a scenario.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the floor for.
+       year (int): The Backcast Year.
+       generation (dict[str, pd.DataFrame]): Hourly ENTSO-E output per
+           canonical region and production type.
+       prices (pd.DataFrame): Hourly day-ahead price per zone.
+       load (pd.DataFrame): Hourly load per zone, to weight the prices of a region's zones.
+       price_threshold (float, optional): Nominal €/MWh. Defaults to PRICE_THRESHOLD.
+       min_hours (int, optional): Low-price hours a week needs. Defaults to MIN_HOURS.
+       every_week (tuple[str, ...], optional): Groups floored every week.
+           Defaults to EVERY_WEEK_GROUPS.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+
+   Raises:
+       ValueError: If an every-week group isn't a fuel group.
+
+   Returns:
+       list[IncFile]: The saved IncFile instances; empty if no floor qualifies.
+
+

@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Take the Demand Level net of the model’s own electric heating, iterated over runs &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="About this code" href="../about.html" />
+    <link rel="prev" title="Rate thermal capacity from installed capacity and outages, not observed output" href="0014-thermal-availability-from-capacity-and-outages.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../developing.html">Developing pybalmorel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../developing.html#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../developing.html#architecture-decisions">Architecture Decisions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-ground-source-heat-pump-cop-excluded-from-weatheryear.html">Ground-source heat pump COP is excluded from the weatheryear pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-vectorize-symbol-to-df-with-gams-transfer.html">Vectorize symbol_to_df via gams.transfer instead of per-record iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0003-canonical-technology-identity-for-weatheryear-name-building.html">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0005-observed-max-flow-not-ntc-for-backcasting.html">Use observed max flow, not NTC, as the transmission constraint for backcasting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0006-xkfx-override-file-not-regeneration.html">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0007-split-entsoe-and-backcasting-packages.html">Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0008-backcast-calendar-utc.html">Backcast calendar uses UTC, not local time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0009-price-year-bundled-deflator-table.html">Bundle the Price Year deflator and exchange-rate tables instead of fetching or passing them</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0010-observed-flow-limit-percentile.html">Cap backcast transmission at a percentile of observed flow, not its maximum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0011-absolute-hydro-flh-with-observed-fallback.html">Take the hydro inflow level from CorRES, with an observed long-term fallback</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0012-vre-level-from-observed-output.html">Scale weather-year VRE full-load hours to the backcast year’s observed output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0013-nuclear-availability-from-weekly-maximum-output.html">Rate nuclear per week from its highest observed output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0014-thermal-availability-from-capacity-and-outages.html">Rate thermal capacity from installed capacity and outages, not observed output</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Take the Demand Level net of the model’s own electric heating, iterated over runs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#considered-options">Considered options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developing.html">Developing pybalmorel</a></li>
+      <li class="breadcrumb-item active">Take the Demand Level net of the model’s own electric heating, iterated over runs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0015-demand-level-net-of-the-models-own-heating.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="take-the-demand-level-net-of-the-model-s-own-electric-heating-iterated-over-runs">
+<span id="take-the-demand-level-net-of-the-models-own-electric-heating-iterated-over-runs"></span><h1>Take the Demand Level net of the model’s own electric heating, iterated over runs<a class="headerlink" href="#take-the-demand-level-net-of-the-model-s-own-electric-heating-iterated-over-runs" title="Link to this heading"></a></h1>
+<p>Balmorel adds electric heating (<code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code>, E2H) and
+transmission losses on top of the exogenous demand <code class="docutils literal notranslate"><span class="pre">DE</span></code>. ENTSO-E’s load
+contains both. So the Demand Level has to leave out the heating Balmorel
+adds back, with the same scope, or every country’s load gap carries the
+difference into generation, prices and flows.</p>
+<p>The first Demand Level, variant (a′), left out Eurostat’s electricity for
+heating, H: household space and water heating, plus electric boilers and
+heat pumps in district heating. Balmorel’s E2H covers more: industrial
+process heat, services heating, and individual users. In <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code>
+of 2026-11-04, solved with (a′), Balmorel’s load matched ENTSO-E’s at
+system level (2,694.7 against 2,699.6 TWh), but the country gaps summed to
+175 TWh in absolute terms, nearly all of it E2H − H: IT +50.6 TWh (E2H − H
++45.5), FR −25.5 (−24.7), NO −13.5 (−13.6). The system match itself hid
+offsetting errors (LU left out of the Balmorel side, <code class="docutils literal notranslate"><span class="pre">DE</span></code> 0.27% low).
+(a′) also counted transmission losses twice, about 20 TWh in that run,
+and the distribution losses Balmorel books on wind and solar output,
+about 7 TWh.</p>
+<p>The Demand Level of canonical region k is now</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>X_k = (L_k − T_k − E_k − O_k)(1 − d_k)
+</pre></div>
+</div>
+<p>with L_k ENTSO-E’s load, d_k the distribution loss, and T_k, E_k and O_k
+the previous backcast run’s transmission losses, electricity for heat, and
+distribution losses on anything but exogenous demand (on its electric
+heating, and the 1–2% of wind and solar output Balmorel books as
+distribution loss), summed over k’s Balmorel regions and scaled from the
+calendar’s 8736 hours to Balmorel’s 8760. Balmorel’s load as <code class="docutils literal notranslate"><span class="pre">format</span></code>
+compares it, <code class="docutils literal notranslate"><span class="pre">EXO</span> <span class="pre">+</span> <span class="pre">E2H</span> <span class="pre">+</span> <span class="pre">DIST_LOSSES</span> <span class="pre">+</span> <span class="pre">TRANS_LOSSES</span></code>, then equals L_k
+exactly, as long as E2H and the losses stay as they were.</p>
+<p>They don’t, because E2H responds to prices: lower <code class="docutils literal notranslate"><span class="pre">DE</span></code> gives lower prices
+and more electric heating, roughly −0.3 TWh of E2H per TWh of <code class="docutils literal notranslate"><span class="pre">DE</span></code> in
+Europe (−0.06 in IT to −0.59 in ES, from two runs that differed in more
+than <code class="docutils literal notranslate"><span class="pre">DE</span></code>). The level is therefore a fixed-point iteration over runs,
+<code class="docutils literal notranslate"><span class="pre">X_{n+1}</span> <span class="pre">=</span> <span class="pre">(L</span> <span class="pre">−</span> <span class="pre">T_n</span> <span class="pre">−</span> <span class="pre">E_n</span> <span class="pre">−</span> <span class="pre">O_n)(1</span> <span class="pre">−</span> <span class="pre">d)</span></code>, which converges for any slope between
+−1 and 0, with the error shrinking by about that factor each run.
+<code class="docutils literal notranslate"><span class="pre">demand-level</span> <span class="pre">--heat</span> <span class="pre">model</span></code> is the default. Each run prints the previous
+run’s residual, X less that run’s exogenous load, summed over Europe and
+summed in absolute terms over countries. The user decides when to stop:
+nothing caps the number of runs, and about 10 TWh summed over countries is
+the guidance, since other errors remain. The first run of a new Backcast
+Year has no previous run, so it takes <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code>, which is (a′).</p>
+<section id="considered-options">
+<h2>Considered options<a class="headerlink" href="#considered-options" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Keep (a′).</strong> It needs no previous run, and its system total was close.
+Rejected: the scope difference E2H − H lands in each country’s load, so
+a supply-side comparison per country inherits it (IT’s generation and
+imports are compared against 50 TWh of demand that ENTSO-E never saw).</p></li>
+<li><p><strong>Fix the scope of E2H in base data</strong>, so that Balmorel’s electric
+heating matches Eurostat’s scope and (a′) becomes exact. Rejected for
+now: it changes base data that other scenarios use (backcast corrections
+stay in override files, ADR 0006), Eurostat has no split of electric
+heating in services and industry to match, and transmission losses would
+still be in the gap.</p></li>
+<li><p><strong>An enforced stop rule or a relaxation factor</strong> (<code class="docutils literal notranslate"><span class="pre">X_new</span> <span class="pre">=</span> <span class="pre">ωX</span> <span class="pre">+</span> <span class="pre">(1−ω)X_prev</span></code>).
+Not built: with a slope near −0.3 plain iteration converges in two or
+three runs, and the user prefers to judge the residual. Relaxation can be
+added if a country oscillates.</p></li>
+</ul>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>A country’s total load is a Calibration Input at every level, the
+system’s and each country’s, up to the last residual. The evidence on
+demand is E2H against H per country (<code class="docutils literal notranslate"><span class="pre">E2H_minus_H_TWh</span></code> in
+<code class="docutils literal notranslate"><span class="pre">demand_level.csv</span></code>), read knowing the scopes differ. IT’s E2H barely
+responds to prices, so its excess is structural (capacity or heat-demand
+allocation), and C moves it out of IT’s load rather than fixing it.</p></li>
+<li><p>A backcast takes several runs, each a full-year hourly run (the check
+rejects a sampled run), and <code class="docutils literal notranslate"><span class="pre">format</span></code> must run on each before the next
+<code class="docutils literal notranslate"><span class="pre">demand-level</span></code>. The level depends on the previous run, so a change to
+any other input (capacities, fuel prices) moves the fixed point and
+needs another iteration or two.</p></li>
+<li><p>The previous run must have solved with the scenario’s current
+<code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>. The command warns where its exogenous load is more than
+1% off that file’s level, and warns if the INDUSTRY or INDIVUSERS
+wrappers that re-apply the level are missing.</p></li>
+<li><p>A country without Eurostat balances (CH) gets a level under C, since
+only ENTSO-E load and the previous run are needed; its coverage check is
+skipped and noted.</p></li>
+<li><p>The hourly shape stays ENTSO-E’s total load profile, which includes
+electric heating. Subtracting the previous run’s hourly heating from the
+profile as well is deferred.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="0014-thermal-availability-from-capacity-and-outages.html" class="btn btn-neutral float-left" title="Rate thermal capacity from installed capacity and outages, not observed output" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../about.html" class="btn btn-neutral float-right" title="About this code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

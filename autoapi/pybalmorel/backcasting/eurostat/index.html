@@ -1,0 +1,307 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.eurostat &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.flows" href="../flows/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.demand" href="../demand/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.eurostat</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/eurostat/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.eurostat">
+<span id="pybalmorel-backcasting-eurostat"></span><h1>pybalmorel.backcasting.eurostat<a class="headerlink" href="#module-pybalmorel.backcasting.eurostat" title="Link to this heading"></a></h1>
+<p>Eurostat Energy Balances</p>
+<p>Fetch the Eurostat statistics the Demand Level needs from the public
+dissemination API (no key): final electricity consumption and electric
+boilers and heat pumps in district heating (nrg_bal_c), and households’
+electricity for space and water heating (nrg_d_hhq). Responses are JSON-stat
+and cached as &lt;eurostat-data-path&gt;/&lt;year&gt;_&lt;dataset&gt;.json, so a dataset is
+only fetched once per year.</p>
+<p>Created on 28.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.EUROSTAT_API" title="pybalmorel.backcasting.eurostat.EUROSTAT_API"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EUROSTAT_API</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.FINAL_CONSUMPTION" title="pybalmorel.backcasting.eurostat.FINAL_CONSUMPTION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FINAL_CONSUMPTION</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.HEATING_BALANCES" title="pybalmorel.backcasting.eurostat.HEATING_BALANCES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HEATING_BALANCES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.DATASET_BALANCES" title="pybalmorel.backcasting.eurostat.DATASET_BALANCES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DATASET_BALANCES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.GEO_TRANSLATION" title="pybalmorel.backcasting.eurostat.GEO_TRANSLATION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GEO_TRANSLATION</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.decode_jsonstat" title="pybalmorel.backcasting.eurostat.decode_jsonstat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decode_jsonstat</span></code></a>(response) → pandas.DataFrame</p></td>
+<td><p>Decode a JSON-stat 2.0 dataset into one row per cell with a value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.eurostat_url" title="pybalmorel.backcasting.eurostat.eurostat_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eurostat_url</span></code></a>(dataset, year) → str</p></td>
+<td><p>The dissemination API URL of a dataset's electricity balances in GWh for <cite>year</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.download_json" title="pybalmorel.backcasting.eurostat.download_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_json</span></code></a>(url) → dict</p></td>
+<td><p>GET a JSON response.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.fetch_eurostat" title="pybalmorel.backcasting.eurostat.fetch_eurostat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_eurostat</span></code></a>(dataset, year, eurostat_data_path) → pandas.DataFrame</p></td>
+<td><p>A dataset's electricity balances for <cite>year</cite>, from the cache or else the dissemination API.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.eurostat.electricity_balances" title="pybalmorel.backcasting.eurostat.electricity_balances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">electricity_balances</span></code></a>(year, eurostat_data_path) → pandas.DataFrame</p></td>
+<td><p>Final electricity consumption and the four electricity-for-heat balances per country.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.EUROSTAT_API">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">EUROSTAT_API</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data'</span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.EUROSTAT_API" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.FINAL_CONSUMPTION">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">FINAL_CONSUMPTION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FC_E'</span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.FINAL_CONSUMPTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.HEATING_BALANCES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">HEATING_BALANCES</span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.HEATING_BALANCES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.DATASET_BALANCES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">DATASET_BALANCES</span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.DATASET_BALANCES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.GEO_TRANSLATION">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">GEO_TRANSLATION</span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.GEO_TRANSLATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.decode_jsonstat">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">decode_jsonstat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.decode_jsonstat" title="Link to this definition"></a></dt>
+<dd><p>Decode a JSON-stat 2.0 dataset into one row per cell with a value.</p>
+<p>Eurostat’s ‘value’ is sparse: a dict from the flat, row-major index over
+the dimensions in ‘id’ to the value. Cells without a value are left out.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>response (dict): The parsed JSON-stat response.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: One column per dimension (holding its category codes)</dt><dd><p>and ‘Value’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.eurostat_url">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">eurostat_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.eurostat_url" title="Link to this definition"></a></dt>
+<dd><p>The dissemination API URL of a dataset’s electricity balances in GWh for <cite>year</cite>.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dataset (str): ‘nrg_bal_c’ or ‘nrg_d_hhq’.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The URL.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.download_json">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">download_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.download_json" title="Link to this definition"></a></dt>
+<dd><p>GET a JSON response.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>url (str): The URL.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: The parsed response.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.fetch_eurostat">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">fetch_eurostat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eurostat_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.fetch_eurostat" title="Link to this definition"></a></dt>
+<dd><p>A dataset’s electricity balances for <cite>year</cite>, from the cache or else the dissemination API.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>dataset (str): ‘nrg_bal_c’ or ‘nrg_d_hhq’.
+year (int): The Backcast Year.
+eurostat_data_path (str | Path): The cache folder.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Columns ‘Country’ (Balmorel’s code, e.g. ‘GR’ for</dt><dd><p>Eurostat’s ‘EL’), ‘Balance’ and ‘GWh’.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.eurostat.electricity_balances">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.eurostat.</span></span><span class="sig-name descname"><span class="pre">electricity_balances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eurostat_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.eurostat.electricity_balances" title="Link to this definition"></a></dt>
+<dd><p>Final electricity consumption and the four electricity-for-heat balances per country.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>year (int): The Backcast Year.
+eurostat_data_path (str | Path): The cache folder.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index country, one column per balance code (GWh). A</dt><dd><p>value Eurostat doesn’t report is NaN.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../demand/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.demand" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../flows/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.flows" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

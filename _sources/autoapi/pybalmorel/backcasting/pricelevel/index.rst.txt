@@ -1,0 +1,96 @@
+pybalmorel.backcasting.pricelevel
+=================================
+
+.. py:module:: pybalmorel.backcasting.pricelevel
+
+.. autoapi-nested-parse::
+
+   Price Level
+
+   Convert nominal historical prices into the backcast Price Year (€2016, see
+   CONTEXT.md and docs/adr/0009): deflate with the euro-area HICP and convert USD
+   with the Eurostat annual-average exchange rate.
+
+   The tables are bundled rather than fetched, so backcast inputs are
+   reproducible offline. Extend them once a year from:
+   - HICP: Eurostat prc_hicp_aind, geo=EA (changing composition), coicop=CP00,
+     unit=INX_A_AVG (annual average index, 2015=100)
+   - EUR/USD: Eurostat ert_bil_eur_a, currency=USD, statinfo=AVG (USD per EUR)
+
+   Created on 15.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.pricelevel.PRICE_YEAR
+   pybalmorel.backcasting.pricelevel.hicp_euro_area
+   pybalmorel.backcasting.pricelevel.usd_per_eur
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.pricelevel._lookup
+   pybalmorel.backcasting.pricelevel.deflator
+   pybalmorel.backcasting.pricelevel.eur_per_usd
+   pybalmorel.backcasting.pricelevel.to_price_year
+
+
+Module Contents
+---------------
+
+.. py:data:: PRICE_YEAR
+   :value: 2016
+
+
+.. py:data:: hicp_euro_area
+
+.. py:data:: usd_per_eur
+
+.. py:function:: _lookup(table: dict[int, float], year: int, table_name: str) -> float
+
+.. py:function:: deflator(year: int, price_year: int = PRICE_YEAR) -> float
+
+   Factor converting nominal euros of `year` into euros of `price_year`.
+
+   Args:
+       year (int): The year the nominal price was observed in.
+       price_year (int, optional): Target currency year. Defaults to PRICE_YEAR (2016).
+
+   Returns:
+       float: Multiply a nominal `year` price by this to get a `price_year` price.
+
+
+.. py:function:: eur_per_usd(year: int) -> float
+
+   Annual-average EUR per USD for `year` (nominal, before deflation).
+
+   Args:
+       year (int): The year of the exchange rate.
+
+   Returns:
+       float: Multiply a USD price by this to get a nominal EUR price.
+
+
+.. py:function:: to_price_year(nominal: float | pandas.Series | pandas.DataFrame, year: int, currency: str = 'EUR', price_year: int = PRICE_YEAR) -> float | pandas.Series | pandas.DataFrame
+
+   Convert a nominal price (scalar or pandas object) into `price_year` euros.
+
+   Args:
+       nominal (float | pd.Series | pd.DataFrame): Nominal price(s) observed in `year`.
+       year (int): The year the price(s) were observed in.
+       currency (str, optional): 'EUR' or 'USD'. Defaults to 'EUR'.
+       price_year (int, optional): Target currency year. Defaults to PRICE_YEAR (2016).
+
+   Returns:
+       float | pd.Series | pd.DataFrame: The price(s) in `price_year` euros.
+
+

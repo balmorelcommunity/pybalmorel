@@ -1,0 +1,359 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.plotting.production_profile &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.timeagg" href="../../timeagg/index.html" />
+    <link rel="prev" title="pybalmorel.plotting.plot_functions" href="../plot_functions/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.plotting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.plotting.production_profile</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/plotting/production_profile/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.plotting.production_profile">
+<span id="pybalmorel-plotting-production-profile"></span><h1>pybalmorel.plotting.production_profile<a class="headerlink" href="#module-pybalmorel.plotting.production_profile" title="Link to this heading"></a></h1>
+<p>Created on 28.05.2022</p>
+<p>&#64;author: Mathias Berg Rosendal, PhD Student at DTU Management (Energy Economics &amp; Modelling)</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile.plot_profile" title="pybalmorel.plotting.production_profile.plot_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_profile</span></code></a>(MainResults, commodity, year[, scenario, ...]) → Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]</p></td>
+<td><p>Plots the production profile of a commodity, in a year, for a certain scenario</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile.plot_profiles" title="pybalmorel.plotting.production_profile.plot_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_profiles</span></code></a>(MainResults, commodity, year[, ...]) → Tuple[List, List]</p></td>
+<td><p>Plots the production profile of a commodity, in a year, for a certain scenario,</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._set_plot_style" title="pybalmorel.plotting.production_profile._set_plot_style"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_set_plot_style</span></code></a>(style) → tuple[str, str]</p></td>
+<td><p>Set the matplotlib style and return the matching face and demand line colours.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._stack_order" title="pybalmorel.plotting.production_profile._stack_order"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_stack_order</span></code></a>(production_columns, columns) → list[str]</p></td>
+<td><p>Order production columns from the bottom of the stack up, as the ENTSO-E profile stacks them.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._select_timeslices" title="pybalmorel.plotting.production_profile._select_timeslices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_select_timeslices</span></code></a>(fD, fP, f[, seasons, terms]) → tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]</p></td>
+<td><p>Keep only the chosen seasons and terms of the demand, price and production data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._aggregate_price" title="pybalmorel.plotting.production_profile._aggregate_price"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_aggregate_price</span></code></a>(prices, demand, node, price_aggregation) → pandas.DataFrame</p></td>
+<td><p>Aggregate the prices of several regions or areas to one price per timeslice.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._prepare_profile_data" title="pybalmorel.plotting.production_profile._prepare_profile_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_prepare_profile_data</span></code></a>(MainResults, commodity, year, ...) → tuple[str, str, str, str, str, pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]</p></td>
+<td><p>Load and aggregate demand, price, production and import data for a profile plot.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile._fill_area" title="pybalmorel.plotting.production_profile._fill_area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_fill_area</span></code></a>(ax, x, lower, upper, column, colours) → matplotlib.collections.PolyCollection</p></td>
+<td><p>Fill between lower and upper in the colour of a fuel or technology.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.plotting.production_profile.single_profile_plot" title="pybalmorel.plotting.production_profile.single_profile_plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">single_profile_plot</span></code></a>(scenario, commodity, region, year, ...)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile.plot_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">MainResults</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commodity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Technology'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ALL'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'light'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seasons</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_aggregation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'load-weighted'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">matplotlib.figure.Figure</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">matplotlib.axes.Axes</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile.plot_profile" title="Link to this definition"></a></dt>
+<dd><p>Plots the production profile of a commodity, in a year, for a certain scenario</p>
+<p>By default the whole year is plotted. Use <cite>seasons</cite> and/or <cite>terms</cite> to plot
+only part of it, e.g. <cite>seasons=’S02’</cite> plots the second week in a model
+with weekly seasons.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>MainResults (_type_): The MainResults class containing results
+commodity (str): The commodity (Electricity, Heat or Hydrogen)
+year (int): The model year to plot
+scenario (str, optional): Defaults to the first scenario in MainResults.
+columns (str, optional): Technology or Fuel as . Defaults to ‘Technology’.
+region (str, optional): Which country, region or area to plot. Defaults to ‘ALL’.
+style (str, optional): Plot style, light or dark. Defaults to ‘light’.
+seasons (str | list[str] | None, optional): Season(s) to plot, e.g. ‘S02’ or [‘S02’, ‘S03’]. Defaults to None, which plots all seasons.
+terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. [‘T001’, ‘T002’]. Defaults to None, which plots all terms.
+price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). ‘load-weighted’ weights the price of each region by its demand in each timeslice, ‘average’ takes the simple mean. Defaults to ‘load-weighted’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Figure, Axes: The figure and axes objects for further manipulations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile.plot_profiles">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">plot_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">MainResults</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commodity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">168</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Technology'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ALL'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'light'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seasons</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_aggregation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'load-weighted'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile.plot_profiles" title="Link to this definition"></a></dt>
+<dd><p>Plots the production profile of a commodity, in a year, for a certain scenario,
+split into one figure per <cite>chunk_size</cite> timeslices</p>
+<p>Use <cite>seasons</cite> and/or <cite>terms</cite> to only plot part of the year, e.g.
+<cite>seasons=[‘S02’, ‘S03’]</cite> with <cite>chunk_size=168</cite> gives one figure for each
+of those two weeks in a model with weekly seasons of 168 terms.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>MainResults (_type_): The MainResults class containing results
+commodity (str): The commodity (Electricity, Heat or Hydrogen)
+year (int): The model year to plot
+scenario (str, optional): Defaults to the first scenario in MainResults.
+chunk_size (int, optional): How many timeslices per profile, defaults to 168
+columns (str, optional): Technology or Fuel as . Defaults to ‘Technology’.
+region (str, optional): Which country, region or area to plot. Defaults to ‘ALL’.
+style (str, optional): Plot style, light or dark. Defaults to ‘light’.
+seasons (str | list[str] | None, optional): Season(s) to plot, e.g. ‘S02’ or [‘S02’, ‘S03’]. Defaults to None, which plots all seasons.
+terms (str | list[str] | None, optional): Term(s) to plot within the chosen seasons, e.g. [‘T001’, ‘T002’]. Defaults to None, which plots all terms.
+price_aggregation (str, optional): How to aggregate the price when the plotted region contains several regions (areas for heat). ‘load-weighted’ weights the price of each region by its demand in each timeslice, ‘average’ takes the simple mean. Defaults to ‘load-weighted’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[Figure], list[Axes]: The figure and axes objects for further manipulations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._set_plot_style">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_set_plot_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._set_plot_style" title="Link to this definition"></a></dt>
+<dd><p>Set the matplotlib style and return the matching face and demand line colours.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>style (str): Plot style, ‘light’ or ‘dark’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[str, str]: Face colour and demand line colour.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._stack_order">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_stack_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">production_columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._stack_order" title="Link to this definition"></a></dt>
+<dd><p>Order production columns from the bottom of the stack up, as the ENTSO-E profile stacks them.</p>
+<dl>
+<dt>Args:</dt><dd><p>production_columns (list[str]): The fuels or technologies to order.
+columns (str): ‘Fuel’, which orders by <cite>fuel_groups</cite>, or ‘Technology’,</p>
+<blockquote>
+<div><p>which orders by <cite>technology_order</cite>.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>list[str]: The columns in stacking order. Columns not listed in</dt><dd><p><cite>fuel_groups</cite> or <cite>technology_order</cite> come last, in alphabetical order.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._select_timeslices">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_select_timeslices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fD</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fP</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seasons</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._select_timeslices" title="Link to this definition"></a></dt>
+<dd><p>Keep only the chosen seasons and terms of the demand, price and production data.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fD (pd.DataFrame): Demand, indexed by (season, term).
+fP (pd.DataFrame): Price, with the same index as fD.
+f (pd.DataFrame): Production and import per column, with the same index as fD.
+seasons (str | list[str] | None, optional): Season(s) to keep. Defaults to None, which keeps all.
+terms (str | list[str] | None, optional): Term(s) to keep. Defaults to None, which keeps all.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]: The filtered fD, fP and f.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._aggregate_price">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_aggregate_price</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_aggregation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._aggregate_price" title="Link to this definition"></a></dt>
+<dd><p>Aggregate the prices of several regions or areas to one price per timeslice.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>prices (pd.DataFrame): Price per node and timeslice, in columns <cite>node</cite>,</dt><dd><p>‘SSS’, ‘TTT’ and ‘Val’.</p>
+</dd>
+<dt>demand (pd.DataFrame): Demand per node and timeslice, in columns <cite>node</cite>,</dt><dd><p>‘SSS’, ‘TTT’ and ‘Val’. Several rows per node and timeslice, e.g. one
+per demand category, are summed.</p>
+</dd>
+</dl>
+<p>node (str): The column with the nodes, ‘RRR’ for regions or ‘AAA’ for areas.
+price_aggregation (str): ‘load-weighted’ weights the price of each node by</p>
+<blockquote>
+<div><p>its demand, ‘average’ takes the simple mean over the nodes. Timeslices
+without any demand get the simple mean.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: The price, indexed by (season, term), in column ‘Val’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._prepare_profile_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_prepare_profile_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">MainResults</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commodity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_aggregation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'load-weighted'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._prepare_profile_data" title="Link to this definition"></a></dt>
+<dd><p>Load and aggregate demand, price, production and import data for a profile plot.</p>
+<dl>
+<dt>Args:</dt><dd><p>MainResults (_type_): The MainResults class containing results
+commodity (str): The commodity (Electricity, Heat or Hydrogen)
+year (int): The model year to plot
+scenario (str | int): Scenario name or index in MainResults.sc.
+columns (str): Technology or Fuel.
+region (str): Which country, region or area to plot, or ‘ALL’.
+price_aggregation (str, optional): ‘load-weighted’ or ‘average’, how to</p>
+<blockquote>
+<div><p>aggregate the price over several regions (areas for heat). Defaults
+to ‘load-weighted’.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple: scenario, commodity, region, year and price axis label (e.g.</dt><dd><p>‘Load-Weighted Price’), followed by demand, price and production
+DataFrames sharing the same sorted (season, term) index.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile._fill_area">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">_fill_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colours</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">matplotlib.collections.PolyCollection</span></span></span><a class="headerlink" href="#pybalmorel.plotting.production_profile._fill_area" title="Link to this definition"></a></dt>
+<dd><p>Fill between lower and upper in the colour of a fuel or technology.</p>
+<dl>
+<dt>Args:</dt><dd><p>ax (Axes): The axes to draw on.
+x (range): Timeslice positions.
+lower (np.ndarray): Lower edge of the area, GW.
+upper (np.ndarray): Upper edge of the area, GW.
+column (str): The fuel or technology, used as label and colour key.
+colours (dict[str, str]): Colour per fuel or technology. Columns without</p>
+<blockquote>
+<div><p>one get matplotlib’s next colour.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>PolyCollection: The filled area.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.plotting.production_profile.single_profile_plot">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.plotting.production_profile.</span></span><span class="sig-name descname"><span class="pre">single_profile_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scenario</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commodity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">price_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demcolor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pybalmorel.plotting.production_profile.single_profile_plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../plot_functions/index.html" class="btn btn-neutral float-left" title="pybalmorel.plotting.plot_functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../timeagg/index.html" class="btn btn-neutral float-right" title="pybalmorel.timeagg" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

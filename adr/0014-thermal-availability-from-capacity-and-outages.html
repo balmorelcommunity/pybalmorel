@@ -1,0 +1,220 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rate thermal capacity from installed capacity and outages, not observed output &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Take the Demand Level net of the model’s own electric heating, iterated over runs" href="0015-demand-level-net-of-the-models-own-heating.html" />
+    <link rel="prev" title="Rate nuclear per week from its highest observed output" href="0013-nuclear-availability-from-weekly-maximum-output.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../developing.html">Developing pybalmorel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../developing.html#installing-pixi">Installing pixi</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../developing.html#architecture-decisions">Architecture Decisions</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="0001-ground-source-heat-pump-cop-excluded-from-weatheryear.html">Ground-source heat pump COP is excluded from the weatheryear pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0002-vectorize-symbol-to-df-with-gams-transfer.html">Vectorize symbol_to_df via gams.transfer instead of per-record iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0003-canonical-technology-identity-for-weatheryear-name-building.html">Derive GGG_renewable/INVDATASET_renewable/AAA_renewable names from one shared technology identity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0004-strict-validation-for-unrecognized-weatheryear-technologies.html">Fail loudly on unrecognized technologies; keep silently dropping known-excluded ones</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0005-observed-max-flow-not-ntc-for-backcasting.html">Use observed max flow, not NTC, as the transmission constraint for backcasting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0006-xkfx-override-file-not-regeneration.html">Generate XKFX overrides as a separate, non-destructive include file rather than regenerating XKFX.inc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0007-split-entsoe-and-backcasting-packages.html">Split entsoe (generic ENTSO-E client) and backcasting (Balmorel validation) into separate packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0008-backcast-calendar-utc.html">Backcast calendar uses UTC, not local time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0009-price-year-bundled-deflator-table.html">Bundle the Price Year deflator and exchange-rate tables instead of fetching or passing them</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0010-observed-flow-limit-percentile.html">Cap backcast transmission at a percentile of observed flow, not its maximum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0011-absolute-hydro-flh-with-observed-fallback.html">Take the hydro inflow level from CorRES, with an observed long-term fallback</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0012-vre-level-from-observed-output.html">Scale weather-year VRE full-load hours to the backcast year’s observed output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="0013-nuclear-availability-from-weekly-maximum-output.html">Rate nuclear per week from its highest observed output</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Rate thermal capacity from installed capacity and outages, not observed output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#considered-options">Considered options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#consequences">Consequences</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="0015-demand-level-net-of-the-models-own-heating.html">Take the Demand Level net of the model’s own electric heating, iterated over runs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developing.html">Developing pybalmorel</a></li>
+      <li class="breadcrumb-item active">Rate thermal capacity from installed capacity and outages, not observed output</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/0014-thermal-availability-from-capacity-and-outages.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rate-thermal-capacity-from-installed-capacity-and-outages-not-observed-output">
+<h1>Rate thermal capacity from installed capacity and outages, not observed output<a class="headerlink" href="#rate-thermal-capacity-from-installed-capacity-and-outages-not-observed-output" title="Link to this heading"></a></h1>
+<p>Base <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> overstates the fossil fleet of the Backcast Year, and all of it
+is available all year. In the 2023 backcast, Germany had 48.0 GW of hard
+coal and lignite against an observed maximum of 31.9 GW. Too much cheap
+capacity flattens the top of the merit order, and the backcast’s thermal
+output was too high.</p>
+<p>The <strong>Thermal Availability</strong> of a fuel group in a country and week is
+k(1 − u):</p>
+<ul class="simple">
+<li><p>k is ENTSO-E’s installed capacity of the group divided by its <code class="docutils literal notranslate"><span class="pre">GKFX</span></code>,
+capped at 1.</p></li>
+<li><p>u is the energy that ENTSO-E reports as out of service that week, divided
+by the installed capacity × 168 h. It counts planned and forced outages,
+takes the latest revision of each event, and drops cancelled and
+withdrawn events.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code> writes it as weekly <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code> overrides to
+<code class="docutils literal notranslate"><span class="pre">GKRATE_THERMAL_ENTSOE.inc</span></code>, which the scenario includes after the nuclear
+ratings. The groups are coal (hard coal and lignite), gas, oil, oil shale
+and peat, biomass, and waste. Technologies are assigned to a group by their
+<code class="docutils literal notranslate"><span class="pre">GDFUEL</span></code>. Hard coal and lignite are one group because Balmorel labels the
+lignite fleets of e.g. BG, RO, CZ, HU and SK as <code class="docutils literal notranslate"><span class="pre">COAL</span></code>, which ENTSO-E reports
+as lignite; separate groups rated them by the country’s small hard coal
+fleet (2026-11-12).
+An electricity-producing fuel that belongs to no group stops the command,
+so a new fuel can’t silently keep full availability. Every technology of a
+group in a country gets the same rating.</p>
+<p>Nuclear takes its availability from observed output (ADR 0013), and thermal
+capacity deliberately doesn’t. The fossil mix, meaning how much each group
+produces and when, is a Validation Metric. A ceiling taken from observed
+output, such as the week’s highest hour, would fix the top of that mix by
+construction. Installed capacity and outage reports describe what could
+have run, independently of what the market chose to run.</p>
+<section id="considered-options">
+<h2>Considered options<a class="headerlink" href="#considered-options" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Nuclear’s method, the week’s highest observed output per group: rejected
+for the reason above.</p></li>
+<li><p>Correcting <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> to ENTSO-E’s installed capacity: rejected. ENTSO-E
+reports per bidding zone and production type, but <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> is per area and
+technology, so the correction would need a split that no data provides. A
+rating scales every technology of the group in a country by the same
+factor, and it leaves the base data alone (ADR 0006).</p></li>
+</ul>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Outages are averaged over the week, but output peaks within it. A unit
+that was out for half the week counts as half a unit for the whole week,
+so the rated capacity can be below the week’s observed peak. With the
+2023 reports, DE lignite is rated below its observed weekly peak in 9
+weeks, by up to 1.2 GW, and Balmorel can’t reproduce those peak hours.
+Nuclear’s weekly maximum has no such gap.</p></li>
+<li><p>k is a ratio of totals, so it derates the whole group rather than the
+units that actually closed. Where ENTSO-E covers less than Balmorel does,
+typically small CHP and industrial plants, k is too low: ES waste gets
+0.10 and PL biomass 0.19. Those plants also produce heat, so the derating
+reaches the heat balance as well.</p></li>
+<li><p>Where ENTSO-E reports more installed capacity than <code class="docutils literal notranslate"><span class="pre">GKFX</span></code>, as for DE gas
+(33.1 against 24.8 GW), k is 1. The rating never adds capacity.</p></li>
+<li><p>A group without ENTSO-E installed capacity keeps its base <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code>. A
+country without outage reports only gets k. The command warns in both
+cases.</p></li>
+<li><p>The Must-run Floor is capped at <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> × <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code> (Balmorel ADR 0005), so
+the thermal ratings must be written before the floor.</p></li>
+<li><p>Thermal output stays a Validation Metric. The ratings come from different
+ENTSO-E datasets than the output being validated, so an error in either
+one shows up as a validation gap rather than being fitted away.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="0013-nuclear-availability-from-weekly-maximum-output.html" class="btn btn-neutral float-left" title="Rate nuclear per week from its highest observed output" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="0015-demand-level-net-of-the-models-own-heating.html" class="btn btn-neutral float-right" title="Take the Demand Level net of the model’s own electric heating, iterated over runs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

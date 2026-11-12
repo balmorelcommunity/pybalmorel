@@ -1,0 +1,464 @@
+pybalmorel.entsoe
+=================
+
+.. py:module:: pybalmorel.entsoe
+
+.. autoapi-nested-parse::
+
+   ENTSO-E API
+
+   Generic client for fetching data from the ENTSO-E transparency platform,
+   including the zone-code vocabulary bridging ENTSO-E bidding zones and
+   Balmorel regions (see CONTEXT.md). Independent of Balmorel backcasting -
+   see pybalmorel.backcasting for that.
+
+   Raw data is downloaded with `python -m pybalmorel.backcasting download`.
+
+   Created on 18.06.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/pybalmorel/entsoe/maps/index
+   /autoapi/pybalmorel/entsoe/profile/index
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.bidding_zone_codes
+   pybalmorel.entsoe.bidding_zones
+   pybalmorel.entsoe.load_zones
+   pybalmorel.entsoe.bidding_zone_translation
+   pybalmorel.entsoe._extra_entsoe_codes
+   pybalmorel.entsoe._code_to_region
+   pybalmorel.entsoe._zone_token
+   pybalmorel.entsoe._extra_neighbours
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.EntsoeProfile
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.entsoe.region_to_entsoe_code
+   pybalmorel.entsoe.entsoe_code_to_region
+   pybalmorel.entsoe.zone_eic_code
+   pybalmorel.entsoe.zone_to_region
+   pybalmorel.entsoe.parse_transmission_filename
+   pybalmorel.entsoe.transmission_files
+   pybalmorel.entsoe.find_transmission_file
+   pybalmorel.entsoe.read_flow_csv
+   pybalmorel.entsoe.entsoe_subzones
+   pybalmorel.entsoe.neighbour_pairs
+   pybalmorel.entsoe.date_format
+   pybalmorel.entsoe.get_full_year
+   pybalmorel.entsoe.get_api_key
+   pybalmorel.entsoe.fetch_annual_data
+   pybalmorel.entsoe.no_data_file
+   pybalmorel.entsoe.read_no_data_pairs
+   pybalmorel.entsoe.read_no_data_zones
+   pybalmorel.entsoe.query_zones
+   pybalmorel.entsoe.load_files
+   pybalmorel.entsoe.fetch_annual_transmission_data
+   pybalmorel.entsoe.load_zone_geometries
+   pybalmorel.entsoe.plot_transmission_map
+   pybalmorel.entsoe.sum_crossborder_flows
+   pybalmorel.entsoe.plot_profile
+   pybalmorel.entsoe.read_profile
+
+
+Package Contents
+----------------
+
+.. py:data:: bidding_zone_codes
+
+.. py:data:: bidding_zones
+   :value: ['IE_SEM', '10YGB----------A', 'PT', 'ES', 'FR', 'BE', 'NL', 'DE_LU', '10YDK-1--------W',...
+
+
+.. py:data:: load_zones
+
+.. py:data:: bidding_zone_translation
+
+.. py:data:: _extra_entsoe_codes
+
+.. py:function:: region_to_entsoe_code(canonical_region: str) -> str
+
+   Map a canonical region name to the code entsoe-py expects for querying it.
+
+
+.. py:data:: _code_to_region
+
+.. py:function:: entsoe_code_to_region(code: str) -> str
+
+   Map an ENTSO-E query code back to its region name.
+
+   Inverse of region_to_entsoe_code. Falls back to the code itself if unmapped.
+
+
+.. py:function:: zone_eic_code(zone: str) -> str
+
+   The EIC code of any ENTSO-E zone identifier.
+
+   Accepts a Balmorel/canonical region name ('DK1', 'UK'), an entsoe-py area
+   name ('DK_1', 'GB') or an EIC code ('10YDK-1--------W'), so files fetched
+   under different spellings of the same zone can be recognised as one.
+
+   Args:
+       zone (str): The zone identifier.
+
+   Returns:
+       str: The EIC code, or the query code itself if entsoe-py doesn't know it.
+
+
+.. py:function:: zone_to_region(zone: str) -> str
+
+   The region name of any ENTSO-E zone identifier (before canonical translation).
+
+   Like entsoe_code_to_region, but also understands entsoe-py area names
+   ('DK_1' -> 'DK1', 'IT_NORD' -> 'IT-NORD', 'GB' -> 'UK') and EIC codes not in
+   bidding_zone_codes.
+
+   Args:
+       zone (str): The zone identifier.
+
+   Returns:
+       str: The region name, falling back to the entsoe-py area name or `zone` itself.
+
+
+.. py:data:: _zone_token
+   :value: '(10Y[0-9A-Z-]{13}|[A-Z]{2}(?:_[A-Z0-9]+)*)'
+
+
+.. py:function:: parse_transmission_filename(file_name: str, year: int, entsoe_query: str = 'crossborder_flows') -> tuple[str, str] | None
+
+   The (from, to) zones of a '<year>_<from>-<to>_<entsoe_query>.csv' file.
+
+   Args:
+       file_name (str): The file name, without folder.
+       year (int): The year the file must be for.
+       entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+   Returns:
+       tuple[str, str] | None: The zones as spelled in the name, or None if it doesn't match.
+
+
+.. py:function:: transmission_files(path: str | pathlib.Path, year: int, entsoe_query: str = 'crossborder_flows') -> dict[tuple[str, str], pathlib.Path]
+
+   The fetched transmission files in `path`, one per directed pair of EIC codes.
+
+   A pair fetched under several spellings (e.g. 'DK_1-DE_LU' and
+   '10YDK-1--------W-DE_LU') appears once, so it is never read twice.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year to look for.
+       entsoe_query (str, optional): The query in the file names. Defaults to 'crossborder_flows'.
+
+   Returns:
+       dict[tuple[str, str], Path]: {(from EIC code, to EIC code): file}.
+
+
+.. py:function:: find_transmission_file(path: str | pathlib.Path, year: int, zone_from: str, zone_to: str, entsoe_query: str = 'crossborder_flows') -> pathlib.Path | None
+
+   The fetched file for one directed pair, whichever spelling it was saved under.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year to look for.
+       zone_from (str): Zone the flow originates from, in any spelling.
+       zone_to (str): Zone the flow arrives at, in any spelling.
+       entsoe_query (str, optional): The query in the file name. Defaults to 'crossborder_flows'.
+
+   Returns:
+       Path | None: The file, or None if the pair hasn't been fetched.
+
+
+.. py:function:: read_flow_csv(csv_path: str | pathlib.Path) -> pandas.Series
+
+   Hourly mean flow (MW) from one fetched crossborder_flows csv, indexed by UTC time.
+
+   Args:
+       csv_path (str | Path): The csv.
+
+   Returns:
+       pd.Series: Hourly flows.
+
+
+.. py:function:: entsoe_subzones(canonical_region: str) -> list[str]
+
+   The ENTSO-E bidding zones that collapse to `canonical_region`.
+
+   Returns multiple zones only when ENTSO-E's resolution is finer than Balmorel's
+   for this region (e.g. 'IT' -> the 7 Italian bidding zones). Otherwise returns
+   a single-item list of the canonical name itself.
+
+
+.. py:data:: _extra_neighbours
+
+.. py:function:: neighbour_pairs(zones: list[str]) -> list[tuple[str, str]]
+
+   The directed pairs of neighbouring zones, both within `zones`, to query flows for.
+
+   Both directions are included, since NEIGHBOURS isn't symmetric (e.g. no AL
+   key). Zones are spelled as transmission-flow-limit looks them up.
+
+   Args:
+       zones (list[str]): ENTSO-E zone identifiers in any spelling, e.g. bidding_zones.
+
+   Returns:
+       list[tuple[str, str]]: Sorted (from, to) query codes.
+
+
+.. py:function:: date_format(date)
+
+.. py:function:: get_full_year(year: int)
+
+.. py:function:: get_api_key()
+
+.. py:function:: fetch_annual_data(entsoe_query, year, bidding_zones, path, api_key, timeout: int = 120)
+
+.. py:function:: no_data_file(path: str | pathlib.Path, year: int, entsoe_query: str) -> pathlib.Path
+
+   The file remembering zones or pairs ENTSO-E has no data for, so reruns skip them.
+
+   Delete it to query those pairs again.
+
+
+.. py:function:: read_no_data_pairs(path: str | pathlib.Path, year: int, entsoe_query: str = 'crossborder_flows') -> set[tuple[str, str]]
+
+   The (from EIC code, to EIC code) pairs ENTSO-E previously had no data for.
+
+
+.. py:function:: read_no_data_zones(path: str | pathlib.Path, year: int, entsoe_query: str) -> set[str]
+
+   The zones ENTSO-E previously had no data for in a single-zone query.
+
+
+.. py:function:: query_zones(entsoe_query: str, zones: list[str]) -> list[str]
+
+   The zones to fetch `entsoe_query` for: `zones`, with load_zones swapped in for load.
+
+   Args:
+       entsoe_query (str): The query, e.g. 'load'.
+       zones (list[str]): ENTSO-E zone identifiers, e.g. bidding_zones.
+
+   Returns:
+       list[str]: The zones to query.
+
+
+.. py:function:: load_files(path: str | pathlib.Path, year: int) -> list[pathlib.Path]
+
+   The load csv's of `year`, without those of a bidding zone whose load is fetched for a smaller area.
+
+   A superseded file (e.g. '<year>_IE_SEM_load.csv', from before IE's load
+   was fetched for Ireland only) is never read, so a zone is not counted
+   twice. Its replacement missing is warned about, as that region then has
+   no load. Zones are matched by their file name token, not their EIC code,
+   since region 'IE' itself resolves to IE_SEM's code.
+
+   Args:
+       path (str | Path): Folder with the fetched load csv's.
+       year (int): The year.
+
+   Returns:
+       list[Path]: The load csv's to read, sorted.
+
+
+.. py:function:: fetch_annual_transmission_data(entsoe_query, from_to_list, year, path, api_key, timeout: int = 120)
+
+.. py:function:: load_zone_geometries(zones: list[str], year: int | None = None) -> geopandas.GeoSeries
+
+   Outlines of ENTSO-E bidding zones, in lon/lat (EPSG:4326).
+
+   Taken from the geojson files bundled with entsoe-py, and for zones it has
+   none for (e.g. GB, IE_SEM, LU, MT and the Western Balkans) from
+   pybalmorel's geofiles. GB is drawn with the UK's outline and IE_SEM with
+   Ireland's, so Northern Ireland appears under GB.
+
+   Args:
+       zones (list[str]): entsoe-py area names, e.g. ['DK_1', 'IT_NORD', 'GB'].
+       year (int | None, optional): The year to draw the zones for. Before 2021, the
+           Italian zones redrawn on 1 January 2021 get their earlier outline. Defaults to None (current outlines).
+
+   Returns:
+       gpd.GeoSeries: One (multi)polygon per zone, indexed by zone. Zones without
+           an outline are left out, with a warning.
+
+
+.. py:function:: plot_transmission_map(path: str | pathlib.Path, year: int, value: str = 'net', start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, unit: str = 'TWh', ax: matplotlib.axes.Axes | None = None, extent: tuple[float, float, float, float] | None = (-11.0, 34.0, 33.0, 71.5), crs: str = 'EPSG:3035', line_show_min: float = 0.0, line_width_min: float = 0.5, line_width_max: float = 8.0, line_value_max: float | None = None, line_color: str = '#256abf', line_label_show: bool = False, zone_label_show: bool = True, zone_coordinates: dict[str, tuple[float, float]] | None = None, legend_loc: str = 'upper left', title: str | None = None) -> tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]
+
+   Map the physical cross-border flows fetched from ENTSO-E, between ENTSO-E's raw bidding zones.
+
+   Every border with a fetched '<year>_<from>-<to>_crossborder_flows.csv' in
+   `path` is drawn as a line between the two zones, its width proportional to
+   the energy that flowed over it. Zones are ENTSO-E's own (e.g. DE_LU, DK_1,
+   the Italian zones), not Balmorel regions. Flows are physical, so they
+   include loop flows.
+
+   Args:
+       path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The year to map.
+       value (str, optional): 'net' for the flow one way minus the other, with an arrow
+           towards the net importer, or 'gross' for both ways added. Defaults to 'net'.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels
+           time unless it has a time zone. Defaults to None (whole year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (whole year).
+       unit (str, optional): 'MWh', 'GWh' or 'TWh', for the legend, labels, `line_show_min`
+           and `line_value_max`. Defaults to 'TWh'.
+       ax (Axes | None, optional): Axes to draw on. Defaults to None (a new figure).
+       extent (tuple[float, float, float, float] | None, optional): (lon min, lat min, lon max,
+           lat max) to show. Zones partly outside are clipped, and their lines meet in the part
+           shown. None shows every zone. Defaults to (-11, 34, 33, 71.5).
+       crs (str, optional): The map projection. Defaults to 'EPSG:3035' (equal-area Europe).
+       line_show_min (float, optional): Borders with less flow than this, in `unit`, are not drawn. Defaults to 0.
+       line_width_min (float, optional): Narrowest line width, in points. Defaults to 0.5.
+       line_width_max (float, optional): Line width of `line_value_max`, in points. Defaults to 8.
+       line_value_max (float | None, optional): Flow drawn at `line_width_max`, in `unit`; set it
+           to compare several maps. Defaults to None (the largest flow on the map).
+       line_color (str, optional): Colour of the lines and arrows. Defaults to '#256abf'.
+       line_label_show (bool, optional): Write the flow next to each line. Defaults to False.
+       zone_label_show (bool, optional): Write each zone's name where its lines meet. Defaults to True.
+       zone_coordinates (dict[str, tuple[float, float]] | None, optional): (lon, lat) where a
+           zone's lines meet, overriding the centroid of its largest part, e.g. {'NO_4': (18.0, 68.5)}.
+           Also places zones without an outline. Defaults to None.
+       legend_loc (str, optional): Where the legend of line widths goes, as in matplotlib's
+           `Axes.legend`. Defaults to 'upper left'.
+       title (str | None, optional): The title. '' shows none. Defaults to None (describes the map).
+
+   Returns:
+       tuple[Figure, Axes]: The figure and axes of the map.
+
+
+.. py:function:: sum_crossborder_flows(path: str | pathlib.Path, year: int, start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None) -> pandas.DataFrame
+
+   The energy that physically flowed over each directed border between ENTSO-E zones.
+
+   Reads every '<year>_<from>-<to>_crossborder_flows.csv' in `path` (a pair
+   fetched under several spellings is read once), resamples it to hourly
+   mean MW and sums the hours from `start` up to, not including, `end`.
+   Missing hours count as no flow. Zones keep their entsoe-py area names:
+   nothing is translated to Balmorel regions.
+
+   Args:
+       path (str | Path): Folder with the fetched crossborder_flows csv's.
+       year (int): The year the files are for.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as
+           Brussels time unless it has a time zone, e.g. '2024-01-15'. Defaults to None (start of the files).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the files).
+
+   Returns:
+       pd.DataFrame: Columns 'From', 'To' and 'Value' (MWh), one row per directed border.
+
+
+.. py:class:: EntsoeProfile
+
+   Hourly ENTSO-E data of a set of bidding zones, indexed by hour in Brussels time.
+
+   Args:
+       zones (list[str]): entsoe-py area names of the zones, e.g. ['DK_1'].
+       generation (pd.DataFrame): Production (MW) per ENTSO-E production type, summed over the zones.
+       load (pd.Series): Actual load (MW), summed over the zones.
+       price (pd.Series | None): Day-ahead price (€/MWh), weighted by load over the zones
+           with prices. None if none of the zones have prices.
+       net_import (pd.Series | None): Physical flow into the zones minus out of them (MW),
+           leaving out flows between them. None without crossborder_flows csv's for the zones.
+
+
+   .. py:attribute:: zones
+      :type:  list[str]
+
+
+   .. py:attribute:: generation
+      :type:  pandas.DataFrame
+
+
+   .. py:attribute:: load
+      :type:  pandas.Series
+
+
+   .. py:attribute:: price
+      :type:  pandas.Series | None
+
+
+   .. py:attribute:: net_import
+      :type:  pandas.Series | None
+
+
+.. py:function:: plot_profile(path: str | pathlib.Path, year: int, zones: str | list[str], start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, title: str | None = None) -> tuple[matplotlib.figure.Figure, numpy.ndarray]
+
+   Plot the hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.
+
+   Production is stacked per group of production types (see
+   `production_groups`), with net import on top and net export below zero,
+   and load drawn as a line. The day-ahead price, if downloaded, is drawn
+   in a panel below. Hours without data are left as gaps. Raises if
+   generation or load of any of the zones is missing, and prints the zones,
+   period and data found (see `read_profile`).
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year the files are for.
+       zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. 'DK1', 'DK_1' or
+           '10YDK-1--------W'. A canonical region with several bidding zones, e.g. 'IT',
+           means all of them. 'all' means every zone in `path` with generation and load.
+       start (str | pd.Timestamp | None, optional): First hour to plot, read as Brussels
+           time unless it has a time zone, e.g. '2023-06-26'. Defaults to None (start of the year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before, e.g. '2023-07-03'.
+           Defaults to None (end of the year).
+       title (str | None, optional): Defaults to None (the zones and period).
+
+   Returns:
+       tuple[Figure, np.ndarray]: The figure, and its axes: production, then price if plotted.
+
+
+.. py:function:: read_profile(path: str | pathlib.Path, year: int, zones: str | list[str], start: str | pandas.Timestamp | None = None, end: str | pandas.Timestamp | None = None, verbose: bool = True) -> EntsoeProfile
+
+   Hourly ENTSO-E production, load, net import and day-ahead price of one or more bidding zones.
+
+   Reads the '<year>_<zone>_<query>.csv' files of `path` for the generation,
+   load and day_ahead_prices queries, and the crossborder_flows files of the
+   borders of the zones. Several zones are summed, except their prices, which
+   are weighted by load. An hour missing for any of the zones is NaN in
+   the summed generation or load. Generation and load are required for
+   every zone; prices and flows are used if they were downloaded. With
+   `verbose`, the zones, period and data found are printed.
+
+   Args:
+       path (str | Path): Folder with the fetched csv's.
+       year (int): The year the files are for.
+       zones (str | list[str]): ENTSO-E zone(s) in any spelling, e.g. 'DK1', 'DK_1' or
+           '10YDK-1--------W'. A canonical region with several bidding zones, e.g. 'IT',
+           means all of them. 'all' means every zone in `path` with generation and load
+           in the period; the other zones are left out and listed in the printout.
+       start (str | pd.Timestamp | None, optional): First hour to include, read as Brussels
+           time unless it has a time zone, e.g. '2023-06-26'. Defaults to None (start of the year).
+       end (str | pd.Timestamp | None, optional): Hour to stop before. Defaults to None (end of the year).
+       verbose (bool, optional): Print the scope of the data. Defaults to True.
+
+   Raises:
+       Exception: If generation or load is missing for any of the zones, in the files
+           or in the period. With 'all', if no zone has both.
+
+   Returns:
+       EntsoeProfile: The hourly data, indexed by hour in Brussels time.
+
+

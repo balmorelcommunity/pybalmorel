@@ -1,0 +1,325 @@
+pybalmorel.backcasting.thermal
+==============================
+
+.. py:module:: pybalmorel.backcasting.thermal
+
+.. autoapi-nested-parse::
+
+   Thermal Availability
+
+   Turn ENTSO-E's installed generation capacity and outage reports into weekly
+   GKRATE overrides (GKRATE_THERMAL_ENTSOE.inc) for the fossil, biomass and
+   waste technologies of a Backcast: per canonical region, fuel group and
+   Backcast Calendar week, the installed capacity as a share of GKFX (at most 1)
+   less the share of it reported out of service (see CONTEXT.md). Observed
+   output is never an input here, since the fossil mix is a Validation Metric;
+   it only serves as a check in thermal_capacity.csv.
+
+   Also defines the fuel groups and the technology selection by acronym name
+   that the must-run floor shares.
+
+   Created on 28.10.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.thermal.ACRONYM_SCALE
+   pybalmorel.backcasting.thermal.THERMAL_TYPES
+   pybalmorel.backcasting.thermal.GROUP_FUELS
+   pybalmorel.backcasting.thermal.GROUP_PRODUCTION_TYPES
+   pybalmorel.backcasting.thermal.UNGROUPED_FUELS
+   pybalmorel.backcasting.thermal.CHECK_ONLY_GROUPS
+   pybalmorel.backcasting.thermal.VOID_DOCSTATUS
+   pybalmorel.backcasting.thermal.OUTAGE_KINDS
+   pybalmorel.backcasting.thermal.GKRATE_THERMAL_INCLUDE
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   pybalmorel.backcasting.thermal.acronym_names
+   pybalmorel.backcasting.thermal.acronym_name
+   pybalmorel.backcasting.thermal.technology_fuels
+   pybalmorel.backcasting.thermal.group_capacity
+   pybalmorel.backcasting.thermal._region_from_file
+   pybalmorel.backcasting.thermal.load_installed_capacity
+   pybalmorel.backcasting.thermal.load_unavailability
+   pybalmorel.backcasting.thermal.group_installed
+   pybalmorel.backcasting.thermal.latest_outages
+   pybalmorel.backcasting.thermal.weekly_outage_energy
+   pybalmorel.backcasting.thermal.thermal_ratings
+   pybalmorel.backcasting.thermal.capacity_check
+   pybalmorel.backcasting.thermal.write_thermal_gkrate_override
+   pybalmorel.backcasting.thermal.check_thermal_gkrate_include
+   pybalmorel.backcasting.thermal.load_scenario_input
+   pybalmorel.backcasting.thermal.generate_thermal_availability
+
+
+Module Contents
+---------------
+
+.. py:data:: ACRONYM_SCALE
+   :value: 1e+301
+
+
+.. py:data:: THERMAL_TYPES
+   :value: ('GCND', 'GBPR', 'GEXT')
+
+
+.. py:data:: GROUP_FUELS
+
+.. py:data:: GROUP_PRODUCTION_TYPES
+
+.. py:data:: UNGROUPED_FUELS
+
+.. py:data:: CHECK_ONLY_GROUPS
+
+.. py:data:: VOID_DOCSTATUS
+   :value: ('Cancelled', 'Withdrawn')
+
+
+.. py:data:: OUTAGE_KINDS
+
+.. py:data:: GKRATE_THERMAL_INCLUDE
+   :value: "$if EXIST '../data/GKRATE_THERMAL_ENTSOE.inc' $INCLUDE '../data/GKRATE_THERMAL_ENTSOE.inc';"
+
+
+.. py:function:: acronym_names(gdx_path: str | pathlib.Path, system_directory: str | None = None) -> dict[float, str]
+
+   The names of the GAMS acronyms in a GDX file, keyed by the value GAMS stores for them.
+
+   A GAMS acronym is stored as its index times ACRONYM_SCALE, so e.g. GCND
+   with index 224 is 2.24e303 in GDATA. Look values up with acronym_name.
+
+   Args:
+       gdx_path (str | Path): The GDX file, e.g. <scenario>_input_data.gdx.
+       system_directory (str | None, optional): GAMS system directory, whose
+           GDX library is used. Defaults to None.
+
+   Returns:
+       dict[float, str]: Acronym name per stored value.
+
+
+.. py:function:: acronym_name(value: float, names: dict[float, str]) -> str | None
+
+   The name of the acronym stored as `value`, or None if it isn't one.
+
+
+.. py:function:: technology_fuels(gdata: pandas.DataFrame, names: dict[float, str]) -> pandas.DataFrame
+
+   GDTYPE and GDFUEL of every technology, by acronym name.
+
+   Args:
+       gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+       names (dict[float, str]): Output of acronym_names.
+
+   Returns:
+       pd.DataFrame: Index 'Technology', columns 'Type' and 'Fuel'.
+
+
+.. py:function:: group_capacity(gkfx: pandas.DataFrame, gdata: pandas.DataFrame, rrraaa: pandas.DataFrame, names: dict[float, str], year: int, check_only: bool = False) -> pandas.DataFrame
+
+   The GKFX of `year` per area and technology of every fuel group, with its canonical region.
+
+   Technologies are selected by the names of their GDTYPE (THERMAL_TYPES)
+   and GDFUEL acronyms. Columns are taken by position, as get_input may
+   name them after the raw GAMS domains.
+
+   Args:
+       gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+       gdata (pd.DataFrame): GDATA from get_input, ending in (G, GDATASET, Value).
+       rrraaa (pd.DataFrame): RRRAAA from get_input, ending in (RRR, AAA).
+       names (dict[float, str]): Output of acronym_names.
+       year (int): The Backcast Year, the Y of GKFX.
+       check_only (bool, optional): Also include CHECK_ONLY_GROUPS (solar
+           and wind). Defaults to False.
+
+   Raises:
+       ValueError: If a thermal technology with GKFX > 0 has a fuel that is
+           in no group and not in UNGROUPED_FUELS.
+
+   Returns:
+       pd.DataFrame: Columns 'Area', 'Technology', 'BalmorelRegion',
+           'Region' (canonical), 'Fuel', 'Group' and 'Capacity' (MW), for
+           every grouped (area, technology) with GKFX > 0.
+
+
+.. py:function:: _region_from_file(path: pathlib.Path, year: int, query: str) -> str
+
+.. py:function:: load_installed_capacity(entsoe_data_path: str | pathlib.Path, year: int) -> pandas.DataFrame
+
+   ENTSO-E's installed generation capacity of `year` per canonical region and production type.
+
+   Zones of one canonical region are summed. A production type a zone
+   doesn't report is missing, not 0.
+
+   Args:
+       entsoe_data_path (str | Path): Folder with the installed_generation_capacity csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index canonical region, one column per production type (MW).
+
+
+.. py:function:: load_unavailability(entsoe_data_path: str | pathlib.Path, year: int) -> pandas.DataFrame
+
+   ENTSO-E's outage reports of generation units, with the canonical region of each file.
+
+   Args:
+       entsoe_data_path (str | Path): Folder with the unavailability_of_generation_units csv's.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: The reports as entsoe-py returns them, plus 'Region'.
+           Empty if there are no files.
+
+
+.. py:function:: group_installed(installed: pandas.DataFrame, groups: dict[str, tuple[str, ...]]) -> pandas.Series
+
+   Installed capacity per canonical region and group; missing where no type of the group is reported.
+
+   Args:
+       installed (pd.DataFrame): Output of load_installed_capacity.
+       groups (dict[str, tuple[str, ...]]): ENTSO-E production types per group.
+
+   Returns:
+       pd.Series: Index (Region, Group), MW.
+
+
+.. py:function:: latest_outages(unavailability: pandas.DataFrame) -> pandas.DataFrame
+
+   The outage periods of the latest revision of every event, without cancelled or withdrawn events.
+
+   Exact duplicate rows are dropped first: ENTSO-E's download repeats some
+   periods of the same event and revision (10,495 of 69,492 rows in 2023),
+   which would otherwise count those outages twice.
+
+   Args:
+       unavailability (pd.DataFrame): Output of load_unavailability.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Group', 'Kind' ('Planned' or
+           'Forced'), 'Start', 'End' (UTC) and 'Lost' (MW out of service),
+           one row per period of an event.
+
+
+.. py:function:: weekly_outage_energy(outages: pandas.DataFrame, year: int) -> pandas.DataFrame
+
+   Energy out of service (MWh) per region, group, kind and Backcast Calendar week.
+
+   Each period counts its MW out of service times its hours of overlap with
+   the week.
+
+   Args:
+       outages (pd.DataFrame): Output of latest_outages.
+       year (int): The Backcast Year.
+
+   Returns:
+       pd.DataFrame: Index (Region, Group, Season), columns 'Planned' and 'Forced' (MWh).
+
+
+.. py:function:: thermal_ratings(capacity: pandas.DataFrame, installed: pandas.Series, outage_energy: pandas.DataFrame | None) -> pandas.DataFrame
+
+   The weekly Thermal Availability per canonical region and group.
+
+   k = min(1, installed / GKFX); u = energy out of service in the week /
+   (installed x 168); rating = k (1 - u), clipped to [0, 1]. A group without
+   an installed capacity gets no rating. Without outage reports for a
+   region, u is 0.
+
+   Args:
+       capacity (pd.DataFrame): Output of group_capacity.
+       installed (pd.Series): Output of group_installed for GROUP_PRODUCTION_TYPES.
+       outage_energy (pd.DataFrame | None): Output of weekly_outage_energy,
+           or None if there are no outage reports at all.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Group', 'Season', 'GKFX', 'Installed',
+           'k', 'Planned', 'Forced' (u of each kind) and 'Rating'.
+
+
+.. py:function:: capacity_check(capacity: pandas.DataFrame, installed: pandas.DataFrame, observed: dict[str, pandas.DataFrame]) -> pandas.DataFrame
+
+   Balmorel GKFX against ENTSO-E's installed capacity and observed output, per region and group.
+
+   The observed maximum and 99th percentile are a check only, never an input.
+
+   Args:
+       capacity (pd.DataFrame): Output of group_capacity with check_only=True.
+       installed (pd.DataFrame): Output of load_installed_capacity.
+       observed (dict[str, pd.DataFrame]): Hourly ENTSO-E output (MW) per
+           canonical region, one column per production type.
+
+   Returns:
+       pd.DataFrame: Columns 'Region', 'Group', 'GKFX', 'Installed', 'Ratio'
+           (installed / GKFX), 'ObservedMax' and 'ObservedP99' (MW).
+
+
+.. py:function:: write_thermal_gkrate_override(ratings: pandas.DataFrame, capacity: pandas.DataFrame, scenario_data_path: str | pathlib.Path) -> pybalmorel.classes.IncFile
+
+   Write GKRATE_THERMAL_ENTSOE.inc with the weekly thermal ratings.
+
+   Every technology of a group in an area gets its region's rating of the group.
+
+   Args:
+       ratings (pd.DataFrame): Output of thermal_ratings.
+       capacity (pd.DataFrame): Output of group_capacity.
+       scenario_data_path (str | Path): The scenario's 'data' folder.
+
+   Returns:
+       IncFile: The saved IncFile instance.
+
+
+.. py:function:: check_thermal_gkrate_include(gkrate_inc_path: str | pathlib.Path) -> None
+
+   Warn if the scenario's GKRATE.inc doesn't include GKRATE_THERMAL_ENTSOE.inc.
+
+   Args:
+       gkrate_inc_path (str | Path): Path to the scenario's GKRATE.inc.
+
+
+.. py:function:: load_scenario_input(balmorel_model_folder: str | pathlib.Path, scenario: str, gams_system_directory: str | None, reload_input: bool, ignore: tuple[str, ...] = ()) -> tuple[pybalmorel.classes.Balmorel, dict[float, str]]
+
+   Load a scenario's input data, warning if the cached GDX is stale, and its acronym names.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario.
+       gams_system_directory (str | None): GAMS system directory.
+       reload_input (bool): Run ReadData again instead of reusing the cached input GDX.
+       ignore (tuple[str, ...], optional): Data files the stale-cache check
+           ignores, e.g. the override the caller writes. Defaults to ().
+
+   Returns:
+       tuple[Balmorel, dict[float, str]]: The model with the input data
+           loaded, and the output of acronym_names.
+
+
+.. py:function:: generate_thermal_availability(balmorel_model_folder: str | pathlib.Path, scenario: str, year: int, entsoe_data_path: str | pathlib.Path, observed: dict[str, pandas.DataFrame], gams_system_directory: str | None = None, reload_input: bool = False) -> pybalmorel.classes.IncFile | None
+
+   Write GKRATE_THERMAL_ENTSOE.inc and backcastoutput/thermal_capacity.csv for a scenario.
+
+   Args:
+       balmorel_model_folder (str | Path): Top-level Balmorel folder (contains 'base').
+       scenario (str): The scenario to write the override for.
+       year (int): The Backcast Year.
+       entsoe_data_path (str | Path): Folder with the installed capacity and
+           outage csv's (from `download`).
+       observed (dict[str, pd.DataFrame]): Hourly ENTSO-E output per
+           canonical region and production type, for the capacity check.
+       gams_system_directory (str | None, optional): GAMS system directory.
+       reload_input (bool, optional): Run ReadData again instead of reusing
+           the cached input GDX. Defaults to False.
+
+   Returns:
+       IncFile | None: The saved IncFile instance, or None without installed capacity.
+
+

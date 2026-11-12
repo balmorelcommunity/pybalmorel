@@ -1,0 +1,732 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.backcasting.demand &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.backcasting.eurostat" href="../eurostat/index.html" />
+    <link rel="prev" title="pybalmorel.backcasting.co2tax" href="../co2tax/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../weatheryear/index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.backcasting</a></li>
+      <li class="breadcrumb-item active">pybalmorel.backcasting.demand</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/backcasting/demand/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.backcasting.demand">
+<span id="pybalmorel-backcasting-demand"></span><h1>pybalmorel.backcasting.demand<a class="headerlink" href="#module-pybalmorel.backcasting.demand" title="Link to this heading"></a></h1>
+<p>Observed Demand Profiles</p>
+<p>Turn ENTSO-E’s actual load into DE_VAR_T overrides (DE_VAR_T_ENTSOE.inc) for
+a Backcast: the hourly load of the Backcast Year on the Backcast Calendar,
+for the exogenous electricity users OTHER and RESE of every region. Balmorel
+scales DE_VAR_T to the annual DE, so only the shape matters. Reuses the
+override-file pattern of docs/adr/0006 and appends the $include to the
+scenario’s DE_VAR_T.inc itself.</p>
+<p>Implausible or missing hours are interpolated. A region with too many of
+them takes its profile from the input data instead, with the same cleaning,
+or keeps it unchanged if that fails too.</p>
+<p>Also sets the annual level of that demand, the Demand Level (DE_ENTSOE.inc):
+ENTSO-E’s annual load less what the previous backcast run added on top of DE
+(its transmission losses, electricity for heat, and distribution losses on
+anything but exogenous demand), net of Balmorel’s distribution losses
+(<cite>heat=’model’</cite>, docs/adr/0015).
+That heating responds to prices, so the level is iterated over runs. The
+first run of a new Backcast Year takes Eurostat’s electricity for heating
+instead (<cite>heat=’eurostat’</cite>).</p>
+<p>Created on 26.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.PLAUSIBLE_LOW" title="pybalmorel.backcasting.demand.PLAUSIBLE_LOW"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PLAUSIBLE_LOW</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.PLAUSIBLE_HIGH" title="pybalmorel.backcasting.demand.PLAUSIBLE_HIGH"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PLAUSIBLE_HIGH</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.MAX_IMPLAUSIBLE_SHARE" title="pybalmorel.backcasting.demand.MAX_IMPLAUSIBLE_SHARE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MAX_IMPLAUSIBLE_SHARE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.DEMAND_USERS" title="pybalmorel.backcasting.demand.DEMAND_USERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEMAND_USERS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.DE_VAR_T_INCLUDE" title="pybalmorel.backcasting.demand.DE_VAR_T_INCLUDE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DE_VAR_T_INCLUDE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.DEMAND_LEVEL_BASES" title="pybalmorel.backcasting.demand.DEMAND_LEVEL_BASES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEMAND_LEVEL_BASES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.COVERAGE_BOUNDS" title="pybalmorel.backcasting.demand.COVERAGE_BOUNDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COVERAGE_BOUNDS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.SHARED_LOAD" title="pybalmorel.backcasting.demand.SHARED_LOAD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SHARED_LOAD</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.BALMOREL_YEAR_HOURS" title="pybalmorel.backcasting.demand.BALMOREL_YEAR_HOURS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BALMOREL_YEAR_HOURS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.HEATING" title="pybalmorel.backcasting.demand.HEATING"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HEATING</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.HEAT_SOURCES" title="pybalmorel.backcasting.demand.HEAT_SOURCES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HEAT_SOURCES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.PREVIOUS_RUN_CATEGORIES" title="pybalmorel.backcasting.demand.PREVIOUS_RUN_CATEGORIES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PREVIOUS_RUN_CATEGORIES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.PREVIOUS_RUN_TOLERANCE" title="pybalmorel.backcasting.demand.PREVIOUS_RUN_TOLERANCE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PREVIOUS_RUN_TOLERANCE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.DE_ADDONS" title="pybalmorel.backcasting.demand.DE_ADDONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DE_ADDONS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.sum_zones" title="pybalmorel.backcasting.demand.sum_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sum_zones</span></code></a>(zones) → pandas.DataFrame</p></td>
+<td><p>Sum hourly ENTSO-E load of bidding zones to their canonical region.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.grid_to_profile" title="pybalmorel.backcasting.demand.grid_to_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">grid_to_profile</span></code></a>(grid) → pandas.Series</p></td>
+<td><p>Flatten an S x T grid into a series indexed by (Season, Term), keeping missing hours.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.current_profiles" title="pybalmorel.backcasting.demand.current_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">current_profiles</span></code></a>(de_var_t[, user]) → pandas.DataFrame</p></td>
+<td><p>The DE_VAR_T profile of <cite>user</cite> per region, from the scenario's input data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.clean_profile" title="pybalmorel.backcasting.demand.clean_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clean_profile</span></code></a>(profile) → tuple[pandas.Series, int]</p></td>
+<td><p>Interpolate the implausible or missing hours of a profile.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.demand_profiles" title="pybalmorel.backcasting.demand.demand_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demand_profiles</span></code></a>(regions, observed, current, year) → tuple[dict[str, pandas.Series], list[str]]</p></td>
+<td><p>The observed demand profile per Balmorel region, with a report line per region.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.country_of" title="pybalmorel.backcasting.demand.country_of"><code class="xref py py-obj docutils literal notranslate"><span class="pre">country_of</span></code></a>(region) → str</p></td>
+<td><p>The country code of a Balmorel region or canonical region, e.g. 'NO' for 'NO3' and 'DE' for 'DE4-E'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.annual_load" title="pybalmorel.backcasting.demand.annual_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annual_load</span></code></a>(observed, year) → pandas.Series</p></td>
+<td><p>ENTSO-E's load per canonical region over Balmorel's year (MWh).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.split_shared_load" title="pybalmorel.backcasting.demand.split_shared_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_shared_load</span></code></a>(load, balances) → pandas.Series</p></td>
+<td><p>Split the load of a canonical region covering several countries (DE_LU) by Eurostat final consumption.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.previous_run_heat" title="pybalmorel.backcasting.demand.previous_run_heat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">previous_run_heat</span></code></a>(load_results, year) → pandas.DataFrame</p></td>
+<td><p>The previous backcast run's exogenous load, electric heating and losses per region.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.demand_levels" title="pybalmorel.backcasting.demand.demand_levels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demand_levels</span></code></a>(de, disloss, load, balances, year[, ...]) → tuple[pandas.DataFrame, pandas.DataFrame]</p></td>
+<td><p>The Demand Level of <cite>year</cite> per region and user, with a summary per country.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.check_previous_run" title="pybalmorel.backcasting.demand.check_previous_run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_previous_run</span></code></a>(previous, de_entsoe_path, year) → None</p></td>
+<td><p>Warn where the previous run's exogenous load isn't the Demand Level it should have solved with.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.check_de_wrappers" title="pybalmorel.backcasting.demand.check_de_wrappers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_de_wrappers</span></code></a>(data_path, base_data_path) → None</p></td>
+<td><p>Warn if a DE addon of base runs without the scenario re-applying DE_ENTSOE.inc after it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.write_de_var_t_override" title="pybalmorel.backcasting.demand.write_de_var_t_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_de_var_t_override</span></code></a>(profiles, report, year, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write DE_VAR_T_ENTSOE.inc with the observed demand profiles.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.append_de_var_t_include" title="pybalmorel.backcasting.demand.append_de_var_t_include"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_de_var_t_include</span></code></a>(de_var_t_inc_path[, base_data_dir]) → None</p></td>
+<td><p>Idempotently append the $include of DE_VAR_T_ENTSOE.inc to the scenario's DE_VAR_T.inc.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.write_de_override" title="pybalmorel.backcasting.demand.write_de_override"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_de_override</span></code></a>(levels, year, basis, scenario_data_path) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write DE_ENTSOE.inc with the Demand Level of <cite>year</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.load_input_data" title="pybalmorel.backcasting.demand.load_input_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_input_data</span></code></a>(balmorel_model_folder, scenario, ...) → pybalmorel.classes.Balmorel</p></td>
+<td><p>Load a scenario's input data, warning if the cached GDX is stale.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.generate_demand_level" title="pybalmorel.backcasting.demand.generate_demand_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_demand_level</span></code></a>(balmorel_model_folder, scenario, ...) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write DE_ENTSOE.inc and backcastoutput/demand_level.csv for a Balmorel scenario.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.backcasting.demand.generate_demand_profile" title="pybalmorel.backcasting.demand.generate_demand_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_demand_profile</span></code></a>(balmorel_model_folder, ...[, ...]) → pybalmorel.classes.IncFile</p></td>
+<td><p>Write DE_VAR_T_ENTSOE.inc for a Balmorel scenario from observed ENTSO-E load.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.PLAUSIBLE_LOW">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">PLAUSIBLE_LOW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.PLAUSIBLE_LOW" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.PLAUSIBLE_HIGH">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">PLAUSIBLE_HIGH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.0</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.PLAUSIBLE_HIGH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.MAX_IMPLAUSIBLE_SHARE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">MAX_IMPLAUSIBLE_SHARE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.MAX_IMPLAUSIBLE_SHARE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.DEMAND_USERS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">DEMAND_USERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('OTHER',</span> <span class="pre">'RESE')</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.DEMAND_USERS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.DE_VAR_T_INCLUDE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">DE_VAR_T_INCLUDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;$if</span> <span class="pre">EXIST</span> <span class="pre">'../data/DE_VAR_T_ENTSOE.inc'</span> <span class="pre">$INCLUDE</span> <span class="pre">'../data/DE_VAR_T_ENTSOE.inc';&quot;</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.DE_VAR_T_INCLUDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.DEMAND_LEVEL_BASES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">DEMAND_LEVEL_BASES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('entsoe',</span> <span class="pre">'eurostat')</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.DEMAND_LEVEL_BASES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.COVERAGE_BOUNDS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">COVERAGE_BOUNDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.8,</span> <span class="pre">1.3)</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.COVERAGE_BOUNDS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.SHARED_LOAD">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">SHARED_LOAD</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.SHARED_LOAD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.BALMOREL_YEAR_HOURS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">BALMOREL_YEAR_HOURS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8760</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.BALMOREL_YEAR_HOURS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.HEATING">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">HEATING</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.HEATING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.HEAT_SOURCES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">HEAT_SOURCES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('eurostat',</span> <span class="pre">'model')</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.HEAT_SOURCES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.PREVIOUS_RUN_CATEGORIES">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">PREVIOUS_RUN_CATEGORIES</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.PREVIOUS_RUN_CATEGORIES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.PREVIOUS_RUN_TOLERANCE">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">PREVIOUS_RUN_TOLERANCE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.PREVIOUS_RUN_TOLERANCE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.DE_ADDONS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">DE_ADDONS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('INDUSTRY_DE.inc',</span> <span class="pre">'INDIVUSERS_DE.inc')</span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.DE_ADDONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.sum_zones">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">sum_zones</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.sum_zones" title="Link to this definition"></a></dt>
+<dd><p>Sum hourly ENTSO-E load of bidding zones to their canonical region.</p>
+<p>An hour missing in one zone is missing for the region, so a partial sum
+is never taken for the region’s load.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>zones (pd.DataFrame): Hourly load (MW), one column per zone (any</dt><dd><p>spelling canonical_region knows, e.g. ‘IT-NORD’ or ‘DK1’).</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Hourly load (MW), one column per canonical region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.grid_to_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">grid_to_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.grid_to_profile" title="Link to this definition"></a></dt>
+<dd><p>Flatten an S x T grid into a series indexed by (Season, Term), keeping missing hours.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>grid (pd.DataFrame): Index ‘S01’..’S52’, columns ‘T001’..’T168’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: 8736 values in (S,T) order.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.current_profiles">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">current_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">de_var_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEMAND_USERS[0]</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.current_profiles" title="Link to this definition"></a></dt>
+<dd><p>The DE_VAR_T profile of <cite>user</cite> per region, from the scenario’s input data.</p>
+<p>Columns are taken by position, as get_input may name them after the raw
+GAMS domains.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>de_var_t (pd.DataFrame): DE_VAR_T from get_input, ending in</dt><dd><p>(RRR, DEUSER, SSS, TTT, Value).</p>
+</dd>
+</dl>
+<p>user (str, optional): The demand user. Defaults to ‘OTHER’.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: Index (Season, Term) in (S,T) order, one column per region.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.clean_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">clean_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.clean_profile" title="Link to this definition"></a></dt>
+<dd><p>Interpolate the implausible or missing hours of a profile.</p>
+<p>An hour is implausible outside PLAUSIBLE_LOW-PLAUSIBLE_HIGH times the
+profile’s median.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>profile (pd.Series): Values in (S,T) order.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[pd.Series, int]: The cleaned profile and the number of hours replaced.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.demand_profiles">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">demand_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.demand_profiles" title="Link to this definition"></a></dt>
+<dd><p>The observed demand profile per Balmorel region, with a report line per region.</p>
+<p>A region takes the ENTSO-E load of its canonical region, so DE4-* take
+DE’s. If that is missing or has more than MAX_IMPLAUSIBLE_SHARE
+implausible or missing hours, it takes its current profile from the input
+data instead, with the same cleaning. A region where both fail gets no
+profile and keeps its current one unchanged, which is warned about.</p>
+<dl>
+<dt>Args:</dt><dd><p>regions (list[str]): Balmorel regions with electricity demand.
+observed (pd.DataFrame): Hourly ENTSO-E load (MW) per canonical region,</p>
+<blockquote>
+<div><p>indexed by timezone-aware timestamps (output of sum_zones).</p>
+</div></blockquote>
+<p>current (pd.DataFrame): Output of current_profiles.
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[dict[str, pd.Series], list[str]]: Profile in (S,T) order per</dt><dd><p>region, and one report line per region.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.country_of">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">country_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.country_of" title="Link to this definition"></a></dt>
+<dd><p>The country code of a Balmorel region or canonical region, e.g. ‘NO’ for ‘NO3’ and ‘DE’ for ‘DE4-E’.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.annual_load">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">annual_load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.annual_load" title="Link to this definition"></a></dt>
+<dd><p>ENTSO-E’s load per canonical region over Balmorel’s year (MWh).</p>
+<p>The mean hourly load over the Backcast Calendar times Balmorel’s 8760
+hours, so that a DE built on it gives back the observed load in the
+calendar’s 8736 hours, and is on the same annual footing as Eurostat’s
+heating and final consumption. Missing hours are filled with the mean, so
+a gap doesn’t lower the level.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>observed (pd.DataFrame): Hourly load (MW) per canonical region (output of sum_zones).
+year (int): The Backcast Year.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: Index canonical region. A region without any hour is NaN.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.split_shared_load">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">split_shared_load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.split_shared_load" title="Link to this definition"></a></dt>
+<dd><p>Split the load of a canonical region covering several countries (DE_LU) by Eurostat final consumption.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>load (pd.Series): Output of annual_load.
+balances (pd.DataFrame): Output of eurostat.electricity_balances.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.Series: The load with one entry per country of SHARED_LOAD.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.previous_run_heat">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">previous_run_heat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.previous_run_heat" title="Link to this definition"></a></dt>
+<dd><p>The previous backcast run’s exogenous load, electric heating and losses per region.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>load_results (str | Path): balmorel_load.csv of one solved backcast,</dt><dd><p>as <cite>format</cite> writes it (MWh per hour on the Backcast Calendar).</p>
+</dd>
+</dl>
+<p>year (int): The Backcast Year.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If the file holds more than one scenario, another year,</dt><dd><p>or not every hour of the Backcast Calendar.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: ‘EXO’, ‘E2H’, ‘TLoss’ and ‘DLoss’ (MWh over the</dt><dd><p>calendar’s 8736 hours) per Balmorel region, with the scenario in
+attrs[‘scenario’].</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.demand_levels">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">demand_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">de</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disloss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balances</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'entsoe'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">COVERAGE_BOUNDS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eurostat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.demand_levels" title="Link to this definition"></a></dt>
+<dd><p>The Demand Level of <cite>year</cite> per region and user, with a summary per country.</p>
+<p>With <cite>heat=’eurostat’</cite>, per country c, with L its ENTSO-E load, d its
+load-weighted DISLOSS_E and H its Eurostat electricity for heating, the
+level is L(1-d) - H (‘entsoe’) or FC_E - H (‘eurostat’). A country with
+several canonical regions (NO1-5) gets L_r(1-d_r) - H L_r/L per region
+(‘entsoe’) or its level split by L_r(1-d_r) (‘eurostat’).</p>
+<p>With <cite>heat=’model’</cite> (basis ‘entsoe’ only), per canonical region k, with
+T_k, E_k and O_k the previous run’s transmission losses, electricity for
+heat (ENDOGENOUS_ELECT2HEAT) and distribution losses on anything but
+exogenous demand (DIST_LOSSES less EXO d_r/(1-d_r) per region r: on
+electric heating, and on wind and solar output through DISLOSS_E_AG),
+summed over its Balmorel regions and scaled from the calendar’s 8736
+hours to Balmorel’s 8760, the level is (L_k - T_k - E_k - O_k)(1 - d_k).
+Balmorel’s load as compared, EXO + E2H + DIST_LOSSES + TRANS_LOSSES, is
+then ENTSO-E’s if the run’s heating and losses stay as they were, so the
+level is iterated.</p>
+<p>Within a canonical region (DE4-<a href="#id1"><span class="problematic" id="id2">*</span></a>) and then over the users, the level is
+split by the shares of <cite>de</cite>, so a rerun on its own output keeps them. A
+country is not written, and warns, without ENTSO-E load, if
+L(1-d)/FC_E is outside <cite>coverage_bounds</cite>, if a level is not positive,
+and with ‘eurostat’ heat without Eurostat final consumption or heating,
+or with ‘model’ heat if a region is not in the previous run. With ‘model’
+heat, a country without Eurostat final consumption (CH) is written with
+its coverage unchecked.</p>
+<dl>
+<dt>Args:</dt><dd><p>de (pd.DataFrame): DE from get_input, ending in (YYY, RRR, DEUSER, Value).
+disloss (pd.DataFrame): DISLOSS_E from get_input, ending in (RRR, Value).</p>
+<blockquote>
+<div><p>A region without one has no losses.</p>
+</div></blockquote>
+<p>load (pd.Series): Output of split_shared_load (MWh per canonical region or country).
+balances (pd.DataFrame): Output of eurostat.electricity_balances (GWh).
+year (int): The Backcast Year.
+basis (str, optional): ‘entsoe’ or ‘eurostat’. Defaults to ‘entsoe’.
+coverage_bounds (tuple[float, float], optional): Lowest and highest</p>
+<blockquote>
+<div><p>L(1-d)/FC_E written. Defaults to COVERAGE_BOUNDS.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>heat (str, optional): ‘eurostat’ or ‘model’, where the heating left</dt><dd><p>out comes from. Defaults to ‘eurostat’.</p>
+</dd>
+<dt>previous (pd.DataFrame | None, optional): Output of previous_run_heat.</dt><dd><p>Needed for ‘model’ heat; with ‘eurostat’ heat it only fills the
+previous-run columns of the summary.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[pd.DataFrame, pd.DataFrame]: The level per ‘Region’ and ‘User’</dt><dd><p>(‘Value’, MWh) of the countries written, and the summary per
+country (TWh). ‘InputTWh’ is the input data’s DE, which after a
+first run is the previous level. ‘ResidualTWh’ is the model-heat
+level less the previous run’s exogenous load: what that run’s
+load missed ENTSO-E’s by, net of distribution losses.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.check_previous_run">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">check_previous_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">de_entsoe_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.check_previous_run" title="Link to this definition"></a></dt>
+<dd><p>Warn where the previous run’s exogenous load isn’t the Demand Level it should have solved with.</p>
+<p>The previous run’s EXOGENOUS over the calendar’s 8736 hours is DE x
+8736/8760. A region more than PREVIOUS_RUN_TOLERANCE off means that run
+solved with another DE_ENTSOE.inc (or none), so its heating and losses
+belong to another level.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>previous (pd.DataFrame): Output of previous_run_heat.
+de_entsoe_path (str | Path): The scenario’s current DE_ENTSOE.inc.
+year (int): The Backcast Year.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.check_de_wrappers">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">check_de_wrappers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.check_de_wrappers" title="Link to this definition"></a></dt>
+<dd><p>Warn if a DE addon of base runs without the scenario re-applying DE_ENTSOE.inc after it.</p>
+<p>The INDUSTRY and INDIVUSERS addons adjust DE after DE.inc, so the
+scenario needs its own INDUSTRY_DE.inc and INDIVUSERS_DE.inc that include
+base’s and then DE_ENTSOE.inc again. Otherwise Balmorel solves with
+another DE than the Demand Level.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>data_path (str | Path): The scenario’s ‘data’ folder.
+base_data_path (str | Path): base/data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.write_de_var_t_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">write_de_var_t_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.write_de_var_t_override" title="Link to this definition"></a></dt>
+<dd><p>Write DE_VAR_T_ENTSOE.inc with the observed demand profiles.</p>
+<p>The first of DEMAND_USERS gets the values, the others are set equal to it.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>profiles (dict[str, pd.Series]): Output of demand_profiles.
+report (list[str]): Report lines of demand_profiles, written in the header.
+year (int): The Backcast Year.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.append_de_var_t_include">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">append_de_var_t_include</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">de_var_t_inc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'../../base/data'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.append_de_var_t_include" title="Link to this definition"></a></dt>
+<dd><p>Idempotently append the $include of DE_VAR_T_ENTSOE.inc to the scenario’s DE_VAR_T.inc.</p>
+<p>A scenario without its own DE_VAR_T.inc gets one that loads base’s first.</p>
+<dl>
+<dt>Args:</dt><dd><p>de_var_t_inc_path (str | Path): Path to the scenario’s DE_VAR_T.inc.
+base_data_dir (str, optional): GAMS path, relative to the scenario’s</p>
+<blockquote>
+<div><p>model/ folder, of the base data. Defaults to ‘../../base/data’.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.write_de_override">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">write_de_override</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">levels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eurostat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">previous_scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.write_de_override" title="Link to this definition"></a></dt>
+<dd><p>Write DE_ENTSOE.inc with the Demand Level of <cite>year</cite>.</p>
+<dl>
+<dt>Args:</dt><dd><p>levels (pd.DataFrame): The levels of demand_levels.
+year (int): The Backcast Year.
+basis (str): ‘entsoe’ or ‘eurostat’.
+scenario_data_path (str | Path): The scenario’s ‘data’ folder.
+heat (str, optional): ‘eurostat’ or ‘model’. Defaults to ‘eurostat’.
+previous_scenario (str | None, optional): The run the heating came</p>
+<blockquote>
+<div><p>from, named in the header with ‘model’ heat.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.load_input_data">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">load_input_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.Balmorel" title="pybalmorel.classes.Balmorel"><span class="pre">pybalmorel.classes.Balmorel</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.load_input_data" title="Link to this definition"></a></dt>
+<dd><p>Load a scenario’s input data, warning if the cached GDX is stale.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario.
+gams_system_directory (str | None): GAMS system directory.
+reload_input (bool): Run ReadData again instead of reusing the cached input GDX.
+ignore (tuple[str, …]): Data files the stale-cache check ignores.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Balmorel: The model with the input data loaded.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.generate_demand_level">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">generate_demand_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eurostat_data_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'entsoe'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">COVERAGE_BOUNDS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.generate_demand_level" title="Link to this definition"></a></dt>
+<dd><p>Write DE_ENTSOE.inc and backcastoutput/demand_level.csv for a Balmorel scenario.</p>
+<p>The scenario’s DE.inc must include DE_ENTSOE.inc after base’s DE.inc, and
+its INDUSTRY_DE.inc and INDIVUSERS_DE.inc again after base’s. With ‘model’
+heat, the heating and transmission losses come from the previous run’s
+balmorel_load.csv, which must be the run that solved with the scenario’s
+current DE_ENTSOE.inc (warned about if not). Its residual is printed, for
+the user to decide whether to iterate again.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the override for.
+year (int): The Backcast Year.
+zones (pd.DataFrame): Hourly ENTSO-E load (MW) per bidding zone,</p>
+<blockquote>
+<div><p>indexed by timezone-aware timestamps.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>eurostat_data_path (str | Path | None, optional): Cache folder of the</dt><dd><p>Eurostat responses. Defaults to &lt;scenario&gt;/eurostatdata.</p>
+</dd>
+</dl>
+<p>basis (str, optional): ‘entsoe’ or ‘eurostat’. Defaults to ‘entsoe’.
+coverage_bounds (tuple[float, float], optional): Lowest and highest</p>
+<blockquote>
+<div><p>L(1-d)/FC_E written. Defaults to COVERAGE_BOUNDS.</p>
+</div></blockquote>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>heat (str, optional): ‘model’ takes the heating from the previous</dt><dd><p>run, ‘eurostat’ from Eurostat (the first run of a new Backcast
+Year). Defaults to ‘model’.</p>
+</dd>
+<dt>load_results (str | Path | None, optional): The previous run’s</dt><dd><p>balmorel_load.csv. Defaults to &lt;scenario&gt;/backcastoutput/balmorel_load.csv.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>FileNotFoundError: With ‘model’ heat, if there is no previous run.</p>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.backcasting.demand.generate_demand_profile">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.backcasting.demand.</span></span><span class="sig-name descname"><span class="pre">generate_demand_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">balmorel_model_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zones</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reload_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../classes/index.html#pybalmorel.classes.IncFile" title="pybalmorel.classes.IncFile"><span class="pre">pybalmorel.classes.IncFile</span></a></span></span><a class="headerlink" href="#pybalmorel.backcasting.demand.generate_demand_profile" title="Link to this definition"></a></dt>
+<dd><p>Write DE_VAR_T_ENTSOE.inc for a Balmorel scenario from observed ENTSO-E load.</p>
+<dl>
+<dt>Args:</dt><dd><p>balmorel_model_folder (str | Path): Top-level Balmorel folder (contains ‘base’).
+scenario (str): The scenario to write the override for.
+year (int): The Backcast Year.
+zones (pd.DataFrame): Hourly ENTSO-E load (MW) per bidding zone,</p>
+<blockquote>
+<div><p>indexed by timezone-aware timestamps.</p>
+</div></blockquote>
+<p>gams_system_directory (str | None, optional): GAMS system directory.
+reload_input (bool, optional): Run ReadData again instead of reusing</p>
+<blockquote>
+<div><p>the cached input GDX. Defaults to False.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>IncFile: The saved IncFile instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../co2tax/index.html" class="btn btn-neutral float-left" title="pybalmorel.backcasting.co2tax" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../eurostat/index.html" class="btn btn-neutral float-right" title="pybalmorel.backcasting.eurostat" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

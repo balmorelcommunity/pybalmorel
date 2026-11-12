@@ -1,0 +1,748 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preparing a Backcast &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Execution" href="../execution.html" />
+    <link rel="prev" title="ENTSO-E Data Fetching" href="entsoe.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Get Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../preprocessing.html">Pre-Processing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Pre-Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timeseriesagg.html">Time Series Aggregation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multi_weather_year_input.html">Multi-Weather-Year Input Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="economics.html">Economic Adjustments: Currency &amp; Inflation Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="entsoe.html">ENTSO-E Data Fetching</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Preparing a Backcast</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli">CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading-entso-e-data">Downloading ENTSO-E data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#key-features">Key features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nuclear-availability">Nuclear availability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#thermal-availability">Thermal availability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#must-run-floor">Must-run floor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vre-level">VRE level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#demand-profiles">Demand profiles</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#demand-level">Demand level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#price-year">Price Year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fuel-prices">Fuel prices</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-the-ttf-price-files">Getting the TTF price files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#co2-tax">CO2 tax</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-flow">Data flow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">About this code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../preprocessing.html">Pre-Processing</a></li>
+      <li class="breadcrumb-item active">Preparing a Backcast</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/preprocessing/preparing_backcast.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="preparing-a-backcast">
+<h1>Preparing a Backcast<a class="headerlink" href="#preparing-a-backcast" title="Link to this heading"></a></h1>
+<p>A Backcast is a Balmorel scenario run for one historical Backcast Year,
+so its results can be compared with what actually happened (see
+<a class="reference external" href="https://github.com/Mathias157/pybalmorel/blob/master/CONTEXT.md"><code class="docutils literal notranslate"><span class="pre">CONTEXT.md</span></code></a>).
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting</span></code> covers the whole workflow:</p>
+<ol class="arabic simple">
+<li><p><strong>Prepare</strong> the Backcast’s inputs: download ENTSO-E data, derive the
+<code class="docutils literal notranslate"><span class="pre">XKFX</span></code> transmission override from ENTSO-E’s Observed Flow Limit, the
+weekly <a class="reference internal" href="#nuclear-availability">nuclear</a> and
+<a class="reference internal" href="#thermal-availability">thermal availability</a>, the
+<a class="reference internal" href="#must-run-floor">must-run floor</a>, the <a class="reference internal" href="#vre-level">VRE level</a>, the
+<a class="reference internal" href="#demand-profiles">electricity demand profiles</a> and
+<a class="reference internal" href="#demand-level">level</a>, and write
+season- and hour-resolved historical <a class="reference internal" href="#fuel-prices">fuel prices</a> and a
+<a class="reference internal" href="#co2-tax">CO2 tax</a> for the Backcast Year. This page.</p></li>
+<li><p><strong>Run</strong> the Balmorel scenario as usual.</p></li>
+<li><p><strong>Validate</strong> the Backcast’s results against ENTSO-E observations. See
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">Validating a Backcast</span></a>.</p></li>
+</ol>
+<p>The transmission override follows ADRs
+<a class="reference internal" href="../adr/0005-observed-max-flow-not-ntc-for-backcasting.html"><span class="std std-doc">0005</span></a>,
+<a class="reference internal" href="../adr/0006-xkfx-override-file-not-regeneration.html"><span class="std std-doc">0006</span></a>,
+<a class="reference internal" href="../adr/0007-split-entsoe-and-backcasting-packages.html"><span class="std std-doc">0007</span></a> and
+<a class="reference internal" href="../adr/0010-observed-flow-limit-percentile.html"><span class="std std-doc">0010</span></a>.
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting</span></code> depends on <a class="reference internal" href="entsoe.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code></span></a> for raw
+data access and on <code class="docutils literal notranslate"><span class="pre">pybalmorel.MainResults</span></code> for Balmorel results — never the
+other way round.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>Backcasting needs the <code class="docutils literal notranslate"><span class="pre">entso-e</span></code> extra:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pybalmorel<span class="o">[</span>entso-e<span class="o">]</span>
+</pre></div>
+</div>
+<p>A GAMS installation is also needed for reading Balmorel results, i.e. for
+<code class="docutils literal notranslate"><span class="pre">transmission-flow-limit</span></code> (which reads the scenario’s <code class="docutils literal notranslate"><span class="pre">XKFX</span></code> borders) and for
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">validating a Backcast</span></a>.</p>
+</section>
+<section id="cli">
+<h2>CLI<a class="headerlink" href="#cli" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download ENTSO-E load, prices, generation and cross-border flows</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>download<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--query<span class="w"> </span>load<span class="w"> </span>--query<span class="w"> </span>crossborder_flows<span class="o">]</span>
+
+<span class="c1"># Write XKFX_ENTSOE.inc: transmission overrides from the ENTSO-E Observed Flow Limit</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>transmission-flow-limit<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--percentile<span class="w"> </span><span class="m">99</span><span class="o">]</span>
+
+<span class="c1"># Write GKRATE_ENTSOE.inc: weekly nuclear availability from ENTSO-E nuclear output</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>nuclear-availability<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Write GKRATE_THERMAL_ENTSOE.inc: weekly thermal availability from ENTSO-E capacity and outages</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>thermal-availability<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Write the MUSTRUN files: weekly must-run floors from ENTSO-E output in low-price weeks</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>must-run-floor<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--price-threshold<span class="w"> </span><span class="m">40</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>--min-hours<span class="w"> </span><span class="m">4</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>--every-week<span class="w"> </span>BIOMASS<span class="w"> </span>--every-week<span class="w"> </span>WASTE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Write WNDFLH_ENTSOE.inc + SOLEFLH_ENTSOE.inc: VRE full-load hours scaled to ENTSO-E output</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>vre-flh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--bounds<span class="w"> </span><span class="m">0</span>.6<span class="w"> </span><span class="m">1</span>.5<span class="o">]</span><span class="w"> </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Write DE_VAR_T_ENTSOE.inc: electricity demand profiles from ENTSO-E actual load</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>demand-profile<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Write DE_ENTSOE.inc: annual electricity demand from ENTSO-E load less the previous run's heating</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>demand-level<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;entsoe-data-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--heat<span class="w"> </span>model<span class="p">|</span>eurostat<span class="o">]</span><span class="w"> </span><span class="o">[</span>--load-results<span class="w"> </span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--basis<span class="w"> </span>entsoe<span class="p">|</span>eurostat<span class="o">]</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--coverage-bounds<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span><span class="m">1</span>.3<span class="o">]</span><span class="w"> </span><span class="o">[</span>--eurostat-data-path<span class="w"> </span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--reload-input<span class="o">]</span>
+
+<span class="c1"># Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_&lt;year&gt;.csv</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>ttf-csv<span class="w"> </span>&lt;html-path&gt;<span class="w"> </span>&lt;historicalprices-path&gt;
+
+<span class="c1"># Write FUELPRICE.inc + FUELPRICE_CONSTANT.inc: historical NATGAS/COAL prices</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>fuelprices<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;
+
+<span class="c1"># Write TAX_CO2_ST.inc: historical EUA price as CO2 tax</span>
+python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>co2-tax<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;balmorel-scenario-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;year&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">[</span>--co2-override<span class="w"> </span><span class="nv">UNITED_KINGDOM</span><span class="o">=</span><span class="m">85</span><span class="w"> </span>--co2-override<span class="w"> </span><span class="nv">SERBIA</span><span class="o">=</span><span class="m">0</span><span class="o">]</span>
+</pre></div>
+</div>
+<p>Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pybalmorel.backcasting</span> <span class="pre">&lt;command&gt;</span> <span class="pre">--help</span></code> for details on each
+command.</p>
+</section>
+<section id="downloading-entso-e-data">
+<h2>Downloading ENTSO-E data<a class="headerlink" href="#downloading-entso-e-data" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">download</span></code> fetches the Backcast Year’s ENTSO-E data into <code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>,
+for every zone in <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe.bidding_zones</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">--query</span></code></p></th>
+<th class="head"><p>Files</p></th>
+<th class="head"><p>Used by</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">load</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_load.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code>, <code class="docutils literal notranslate"><span class="pre">demand-profile</span></code>, <code class="docutils literal notranslate"><span class="pre">demand-level</span></code>, <code class="docutils literal notranslate"><span class="pre">must-run-floor</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">day_ahead_prices</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_day_ahead_prices.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code>, <code class="docutils literal notranslate"><span class="pre">must-run-floor</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">generation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_generation.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">format</span></code>, <code class="docutils literal notranslate"><span class="pre">nuclear-availability</span></code>, <code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code>, <code class="docutils literal notranslate"><span class="pre">must-run-floor</span></code>, <code class="docutils literal notranslate"><span class="pre">vre-flh</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">crossborder_flows</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;from&gt;-&lt;to&gt;_crossborder_flows.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">transmission-flow-limit</span></code>, <code class="docutils literal notranslate"><span class="pre">format</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">installed_generation_capacity</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_installed_generation_capacity.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">unavailability_of_generation_units</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;zone&gt;_unavailability_of_generation_units.csv</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Without <code class="docutils literal notranslate"><span class="pre">--query</span></code>, the first four are downloaded. The capacity and outage
+queries must be asked for. <code class="docutils literal notranslate"><span class="pre">--query</span></code> is repeatable.</p>
+<p>Flows are fetched for every directed pair of neighbouring zones.</p>
+<p>IE’s load is fetched for Ireland’s control area (<code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_IE_load.csv</span></code>), not
+the all-island <code class="docutils literal notranslate"><span class="pre">IE_SEM</span></code> bidding zone, because Balmorel has Northern Ireland in
+UK (<code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe.load_zones</span></code>). Prices, generation and flows stay on
+<code class="docutils literal notranslate"><span class="pre">IE_SEM</span></code>. An older <code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_IE_SEM_load.csv</span></code> is not read. If it is the only IE
+load file, the commands warn, and you should rerun <code class="docutils literal notranslate"><span class="pre">download</span> <span class="pre">--query</span> <span class="pre">load</span></code>.</p>
+<p>The download can be stopped and rerun at any time. On a rerun:</p>
+<ul class="simple">
+<li><p>Files that already exist are skipped.</p></li>
+<li><p>Zones and pairs ENTSO-E answered “no matching data” for on an earlier
+run are skipped. They are listed in <code class="docutils literal notranslate"><span class="pre">&lt;year&gt;_&lt;query&gt;_nodata.txt</span></code> in
+<code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>, one zone per line (or, for flows, two EIC codes
+separated by a tab). Delete a line to query that zone or pair again, or
+the whole file to query them all again, e.g. if ENTSO-E has since
+published the data.</p></li>
+<li><p>Failed requests are retried. Timeouts, dropped connections and server
+errors are never written to the <code class="docutils literal notranslate"><span class="pre">_nodata.txt</span></code> files, and don’t stop the
+download. Requests time out after 120 seconds, so a connection lost
+mid-request, e.g. when switching networks, doesn’t hang the download.</p></li>
+</ul>
+</section>
+<section id="key-features">
+<h2>Key features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Backcast Calendar</strong>: every timestamp ↔ (Season, Term) conversion goes
+through <code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting.calendar</span></code>. S01 T001 is 00:00 UTC on the
+first Monday of the year, and every day has 24 terms (see
+<a class="reference internal" href="../adr/0008-backcast-calendar-utc.html"><span class="std std-doc">ADR 0008</span></a>). Balmorel results are
+matched by label, never by position. Inputs not in UTC, such as a demand
+series in local time, must be converted before they are mapped onto it.</p></li>
+<li><p><strong>Bidding Zone Mapping</strong>: uses <code class="docutils literal notranslate"><span class="pre">bidding_zone_codes</span></code>/<code class="docutils literal notranslate"><span class="pre">bidding_zone_translation</span></code>
+from <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> to bridge ENTSO-E bidding zones and Balmorel regions.</p></li>
+<li><p><strong>Transmission overrides</strong>: <code class="docutils literal notranslate"><span class="pre">flows.py</span></code> computes the Observed Flow Limit
+per border and writes it to <code class="docutils literal notranslate"><span class="pre">XKFX_ENTSOE.inc</span></code> (see ADRs
+<a class="reference internal" href="../adr/0005-observed-max-flow-not-ntc-for-backcasting.html"><span class="std std-doc">0005</span></a>,
+<a class="reference internal" href="../adr/0006-xkfx-override-file-not-regeneration.html"><span class="std std-doc">0006</span></a> and
+<a class="reference internal" href="../adr/0010-observed-flow-limit-percentile.html"><span class="std std-doc">0010</span></a>) — a
+non-destructive override file, never a rewrite of the base <code class="docutils literal notranslate"><span class="pre">XKFX.inc</span></code>.
+The limit is a percentile (<code class="docutils literal notranslate"><span class="pre">--percentile</span></code>, default 99) of the hourly flow
+in one direction, over the hours with flow in that direction, after
+summing every ENTSO-E zone pair of the border hour by hour. A direction
+without flow gets 0, and <code class="docutils literal notranslate"><span class="pre">--percentile</span> <span class="pre">100</span></code> gives the maximum. The
+<code class="docutils literal notranslate"><span class="pre">transmission-flow-limit</span></code> command replaces <code class="docutils literal notranslate"><span class="pre">transmission-max-flow</span></code>, which
+took the yearly maximum; there is no alias for the old name.</p></li>
+</ul>
+</section>
+<section id="nuclear-availability">
+<h2>Nuclear availability<a class="headerlink" href="#nuclear-availability" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">nuclear-availability</span></code> command writes <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/GKRATE_ENTSOE.inc</span></code>:
+one <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code> per nuclear (area, technology) and Backcast Calendar week. The
+rating is the country’s Nuclear Availability: the highest hourly nuclear
+output ENTSO-E reports for that week, divided by the country’s nuclear
+<code class="docutils literal notranslate"><span class="pre">GKFX</span></code> in the Backcast Year, clipped at 1. It reads the generation files
+<code class="docutils literal notranslate"><span class="pre">download</span> <span class="pre">--query</span> <span class="pre">generation</span></code> fetched; it does not fetch.</p>
+<ul class="simple">
+<li><p>Nuclear technologies are those whose <code class="docutils literal notranslate"><span class="pre">GDATA(G,'GDFUEL')</span></code> is
+<code class="docutils literal notranslate"><span class="pre">FDATA('NUCLEAR','FDACRONYM')</span></code>. <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> is read through GAMS from the
+scenario’s cached <code class="docutils literal notranslate"><span class="pre">&lt;scenario&gt;_input_data.gdx</span></code>, or by running ReadData if
+it isn’t cached. The command warns if a file in <code class="docutils literal notranslate"><span class="pre">&lt;scenario&gt;/data</span></code> is newer
+than the cache, which then misses it; <code class="docutils literal notranslate"><span class="pre">--reload-input</span></code> runs ReadData again
+(more than 20 minutes on the backcast).</p></li>
+<li><p>Every nuclear technology in a country gets the same rating, since ENTSO-E
+only reports nuclear output per bidding zone. Areas are grouped by
+Canonical Region Name (<code class="docutils literal notranslate"><span class="pre">FIN</span></code> → <code class="docutils literal notranslate"><span class="pre">FI</span></code>, <code class="docutils literal notranslate"><span class="pre">DE4-*</span></code> → <code class="docutils literal notranslate"><span class="pre">DE</span></code>).</p></li>
+<li><p>A rating of 0 is written as <code class="docutils literal notranslate"><span class="pre">eps</span></code>, since Balmorel reads a literal 0 as
+“no rating” and uses full capacity.</p></li>
+<li><p>Weeks without data after a country’s last week with data are a closure:
+ENTSO-E stops reporting a closed fleet instead of reporting zeros (Germany
+in 2023 after 15 April). They are written as <code class="docutils literal notranslate"><span class="pre">eps</span></code>, with a loud warning,
+since a feed that simply stops looks the same.</p></li>
+<li><p>Any other week without data gets no line and keeps the base rating. Countries with
+nuclear <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> but no ENTSO-E nuclear output, or the other way round, are
+reported and left out.</p></li>
+</ul>
+<p>The scenario’s <code class="docutils literal notranslate"><span class="pre">data/GKRATE.inc</span></code> must include the file after the base
+ratings (the command warns if it doesn’t):</p>
+<div class="highlight-gams notranslate"><div class="highlight"><pre><span></span>$if EXIST '../data/GKRATE_ENTSOE.inc' $INCLUDE '../data/GKRATE_ENTSOE.inc';
+</pre></div>
+</div>
+<p>The nuclear availability is a Calibration Input: nuclear output that it
+fixes by construction is not evidence in Backcast validation.</p>
+</section>
+<section id="thermal-availability">
+<h2>Thermal availability<a class="headerlink" href="#thermal-availability" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code> command writes
+<code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/GKRATE_THERMAL_ENTSOE.inc</span></code>: one <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code> per fossil,
+biomass or waste (area, technology) and Backcast Calendar week. The rating
+is the country’s Thermal Availability for the technology’s fuel group
+(<code class="docutils literal notranslate"><span class="pre">COAL</span></code>, <code class="docutils literal notranslate"><span class="pre">GAS</span></code>, <code class="docutils literal notranslate"><span class="pre">OIL</span></code>, <code class="docutils literal notranslate"><span class="pre">OILSHALE_PEAT</span></code>, <code class="docutils literal notranslate"><span class="pre">BIOMASS</span></code>, <code class="docutils literal notranslate"><span class="pre">WASTE</span></code>): ENTSO-E’s
+installed capacity of the group as a share of its <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> (at most 1), less
+the share ENTSO-E reports out of service that week. It reads the files of
+<code class="docutils literal notranslate"><span class="pre">download</span> <span class="pre">--query</span> <span class="pre">installed_generation_capacity</span> <span class="pre">--query</span> <span class="pre">unavailability_of_generation_units</span></code>.</p>
+<ul class="simple">
+<li><p>Technologies are grouped by their <code class="docutils literal notranslate"><span class="pre">GDFUEL</span></code> acronym, read from the input
+GDX. An electricity-producing fuel that is neither in a group nor listed
+as ungrouped (nuclear, heat, …) raises an error, so a new fuel can’t
+silently keep full availability.</p></li>
+<li><p>Only the latest revision of each outage report counts, and cancelled or
+withdrawn reports are dropped. Rows that the download repeats exactly
+count once (10,495 of 69,492 in 2023). Planned and forced outages are
+averaged over the hours of each week.</p></li>
+<li><p>A group without ENTSO-E installed capacity keeps its base <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code>, and a
+country without outage reports only has <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> scaled to the installed
+capacity; both warn.</p></li>
+<li><p>The ratings are saved to <code class="docutils literal notranslate"><span class="pre">backcastoutput/thermal_availability.csv</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">backcastoutput/thermal_capacity.csv</span></code> checks <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> against ENTSO-E’s
+installed capacity and observed output per country and group,
+including solar and wind (check only).</p></li>
+</ul>
+<p>The scenario’s <code class="docutils literal notranslate"><span class="pre">data/GKRATE.inc</span></code> must include the file after the base
+ratings (the command warns if it doesn’t):</p>
+<div class="highlight-gams notranslate"><div class="highlight"><pre><span></span>$if EXIST '../data/GKRATE_THERMAL_ENTSOE.inc' $INCLUDE '../data/GKRATE_THERMAL_ENTSOE.inc';
+</pre></div>
+</div>
+<p>Thermal Availability is taken from capacity and outage reports, never from
+observed output, so the fossil mix stays a Validation Metric.</p>
+</section>
+<section id="must-run-floor">
+<h2>Must-run floor<a class="headerlink" href="#must-run-floor" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">must-run-floor</span></code> command writes the data of Balmorel’s <code class="docutils literal notranslate"><span class="pre">MUSTRUN</span></code> addon
+to <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/</span></code>: <code class="docutils literal notranslate"><span class="pre">MUSTRUN_ZONE.inc</span></code>, <code class="docutils literal notranslate"><span class="pre">MUSTRUN_ZONE_RRR.inc</span></code>,
+<code class="docutils literal notranslate"><span class="pre">MUSTRUN_GROUP.inc</span></code>, <code class="docutils literal notranslate"><span class="pre">MUSTRUN_GROUP_FFF.inc</span></code> and, last,
+<code class="docutils literal notranslate"><span class="pre">MUSTRUN_FLOOR.inc</span></code>, whose existence switches the addon on. The floor is
+the lowest hourly output ENTSO-E reports for a country’s fuel group in a
+Backcast Calendar week in which the day-ahead price stayed at or below
+<code class="docutils literal notranslate"><span class="pre">--price-threshold</span></code> (40 €/MWh, nominal) for at least <code class="docutils literal notranslate"><span class="pre">--min-hours</span></code> (4)
+hours. <code class="docutils literal notranslate"><span class="pre">--every-week</span></code> groups (biomass and waste, paid regardless of the
+price) are floored in every week.</p>
+<ul class="simple">
+<li><p>The country’s price is the load-weighted mean of its zones’ prices.</p></li>
+<li><p>Floors are capped at Balmorel’s available capacity (<code class="docutils literal notranslate"><span class="pre">GKFX</span></code> × <code class="docutils literal notranslate"><span class="pre">GKRATE</span></code>),
+so run <code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code> first; the command warns if
+<code class="docutils literal notranslate"><span class="pre">GKRATE_THERMAL_ENTSOE.inc</span></code> is missing.</p></li>
+<li><p>Without any floor, no files are written. A <code class="docutils literal notranslate"><span class="pre">MUSTRUN_FLOOR.inc</span></code> left from
+an earlier run is warned about, not deleted.</p></li>
+<li><p>The floors are saved to <code class="docutils literal notranslate"><span class="pre">backcastoutput/must_run_floor.csv</span></code>.</p></li>
+</ul>
+<p>The floor fixes only the bottom of the fossil mix; the rest of it stays a
+Validation Metric.</p>
+</section>
+<section id="vre-level">
+<h2>VRE level<a class="headerlink" href="#vre-level" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">vre-flh</span></code> command scales the weather year’s wind and solar full-load
+hours per country and kind (solar, onshore, offshore), so that the output
+Balmorel can produce in the Backcast Year (<code class="docutils literal notranslate"><span class="pre">GKFX</span></code> × FLH × the mean weekly
+<code class="docutils literal notranslate"><span class="pre">GKRATE</span></code>) equals ENTSO-E’s reported output (see
+<a class="reference internal" href="../adr/0012-vre-level-from-observed-output.html"><span class="std std-doc">ADR 0012</span></a>). Every area of a
+country and kind gets the same factor, so the hourly profiles and the spread
+between areas stay as the weather year wrote them.</p>
+<ul class="simple">
+<li><p>Wind is every technology with fuel <code class="docutils literal notranslate"><span class="pre">WIND</span></code>; solar is <code class="docutils literal notranslate"><span class="pre">GSOLE</span></code> technologies
+with fuel <code class="docutils literal notranslate"><span class="pre">SUN</span></code>, so solar heat isn’t counted. Offshore areas are named
+<code class="docutils literal notranslate"><span class="pre">*_OFF_Existing_RG&lt;n&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">*_VRE-OFF_*</span></code> by the weather year.</p></li>
+<li><p>Where ENTSO-E reports no offshore output for a country with Balmorel
+offshore capacity (SE4, FI, IE), onshore and offshore share one factor,
+since ENTSO-E books small offshore farms as onshore.</p></li>
+<li><p>A factor outside <code class="docutils literal notranslate"><span class="pre">--bounds</span></code> (0.6-1.5) is not written and warns: such a
+gap is a capacity or reporting problem. So does a country without a
+generation file (UK), and an area with <code class="docutils literal notranslate"><span class="pre">GKFX</span></code> but no full-load hours.</p></li>
+<li><p>Both files are always written, even without lines, and the command
+appends their <code class="docutils literal notranslate"><span class="pre">$include</span></code> to the scenario’s <code class="docutils literal notranslate"><span class="pre">WNDFLH.inc</span></code> and
+<code class="docutils literal notranslate"><span class="pre">SOLEFLH.inc</span></code>. The weather year overwrites those, so rerun <code class="docutils literal notranslate"><span class="pre">vre-flh</span></code>
+after every weather-year run. Rerunning is safe: on scaled input data
+the factors are 1 and the files don’t change.</p></li>
+<li><p>The factors are saved to <code class="docutils literal notranslate"><span class="pre">backcastoutput/vre_flh.csv</span></code>.</p></li>
+</ul>
+<p>A country’s annual wind and solar output is then a Calibration Input; the
+hourly timing still comes from the weather year and stays a check.</p>
+</section>
+<section id="demand-profiles">
+<h2>Demand profiles<a class="headerlink" href="#demand-profiles" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">demand-profile</span></code> command writes <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/DE_VAR_T_ENTSOE.inc</span></code>:
+the hourly ENTSO-E actual load of the Backcast Year on the Backcast
+Calendar, as <code class="docutils literal notranslate"><span class="pre">DE_VAR_T</span></code> of the electricity users <code class="docutils literal notranslate"><span class="pre">OTHER</span></code> and <code class="docutils literal notranslate"><span class="pre">RESE</span></code> (set
+equal to <code class="docutils literal notranslate"><span class="pre">OTHER</span></code>) in every region with electricity demand. <code class="docutils literal notranslate"><span class="pre">PII</span></code> keeps its
+profile. Balmorel scales <code class="docutils literal notranslate"><span class="pre">DE_VAR_T</span></code> to the annual <code class="docutils literal notranslate"><span class="pre">DE</span></code>, which still comes
+from the scenario’s input data, so only the shape is replaced. It reads the
+load files <code class="docutils literal notranslate"><span class="pre">download</span> <span class="pre">--query</span> <span class="pre">load</span></code> fetched; it does not fetch.</p>
+<p>It exists because the weather-year electricity demand profiles
+(<code class="docutils literal notranslate"><span class="pre">classic_demand.csv</span></code>) are corrupt from 2022 onwards: negative hours down to
+-1e13 in LV and LT, spikes of 20-60 times the median in NL and EE, and
+copies of one profile in sub-areas. In the 2023 backcast, NL’s demand
+peaked at 136 GW (observed: about 19 GW). The weather-year demand step now
+<a class="reference internal" href="multi_weather_year_input.html#demand-plausibility-check"><span class="std std-ref">checks the profiles</span></a>,
+but the backcast should use the observed load anyway.</p>
+<ul>
+<li><p>Regions and the current profiles are read through GAMS from the
+scenario’s cached <code class="docutils literal notranslate"><span class="pre">&lt;scenario&gt;_input_data.gdx</span></code>, as for
+<a class="reference internal" href="#nuclear-availability">nuclear availability</a>, with the same staleness
+warning and <code class="docutils literal notranslate"><span class="pre">--reload-input</span></code>.</p></li>
+<li><p>Bidding zones are summed to their Canonical Region Name (<code class="docutils literal notranslate"><span class="pre">IT-*</span></code> → <code class="docutils literal notranslate"><span class="pre">IT</span></code>);
+an hour missing in one zone is missing for the region. Balmorel regions
+take the load of their Canonical Region Name, so all <code class="docutils literal notranslate"><span class="pre">DE4-*</span></code> take <code class="docutils literal notranslate"><span class="pre">DE</span></code>’s
+and <code class="docutils literal notranslate"><span class="pre">FIN</span></code> takes <code class="docutils literal notranslate"><span class="pre">FI</span></code>’s.</p></li>
+<li><p>Hours outside 0.2-3 times the profile’s median, or missing, are
+interpolated. A region with more than 2% such hours takes its current
+profile from the input data instead, with the same cleaning, and if that
+fails too it keeps its current profile unchanged, with a warning. Regions
+without ENTSO-E load (the UK, and CY, LU, MT, TR in 2023) also take the
+input data. The file’s header lists the source and number of
+interpolated hours of every region; check it.</p></li>
+<li><p>The command appends this line to the scenario’s <code class="docutils literal notranslate"><span class="pre">data/DE_VAR_T.inc</span></code> if it
+isn’t there, creating the file to include base’s first if needed:</p>
+<div class="highlight-gams notranslate"><div class="highlight"><pre><span></span>$if EXIST '../data/DE_VAR_T_ENTSOE.inc' $INCLUDE '../data/DE_VAR_T_ENTSOE.inc';
+</pre></div>
+</div>
+<p>Writing new weather-year data (<code class="docutils literal notranslate"><span class="pre">run_weatheryear</span></code>, <code class="docutils literal notranslate"><span class="pre">write_scenario_data</span></code>)
+overwrites <code class="docutils literal notranslate"><span class="pre">DE_VAR_T.inc</span></code>, so run <code class="docutils literal notranslate"><span class="pre">demand-profile</span></code> again afterwards.</p>
+</li>
+</ul>
+<p>Caveats:</p>
+<ul class="simple">
+<li><p>ENTSO-E actual load is total load. It includes demand that Balmorel
+models endogenously: heat pumps, electric boilers, EV charging and
+electrolysis. Using its shape for the exogenous users counts part of
+their temperature and time-of-day variation twice. For a backcast this is
+a much smaller error than the corrupt profiles. A cleaner option is to
+subtract an estimate of those loads first.</p></li>
+<li><p>The demand profile is a Calibration Input: the load-shape correlation in
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">Backcast validation</span></a> is no
+longer independent evidence. Only the annual level and the endogenous
+demand remain to be validated.</p></li>
+</ul>
+</section>
+<section id="demand-level">
+<h2>Demand level<a class="headerlink" href="#demand-level" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">demand-level</span></code> command writes <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/DE_ENTSOE.inc</span></code>: the
+annual <code class="docutils literal notranslate"><span class="pre">DE</span></code> of the Backcast Year per region and user. Per zone k, the
+Demand Level is</p>
+<p>X_k = (L_k − T_k − E_k − O_k)(1 − d_k)</p>
+<ul class="simple">
+<li><p>L_k is ENTSO-E’s load over the Backcast Calendar.</p></li>
+<li><p>T_k is the previous backcast run’s transmission losses (<code class="docutils literal notranslate"><span class="pre">TRANS_LOSSES</span></code>).
+ENTSO-E’s load contains them, but Balmorel adds them on top of <code class="docutils literal notranslate"><span class="pre">DE</span></code>.</p></li>
+<li><p>E_k is the electricity the previous run used for heat
+(<code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code>), which Balmorel adds back endogenously.</p></li>
+<li><p>O_k is the previous run’s distribution losses on anything but exogenous
+demand: <code class="docutils literal notranslate"><span class="pre">DIST_LOSSES</span></code> less <code class="docutils literal notranslate"><span class="pre">EXOGENOUS</span></code> × d/(1 − d), per Balmorel region.
+That is the losses on its electric heating, and the 1-2% of wind and
+solar output that Balmorel books as distribution loss (<code class="docutils literal notranslate"><span class="pre">DISLOSS_E_AG</span></code>;
+6.7 TWh in the compared countries in <code class="docutils literal notranslate"><span class="pre">backcast_R2023</span></code> of 2026-11-10).</p></li>
+<li><p>d_k is Balmorel’s distribution loss (<code class="docutils literal notranslate"><span class="pre">DISLOSS_E</span></code>), weighted by the input
+data’s <code class="docutils literal notranslate"><span class="pre">DE</span></code>.</p></li>
+</ul>
+<p>Balmorel’s load as <code class="docutils literal notranslate"><span class="pre">format</span></code> compares it (<code class="docutils literal notranslate"><span class="pre">EXOGENOUS</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ENDOGENOUS_ELECT2HEAT</span></code>, <code class="docutils literal notranslate"><span class="pre">DIST_LOSSES</span></code> and <code class="docutils literal notranslate"><span class="pre">TRANS_LOSSES</span></code>) is then
+ENTSO-E’s, if the run’s heating and losses stay as they were. They respond to prices, and so to the level: E2H falls by about
+0.3 TWh per TWh of <code class="docutils literal notranslate"><span class="pre">DE</span></code>. The level is therefore iterated over runs (see
+<a class="reference internal" href="../adr/0015-demand-level-net-of-the-models-own-heating.html"><span class="std std-doc">ADR 0015</span></a>):</p>
+<ol class="arabic simple">
+<li><p><strong>Iteration 0</strong>: a solved full-year backcast. For a new Backcast Year,
+generate the level with <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code> first (below), and solve.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">format</span></code> on the solved run. It writes
+<code class="docutils literal notranslate"><span class="pre">backcastoutput/balmorel_load.csv</span></code>, which <code class="docutils literal notranslate"><span class="pre">demand-level</span></code> reads by
+default (<code class="docutils literal notranslate"><span class="pre">--load-results</span></code> to read another).</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">demand-level</span></code> (<code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">model</span></code> is the default) and solve again.</p></li>
+<li><p>Repeat 2-3 for as long as you like. The command prints the previous
+run’s residual, X_k less that run’s exogenous load, summed over Europe
+and summed in absolute terms over countries. It is what that run’s load
+missed ENTSO-E’s by, net of distribution losses. Around 10 TWh summed
+over countries is as close as the other errors allow; nothing stops the
+iteration for you.</p></li>
+</ol>
+<p>The previous run must be the one that solved with the scenario’s current
+<code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code>. The command warns where that run’s exogenous load is more
+than 1% off the file’s level, and it stops if <code class="docutils literal notranslate"><span class="pre">balmorel_load.csv</span></code> holds
+more than one scenario, another year, or not every hour of the calendar (a
+sampled run).</p>
+<ul class="simple">
+<li><p>ENTSO-E’s load is its mean over the Backcast Calendar times 8760 hours.
+Balmorel spreads <code class="docutils literal notranslate"><span class="pre">DE</span></code> over 8760 hours whatever its time steps cover, so
+the calendar’s 8736 hours get back the observed load. The previous run’s
+losses and heating, summed over the calendar’s 8736 hours, are scaled to
+8760 the same way.</p></li>
+<li><p>ENTSO-E’s <code class="docutils literal notranslate"><span class="pre">DE_LU</span></code> load is split between DE and LU by Eurostat final
+consumption, and each takes its own heating and losses. IE’s load is
+Ireland’s control area, without Northern Ireland (see
+<a class="reference internal" href="#downloading-entso-e-data">Downloading ENTSO-E data</a>). A zone covering
+several Balmorel regions (DE4-*) sums their heating and losses, and its
+level is split by the input data’s <code class="docutils literal notranslate"><span class="pre">DE</span></code>, as it is over the users.</p></li>
+<li><p>Missing load hours are filled with the zone’s mean; more than 2% missing
+warns.</p></li>
+<li><p>A country keeps its input <code class="docutils literal notranslate"><span class="pre">DE</span></code>, with a warning, without ENTSO-E load
+(UK, TR), if one of its zones is not in the previous run, if a level is
+not positive, or if its load net of losses over Eurostat final
+consumption is outside <code class="docutils literal notranslate"><span class="pre">--coverage-bounds</span></code> (0.8-1.3; AL in 2023). A
+country without Eurostat data (CH) is written, with its coverage
+unchecked.</p></li>
+<li><p>Eurostat data is fetched from the public dissemination API (no key) and
+cached in <code class="docutils literal notranslate"><span class="pre">--eurostat-data-path</span></code> (default <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/eurostatdata</span></code>),
+one JSON file per dataset and year. With <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">model</span></code> it is only used
+for the coverage check, the DE_LU split and the summary.</p></li>
+<li><p>The summary is saved to <code class="docutils literal notranslate"><span class="pre">backcastoutput/demand_level.csv</span></code>. Next to the
+level (<code class="docutils literal notranslate"><span class="pre">NewTWh</span></code>) and the input data’s <code class="docutils literal notranslate"><span class="pre">DE</span></code> (<code class="docutils literal notranslate"><span class="pre">InputTWh</span></code>, the previous
+level after the first run), it reports the previous run’s heating
+(<code class="docutils literal notranslate"><span class="pre">E2H_TWh</span></code>), transmission losses (<code class="docutils literal notranslate"><span class="pre">TransLossTWh</span></code>), other distribution
+losses (<code class="docutils literal notranslate"><span class="pre">OtherDistLossTWh</span></code>), exogenous load (<code class="docutils literal notranslate"><span class="pre">PrevExoTWh</span></code>) and
+<code class="docutils literal notranslate"><span class="pre">ResidualTWh</span></code>, and Balmorel’s electric heating less Eurostat’s
+(<code class="docutils literal notranslate"><span class="pre">E2H_minus_H_TWh</span></code>).</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code> leaves out the electricity Eurostat reports for heating
+instead of E_k, with no T_k or O_k: households’ space and water
+heating (<code class="docutils literal notranslate"><span class="pre">nrg_d_hhq</span></code>) and electric boilers and heat pumps in district
+heating (<code class="docutils literal notranslate"><span class="pre">nrg_bal_c</span></code>). It needs no previous run, so it is how the first
+run of a new Backcast Year gets its level. Its load misses ENTSO-E’s by
+the model’s electric heating less Eurostat’s and by the transmission
+losses and O_k. Electric heating in services has no Eurostat split, so with it
+that heating stays in <code class="docutils literal notranslate"><span class="pre">DE</span></code> and is counted again by Balmorel’s tertiary
+heating. <code class="docutils literal notranslate"><span class="pre">--basis</span> <span class="pre">eurostat</span></code> (only with <code class="docutils literal notranslate"><span class="pre">--heat</span> <span class="pre">eurostat</span></code>) takes Eurostat
+final consumption less heating instead of ENTSO-E’s load.</p>
+<p>The scenario’s <code class="docutils literal notranslate"><span class="pre">data/DE.inc</span></code> must include the file after base’s <code class="docutils literal notranslate"><span class="pre">DE.inc</span></code>
+(the command warns if it doesn’t):</p>
+<div class="highlight-gams notranslate"><div class="highlight"><pre><span></span>$include '../../base/data/DE.inc';
+$if EXIST '../data/DE_ENTSOE.inc' $INCLUDE '../data/DE_ENTSOE.inc';
+</pre></div>
+</div>
+<p>The INDUSTRY and INDIVUSERS addons adjust <code class="docutils literal notranslate"><span class="pre">DE</span></code> again after <code class="docutils literal notranslate"><span class="pre">DE.inc</span></code>, so the
+scenario’s own <code class="docutils literal notranslate"><span class="pre">INDUSTRY_DE.inc</span></code> and <code class="docutils literal notranslate"><span class="pre">INDIVUSERS_DE.inc</span></code> must include
+base’s and then <code class="docutils literal notranslate"><span class="pre">DE_ENTSOE.inc</span></code> again (the command warns if one doesn’t).</p>
+<p>A country’s total load is a Calibration Input; its electric heating
+(<code class="docutils literal notranslate"><span class="pre">E2H_minus_H_TWh</span></code>) stays a Validation Metric. Read it knowing the scopes
+differ: Balmorel’s E2H also covers industry and services.</p>
+</section>
+<section id="price-year">
+<h2>Price Year<a class="headerlink" href="#price-year" title="Link to this heading"></a></h2>
+<p>All generated prices are in €2016. Nominal prices are converted from USD
+at the Eurostat annual-average EUR/USD rate of the Backcast Year and
+deflated with the annual euro-area HICP. Both tables are bundled in
+<code class="docutils literal notranslate"><span class="pre">pybalmorel.backcasting.pricelevel</span></code> (see
+<a class="reference internal" href="../adr/0009-price-year-bundled-deflator-table.html"><span class="std std-doc">ADR 0009</span></a>), with the
+Eurostat dataset codes next to them; extend them when a new year is needed.</p>
+</section>
+<section id="fuel-prices">
+<h2>Fuel prices<a class="headerlink" href="#fuel-prices" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> command converts historical daily fuel prices into Balmorel’s
+season- and hour-resolved <code class="docutils literal notranslate"><span class="pre">FUELPRICE(YYY,AAA,FFF,SSS,TTT)</span></code> input, so a
+Backcast sees the fuel prices of the actual year. It reads two CSV files
+from <code class="docutils literal notranslate"><span class="pre">&lt;historicalprices-path&gt;</span></code>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Fuel</p></th>
+<th class="head"><p>File</p></th>
+<th class="head"><p>Unit</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NATGAS</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">natural_gas_TTF_&lt;year&gt;.csv</span></code> (TTF futures, see <a class="reference internal" href="#getting-the-ttf-price-files">below</a>)</p></td>
+<td><p>€/MWh, converted to €/GJ</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">COAL</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Rotterdam</span> <span class="pre">Coal</span> <span class="pre">Futures</span> <span class="pre">Historical</span> <span class="pre">Data.csv</span></code> (must cover the year)</p></td>
+<td><p>USD/t, converted to €/GJ with 30.2 GJ/t</p></td>
+</tr>
+</tbody>
+</table>
+<section id="getting-the-ttf-price-files">
+<h3>Getting the TTF price files<a class="headerlink" href="#getting-the-ttf-price-files" title="Link to this heading"></a></h3>
+<p>Yahoo Finance only lets paying users download its history as CSV. Instead,
+open <a class="reference external" href="https://finance.yahoo.com/quote/TTF%3DF/history/">https://finance.yahoo.com/quote/TTF%3DF/history/</a>, choose a date range
+(it can span several years), and save the page from the browser as HTML.
+Then run <code class="docutils literal notranslate"><span class="pre">ttf-csv</span></code> on it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pybalmorel.backcasting<span class="w"> </span>ttf-csv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"2020-2025 Dutch TTF Natural Gas Calendar (TTF=F) Stock Historical Prices &amp; Data - Yahoo Finance.html"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;historicalprices-path&gt;
+</pre></div>
+</div>
+<p>This writes one <code class="docutils literal notranslate"><span class="pre">natural_gas_TTF_&lt;year&gt;.csv</span></code> per calendar year on the page,
+overwriting any that already exist. Each file has the columns
+<code class="docutils literal notranslate"><span class="pre">Date,Open,High,Low,Close,Adj</span> <span class="pre">Close,Volume</span></code>. <code class="docutils literal notranslate"><span class="pre">Date</span></code> has no year (<code class="docutils literal notranslate"><span class="pre">Dec</span> <span class="pre">30</span></code>),
+and <code class="docutils literal notranslate"><span class="pre">Volume</span></code> has no thousands separators, so the file is valid CSV. The
+<code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> command uses <code class="docutils literal notranslate"><span class="pre">Adj</span> <span class="pre">Close</span></code>.</p>
+<p>Daily prices apply to the UTC calendar day on the Backcast Calendar,
+carrying the last price forward over weekends and holidays. Two files are
+written to <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FUELPRICE.inc</span></code> — the (S,T)-resolved NATGAS and COAL prices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FUELPRICE_CONSTANT.inc</span></code> — flags every other fuel as constant over the year.</p></li>
+</ul>
+<p>Only natural gas and coal are covered; oil is not covered yet. For annual
+averages instead, see the
+<a class="reference internal" href="economics.html#average-fuel-prices-cli"><span class="std std-ref">average fuel prices CLI</span></a>.</p>
+</section>
+</section>
+<section id="co2-tax">
+<h2>CO2 tax<a class="headerlink" href="#co2-tax" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code> command converts the EEX EUA primary-auction results into
+Balmorel’s <code class="docutils literal notranslate"><span class="pre">TAX_CO2_ST(YYY,CCC,SSS,TTT)</span></code> input (see ADR 0002 in the
+Balmorel repo) and writes <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/TAX_CO2_ST.inc</span></code>. It reads
+<code class="docutils literal notranslate"><span class="pre">emission-spot-primary-market-auction-report-&lt;year&gt;-data.xlsx</span></code>, found
+anywhere under <code class="docutils literal notranslate"><span class="pre">&lt;historicalprices-path&gt;</span></code>, downloaded from
+<a class="reference external" href="https://www.eex.com/en/market-data/market-data-hub/environmentals/eex-eua-primary-auction-spot-download">EEX</a>.</p>
+<p>Only successful auctions are used. Days with several auctions (EU, DE, PL)
+get the mean clearing price, and days without one carry the last price
+forward.</p>
+<p>Every country gets the EUA price. Use <code class="docutils literal notranslate"><span class="pre">--co2-override</span> <span class="pre">COUNTRY=VALUE</span></code>
+(repeatable, Balmorel <code class="docutils literal notranslate"><span class="pre">CCC</span></code> names, nominal €/tCO2 of the Backcast Year) for
+countries with a different carbon price, such as the UK, or <code class="docutils literal notranslate"><span class="pre">0</span></code> for
+countries without one.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">fuelprices</span></code> and <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code> never edit the scenario’s options, but they warn
+when Balmorel would ignore what they wrote:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">balopt.opt</span></code> (the scenario’s own, else <code class="docutils literal notranslate"><span class="pre">base/model/balopt.opt</span></code>) must set
+<code class="docutils literal notranslate"><span class="pre">FUELPRICE_DOL=YYY_AAA_FFF_SSS_TTT</span></code> and <code class="docutils literal notranslate"><span class="pre">TAX_CO2_DOL=YYY_CCC_SSS_TTT</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HYDROGEN_FUELPRICE.inc</span></code> must not assign COAL or NATGAS prices, since
+<code class="docutils literal notranslate"><span class="pre">FUELPRICE_HYDROGEN</span></code> overrides <code class="docutils literal notranslate"><span class="pre">IFUELPRICE</span></code> wherever it is nonzero.</p></li>
+</ul>
+</div>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>API Key</strong>: set <code class="docutils literal notranslate"><span class="pre">ENTSOE_API_KEY</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code>, or provide it when prompted.</p></li>
+<li><p><strong>GAMS Path</strong>: set <code class="docutils literal notranslate"><span class="pre">GAMS_SYSTEM_DIR</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code> for Balmorel result processing.</p></li>
+<li><p><strong>Output</strong>: raw ENTSO-E data in <code class="docutils literal notranslate"><span class="pre">&lt;entsoe-data-path&gt;</span></code>; Eurostat data in
+<code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/eurostatdata/</span></code>; XKFX, GKRATE, MUSTRUN, WNDFLH, SOLEFLH, DE,
+DE_VAR_T, fuel price and CO2 tax overrides written to <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/data/</span></code>;
+summaries and validation data in <code class="docutils literal notranslate"><span class="pre">&lt;scenario-path&gt;/backcastoutput/</span></code>.</p></li>
+</ul>
+</section>
+<section id="data-flow">
+<h2>Data flow<a class="headerlink" href="#data-flow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Raw ENTSO-E data fetched via <code class="docutils literal notranslate"><span class="pre">pybalmorel.entsoe</span></code> (<code class="docutils literal notranslate"><span class="pre">download</span></code>) and saved
+as CSV.</p></li>
+<li><p>The XKFX override is computed from the ENTSO-E flows
+(<code class="docutils literal notranslate"><span class="pre">transmission-flow-limit</span></code>), the GKRATE overrides from the ENTSO-E
+nuclear output (<code class="docutils literal notranslate"><span class="pre">nuclear-availability</span></code>) and from installed capacity and
+outages (<code class="docutils literal notranslate"><span class="pre">thermal-availability</span></code>), the MUSTRUN files from output and
+prices (<code class="docutils literal notranslate"><span class="pre">must-run-floor</span></code>), the WNDFLH and SOLEFLH overrides from wind
+and solar output (<code class="docutils literal notranslate"><span class="pre">vre-flh</span></code>), and the DE_VAR_T and DE overrides from the
+ENTSO-E load and the previous run’s heating, or Eurostat’s for the
+first run (<code class="docutils literal notranslate"><span class="pre">demand-profile</span></code>, <code class="docutils literal notranslate"><span class="pre">demand-level</span></code>).</p></li>
+<li><p>Historical prices are mapped onto the UTC Backcast Calendar and written
+(<code class="docutils literal notranslate"><span class="pre">fuelprices</span></code>, <code class="docutils literal notranslate"><span class="pre">co2-tax</span></code>).</p></li>
+</ol>
+<p>The Backcast is then run in Balmorel and
+<a class="reference internal" href="../postprocessing/validating_backcast.html"><span class="std std-doc">validated</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="entsoe.html" class="btn btn-neutral float-left" title="ENTSO-E Data Fetching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../execution.html" class="btn btn-neutral float-right" title="Execution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

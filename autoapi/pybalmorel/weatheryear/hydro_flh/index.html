@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pybalmorel.weatheryear.hydro_flh &mdash; pybalmorel 1.4.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css_options.css?v=313b1874" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=02f2166e"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="author" title="About these documents" href="../../../../about.html" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="pybalmorel.weatheryear.hydro_reference" href="../hydro_reference/index.html" />
+    <link rel="prev" title="pybalmorel.weatheryear.get_GKFX_func" href="../get_GKFX_func/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pybalmorel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">pybalmorel</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Get Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../preprocessing.html">Pre-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../execution.html">Execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../postprocessing.html">Post-Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developing.html">Developing pybalmorel</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../about.html">About this code</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">pybalmorel</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../backcasting/index.html">pybalmorel.backcasting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../classes/index.html">pybalmorel.classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../economics/index.html">pybalmorel.economics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../entsoe/index.html">pybalmorel.entsoe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../formatting/index.html">pybalmorel.formatting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../interactive/index.html">pybalmorel.interactive</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plotting/index.html">pybalmorel.plotting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../timeagg/index.html">pybalmorel.timeagg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/index.html">pybalmorel.utils</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">pybalmorel.weatheryear</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#classes">Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../eel_dashboard/index.html">eel_dashboard</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pybalmorel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">pybalmorel</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">pybalmorel.weatheryear</a></li>
+      <li class="breadcrumb-item active">pybalmorel.weatheryear.hydro_flh</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/pybalmorel/weatheryear/hydro_flh/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pybalmorel.weatheryear.hydro_flh">
+<span id="pybalmorel-weatheryear-hydro-flh"></span><h1>pybalmorel.weatheryear.hydro_flh<a class="headerlink" href="#module-pybalmorel.weatheryear.hydro_flh" title="Link to this heading"></a></h1>
+<p>Absolute Hydro FLH</p>
+<p>Hydro full-load hours as CorRES inflow energy divided by the Balmorel capacity
+that receives it (<cite>hydro_flh: mode: absolute</cite>), instead of a factor on
+Balmorel’s base FLH. Run-of-river energy above the run-of-river capacity moves
+to the same area’s reservoir, and countries whose CorRES inflow fails a
+plausibility check, or that CorRES covers only partly or not at all, get the
+Hydro Inflow Fallback (see CONTEXT.md, ADR 0011).</p>
+<p>Everything but load_balmorel_hydro_inputs works on DataFrames, so it can be
+tested without GAMS.</p>
+<p>Created on 22.10.2026
+&#64;author: Mathias Berg Rosendal</p>
+<blockquote>
+<div><p>PostDoc at DTU Management (Energy Economics &amp; Modelling)</p>
+</div></blockquote>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.RESERVOIR" title="pybalmorel.weatheryear.hydro_flh.RESERVOIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RESERVOIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.RUN_OF_RIVER" title="pybalmorel.weatheryear.hydro_flh.RUN_OF_RIVER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RUN_OF_RIVER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.HYDRO_SYMBOLS" title="pybalmorel.weatheryear.hydro_flh.HYDRO_SYMBOLS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HYDRO_SYMBOLS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.PLAUSIBLE_DEVIATION" title="pybalmorel.weatheryear.hydro_flh.PLAUSIBLE_DEVIATION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PLAUSIBLE_DEVIATION</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.HOURS_PER_YEAR" title="pybalmorel.weatheryear.hydro_flh.HOURS_PER_YEAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HOURS_PER_YEAR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.region_country" title="pybalmorel.weatheryear.hydro_flh.region_country"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region_country</span></code></a>(region) → str</p></td>
+<td><p>The country of a Balmorel region: its first two letters ('DE4-E' -&gt; 'DE', 'FIN' -&gt; 'FI', 'NO1' -&gt; 'NO').</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.hydro_capacity" title="pybalmorel.weatheryear.hydro_flh.hydro_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hydro_capacity</span></code></a>(gkfx, ighyrs, ighyrr, year) → pandas.DataFrame</p></td>
+<td><p>The reservoir and run-of-river GKFX per area in <cite>year</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.area_countries" title="pybalmorel.weatheryear.hydro_flh.area_countries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">area_countries</span></code></a>(rrraaa) → pandas.Series</p></td>
+<td><p>The country of every area, from RRRAAA (from get_input, ending in (RRR, AAA)).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.base_flh" title="pybalmorel.weatheryear.hydro_flh.base_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base_flh</span></code></a>(wtrrsflh, wtrrrflh) → pandas.DataFrame</p></td>
+<td><p>Balmorel's base FLH per area, from WTRRSFLH and WTRRRFLH (from get_input, ending in (AAA, Value)).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.load_balmorel_hydro_inputs" title="pybalmorel.weatheryear.hydro_flh.load_balmorel_hydro_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_balmorel_hydro_inputs</span></code></a>(config[, gams_system_directory]) → tuple[pandas.DataFrame, pandas.Series, pandas.DataFrame]</p></td>
+<td><p>Read hydro capacity, area countries and base FLH from the Balmorel model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.yearly_energy" title="pybalmorel.weatheryear.hydro_flh.yearly_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yearly_energy</span></code></a>(inflow) → pandas.DataFrame</p></td>
+<td><p>The inflow energy per year and area (MWh), from hourly mean MW.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.move_spilled_run_of_river" title="pybalmorel.weatheryear.hydro_flh.move_spilled_run_of_river"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_spilled_run_of_river</span></code></a>(res, ror, capacity) → tuple[pandas.DataFrame, pandas.DataFrame]</p></td>
+<td><p>The yearly energies after moving run-of-river energy Balmorel can't take to the reservoir.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.missing_columns" title="pybalmorel.weatheryear.hydro_flh.missing_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">missing_columns</span></code></a>(res, ror, capacity) → dict[str, list[str]]</p></td>
+<td><p>The (area, type) pairs with hydro capacity but no CorRES column, per symbol.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.plausibility_failures" title="pybalmorel.weatheryear.hydro_flh.plausibility_failures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plausibility_failures</span></code></a>(res, ror, capacity, countries, ...) → dict[str, str]</p></td>
+<td><p>The countries whose CorRES inflow fails the plausibility check, with the reason.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.country_factor" title="pybalmorel.weatheryear.hydro_flh.country_factor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">country_factor</span></code></a>(res, ror, areas, year) → float</p></td>
+<td><p>The relative factor of a country's CorRES inflow in <cite>year</cite>: its energy in <cite>year</cite> / its long-term mean.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.fallback_flh" title="pybalmorel.weatheryear.hydro_flh.fallback_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fallback_flh</span></code></a>(country, capacity, countries, flh_base, ...) → pandas.DataFrame</p></td>
+<td><p>The Hydro Inflow Fallback FLH for every hydro area and type of a country.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.absolute_flh" title="pybalmorel.weatheryear.hydro_flh.absolute_flh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">absolute_flh</span></code></a>(res, ror, res_factors, ror_factors, year, ...) → dict[str, tuple[pandas.Series, pandas.Series]]</p></td>
+<td><p>The Absolute Hydro FLH of <cite>year</cite> and of the long term, per symbol.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pybalmorel.weatheryear.hydro_flh.absolute_flh_assignment_lines" title="pybalmorel.weatheryear.hydro_flh.absolute_flh_assignment_lines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">absolute_flh_assignment_lines</span></code></a>(series, symbol, header) → pandas.DataFrame</p></td>
+<td><p>Balmorel assignment lines setting <cite>symbol</cite> per area, after a header comment.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.RESERVOIR">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">RESERVOIR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WTRRSFLH'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.RESERVOIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.RUN_OF_RIVER">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">RUN_OF_RIVER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WTRRRFLH'</span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.RUN_OF_RIVER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.HYDRO_SYMBOLS">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">HYDRO_SYMBOLS</span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.HYDRO_SYMBOLS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.PLAUSIBLE_DEVIATION">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">PLAUSIBLE_DEVIATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.PLAUSIBLE_DEVIATION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.HOURS_PER_YEAR">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">HOURS_PER_YEAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8760</span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.HOURS_PER_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.region_country">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">region_country</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.region_country" title="Link to this definition"></a></dt>
+<dd><p>The country of a Balmorel region: its first two letters (‘DE4-E’ -&gt; ‘DE’, ‘FIN’ -&gt; ‘FI’, ‘NO1’ -&gt; ‘NO’).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.hydro_capacity">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">hydro_capacity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gkfx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ighyrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ighyrr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.hydro_capacity" title="Link to this definition"></a></dt>
+<dd><p>The reservoir and run-of-river GKFX per area in <cite>year</cite>.</p>
+<p>Columns are taken by position, as get_input may name them after the raw
+GAMS domains.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>gkfx (pd.DataFrame): GKFX from get_input, ending in (Y, AAA, G, Value).
+ighyrs (pd.DataFrame): IGHYRS from get_input, ending in G.
+ighyrr (pd.DataFrame): IGHYRR from get_input, ending in G.
+year (int): The Y of GKFX.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index area, columns ‘WTRRSFLH’ (reservoir) and</dt><dd><p>‘WTRRRFLH’ (run-of-river), MW.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.area_countries">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">area_countries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rrraaa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.area_countries" title="Link to this definition"></a></dt>
+<dd><p>The country of every area, from RRRAAA (from get_input, ending in (RRR, AAA)).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.base_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">base_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wtrrsflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wtrrrflh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.base_flh" title="Link to this definition"></a></dt>
+<dd><p>Balmorel’s base FLH per area, from WTRRSFLH and WTRRRFLH (from get_input, ending in (AAA, Value)).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.load_balmorel_hydro_inputs">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">load_balmorel_hydro_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config_models/index.html#pybalmorel.weatheryear.config_models.HydroFlhConfig" title="pybalmorel.weatheryear.config_models.HydroFlhConfig"><span class="pre">pybalmorel.weatheryear.config_models.HydroFlhConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gams_system_directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.load_balmorel_hydro_inputs" title="Link to this definition"></a></dt>
+<dd><p>Read hydro capacity, area countries and base FLH from the Balmorel model.</p>
+<p>Capacity and countries come from <cite>config.scenario</cite>, the base FLH from the
+‘base’ scenario, since the scenario’s own FLH files are the ones being written.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (HydroFlhConfig): The absolute-mode config.
+gams_system_directory (str | None, optional): GAMS system directory.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[pd.DataFrame, pd.Series, pd.DataFrame]: Output of hydro_capacity,</dt><dd><p>area_countries and base_flh.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.yearly_energy">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">yearly_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inflow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.yearly_energy" title="Link to this definition"></a></dt>
+<dd><p>The inflow energy per year and area (MWh), from hourly mean MW.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.move_spilled_run_of_river">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">move_spilled_run_of_river</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.move_spilled_run_of_river" title="Link to this definition"></a></dt>
+<dd><p>The yearly energies after moving run-of-river energy Balmorel can’t take to the reservoir.</p>
+<p>Per year and area, the spill is the run-of-river inflow above the
+run-of-river capacity, summed over the hours (all of it without
+run-of-river capacity). With reservoir capacity in the area it moves to
+the reservoir; without, it stays and is reported.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>res (pd.DataFrame): Hourly reservoir inflow (MW) per area.
+ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area.
+capacity (pd.DataFrame): Output of hydro_capacity.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[pd.DataFrame, pd.DataFrame]: Yearly reservoir and run-of-river</dt><dd><p>energy (MWh), index year, one column per area.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.missing_columns">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">missing_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.missing_columns" title="Link to this definition"></a></dt>
+<dd><p>The (area, type) pairs with hydro capacity but no CorRES column, per symbol.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.plausibility_failures">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">plausibility_failures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">countries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.plausibility_failures" title="Link to this definition"></a></dt>
+<dd><p>The countries whose CorRES inflow fails the plausibility check, with the reason.</p>
+<p>A country fails if a reservoir column equals the run-of-river column of
+the same area, if a column equals another area’s column in either file,
+if its long-term CorRES energy is more than PLAUSIBLE_DEVIATION from the
+reference, or if CorRES covers its hydro capacity only partly or not at
+all. A country missing from the reference can’t be checked on its level
+and is reported.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>res (pd.DataFrame): Hourly reservoir inflow (MW) per area.
+ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area.
+capacity (pd.DataFrame): Output of hydro_capacity.
+countries (pd.Series): Output of area_countries.
+reference (dict[str, float]): Long-term Natural-Inflow Hydro per country (TWh/yr).</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict[str, str]: Failing country -&gt; reason.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.country_factor">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">country_factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">areas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.country_factor" title="Link to this definition"></a></dt>
+<dd><p>The relative factor of a country’s CorRES inflow in <cite>year</cite>: its energy in <cite>year</cite> / its long-term mean.</p>
+<p>1 if the country has no CorRES column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.fallback_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">fallback_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">countries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flh_base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">missing_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.fallback_flh" title="Link to this definition"></a></dt>
+<dd><p>The Hydro Inflow Fallback FLH for every hydro area and type of a country.</p>
+<p>FLH_a,t = E_c x f_a,t x FLHbase_a,t / sum over the country of (FLHbase x K),
+with E_c the reference long-term energy and f the relative factor of the
+year: the pair’s own, or the country’s for a pair without a CorRES column
+(1 in the long-term files). A missing FLHbase counts as 0, so that pair
+gets no line. A country without a reference value gets FLHbase x f.</p>
+<dl>
+<dt>Args:</dt><dd><p>country (str): The country.
+capacity (pd.DataFrame): Output of hydro_capacity.
+countries (pd.Series): Output of area_countries.
+flh_base (pd.DataFrame): Output of base_flh.
+factors (dict[str, pd.Series]): The relative factor per area with a</p>
+<blockquote>
+<div><p>CorRES column, for each symbol.</p>
+</div></blockquote>
+<p>missing_factor (float): The factor for pairs without a CorRES column.
+reference (dict[str, float]): Long-term Natural-Inflow Hydro per country (TWh/yr).</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>pd.DataFrame: Index area, one column per symbol, NaN where the area</dt><dd><p>has no capacity or base FLH of that type.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.absolute_flh">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">absolute_flh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_factors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ror_factors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">countries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flh_base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">hydro_natural_inflow_twh</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.Series</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.Series</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.absolute_flh" title="Link to this definition"></a></dt>
+<dd><p>The Absolute Hydro FLH of <cite>year</cite> and of the long term, per symbol.</p>
+<dl>
+<dt>Args:</dt><dd><p>res (pd.DataFrame): Hourly reservoir inflow (MW) per area, all years.
+ror (pd.DataFrame): Hourly run-of-river inflow (MW) per area, all years.
+res_factors (pd.Series): The relative reservoir factor of <cite>year</cite> per area.
+ror_factors (pd.Series): The relative run-of-river factor of <cite>year</cite> per area.
+year (int): The weather year.
+capacity (pd.DataFrame): Output of hydro_capacity.
+countries (pd.Series): Output of area_countries.
+flh_base (pd.DataFrame): Output of base_flh.
+reference (dict[str, float], optional): Long-term Natural-Inflow Hydro</p>
+<blockquote>
+<div><p>per country (TWh/yr). Defaults to the bundled table.</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>dict[str, tuple[pd.Series, pd.Series]]: Symbol -&gt; (FLH of <cite>year</cite>,</dt><dd><p>long-term FLH), indexed by area. Areas without a value get no line.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pybalmorel.weatheryear.hydro_flh.absolute_flh_assignment_lines">
+<span class="sig-prename descclassname"><span class="pre">pybalmorel.weatheryear.hydro_flh.</span></span><span class="sig-name descname"><span class="pre">absolute_flh_assignment_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#pybalmorel.weatheryear.hydro_flh.absolute_flh_assignment_lines" title="Link to this definition"></a></dt>
+<dd><p>Balmorel assignment lines setting <cite>symbol</cite> per area, after a header comment.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>series (pd.Series): FLH per area.
+symbol (str): ‘WTRRSFLH’ or ‘WTRRRFLH’.
+header (str): Comment line saying how the values were made.</p>
+</dd>
+<dt>Returns:</dt><dd><p>pd.DataFrame: A single column (symbol) of lines, for build_inc_file_list_type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../get_GKFX_func/index.html" class="btn btn-neutral float-left" title="pybalmorel.weatheryear.get_GKFX_func" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../hydro_reference/index.html" class="btn btn-neutral float-right" title="pybalmorel.weatheryear.hydro_reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Mathias Berg Rosendal, Théodore Le Nalinec, Polyneikis Kanellas.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

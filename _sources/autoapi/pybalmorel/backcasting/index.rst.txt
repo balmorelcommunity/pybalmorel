@@ -1,0 +1,46 @@
+pybalmorel.backcasting
+======================
+
+.. py:module:: pybalmorel.backcasting
+
+.. autoapi-nested-parse::
+
+   Backcasting
+
+   Validate simulated Balmorel behaviour against historical ENTSO-E data:
+   load/price/generation/flow comparison, and the Calibration Inputs of a
+   Backcast on the UTC Backcast Calendar: the Observed Flow Limit XKFX
+   overrides, nuclear and thermal availability, the must-run floor, the VRE
+   level, the demand profiles and level (with Eurostat heating), and
+   historical fuel prices and CO2 tax (see CONTEXT.md and docs/adr/0005-0012).
+   Depends on pybalmorel.entsoe for raw data access; pybalmorel.entsoe never
+   depends on this package.
+
+   Created on 07.08.2026
+   @author: Mathias Berg Rosendal
+            PostDoc at DTU Management (Energy Economics & Modelling)
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/pybalmorel/backcasting/__main__/index
+   /autoapi/pybalmorel/backcasting/calendar/index
+   /autoapi/pybalmorel/backcasting/co2tax/index
+   /autoapi/pybalmorel/backcasting/demand/index
+   /autoapi/pybalmorel/backcasting/eurostat/index
+   /autoapi/pybalmorel/backcasting/flows/index
+   /autoapi/pybalmorel/backcasting/fuelprices/index
+   /autoapi/pybalmorel/backcasting/mustrun/index
+   /autoapi/pybalmorel/backcasting/nuclear/index
+   /autoapi/pybalmorel/backcasting/plotstyle/index
+   /autoapi/pybalmorel/backcasting/pricelevel/index
+   /autoapi/pybalmorel/backcasting/scenariochecks/index
+   /autoapi/pybalmorel/backcasting/thermal/index
+   /autoapi/pybalmorel/backcasting/vre/index
+
+
