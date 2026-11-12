@@ -148,7 +148,13 @@ def plot_bar_chart(df: pd.core.frame.DataFrame, filter: dict, series: Union[str,
             temp.plot(ax=ax, kind='bar', stacked=True, legend=False, color=balmorel_colours)
         except KeyError:
             temp.plot(ax=ax, kind='bar', stacked=True, legend=False)
-        
+
+        # pandas 3 stacks 0 values on top of the bars, where their sticky edge would remove the y-axis margin
+        for patch in ax.patches:
+            if patch.get_height() == 0 and patch.get_y() != 0:
+                patch.sticky_edges.y.clear()
+        ax.autoscale_view()  # pandas already computed the limits while plotting
+
         if legend[0] == True:
             # To deal with double legend
             handles, labels = plt.gca().get_legend_handles_labels()

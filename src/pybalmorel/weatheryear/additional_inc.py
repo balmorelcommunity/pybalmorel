@@ -89,8 +89,8 @@ def _convert_corres_rg_to_balmorel(rg: str) -> str:
 def build_INVDATASET(
     config: AdditionalIncConfig,
     output_folder: str,
-    techs: dict[str, set[str]],
-    turbines: dict[str, set[str]],
+    techs: dict[str, list[str]],
+    turbines: dict[str, list[str]],
 ) -> pd.DataFrame:
     INVDATASET_renewables=[]
     for tech in techs["wind"] :
@@ -157,8 +157,8 @@ def build_INVDATA_renewable(
 def build_GGG(
     config: AdditionalIncConfig,
     output_folder: str,
-    techs: dict[str, set[str]],
-    turbines: dict[str, set[str]],
+    techs: dict[str, list[str]],
+    turbines: dict[str, list[str]],
 ) -> pd.DataFrame:
     GGG_renewable=[]
     for tech in techs["wind"] :
@@ -251,8 +251,8 @@ def build_AGKN(AAA: pd.DataFrame, GGG: pd.DataFrame, output_folder: str) -> None
 def build_AAA(
     config: AdditionalIncConfig,
     output_folder: str,
-    techs: dict[str, set[str]],
-    turbines: dict[str, set[str]],
+    techs: dict[str, list[str]],
+    turbines: dict[str, list[str]],
 ) -> pd.DataFrame:
     AAA_renwable=[]
     for region in config.regions_to_keep.onshore:
@@ -346,8 +346,8 @@ def build_ALLOWEDINV(
     AAA_renewable_df: pd.DataFrame,
     GGG_renewable_df: pd.DataFrame,
     INVDATASET_renewables_df: pd.DataFrame,
-    turbines: dict[str, set[str]],
-    techs: dict[str, set[str]],
+    turbines: dict[str, list[str]],
+    techs: dict[str, list[str]],
     config: AdditionalIncConfig,
     output_folder: str,
 ) -> None:
@@ -524,7 +524,7 @@ def create_additional_inc(
     wind_criteria = {'Offshore', 'Onshore',"Existing"}
     solar_criteria = {'PV'}
 
-    def _select_techs(criteria: set[str]) -> set[str]:
+    def _select_techs(criteria: set[str]) -> list[str]:
         # Folders left over on disk from a previous run/config (e.g. a stale
         # PV_Rooftop directory) must not be processed just because they exist -
         # a known-but-currently-excluded category is dropped silently, but a
@@ -544,7 +544,7 @@ def create_additional_inc(
                 ) from None
             if tech in config.tech_to_keep:
                 selected.add(tech)
-        return selected
+        return sorted(selected)  # sorted so .inc files come out in the same order every run
 
     techs=dict()
     techs["wind"] = _select_techs(wind_criteria)
@@ -554,8 +554,8 @@ def create_additional_inc(
     onshore_criteria = {'SP335-HH100', 'SP335-HH150','SP335-HH200','SP277-HH100',"SP277-HH150","SP277-HH200","SP199-HH100","SP199-HH150","SP199-HH200"}
     offshore_criteria = {'SP316-HH155','SP370-HH155'}
     turbines=dict()
-    turbines["onshore"] = {turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in onshore_criteria)}
-    turbines["offshore"] = {turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in offshore_criteria)}
+    turbines["onshore"] = sorted({turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in onshore_criteria)})
+    turbines["offshore"] = sorted({turb for turb in config.turbine_to_keep if any(criterion in turb for criterion in offshore_criteria)})
 
     legacy_config = config.as_legacy_dict()
 

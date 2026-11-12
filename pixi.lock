@@ -354,11 +354,11 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/85/fe/691e5eb26f58ee4a072add6cc484756d9e3c367901ec6701d2c6789b394d/pyomo-6.9.5-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/9e/b9/a6d8bb7d228940f01885bd9f327ab7f9d366a9be775c4bf366bf9d9477ae/kaleido-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a0/19/b4dfb2690b55262e6ec3e578731ee4b7df1e668a41a8879b4f7d71d9a0df/cartopy-0.26.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ba/6c/ff8bf52315064dbeb55cb5067e191120a5b2e58bb648d0d34cf7969dc2c2/choreographer-1.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c5/0d/84a4380f930db0010168e0aa7b7a8fed9ba1835a8fbb1472bc6d0201d529/build-1.4.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/dc/91/98a52415059db3f374757d0b7f0f16e3b5cd5976c90d1c2b56acaea039e6/orjson-3.11.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ee/ad/be6847577282389a5b8ab4ef6bee71c5ccb2383c84a123561b4e538449b7/highspy-1.13.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       osx-64:
@@ -612,6 +612,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zlib-ng-2.3.3-h8bce59a_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
       - pypi: ./
+      - pypi: https://files.pythonhosted.org/packages/0d/1d/b3b2125e20cb37f0bdfd501bc05c93c4c43fc915883979fa3fd94c7b3591/cartopy-0.26.0-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/35/28/5a4b8f3483fbfb68f3f460bc002cef3a5735ef30950e7c4adce9c8da15c7/simplejson-3.20.2-cp313-cp313-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3f/c3/06490e98393dcb4d6ce2bf331a39335375c300afaef526897881fbeae6ab/narwhals-2.18.1-py3-none-any.whl
@@ -628,7 +629,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c5/0d/84a4380f930db0010168e0aa7b7a8fed9ba1835a8fbb1472bc6d0201d529/build-1.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c7/b3/ae47340790f2f1f92f76b176acf475890717f0cb7def073e504b9857a057/pyomo-6.9.5-cp313-cp313-macosx_10_13_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/e7/fa/1d3346ce3317049153521d83d6af98355bc4a524b130a66965874e6bccae/gamsapi-53.2.0-cp313-cp313-macosx_13_0_x86_64.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -890,6 +890,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/66/ce/df3bf76b04f26b04ee3aa137ab26cda1e8857d3912b07efc6937976f3d3c/tsam-3.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6a/5c/8a57a0f2d18bd9fb88f64c87c11882defe90832361ecd4f612b36d1c5f05/highspy-1.13.1-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7a/4d/30dfef83b9ac48afae1cf1ab19c2867e27b8d22b5d9f8ca7ce5a0a157d8c/simplejson-3.20.2-cp313-cp313-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/7b/33/7f2f6e1ae1db2c4d688f9d1bd54778e1677e2f46a341286b74287b331895/cartopy-0.26.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/80/8a/023e7c432634a6090a26ace319a37a2a73aac8fa6a7bf142fd7b3ec8fd3b/ripgrepy-2.2.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/82/06/cad54e8ce758bd836ee5411691cbd49efeb9cc611b374670fce299519334/pyshp-3.0.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/89/25/6e0e52cac5aab51d7b6dcd257e855e1dec1c2060f6b28566c509b4665f62/orjson-3.11.7-cp313-cp313-macosx_10_15_x86_64.macosx_11_0_arm64.macosx_10_15_universal2.whl
@@ -898,7 +899,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/ba/6c/ff8bf52315064dbeb55cb5067e191120a5b2e58bb648d0d34cf7969dc2c2/choreographer-1.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c5/0d/84a4380f930db0010168e0aa7b7a8fed9ba1835a8fbb1472bc6d0201d529/build-1.4.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       win-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/alabaster-1.0.0-pyhd8ed1ab_1.conda
@@ -1171,6 +1171,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/27/c1/805b8e7f9720c72a2fdff59b927d244421efd6368a47eb15180d143ec99d/gamsapi-53.2.0-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/3f/c3/06490e98393dcb4d6ce2bf331a39335375c300afaef526897881fbeae6ab/narwhals-2.18.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/52/d2/c6e44dba74f17c6216ce1b56044a9b93a929f1c2d5bdaff892512b260f5e/plotly-6.6.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/53/0a/825999b94a62670a7b2eca37fcaa7781bf3eadcbb60cef657071facfc25e/cartopy-0.26.0-cp313-cp313-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/54/20/6aa79ba3570bddd1bf7e951c6123f806751e58e8cce736bad77b2cf348d7/logistro-2.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/66/ce/df3bf76b04f26b04ee3aa137ab26cda1e8857d3912b07efc6937976f3d3c/tsam-3.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/68/29/394967f7df51788cbdf1b4aedfb7c5a3a62e11b85b4c9d806b86cc576be4/pyomo-6.9.5-py3-none-any.whl
@@ -1182,7 +1183,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/ba/6c/ff8bf52315064dbeb55cb5067e191120a5b2e58bb648d0d34cf7969dc2c2/choreographer-1.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c5/0d/84a4380f930db0010168e0aa7b7a8fed9ba1835a8fbb1472bc6d0201d529/build-1.4.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/e2/15/d9be1b1f22ecafedddbf504b3c63b7e4a17a710e3b45f615be1869160938/highspy-1.13.1-cp313-cp313-win_amd64.whl
   user:
     channels:
@@ -1243,6 +1243,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/9e/c3/059298687310d527a58bb01f3b1965787ee3b40dce76752eda8b44e9a2c5/pexpect-4.9.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a1/0c/aff7dfadb63219792f739d900caa028361bb562b1db10048995d4457dfa5/pybalmorel-1.2.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a6/8f/c3f210f3926c205483a7c8f824816c4d808efbe2c7de31aef15546e17b09/cartopy-0.26.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ab/b5/36c712098e6191d1b4e349304ef73a8d06aed77e56ceaac8c0a306c7bda1/jupyterlab_widgets-3.0.16-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/33/ee4519fa02ed11a94aef9559552f3b17bb863f2ecfe1a35dc7f548cde231/matplotlib_inline-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b6/61/fae042894f4296ec49e3f193aff5d7c18440da9e48102c3315e1bc4519a7/parso-0.8.6-py2.py3-none-any.whl
@@ -1251,7 +1252,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/ca/ba/ffdcb19be4ff6bfe7d969e7cef2c567c633df5a3a1cc1053394ad053bca8/pandas-3.0.6-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/68/cc07320a63f9c2586e60bf11d148b00e12d0e707673bffe609bbdcb7e754/pyogrio-0.12.1-cp314-cp314-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/ee/c85a38a9ab92037a75615aba572c85ea51e605265036e00c5b67dfafbfe2/pillow-12.1.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
@@ -1320,10 +1320,10 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/cf/83/333afb452af6f0fd70414dc04f898647ee1423979ce02efa75c3b0f2c28e/scipy-1.17.1-cp314-cp314-macosx_10_14_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/d2/39/e7eaf1799466a4aef85b6a4fe7bd175ad2b1c6345066aa33f1f58d4b18d0/asttokens-3.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d9/33/1f075bf72b0b747cb3288d011319aaf64083cf2efef8354174e3ed4540e2/ipython_pygments_lexers-1.1.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/d9/3c/c0cdefc7a4f60d9c56673b9be732fd94526f7930db0b1914418c7f8e1dc4/cartopy-0.26.0-cp314-cp314-macosx_10_15_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl
@@ -1354,6 +1354,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/17/b9/f6ab8918fc15429f79cb04afa9f9913546212d7fb5e5196132a2af46676b/shapely-2.1.2-cp314-cp314-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/22/31/397970fab138a7a8772871d9f9518e6fed0b3f9d708843d34ac3540c1c8d/cartopy-0.26.0-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/32/8f/4e7bf82c0cbb738d3c2206c920ca34ca74ef9dabde779030145d28665104/fonttools-4.61.1-cp314-cp314-macosx_10_15_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/35/61/47ae13476995cc8a40cd609e93e7cf11f273d8692925c2903cb6d38aa0d1/pandas-3.0.6-cp314-cp314-macosx_11_0_arm64.whl
@@ -1383,7 +1384,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
       - pypi: https://files.pythonhosted.org/packages/d2/39/e7eaf1799466a4aef85b6a4fe7bd175ad2b1c6345066aa33f1f58d4b18d0/asttokens-3.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d9/33/1f075bf72b0b747cb3288d011319aaf64083cf2efef8354174e3ed4540e2/ipython_pygments_lexers-1.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl
@@ -1453,7 +1453,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
+      - pypi: https://files.pythonhosted.org/packages/cd/a8/b2b3620dff97def14e49ea6368a06e33650b49ad0f4ce4417c3656f4d5c9/cartopy-0.26.0-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/78/5ed86f743d4bc350db307e7636419a0a5ee1d91806d30c7f667bd5c80dae/charset_normalizer-3.5.2-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/d2/39/e7eaf1799466a4aef85b6a4fe7bd175ad2b1c6345066aa33f1f58d4b18d0/asttokens-3.0.1-py3-none-any.whl
@@ -5700,7 +5700,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/soupsieve?source=compressed-mapping
+  - pkg:pypi/soupsieve?source=hash-mapping
   run_exports: {}
   size: 43039
   timestamp: 1791821664697
@@ -11219,7 +11219,7 @@ packages:
   - geopandas>=0.14.4
   - gamsapi[transfer]>=45.7.0
   - ipywidgets>=8.1.3
-  - cartopy
+  - cartopy>=0.24.1
   - requests
   - xlsxwriter>=3.2.0 ; extra == 'weatheryear'
   - openpyxl>=3.1.5 ; extra == 'weatheryear'
@@ -11376,6 +11376,35 @@ packages:
   version: 2026.7.22
   sha256: 62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775
   requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/0d/1d/b3b2125e20cb37f0bdfd501bc05c93c4c43fc915883979fa3fd94c7b3591/cartopy-0.26.0-cp313-cp313-macosx_10_13_x86_64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 9cbcc7b585cd715befb143ba19213fe7770c302fc50097edcb6025ad2b129beb
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl
   name: pyparsing
   version: 3.3.2
@@ -11533,6 +11562,35 @@ packages:
   - certifi ; extra == 'all'
   - pandas>=2.2.2,<3.1 ; extra == 'all'
   requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/22/31/397970fab138a7a8772871d9f9518e6fed0b3f9d708843d34ac3540c1c8d/cartopy-0.26.0-cp314-cp314-macosx_11_0_arm64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 2a9b9dc5b396882091fef14569bfce04b9195e267bb22f1bf8207765de050453
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/22/a6/858897256d0deac81a172289110f31629fc4cee19b6f01283303e18c8db3/ptyprocess-0.7.0-py2.py3-none-any.whl
   name: ptyprocess
   version: 0.7.0
@@ -12066,6 +12124,35 @@ packages:
   - xarray ; extra == 'dev-optional'
   - plotly[dev-optional] ; extra == 'dev'
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/53/0a/825999b94a62670a7b2eca37fcaa7781bf3eadcbb60cef657071facfc25e/cartopy-0.26.0-cp313-cp313-win_amd64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 0f8f81b45844272dd289f79de707d6deb1975e5e0b27a64dff955519e73dc1d5
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/54/20/6aa79ba3570bddd1bf7e951c6123f806751e58e8cce736bad77b2cf348d7/logistro-2.0.1-py3-none-any.whl
   name: logistro
   version: 2.0.1
@@ -12489,6 +12576,35 @@ packages:
   version: 3.20.2
   sha256: 6b1d8d7c3e1a205c49e1aee6ba907dcb8ccea83651e6c3e2cb2062f1e52b0726
   requires_python: '>=2.5,!=3.0.*,!=3.1.*,!=3.2.*'
+- pypi: https://files.pythonhosted.org/packages/7b/33/7f2f6e1ae1db2c4d688f9d1bd54778e1677e2f46a341286b74287b331895/cartopy-0.26.0-cp313-cp313-macosx_11_0_arm64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 9841e51d4c1a3258365ad3ae0549d06451ee7bd48dd19657d8daa172d581a897
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/7c/8a/40db9aa9f5907bb0e6f8b6d64064bf8852fb33d4b813ff9414911df7647c/charset_normalizer-3.5.2-cp314-cp314-macosx_10_15_universal2.whl
   name: charset-normalizer
   version: 3.5.2
@@ -12728,6 +12844,35 @@ packages:
   sha256: 7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523
   requires_dist:
   - ptyprocess>=0.5
+- pypi: https://files.pythonhosted.org/packages/a0/19/b4dfb2690b55262e6ec3e578731ee4b7df1e668a41a8879b4f7d71d9a0df/cartopy-0.26.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 4c176bc6a9b9e96cdafed63daea2a3d6368f9887e7acf7b3bcc9d5e0bc0914b9
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl
   name: requests
   version: 2.34.2
@@ -12759,6 +12904,35 @@ packages:
   name: ply
   version: '3.11'
   sha256: 096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce
+- pypi: https://files.pythonhosted.org/packages/a6/8f/c3f210f3926c205483a7c8f824816c4d808efbe2c7de31aef15546e17b09/cartopy-0.26.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: f8ec2d6adbb3325eea8b0087471f7b52d1aff603383c669290914145c5d15dff
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/ab/b5/36c712098e6191d1b4e349304ef73a8d06aed77e56ceaac8c0a306c7bda1/jupyterlab_widgets-3.0.16-py3-none-any.whl
   name: jupyterlab-widgets
   version: 3.0.16
@@ -13068,33 +13242,6 @@ packages:
   - pandas ; implementation_name != 'pypy' and extra == 'optional'
   - seaborn ; implementation_name != 'pypy' and extra == 'optional'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/c8/99/e2ad8a60df598de02904867ec83bc9d785b6534a503aecc9426889aa807e/Cartopy-0.22.0.tar.gz
-  name: cartopy
-  version: 0.22.0
-  sha256: b300f90120931d43f11ef87c064ea1dacec1b59a4940aa76ebf82cf09548bb49
-  requires_dist:
-  - numpy>=1.21
-  - matplotlib>=3.4
-  - shapely>=1.7
-  - packaging>=20
-  - pyshp>=2.1
-  - pyproj>=3.1.0
-  - beautifulsoup4 ; extra == 'doc'
-  - pydata-sphinx-theme ; extra == 'doc'
-  - sphinx ; extra == 'doc'
-  - sphinx-gallery ; extra == 'doc'
-  - pykdtree ; extra == 'speedups'
-  - fiona ; extra == 'speedups'
-  - owslib>=0.20.0 ; extra == 'ows'
-  - pillow>=6.1.0 ; extra == 'ows'
-  - pillow>=6.1.0 ; extra == 'plotting'
-  - scipy>=1.3.1 ; extra == 'plotting'
-  - pytest>=5.1.2 ; extra == 'test'
-  - pytest-mpl>=0.11 ; extra == 'test'
-  - pytest-xdist ; extra == 'test'
-  - pytest-cov ; extra == 'test'
-  - coveralls ; extra == 'test'
-  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/ca/ba/ffdcb19be4ff6bfe7d969e7cef2c567c633df5a3a1cc1053394ad053bca8/pandas-3.0.6-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
   name: pandas
   version: 3.0.6
@@ -13184,6 +13331,35 @@ packages:
   - xlrd>=2.0.1 ; extra == 'all'
   - xlsxwriter>=3.2.0 ; extra == 'all'
   - zstandard>=0.23.0 ; extra == 'all'
+  requires_python: '>=3.11'
+- pypi: https://files.pythonhosted.org/packages/cd/a8/b2b3620dff97def14e49ea6368a06e33650b49ad0f4ce4417c3656f4d5c9/cartopy-0.26.0-cp314-cp314-win_amd64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: 629aad5ff84d61915893e24a505e123db09572fb6294eb1192a2a59c0d6e46f0
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
   requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/cf/83/333afb452af6f0fd70414dc04f898647ee1423979ce02efa75c3b0f2c28e/scipy-1.17.1-cp314-cp314-macosx_10_14_x86_64.whl
   name: scipy
@@ -13303,6 +13479,35 @@ packages:
   requires_dist:
   - pygments
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/d9/3c/c0cdefc7a4f60d9c56673b9be732fd94526f7930db0b1914418c7f8e1dc4/cartopy-0.26.0-cp314-cp314-macosx_10_15_x86_64.whl
+  name: cartopy
+  version: 0.26.0
+  sha256: ce66f8adbcf26b64ac18fc25c15190108b3bc9b64a3d17a650d23e17714dcecd
+  requires_dist:
+  - numpy>=1.26
+  - matplotlib>=3.8
+  - shapely>=2.0
+  - packaging>=21
+  - pyshp>=2.3.1
+  - pyproj>=3.6
+  - pydata-sphinx-theme ; extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-gallery ; extra == 'doc'
+  - pykdtree ; extra == 'speedups'
+  - fiona ; extra == 'speedups'
+  - owslib>=0.29.0 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'ows'
+  - pillow>=9.1 ; extra == 'plotting'
+  - scipy>=1.11 ; extra == 'plotting'
+  - beautifulsoup4 ; extra == 'srtm'
+  - pytest>=5.1.2 ; extra == 'test'
+  - pytest-mpl>=0.11 ; extra == 'test'
+  - pytest-xdist ; extra == 'test'
+  - pytest-cov ; extra == 'test'
+  - coveralls ; extra == 'test'
+  - packaging>=21.0 ; extra == 'test'
+  requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/dc/91/98a52415059db3f374757d0b7f0f16e3b5cd5976c90d1c2b56acaea039e6/orjson-3.11.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: orjson
   version: 3.11.7

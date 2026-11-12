@@ -179,7 +179,8 @@ class TimeAgg:
         # Assign weight per area
         weights_per_area = pd.DataFrame(index=RRRAAA.index, columns=['Value'], data=0.0)
         for area in weights_per_area.index:
-            weights_per_area.loc[area, 'Value'] = weights_per_region.loc[RRRAAA.loc[area].values[0], 'Value']
+            # A region without demand or investment potential (e.g. Christiansoe) has no weight
+            weights_per_area.loc[area, 'Value'] = weights_per_region['Value'].get(RRRAAA.loc[area].values[0], 0.0)
 
         return weights_per_region, weights_per_area
 

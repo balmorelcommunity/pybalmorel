@@ -366,6 +366,20 @@ def test_flow_limit_percentile_100_is_the_maximum(tmp_path):
     assert observed_flow_limits(tmp_path, 2023)[("FR", "ES")] < 500.0
 
 
+def test_flows_without_crossborder_files(tmp_path):
+    assert observed_flow_limits(tmp_path, 2023).empty
+
+    balmorel = format_balmorel_flows(
+        pd.DataFrame(
+            {"From": ["DK1"], "To": ["DE"], "Season": ["S01"], "Time": ["T001"], "Value": [100.0]}
+        ),
+        2023,
+    )
+    with pytest.warns(UserWarning, match="no ENTSO-E flow data"):
+        flows = align_flows(load_entsoe_flows(tmp_path, 2023), balmorel, observed_flow_limits(tmp_path, 2023))
+    assert flows.empty
+
+
 def test_flow_limit_of_rare_and_absent_directions(tmp_path):
     # Flows in 3 hours out of 200 in one direction, never in the other
     _write_flow_csv(tmp_path, "2023_SE_3-SE_2_crossborder_flows.csv", [0.0] * 197 + [1000.0, 1200.0, 1500.0], freq="h")

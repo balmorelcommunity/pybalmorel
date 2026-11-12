@@ -246,7 +246,7 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
     wind_criteria = {"Offshore", "Onshore", "Existing"}
     solar_criteria = {"PV"}
 
-    def _select_technology_folders(criteria: set[str]) -> set[str]:
+    def _select_technology_folders(criteria: set[str]) -> list[str]:
         """Pick tech_to_keep-enabled folders matching criteria; e.g. a stale
         PV_Rooftop folder left over from an earlier config is dropped silently
         (it's a known category, just not a currently-enabled one), but a folder
@@ -268,7 +268,7 @@ def export_timeseries_to_balmorel_format(config_fn: str, start_date: str, output
                 ) from None
             if folder_name in weatheryear_config.tech_to_keep:
                 selected.add(folder_name)
-        return selected
+        return sorted(selected)  # sorted so .inc files come out in the same order every run
 
     technology_folders_by_source = {}
     technology_folders_by_source["wind"] = _select_technology_folders(wind_criteria)

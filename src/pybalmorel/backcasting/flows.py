@@ -319,7 +319,15 @@ def load_entsoe_flows(entsoe_data_path: str | Path, year: int) -> pd.DataFrame:
         flows.append(temp)
 
     if not flows:
-        return pd.DataFrame(columns=["From", "To", "Time", "Value"])
+        # Typed, so the percentile in observed_flow_limits works on the empty frame
+        return pd.DataFrame(
+            {
+                "From": pd.Series(dtype=str),
+                "To": pd.Series(dtype=str),
+                "Time": pd.Series(dtype="datetime64[ns, UTC]"),
+                "Value": pd.Series(dtype=float),
+            }
+        )
 
     return (
         pd.concat(flows, ignore_index=True)
@@ -406,11 +414,15 @@ def align_flows(
         frozenset(border)
         for border in balmorel_flows[["From", "To"]].itertuples(index=False)
     }
+    # A bool array, since an empty list would select no columns rather than no rows
     entsoe_flows = entsoe_flows[
-        [
-            frozenset(border) in balmorel_links
-            for border in entsoe_flows[["From", "To"]].itertuples(index=False)
-        ]
+        np.array(
+            [
+                frozenset(border) in balmorel_links
+                for border in entsoe_flows[["From", "To"]].itertuples(index=False)
+            ],
+            dtype=bool,
+        )
     ]
     missing = balmorel_links.difference(
         frozenset(border) for border in entsoe_flows[["From", "To"]].itertuples(index=False)

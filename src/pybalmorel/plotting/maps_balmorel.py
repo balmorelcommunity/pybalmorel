@@ -199,9 +199,8 @@ def plot_map(path_to_result: str,
             raise ValueError('generation must be either "Capacity", "Production", or ProductionTime')
         if generation != None and commodity == None :
             raise ValueError('You must specify a commodity if you want to plot the generation')
-        if lines in ['FlowTime', 'UtilizationTime']: # Check if there is a specified season and hour for flow maps
-            S = kwargs.get('S', '')
-            T = kwargs.get('T', '')
+        S = kwargs.get('S', '') # Season for time-based lines or generation
+        T = kwargs.get('T', '') # Time step for time-based lines or generation
         exo_end = kwargs.get('exo_end', 'Both') # Options for showing only exogenous or endogenous capacities
         if exo_end not in ['Both', 'Endogenous', 'Exogenous']:
             print('exo_end must be either "Both", "Endogenous" or "Exogenous", set to "Both"')
@@ -788,6 +787,7 @@ def plot_map(path_to_result: str,
         ### 2.4 Add coordinates to line dataframes
         
         if lines != None :
+            df_line[['LatExp', 'LonExp', 'LatImp', 'LonImp']] = np.nan # Stay NaN for regions missing from the geofile
             if path_to_geofile == None : # If the user hasn't define a personalized geofile
                 for i,row in df_line.iterrows():
                         for j in range(0,len(df_unique)):
@@ -1031,6 +1031,7 @@ def plot_map(path_to_result: str,
             if path_to_geofile == None : # If the user hasn't define a personalized geofile
                 df_slack_generation = pd.merge(df_slack_generation, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'right')
             else :
+                df_slack_generation[['Lat', 'Lon']] = np.nan # Stay NaN for regions missing from the geofile
                 for i,row in df_slack_generation.iterrows():
                     for j in range(0,len(geo_file)):
                         if df_slack_generation.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
@@ -1104,6 +1105,7 @@ def plot_map(path_to_result: str,
             if path_to_geofile == None : # If the user hasn't define a personalized geofile
                 df_background = pd.merge(df_background, df_region[['Lat', 'Lon', 'RRR']], on = ['RRR'], how = 'inner')
             else :
+                df_background[['Lat', 'Lon']] = np.nan # Stay NaN for regions missing from the geofile
                 for i,row in df_background.iterrows():
                     for j in range(0,len(geo_file)):
                         if df_background.loc[i,'RRR'] ==  geo_file.loc[j, geo_file_region_column]:  
@@ -1116,6 +1118,8 @@ def plot_map(path_to_result: str,
                         df_background_copy = df_background_copy.drop(i)
                         print('Background in ' + df_background.loc[i,'RRR'] + ' has been deleted because of missing coordinates in the geofile')
                 df_background = df_background_copy
+                if df_background.empty:
+                    raise ValueError(f"None of the regions with background data were found in the '{geo_file_region_column}' column of the geofile")
             # Get the regions having data
             background_RRR = df_background['RRR'].unique()
             # Deal with the scale of the background
@@ -1302,7 +1306,7 @@ def plot_map(path_to_result: str,
                                 linewidth=.2)
                     geo_artist.set_zorder(1)
                 except :
-                    print("It seems like the region " + R + " id is not defined correctly in the geofile")
+                    print(f"It seems like the region {R} id is not defined correctly in the geofile")
                     
         # Add labels to countries   
         if background != None:
@@ -1499,6 +1503,7 @@ def plot_map(path_to_result: str,
                 
                 scatter_handles = []
                 legend_labels = []
+                first_legend = None # Stays None if there is only one pie size to show
                 if pie_legend_cluster_values == [] and pie_radius_cat != 'cluster' : # If the user has not input any legend values
                     # If they do not exist, create the legend clusters
                     pie_legend_cluster_values = []
@@ -1558,7 +1563,8 @@ def plot_map(path_to_result: str,
 
                 ### Tech legend
                 # Get the bounding box of the first legend
-                bbox_first_legend = first_legend.get_window_extent().transformed(ax.transAxes.inverted())
+                if first_legend is not None:
+                    bbox_first_legend = first_legend.get_window_extent().transformed(ax.transAxes.inverted())
                 
                 # Tech of fuel legend
                 # The characteristics of legend depend on the commodity and the variable
@@ -1570,7 +1576,10 @@ def plot_map(path_to_result: str,
                     ncol = 3
                             
                 # Calculate the position for the second legend based on the bounding box of the first one
-                pos_tech = (bbox_first_legend.x0, bbox_first_legend.y0 - 0.01)  # Adjust the vertical position as needed
+                if first_legend is not None:
+                    pos_tech = (bbox_first_legend.x0, bbox_first_legend.y0 - 0.01)  # Adjust the vertical position as needed
+                else:
+                    pos_tech = (0, 0.99) # Take the place of the missing pie size legend
             
                 # Plot the legend for technologies
                 patches = [mpatches.Patch(color=dict_generation_color[tech], label=tech) for tech in generation_existing_var]
