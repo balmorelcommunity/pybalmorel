@@ -300,7 +300,12 @@ def group_installed(installed: pd.DataFrame, groups: dict[str, tuple[str, ...]])
         group: installed.reindex(columns=list(production_types)).sum(axis=1, min_count=1)
         for group, production_types in groups.items()
     }
-    return pd.DataFrame(grouped, index=installed.index).stack().rename_axis(["Region", "Group"])
+    return (
+        pd.DataFrame(grouped, index=installed.index)
+        .stack()
+        .dropna()
+        .rename_axis(["Region", "Group"])
+    )
 
 
 def latest_outages(unavailability: pd.DataFrame) -> pd.DataFrame:
