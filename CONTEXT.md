@@ -89,7 +89,7 @@ The share of a country's fossil, biomass or waste `GKFX` of one fuel group that 
 _Avoid_: Capacity factor (that describes output); Nuclear Availability (that is taken from observed output)
 
 **Transmission Availability**:
-The share of one direction's Observed Flow Limit that could be used in a given week of the Backcast Year: the capacity ENTSO-E's transmission outage reports leave in service after planned and forced outages, capped at the Observed Flow Limit, as a share of it, averaged over the week. Only directions whose reports describe the whole border are rated (see ADR 0016); every other direction is rated 1. Taken from outage reports, never from observed flows, because flows are a Validation Metric. Written as weekly `XKRATE` overrides to `XKRATE_ENTSOE.inc`. A Calibration Input.
+The share of one direction's Observed Flow Limit that could be used in a given week of the Backcast Year: the capacity ENTSO-E's transmission outage reports leave in service after planned and forced outages (not a TSO's operational security limits), capped at the Observed Flow Limit, as a share of it, averaged over the week. Only directions whose reports describe the whole border are rated (see ADR 0016); every other direction is rated 1. Taken from outage reports, never from observed flows, because flows are a Validation Metric. Written as weekly `XKRATE` overrides to `XKRATE_ENTSOE.inc`. A Calibration Input.
 _Avoid_: NTC, offered capacity (a TSO's market allocation, which also cuts for internal congestion)
 
 **Must-run Floor**:

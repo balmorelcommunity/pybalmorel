@@ -59,6 +59,13 @@ MAX_EXCEEDED_SHARE = 0.2
 EXCEEDED_TOLERANCE_MW = 10.0
 EXCEEDED_TOLERANCE_SHARE = 0.02  # of the largest reported capacity
 
+# Reports on these assets are operational security limits, not equipment out:
+# Svenska kraftnät and Fingrid file their year-long limits on the Swedish and
+# Finnish borders as planned maintenance of an "AC Link" asset named e.g.
+# "Operational Security SE3". A TSO limiting a border for its own grid is a
+# market input, not an outage, so they don't count.
+NOT_OUTAGE_ASSETS = r"(?i)\boperational security\b"
+
 XKRATE_ENTSOE_INCLUDE = "$if EXIST '../data/XKRATE_ENTSOE.inc' $INCLUDE '../data/XKRATE_ENTSOE.inc';"
 
 BORDER_COLUMNS = [
@@ -117,8 +124,9 @@ def latest_events(outages: pd.DataFrame) -> pd.DataFrame:
     """The periods of the latest revision of every outage event, without cancelled or withdrawn events.
 
     Exact duplicate rows are dropped first, as are time series of another
-    direction than their file's and periods without a capacity (the
-    flow-based borders' reports).
+    direction than their file's, periods without a capacity (the
+    flow-based borders' reports) and operational security limits
+    (NOT_OUTAGE_ASSETS).
 
     Args:
         outages (pd.DataFrame): Output of load_transmission_outages.
@@ -140,6 +148,7 @@ def latest_events(outages: pd.DataFrame) -> pd.DataFrame:
         & ~outages["docstatus"].isin(VOID_DOCSTATUS)
         & (outages["out_domain"] == outages["ZoneFrom"])
         & (outages["in_domain"] == outages["ZoneTo"])
+        & ~outages["asset_name"].fillna("").astype(str).str.contains(NOT_OUTAGE_ASSETS)
     ].dropna(subset=["start", "end", "avail_qty"])
 
     return pd.DataFrame(

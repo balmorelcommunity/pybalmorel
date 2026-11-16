@@ -287,6 +287,10 @@ and the Observed Flow Limits (`XKFX`) from the input GDX, so run
   dropped, and rows the download repeats exactly count once. Planned and
   forced outages both count. Where reports overlap, the lowest remaining
   capacity holds.
+- Reports on an "Operational Security" asset are dropped: Svenska kraftnät
+  and Fingrid file year-long operational security limits on the Swedish and
+  Finnish borders as planned maintenance, and a TSO limiting a border for
+  its own grid is not an outage.
 - A border made of several ENTSO-E zone pairs (e.g. one to Italy, whose
   bidding zones are one Canonical Region) sums the pairs' remaining
   capacities; a pair without a report at that time counts its largest

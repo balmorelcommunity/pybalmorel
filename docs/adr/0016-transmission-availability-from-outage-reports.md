@@ -22,6 +22,16 @@ Only the latest revision of each report counts, cancelled reports are
 dropped (the API already leaves out withdrawn ones), and exact duplicates
 count once. Planned and forced outages both count.
 
+Reports on "Operational Security" assets are dropped too. Svenska kraftnät
+and Fingrid file year-long limits on the Swedish and Finnish borders as
+planned maintenance of an "AC Link" with that name (e.g. "Operational
+Security SE3": FI→SE3 at 0–800 MW of an 857 MW limit for all of 2023). Only
+the name tells them from an outage. A TSO limiting a border to protect its
+own grid is the internal-congestion cut this rating is not meant to
+describe, and a prospective scenario would not model it as an outage. With
+them, FI→SE3 would be rated 0.40 on average instead of 0.75, and SE2→SE3
+0.84 instead of 0.89.
+
 `transmission-availability` writes the ratings as weekly `XKRATE` overrides
 to `XKRATE_ENTSOE.inc`. The Balmorel backcast's `XKRATE.inc` resets every
 open line to 1 and then includes the file. A rating of 0 is written as
@@ -108,12 +118,34 @@ Backcast Calendar's 52 weeks, not the calendar year (ADR 0008).
 
 ## Consequences
 
-- Most directions keep a rating of 1. Their flows are limited only by the
+In 2023, 158 of 190 directed pairs of zones have reports (13,991 events at
+their latest revision: 12,477 planned, 1,514 forced). Of the 179 directions
+with an Observed Flow Limit, 69 are rated, with 94 of the 243 GW of limits.
+Their limit-weighted mean rating is 0.875, so on average 11.8 GW is out,
+4.9% of all limits. The deepest ratings are ES→PT 0.65 and PT→ES 0.72,
+AT→IT 0.63, DE→DK2 0.67, IT→FR 0.69, NO3→NO5 0.74, FI→SE3 0.75, DK1→DE 0.75
+and NO2→DE 0.76. 38 weekly ratings are 0.
+
+- 110 directions keep a rating of 1. Their flows are limited only by the
   annual Observed Flow Limit, and the README of the Balmorel backcast lists
-  them under Known limitations.
+  them under Known limitations: 44 without reports (55.5 GW, mostly Core
+  borders that report nothing, the Balkans and TR, DK1↔UK, IT↔MT, and the
+  reverse of four rated Nordic directions), 33 with single-line reports
+  (31.5 GW: the Balkans, IT's borders with GR, ME and SI, CH's borders
+  with DE, FR and IT, FR→UK, BE→UK, UK→IE, NO1↔NO3, NO2→NO5), 20 Core
+  flow-based (38.6 GW), and 13 whose flows exceeded the reports too often
+  (23.3 GW, e.g. NO5→NO2 76%, FR→IT 57%, DK2→DE 56%).
 - The Core borders are not rated at all, so central Europe's flows keep
   their annual limit; the flow-based domain is outside Balmorel's NTC
   model in any case.
+- The tests are per direction, so the two directions of a border can differ:
+  UK→FR is rated (0.81), FR→UK is not (its largest report is 49% of the
+  limit).
+- ES↔PT reports cover 8,677 of the 8,736 hours. They name internal
+  Portuguese lines (Pegões–Sines, Palmela–Pegões) whose maintenance cuts
+  the border, so the Iberian rating is close to a capacity schedule, and
+  ES→PT flow exceeded it in 18% of the outage hours, just under the
+  threshold.
 - A minute without a report counts as the full limit, so the rating can
   only lower the Observed Flow Limit, never raise it.
 - The rating is shared by all Balmorel lines between two zones, as the

@@ -2595,6 +2595,21 @@ def test_latest_transmission_outage_revision_counts_and_void_or_foreign_rows_do_
     assert events["End"].iloc[0] == monday + day
 
 
+def test_operational_security_limits_are_not_transmission_outages():
+    from pybalmorel.backcasting.transmission import latest_events
+
+    monday = first_monday(2023)
+    day = pd.Timedelta(days=1)
+    restriction = _transmission_report("s", 1, monday, monday + 300 * day, 100.0)
+    restriction["asset_name"] = "Operational Security SE3"  # Svk's year-long limit, filed as planned maintenance
+
+    events = latest_events(
+        pd.DataFrame([_transmission_report("a", 1, monday, monday + day, 700.0), restriction])
+    )
+
+    assert events["Event"].tolist() == ["a"]
+
+
 def test_overlapping_transmission_outages_take_the_lowest_capacity_capped_at_the_limit():
     from pybalmorel.backcasting.transmission import remaining_capacity, weekly_ratings
 
