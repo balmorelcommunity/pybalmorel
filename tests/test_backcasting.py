@@ -518,6 +518,7 @@ def test_neighbour_pairs_are_symmetric_and_include_missing_borders():
             ["--query", "installed_generation_capacity", "--query", "unavailability_of_generation_units"],
             ["installed_generation_capacity", "unavailability_of_generation_units"],
         ),
+        (["--query", "unavailability_of_transmission"], ["unavailability_of_transmission"]),
     ],
 )
 def test_download_command(tmp_path, monkeypatch, args, expected):
@@ -537,6 +538,13 @@ def test_download_command(tmp_path, monkeypatch, args, expected):
         "fetch_annual_transmission_data",
         lambda query, pairs, year, path, api_key: calls.append((query, year)),
     )
+
+    def fetch_outages(pairs, year, path, api_key, start, end):
+        # Outage reports are fetched on the Backcast Calendar, not the calendar year
+        assert (start, end) == (first_monday(year), first_monday(year) + pd.Timedelta(weeks=52))
+        calls.append(("unavailability_of_transmission", year))
+
+    monkeypatch.setattr(entsoe_module, "fetch_annual_transmission_outages", fetch_outages)
 
     data_path = tmp_path / "entsoedata"
     result = CliRunner().invoke(main, ["download", str(data_path), "2023", *args])
@@ -2373,3 +2381,434 @@ def test_model_heat_header_names_the_previous_run(tmp_path):
     content = (tmp_path / "DE_ENTSOE.inc").read_text()
     assert "other than on exogenous demand of backcast_R2023" in content
     assert "ENDOGENOUS_ELECT2HEAT" in content
+
+
+# %% ------------------------------- ###
+###  16. Transmission availability   ###
+### ------------------------------- ###
+
+OUTAGE_NAMESPACE = "urn:iec62325.351:tc57wg16:451-6:outagedocument:3:0"
+NO_OUTAGE_DATA = (
+    b'<Acknowledgement_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">'
+    b"<Reason><code>999</code><text>No matching data found for Data item Unavailability</text></Reason>"
+    b"</Acknowledgement_MarketDocument>"
+)
+
+
+def _outage_document(mrid, revision=1, docstatus=None, series=""):
+    status = f"<docStatus><value>{docstatus}</value></docStatus>" if docstatus else ""
+    return (
+        f'<Unavailability_MarketDocument xmlns="{OUTAGE_NAMESPACE}">'
+        f"<mRID>{mrid}</mRID><revisionNumber>{revision}</revisionNumber><type>A78</type>{status}"
+        f"{series}<Reason><code>B18</code><text>Cable fault</text></Reason>"
+        "</Unavailability_MarketDocument>"
+    ).encode()
+
+
+def _outage_series(out_domain, in_domain, periods="", businesstype="A54"):
+    assets = "".join(
+        f"<Asset_RegisteredResource><mRID>10T-{name}</mRID><name>Skagerrak {name}</name>"
+        "<asset_PSRType.psrType>B22</asset_PSRType.psrType></Asset_RegisteredResource>"
+        for name in ("4", "3")
+    )
+    return (
+        f"<TimeSeries><mRID>1</mRID><businessType>{businesstype}</businessType>"
+        f"<in_Domain.mRID>{in_domain}</in_Domain.mRID><out_Domain.mRID>{out_domain}</out_Domain.mRID>"
+        f"<quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name><curveType>A03</curveType>{assets}"
+        f"{periods}</TimeSeries>"
+    )
+
+
+def _outage_period(start, end, points):
+    return (
+        f"<Available_Period><timeInterval><start>{start}</start><end>{end}</end></timeInterval>"
+        "<resolution>PT1M</resolution>"
+        + "".join(
+            f"<Point><position>{position}</position><quantity>{quantity}</quantity></Point>"
+            for position, quantity in points
+        )
+        + "</Available_Period>"
+    )
+
+
+def _outage_zip(documents):
+    import io
+    import zipfile
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for index, document in enumerate(documents):
+            archive.writestr(f"{index}.xml", document)
+    return buffer.getvalue()
+
+
+class _FakeResponse:
+    def __init__(self, content, status_code=200):
+        self.content = content
+        self.text = content.decode(errors="replace")
+        self.status_code = status_code
+
+
+def test_outage_points_hold_until_the_next_position():
+    from pybalmorel.entsoe.outages import parse_transmission_outage_document
+
+    period = _outage_period("2023-01-02T00:00Z", "2023-01-02T03:00Z", [(1, 700), (61, 0)])
+    rows = parse_transmission_outage_document(
+        _outage_document("a", 2, series=_outage_series("DK1", "NO2", period))
+    )
+
+    utc = lambda time: pd.Timestamp(time, tz="UTC")  # noqa: E731
+    assert [(row["start"], row["end"], row["avail_qty"]) for row in rows] == [
+        (utc("2023-01-02 00:00"), utc("2023-01-02 01:00"), 700.0),
+        (utc("2023-01-02 01:00"), utc("2023-01-02 03:00"), 0.0),
+    ]
+    row = rows[0]
+    assert row["docstatus"] == "Active"  # an active document carries no status
+    assert (row["mrid"], row["revision"], row["businesstype"]) == ("a", 2, "Unplanned outage")
+    assert (row["out_domain"], row["in_domain"]) == ("DK1", "NO2")
+    assert row["asset_name"] == "Skagerrak 4|Skagerrak 3"
+    assert row["asset_psrtype"] == "DC Link|DC Link"
+    assert row["reason"] == "Cable fault"
+
+
+def test_outage_zip_keeps_cancelled_documents_and_series_without_periods():
+    from pybalmorel.entsoe.outages import parse_transmission_outage_response
+
+    documents = [
+        _outage_document("a", docstatus="A09", series=_outage_series("DE", "PL")),
+        _outage_document("b", series=_outage_series("DE", "PL")),
+    ]
+    rows, n_documents = parse_transmission_outage_response(_outage_zip(documents))
+
+    assert n_documents == 2
+    assert [(row["mrid"], row["docstatus"], row["avail_qty"]) for row in rows] == [
+        ("a", "Cancelled", None),
+        ("b", "Active", None),
+    ]
+
+
+def test_outage_download_pages_remembers_no_data_and_survives_timeouts(tmp_path, monkeypatch):
+    import requests
+    import pybalmorel.entsoe.outages as outages
+
+    monkeypatch.setattr(outages, "PAGE_SIZE", 2)
+    monkeypatch.setattr(outages.time, "sleep", lambda seconds: None)
+    dk1, no2, fr = zone_eic_code("DK_1"), zone_eic_code("NO_2"), zone_eic_code("FR")
+    period = _outage_period("2023-01-02T00:00Z", "2023-01-02T01:00Z", [(1, 500)])
+    calls = []
+
+    def fake_get(url, params, timeout):
+        calls.append((params["out_Domain"], params["offset"]))
+        if params["out_Domain"] == fr:
+            return _FakeResponse(NO_OUTAGE_DATA)
+        if params["out_Domain"] == no2:
+            raise requests.exceptions.ReadTimeout
+        # DK1 -> NO2: two full pages, then a last one
+        documents = 2 if params["offset"] < 4 else 1
+        return _FakeResponse(
+            _outage_zip(
+                _outage_document(f"{params['offset']}-{index}", series=_outage_series(dk1, no2, period))
+                for index in range(documents)
+            )
+        )
+
+    monkeypatch.setattr(outages.requests, "get", fake_get)
+    pairs = [("DK_1", "NO_2"), ("FR", "LU"), ("NO_2", "DK_1")]
+    start = first_monday(2023)
+    end = start + pd.Timedelta(weeks=52)
+
+    outages.fetch_annual_transmission_outages(pairs, 2023, tmp_path, "key", start=start, end=end)
+
+    assert [offset for zone, offset in calls if zone == dk1] == [0, 2, 4]
+    assert len([zone for zone, offset in calls if zone == no2]) == 5  # retried, then left for a rerun
+    saved = pd.read_csv(tmp_path / "2023_DK_1-NO_2_unavailability_of_transmission.csv")
+    assert saved["mrid"].nunique() == 5
+
+    # Second run: the no-data pair and the fetched pair are skipped, the timed out one retried
+    calls.clear()
+    outages.fetch_annual_transmission_outages(pairs, 2023, tmp_path, "key", start=start, end=end)
+    assert {zone for zone, offset in calls} == {no2}
+
+
+def _transmission_report(
+    mrid, revision, start, end, available, docstatus="Active", kind="Planned maintenance", reverse=False
+):
+    """A row of load_transmission_outages for DK1 -> NO2."""
+    dk1, no2 = zone_eic_code("DK_1"), zone_eic_code("NO_2")
+    return {
+        "mrid": mrid,
+        "revision": revision,
+        "docstatus": docstatus,
+        "businesstype": kind,
+        "out_domain": no2 if reverse else dk1,
+        "in_domain": dk1 if reverse else no2,
+        "asset_mrid": "10T-1",
+        "asset_name": "Skagerrak 1-4",
+        "asset_psrtype": "DC Link",
+        "unit": "MAW",
+        "start": start,
+        "end": end,
+        "avail_qty": available,
+        "reason": "",
+        "ZoneFrom": dk1,
+        "ZoneTo": no2,
+        "From": "DK1",
+        "To": "NO2",
+    }
+
+
+def _transmission_event(region_from, region_to, available, start, hours, event="a"):
+    """A row of latest_events whose zones are the canonical regions."""
+    return {
+        "From": region_from,
+        "To": region_to,
+        "ZoneFrom": region_from,
+        "ZoneTo": region_to,
+        "Event": event,
+        "Kind": "Planned",
+        "Start": start,
+        "End": start + pd.Timedelta(hours=hours),
+        "Available": available,
+        "Asset": "Cable",
+    }
+
+
+def test_latest_transmission_outage_revision_counts_and_void_or_foreign_rows_do_not():
+    from pybalmorel.backcasting.transmission import latest_events
+
+    monday = first_monday(2023)
+    day = pd.Timedelta(days=1)
+    events = latest_events(
+        pd.DataFrame(
+            [
+                _transmission_report("a", 1, monday, monday + 4 * day, 700.0),
+                _transmission_report("a", 2, monday, monday + day, 700.0),
+                _transmission_report("a", 2, monday, monday + day, 700.0),  # an exact duplicate
+                _transmission_report("b", 1, monday, monday + day, 0.0, docstatus="Cancelled"),
+                _transmission_report("c", 1, monday, monday + day, 100.0, reverse=True),
+                _transmission_report("d", 1, None, None, None),  # flow-based: no capacity
+            ]
+        )
+    )
+
+    assert events[["Event", "Kind", "Available"]].to_numpy().tolist() == [["a", "Planned", 700.0]]
+    assert events["End"].iloc[0] == monday + day
+
+
+def test_overlapping_transmission_outages_take_the_lowest_capacity_capped_at_the_limit():
+    from pybalmorel.backcasting.transmission import remaining_capacity, weekly_ratings
+
+    week2 = first_monday(2023) + pd.Timedelta(weeks=1)
+    events = pd.DataFrame(
+        [
+            _transmission_event("DK1", "NO2", 1000.0, week2, 48, "a"),
+            _transmission_event("DK1", "NO2", 500.0, week2 + pd.Timedelta(days=1), 48, "b"),
+            # Above the limit, so it takes nothing away
+            _transmission_event("DK1", "NO2", 1500.0, week2 + pd.Timedelta(days=4), 24, "c"),
+        ]
+    )
+
+    ratings = weekly_ratings(remaining_capacity(events, 2023), limit=1400.0)
+
+    # Day 1 at 1000, days 2-3 at 500, the rest of the week at the limit
+    assert ratings[1] == pytest.approx((1000 + 2 * 500 + 4 * 1400) / (7 * 1400))
+    assert np.delete(ratings, 1).tolist() == [1.0] * 51
+
+
+def test_transmission_outage_spanning_two_weeks_lowers_both_by_the_minute():
+    from pybalmorel.backcasting.transmission import remaining_capacity, weekly_ratings
+
+    sunday = first_monday(2023) + pd.Timedelta(days=6)
+    events = pd.DataFrame(
+        [
+            _transmission_event("DK1", "NO2", 0.0, sunday, 48, "a"),
+            _transmission_event("DK1", "NO2", 0.0, sunday + pd.Timedelta(weeks=2), 0.5, "b"),
+            # Starts before the Backcast Calendar
+            _transmission_event("DK1", "NO2", 0.0, first_monday(2023) - pd.Timedelta(days=1), 25, "c"),
+        ]
+    )
+
+    ratings = weekly_ratings(remaining_capacity(events, 2023), limit=1000.0)
+
+    assert ratings[:4] == pytest.approx([1 - 25 / 168, 6 / 7, 1 - 30 / 10080, 1.0])
+
+
+def test_border_of_several_zone_pairs_counts_the_largest_report_of_a_pair_without_an_event():
+    from pybalmorel.backcasting.transmission import remaining_capacity
+
+    monday = first_monday(2023)
+    hour = pd.Timedelta(hours=1)
+    events = pd.DataFrame(
+        {
+            "ZoneFrom": ["A1", "A1", "A2", "A2"],
+            "ZoneTo": ["B"] * 4,
+            "Start": [monday, monday + 5 * hour, monday + hour, monday + 10 * hour],
+            "End": [monday + 2 * hour, monday + 6 * hour, monday + 3 * hour, monday + 11 * hour],
+            "Available": [200.0, 1000.0, 100.0, 500.0],
+        }
+    )
+
+    remaining = remaining_capacity(events, 2023)[::60]
+
+    # A1 reports 1000 at most and A2 500; no event on either is no limit
+    assert remaining[:4].tolist() == [200.0 + 500.0, 200.0 + 100.0, 1000.0 + 100.0, np.inf]
+
+
+def test_only_directions_whose_reports_describe_the_border_are_rated():
+    from pybalmorel.backcasting.transmission import transmission_ratings
+
+    week2 = first_monday(2023) + pd.Timedelta(weeks=1)
+    events = pd.DataFrame(
+        [
+            _transmission_event("DK1", "NO2", 700.0, week2, 48),
+            _transmission_event("NO2", "DK1", 300.0, week2, 48),
+            _transmission_event("DK2", "DE", 300.0, week2, 48),
+            _transmission_event("DE", "NL", 3000.0, week2, 48),
+            _transmission_event("SE3", "FI", 600.0, week2, 48),
+            _transmission_event("GB", "DK1", 0.0, week2, 48),
+        ]
+    )
+    limits = pd.Series(
+        {
+            ("DK1", "NO2"): 1400.0,
+            ("NO2", "DK1"): 1400.0,
+            ("DK2", "DE"): 600.0,
+            ("DE", "NL"): 4000.0,
+            ("SE3", "FI"): 1200.0,
+            ("FI", "SE3"): 1200.0,
+        }
+    )
+    hours = backcast_hours(2023)
+    flows = pd.concat(
+        [
+            pd.DataFrame({"From": "DK1", "To": "NO2", "Time": hours, "Value": 600.0}),
+            pd.DataFrame({"From": "DK2", "To": "DE", "Time": hours, "Value": 500.0}),
+        ]
+    )
+
+    ratings, borders = transmission_ratings(events, limits, flows, 2023)
+
+    reasons = borders.set_index(["From", "To"])["Reason"]
+    assert reasons[("DK1", "NO2")] == ""
+    assert reasons[("NO2", "DK1")] == "reports single lines (largest 21% of the limit)"
+    assert reasons[("DK2", "DE")] == "flow exceeded the reports in 100% of the outage hours"
+    assert reasons[("DE", "NL")] == "flow-based border (Core)"
+    assert reasons[("SE3", "FI")] == "no observed flow in the outage hours"
+    assert reasons[("FI", "SE3")] == "no outage reports"
+    assert reasons[("GB", "DK1")] == "no Observed Flow Limit"
+    assert borders.set_index(["From", "To"]).loc[("DK1", "NO2"), "EventHours"] == 48
+
+    assert set(zip(ratings["From"], ratings["To"])) == {("DK1", "NO2")}
+    week = ratings.set_index("Season")["Rating"]
+    assert len(week) == 52
+    assert week["S02"] == pytest.approx(1 - 48 / 168 * 0.5)
+    assert week.drop("S02").eq(1).all()
+
+    # The thresholds are options
+    ratings, borders = transmission_ratings(
+        events, limits, flows, 2023, min_reported_share=0.2, max_exceeded_share=1.1
+    )
+    assert set(zip(ratings["From"], ratings["To"])) == {("DK1", "NO2"), ("DK2", "DE")}
+    assert borders.set_index(["From", "To"]).loc[("NO2", "DK1"), "Reason"] == (
+        "no observed flow in the outage hours"
+    )
+
+
+def test_border_lines_keep_the_years_external_lines_with_their_canonical_border():
+    from pybalmorel.backcasting.transmission import border_lines
+
+    xkfx = pd.DataFrame(
+        {
+            "Scenario": "backcast",
+            "Y": ["2023", "2023", "2023", "2050"],
+            "IRRRE": ["DE4-N", "DE4-N", "DK1", "DK1"],
+            "IRRRI": ["DK1", "DE4-E", "DE4-N", "DE4-N"],
+            "Value": [1000.0, 5000.0, 0.0, 900.0],
+        }
+    )
+
+    assert border_lines(xkfx, 2023).to_numpy().tolist() == [["DE4-N", "DK1", "DE", "DK1", 1000.0]]
+
+
+def test_every_balmorel_line_of_a_rated_direction_gets_its_rating_and_zero_is_eps(tmp_path):
+    from pybalmorel.backcasting.transmission import write_xkrate_override
+
+    ratings = pd.DataFrame(
+        {
+            "From": "DE",
+            "To": "DK1",
+            "Season": [f"S{season:02d}" for season in range(1, 53)],
+            "Rating": [0.0] + [1.0] * 51,
+        }
+    )
+    lines = pd.DataFrame(
+        {
+            "RegionFrom": ["DE4-N", "DE4-E", "DK2"],
+            "RegionTo": ["DK1", "DK1", "DE4-E"],
+            "From": ["DE", "DE", "DK2"],
+            "To": ["DK1", "DK1", "DE"],
+            "Capacity": [1000.0, 500.0, 600.0],
+        }
+    )
+
+    write_xkrate_override(ratings, lines, tmp_path)
+
+    text = (tmp_path / "XKRATE_ENTSOE.inc").read_text()
+    assert "XKRATE('DE4-N','DK1','S01')=eps;" in text
+    assert "XKRATE('DE4-E','DK1','S52')=1.0000;" in text
+    assert "=0;" not in text
+    assert text.count("XKRATE(") == 104
+    assert "'DK2'" not in text
+
+
+def test_xkrate_without_the_include_warns(tmp_path):
+    import warnings
+
+    from pybalmorel.backcasting.transmission import XKRATE_ENTSOE_INCLUDE, check_xkrate_include
+
+    xkrate_inc = tmp_path / "XKRATE.inc"
+    xkrate_inc.write_text("XKRATE(IRRRE,IRRRI,S)$(XKRATE(IRRRE,IRRRI,S) GT 0) = 1;\n")
+    with pytest.warns(UserWarning, match="doesn't include XKRATE_ENTSOE.inc"):
+        check_xkrate_include(xkrate_inc)
+
+    xkrate_inc.write_text(XKRATE_ENTSOE_INCLUDE + "\n")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        check_xkrate_include(xkrate_inc)
+
+
+def test_transmission_availability_command_writes_the_override_and_tables(tmp_path, monkeypatch):
+    from click.testing import CliRunner
+    import pybalmorel.backcasting.transmission as transmission
+    from pybalmorel.backcasting.__main__ import main
+
+    class FakeModel:
+        def get_input(self, symbol):
+            assert symbol == "XKFX"
+            return pd.DataFrame(
+                {"Y": "2023", "IRRRE": ["DK1", "NO2"], "IRRRI": ["NO2", "DK1"], "Value": [1400.0, 1400.0]}
+            )
+
+    monkeypatch.setattr(transmission, "load_scenario_input", lambda *args, **kwargs: (FakeModel(), {}))
+    entsoe = tmp_path / "entsoedata"
+    entsoe.mkdir()
+    week2 = first_monday(2023) + pd.Timedelta(weeks=1)
+    report = _transmission_report("a", 1, week2, week2 + pd.Timedelta(days=2), 700.0)
+    pd.DataFrame([report]).drop(columns=["ZoneFrom", "ZoneTo", "From", "To"]).to_csv(
+        entsoe / "2023_DK_1-NO_2_unavailability_of_transmission.csv", index=False
+    )
+    _write_flow_csv(entsoe, "2023_DK_1-NO_2_crossborder_flows.csv", [600.0] * 8736, freq="h")
+    scenario = tmp_path / "balmorel" / "backcast"
+    (scenario / "data").mkdir(parents=True)
+    (scenario / "data" / "XKRATE.inc").write_text(transmission.XKRATE_ENTSOE_INCLUDE + "\n")
+
+    result = CliRunner().invoke(main, ["transmission-availability", str(scenario), str(entsoe), "2023"])
+
+    assert result.exit_code == 0, result.output
+    text = (scenario / "data" / "XKRATE_ENTSOE.inc").read_text()
+    assert f"XKRATE('DK1','NO2','S02')={1 - 48 / 168 * 0.5:.4f};" in text
+    assert text.count("XKRATE(") == 52
+    borders = pd.read_csv(scenario / "backcastoutput" / "transmission_availability_borders.csv")
+    assert borders.set_index(["From", "To"]).loc[("NO2", "DK1"), "Reason"] == "no outage reports"
+    ratings = pd.read_csv(scenario / "backcastoutput" / "transmission_availability.csv")
+    assert len(ratings) == 52

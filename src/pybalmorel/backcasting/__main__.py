@@ -21,8 +21,13 @@ from pathlib import Path
 import click
 from decouple import config
 from .. import MainResults
-from ..entsoe import bidding_zone_translation, entsoe_code_to_region, load_files
-from .calendar import backcast_hours, from_backcast_grid
+from ..entsoe import (
+    TRANSMISSION_OUTAGES,
+    bidding_zone_translation,
+    entsoe_code_to_region,
+    load_files,
+)
+from .calendar import N_SEASONS, backcast_hours, first_monday, from_backcast_grid
 from .demand import SHARED_LOAD
 from .flows import (
     OBSERVED_FLOW_PERCENTILE,
@@ -177,6 +182,9 @@ entsoe_capacity_queries = [
     "unavailability_of_generation_units",
 ]
 
+# ENTSO-E query for transmission-availability, downloaded only on request
+entsoe_outage_queries = [TRANSMISSION_OUTAGES]
+
 # Balmorel load categories that are storage charging, which ENTSO-E's
 # Actual Total Load excludes
 STORAGE_CHARGING_CATEGORIES = ("ENDO_INTRASTO",)
@@ -329,10 +337,13 @@ def load_entsoe_data(entsoe_data_path: str, year: int, resampling: str = "h"):
             )
 
     # Cross-border flows are loaded separately, see flows.load_entsoe_flows
-    # and capacities and outages by thermal.py
+    # and capacities and outages by thermal.py and transmission.py
     known_suffixes = tuple(
         f"_{data_item}.csv"
-        for data_item in data_items + ["crossborder_flows"] + entsoe_capacity_queries
+        for data_item in data_items
+        + ["crossborder_flows"]
+        + entsoe_capacity_queries
+        + entsoe_outage_queries
     ) + ("_nodata.txt",)
     for item in path.glob(f"{year}_*"):
         if not item.name.endswith(known_suffixes):
@@ -1650,6 +1661,59 @@ def thermal_availability(balmorel_scenario_path, entsoe_data_path, year, reload_
     )
 
 
+@main.command(name="transmission-availability")
+@click.argument("balmorel-scenario-path", type=str)
+@click.argument("entsoe-data-path", type=str)
+@click.argument("year", type=int)
+@click.option(
+    "--min-reported-share",
+    type=float,
+    default=0.5,
+    show_default=True,
+    help="Rate a direction only if its largest reported capacity is at least this share of the Observed Flow Limit.",
+)
+@click.option(
+    "--max-exceeded-share",
+    type=float,
+    default=0.2,
+    show_default=True,
+    help="Rate a direction only if observed flow exceeded the reported capacity in less than this share of the outage hours.",
+)
+@click.option(
+    "--reload-input",
+    is_flag=True,
+    help="Run ReadData again instead of reusing the cached <scenario>_input_data.gdx (takes a while).",
+)
+def transmission_availability(
+    balmorel_scenario_path, entsoe_data_path, year, min_reported_share, max_exceeded_share, reload_input
+):
+    """Write XKRATE_ENTSOE.inc: weekly Transmission Availability from ENTSO-E outage reports.
+
+    Per direction of a canonical border and Backcast Calendar week: the mean
+    capacity ENTSO-E's transmission outage reports leave in service (from
+    `download --query unavailability_of_transmission`), capped at the
+    Observed Flow Limit (the scenario's XKFX), as a share of it. Only
+    directions whose reports describe the whole border are rated; the rest
+    keep 1. Writes <balmorel-scenario-path>/data/XKRATE_ENTSOE.inc, which the
+    scenario's XKRATE.inc must include, and
+    backcastoutput/transmission_availability*.csv, the ratings and why each
+    direction is rated or not. See CONTEXT.md and docs/adr/0016.
+    """
+    from .transmission import generate_transmission_availability
+
+    balmorel_scenario_path = Path(balmorel_scenario_path)
+    generate_transmission_availability(
+        balmorel_scenario_path.parent,
+        balmorel_scenario_path.name,
+        year,
+        entsoe_data_path,
+        gams_system_directory=config("GAMS_SYSTEM_DIR", None),
+        reload_input=reload_input,
+        min_reported_share=min_reported_share,
+        max_exceeded_share=max_exceeded_share,
+    )
+
+
 @main.command(name="must-run-floor")
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("entsoe-data-path", type=str)
@@ -1922,26 +1986,29 @@ def vre_flh(balmorel_scenario_path, entsoe_data_path, year, bounds, reload_input
     "--query",
     "queries",
     multiple=True,
-    type=click.Choice(entsoe_queries + entsoe_capacity_queries),
+    type=click.Choice(entsoe_queries + entsoe_capacity_queries + entsoe_outage_queries),
     help=(
         "ENTSO-E data to download. Repeatable. Defaults to "
         f"{', '.join(entsoe_queries)}; {' and '.join(entsoe_capacity_queries)} "
-        "(for thermal-availability) only on request."
+        f"(for thermal-availability) and {' and '.join(entsoe_outage_queries)} "
+        "(for transmission-availability) only on request."
     ),
 )
 def download(entsoe_data_path, year, queries):
     """Download ENTSO-E data for YEAR into ENTSOE_DATA_PATH, for `format` and `transmission-flow-limit`.
 
-    Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows of
-    every neighbouring pair of them. IE's load is fetched for Ireland's
-    control area instead of the all-island IE_SEM zone. Files already downloaded, and pairs
-    ENTSO-E had no data for on an earlier run, are skipped, so rerun to retry
-    failed requests.
+    Fetches every zone in pybalmorel.entsoe.bidding_zones, and the flows and
+    transmission outage reports of every neighbouring pair of them. Outage
+    reports are fetched for the Backcast Calendar of YEAR. IE's load is
+    fetched for Ireland's control area instead of the all-island IE_SEM zone.
+    Files already downloaded, and pairs ENTSO-E had no data for on an earlier
+    run, are skipped, so rerun to retry failed requests.
     """
     from ..entsoe import (
         bidding_zones,
         fetch_annual_data,
         fetch_annual_transmission_data,
+        fetch_annual_transmission_outages,
         get_api_key,
         neighbour_pairs,
         query_zones,
@@ -1956,6 +2023,16 @@ def download(entsoe_data_path, year, queries):
         if query == "crossborder_flows":
             fetch_annual_transmission_data(
                 query, neighbour_pairs(bidding_zones), year, path, api_key
+            )
+        elif query == TRANSMISSION_OUTAGES:
+            start = first_monday(year)
+            fetch_annual_transmission_outages(
+                neighbour_pairs(bidding_zones),
+                year,
+                path,
+                api_key,
+                start=start,
+                end=start + pd.Timedelta(weeks=N_SEASONS),
             )
         else:
             fetch_annual_data(

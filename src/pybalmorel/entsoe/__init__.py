@@ -544,3 +544,4 @@ def fetch_annual_transmission_data(
 # Imported last, as maps and profile build on the functions above
 from .maps import load_zone_geometries, plot_transmission_map, sum_crossborder_flows  # noqa: E402
 from .profile import EntsoeProfile, plot_profile, read_profile  # noqa: E402
+from .outages import TRANSMISSION_OUTAGES, fetch_annual_transmission_outages  # noqa: E402

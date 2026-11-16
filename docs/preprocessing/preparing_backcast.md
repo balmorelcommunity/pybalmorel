@@ -6,7 +6,8 @@ so its results can be compared with what actually happened (see
 `pybalmorel.backcasting` covers the whole workflow:
 
 1. **Prepare** the Backcast's inputs: download ENTSO-E data, derive the
-   `XKFX` transmission override from ENTSO-E's Observed Flow Limit, the
+   `XKFX` transmission override from ENTSO-E's Observed Flow Limit and its
+   weekly [transmission availability](#transmission-availability), the
    weekly [nuclear](#nuclear-availability) and
    [thermal availability](#thermal-availability), the
    [must-run floor](#must-run-floor), the [VRE level](#vre-level), the
@@ -21,8 +22,9 @@ so its results can be compared with what actually happened (see
 The transmission override follows ADRs
 [0005](../adr/0005-observed-max-flow-not-ntc-for-backcasting.md),
 [0006](../adr/0006-xkfx-override-file-not-regeneration.md),
-[0007](../adr/0007-split-entsoe-and-backcasting-packages.md) and
-[0010](../adr/0010-observed-flow-limit-percentile.md).
+[0007](../adr/0007-split-entsoe-and-backcasting-packages.md),
+[0010](../adr/0010-observed-flow-limit-percentile.md) and
+[0016](../adr/0016-transmission-availability-from-outage-reports.md).
 `pybalmorel.backcasting` depends on [`pybalmorel.entsoe`](entsoe.md) for raw
 data access and on `pybalmorel.MainResults` for Balmorel results — never the
 other way round.
@@ -54,6 +56,13 @@ python -m pybalmorel.backcasting transmission-flow-limit \
     <entsoe-data-path> \
     <year> \
     [--percentile 99]
+
+# Write XKRATE_ENTSOE.inc: weekly transmission availability from ENTSO-E outage reports
+python -m pybalmorel.backcasting transmission-availability \
+    <balmorel-scenario-path> \
+    <entsoe-data-path> \
+    <year> \
+    [--min-reported-share 0.5] [--max-exceeded-share 0.2] [--reload-input]
 
 # Write GKRATE_ENTSOE.inc: weekly nuclear availability from ENTSO-E nuclear output
 python -m pybalmorel.backcasting nuclear-availability \
@@ -128,14 +137,19 @@ for every zone in `pybalmorel.entsoe.bidding_zones`:
 | `load` | `<year>_<zone>_load.csv` | `format`, `demand-profile`, `demand-level`, `must-run-floor` |
 | `day_ahead_prices` | `<year>_<zone>_day_ahead_prices.csv` | `format`, `must-run-floor` |
 | `generation` | `<year>_<zone>_generation.csv` | `format`, `nuclear-availability`, `thermal-availability`, `must-run-floor`, `vre-flh` |
-| `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-flow-limit`, `format` |
+| `crossborder_flows` | `<year>_<from>-<to>_crossborder_flows.csv` | `transmission-flow-limit`, `transmission-availability`, `format` |
 | `installed_generation_capacity` | `<year>_<zone>_installed_generation_capacity.csv` | `thermal-availability` |
 | `unavailability_of_generation_units` | `<year>_<zone>_unavailability_of_generation_units.csv` | `thermal-availability` |
+| `unavailability_of_transmission` | `<year>_<from>-<to>_unavailability_of_transmission.csv` | `transmission-availability` |
 
 Without `--query`, the first four are downloaded. The capacity and outage
 queries must be asked for. `--query` is repeatable.
 
-Flows are fetched for every directed pair of neighbouring zones.
+Flows and transmission outage reports are fetched for every directed pair of
+neighbouring zones. The transmission outage reports are fetched over the
+Backcast Calendar's 52 weeks, not the calendar year, by pybalmorel's own
+client (`pybalmorel.entsoe.outages`), because entsoe-py reads only the first
+200 reports of a query; it waits up to 180 seconds for a response.
 
 IE's load is fetched for Ireland's control area (`<year>_IE_load.csv`), not
 the all-island `IE_SEM` bidding zone, because Balmorel has Northern Ireland in
@@ -255,6 +269,59 @@ $if EXIST '../data/GKRATE_THERMAL_ENTSOE.inc' $INCLUDE '../data/GKRATE_THERMAL_E
 
 Thermal Availability is taken from capacity and outage reports, never from
 observed output, so the fossil mix stays a Validation Metric.
+
+## Transmission availability
+
+The `transmission-availability` command writes
+`<scenario-path>/data/XKRATE_ENTSOE.inc`: one `XKRATE` per Balmorel line
+(`IRRRE`, `IRRRI`) and Backcast Calendar week, for the directions whose
+ENTSO-E transmission outage reports describe the whole border. The rating is
+the direction's Transmission Availability: the capacity the reports leave in
+service, capped at the Observed Flow Limit, as a share of that limit,
+averaged over the minutes of the week. It reads the files of
+`download --query unavailability_of_transmission --query crossborder_flows`
+and the Observed Flow Limits (`XKFX`) from the input GDX, so run
+`transmission-flow-limit` first.
+
+- Only the latest revision of each report counts, cancelled reports are
+  dropped, and rows the download repeats exactly count once. Planned and
+  forced outages both count. Where reports overlap, the lowest remaining
+  capacity holds.
+- A border made of several ENTSO-E zone pairs (e.g. one to Italy, whose
+  bidding zones are one Canonical Region) sums the pairs' remaining
+  capacities; a pair without a report at that time counts its largest
+  reported capacity.
+- A direction is rated only if all three hold. Every other direction keeps a
+  rating of 1.
+  - Its largest reported capacity is at least `--min-reported-share` (0.5)
+    of its Observed Flow Limit. Smaller values report a single line of the
+    border (0 then means one circuit is out, not the border).
+  - It isn't a border of Core's flow-based market coupling (AT, BE, CZ, DE,
+    FR, HR, HU, NL, PL, RO, SI, SK on both sides), whose reports give no
+    border capacity.
+  - Observed flow exceeded the reported capacity, by more than 10 MW or 2%
+    of the largest report, in less than `--max-exceeded-share` (0.2) of the
+    hours with a report. More often means the reports don't describe the
+    border's capacity.
+- Every Balmorel line between the two zones gets the direction's rating. A
+  rating of 0 is written as `eps`, since Balmorel reads 0 as 1.
+- The weekly ratings are saved to
+  `backcastoutput/transmission_availability.csv`, and every direction's
+  limit, report counts, filter values and the reason it was not rated to
+  `backcastoutput/transmission_availability_borders.csv`.
+
+The scenario's `data/XKRATE.inc` must include the file after the base
+ratings (the command warns if it doesn't):
+
+```gams
+$if EXIST '../data/XKRATE_ENTSOE.inc' $INCLUDE '../data/XKRATE_ENTSOE.inc';
+```
+
+Transmission Availability is taken from outage reports, never from observed
+flows, so cross-border flows stay a Validation Metric. Flows only decide,
+once per direction and for the whole year, whether its reports are credible,
+and can only remove a rating (see
+[ADR 0016](../adr/0016-transmission-availability-from-outage-reports.md)).
 
 ## Must-run floor
 
@@ -552,7 +619,7 @@ when Balmorel would ignore what they wrote:
 - **API Key**: set `ENTSOE_API_KEY` in `.env`, or provide it when prompted.
 - **GAMS Path**: set `GAMS_SYSTEM_DIR` in `.env` for Balmorel result processing.
 - **Output**: raw ENTSO-E data in `<entsoe-data-path>`; Eurostat data in
-  `<scenario-path>/eurostatdata/`; XKFX, GKRATE, MUSTRUN, WNDFLH, SOLEFLH, DE,
+  `<scenario-path>/eurostatdata/`; XKFX, XKRATE, GKRATE, MUSTRUN, WNDFLH, SOLEFLH, DE,
   DE_VAR_T, fuel price and CO2 tax overrides written to `<scenario-path>/data/`;
   summaries and validation data in `<scenario-path>/backcastoutput/`.
 
@@ -561,7 +628,8 @@ when Balmorel would ignore what they wrote:
 1. Raw ENTSO-E data fetched via `pybalmorel.entsoe` (`download`) and saved
    as CSV.
 2. The XKFX override is computed from the ENTSO-E flows
-   (`transmission-flow-limit`), the GKRATE overrides from the ENTSO-E
+   (`transmission-flow-limit`), the XKRATE overrides from the transmission
+   outage reports (`transmission-availability`), the GKRATE overrides from the ENTSO-E
    nuclear output (`nuclear-availability`) and from installed capacity and
    outages (`thermal-availability`), the MUSTRUN files from output and
    prices (`must-run-floor`), the WNDFLH and SOLEFLH overrides from wind
