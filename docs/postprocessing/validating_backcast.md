@@ -18,23 +18,35 @@ comparison comes out empty.
 ```bash
 # Fetch and format data for validation
 python -m pybalmorel.backcasting format \
-    <balmorel-scenario> \
     <balmorel-scenario-path> \
     <entsoe-data-path> \
     <year> \
+    [--scenario-name <folder>_R<year>] \
     [--elpriceaggfunc mean] \
     [--overwrite] \
     [--allow-unmapped]
 
 # Generate statistics
-python -m pybalmorel.backcasting statistics <balmorel-scenario-path>
+python -m pybalmorel.backcasting statistics <balmorel-scenario-path> [--scenario-name NAME]
 
 # Generate plots
-python -m pybalmorel.backcasting generation <balmorel-scenario-path> [--style light] [--output-dir .]
-python -m pybalmorel.backcasting prices <balmorel-scenario-path> [--style light] [--output-dir .]
-python -m pybalmorel.backcasting price-duration <balmorel-scenario-path> [--ylim -60 320] [--style light] [--output-dir .]
-python -m pybalmorel.backcasting flows <balmorel-scenario-path> [--style light] [--output-dir .]
+python -m pybalmorel.backcasting generation <balmorel-scenario-path> [--scenario-name NAME] [--style light] [--output-dir .]
+python -m pybalmorel.backcasting prices <balmorel-scenario-path> [--scenario-name NAME] [--style light] [--output-dir .]
+python -m pybalmorel.backcasting price-duration <balmorel-scenario-path> [--scenario-name NAME] [--ylim -60 320] [--style light] [--output-dir .]
+python -m pybalmorel.backcasting flows <balmorel-scenario-path> [--scenario-name NAME] [--style light] [--output-dir .]
 ```
+
+A scenario folder can hold several solved runs, one
+`model/MainResults_<scenario-name>.gdx` each. `--scenario-name` picks the run:
+
+- `format` reads `MainResults_<scenario-name>.gdx` and writes the run's
+  output to `<scenario-path>/backcastoutput/<scenario-name>/`. The name
+  defaults to `<folder>_R<year>`, e.g. `backcast_R2023` for the folder
+  `backcast`: the name of a rolling-horizon run. If that file doesn't
+  exist, `format` lists the scenario names that do.
+- `statistics` and the plot commands read that folder. Without
+  `--scenario-name` they read the only run `format` has written output
+  for, and ask for a name if there are several.
 
 Plot options:
 
@@ -51,7 +63,7 @@ Plot options:
   sub-regions of a canonical zone (any pandas aggregation, e.g. `mean`,
   `max`). Defaults to `mean`.
 - `--overwrite` — regenerate the cached `.csv` files in
-  `<scenario-path>/backcastoutput/` instead of reusing them.
+  `<scenario-path>/backcastoutput/<scenario-name>/` instead of reusing them.
 - `--allow-unmapped` — compare technologies without a category as
   `Unmapped` instead of stopping (see
   [Technology categories](#technology-categories)).
@@ -60,6 +72,10 @@ Plot options:
 Caches in `backcastoutput/` made before the switch to the UTC Backcast
 Calendar ([ADR 0008](../adr/0008-backcast-calendar-utc.md)) are one hour
 off after the March DST change. Rerun `format` with `--overwrite` once.
+
+Output that `format` wrote straight to `backcastoutput/`, before each run got
+its own folder, is no longer read. Run `format` again, which reads the run's
+`MainResults` once more.
 :::
 
 Run `python -m pybalmorel.backcasting <command> --help` for details on each
@@ -136,7 +152,7 @@ close to 0.
 
 ## Price duration curves
 
-`price-duration` reads `backcastoutput/prices.csv` and saves
+`price-duration` reads `backcastoutput/<scenario-name>/prices.csv` and saves
 `price_duration_curves.png`: Balmorel's and ENTSO-E's price duration curves
 with all region-hours pooled in one large panel, then one small panel per
 region. Every panel has the same y-range (`--ylim`, -60 to 320 €/MWh by
@@ -145,7 +161,7 @@ sides are in nominal euros of the Backcast Year.
 
 ## Load components
 
-`format` also writes `backcastoutput/load_components.csv`: Balmorel's
+`format` also writes `backcastoutput/<scenario-name>/load_components.csv`: Balmorel's
 annual load (TWh) per region and `EL_DEMAND_YCRST` category, with
 storage charging (`ENDO_INTRASTO`) listed but marked as excluded. A
 `Total compared` row per region sums the other categories next to
@@ -186,7 +202,7 @@ with. Depending on which preparation commands were run:
 
 ## Flow validation
 
-`format` also writes `backcastoutput/flows.csv`: Balmorel's `X_FLOW_YCRST`
+`format` also writes `backcastoutput/<scenario-name>/flows.csv`: Balmorel's `X_FLOW_YCRST`
 next to the ENTSO-E physical flows, per directed border and hour. Both sides
 are summed up to Canonical Region Names (`DE4-*` → `DE`, the Italian
 sub-zones → `IT`), and internal links are dropped. Hours Balmorel leaves out
@@ -210,10 +226,12 @@ cannot reproduce.
 
 ## Output
 
-`format` caches the Balmorel results and writes the joined comparison data
-to `<scenario-path>/backcastoutput/` (`loads.csv`, `prices.csv`,
-`generation.csv`, `flows.csv`, `load_components.csv`). The plot commands save their figures to the
-current folder.
+`format` caches the Balmorel results (`balmorel_*.csv`) and writes the
+joined comparison data to `<scenario-path>/backcastoutput/<scenario-name>/`
+(`loads.csv`, `prices.csv`, `generation.csv`, `flows.csv`,
+`load_components.csv`). The files the preparation commands write stay in
+`backcastoutput/`, since they belong to the scenario folder's input data, not
+to one run. The plot commands save their figures to `--output-dir`.
 
 ## Data flow
 
