@@ -104,7 +104,7 @@ python -m pybalmorel.backcasting demand-level \
     <balmorel-scenario-path> \
     <entsoe-data-path> \
     <year> \
-    [--heat model|eurostat] [--scenario-name NAME] [--load-results PATH] [--basis entsoe|eurostat] \
+    [--heat model|eurostat] [--load-results PATH] [--basis entsoe|eurostat] \
     [--coverage-bounds 0.8 1.3] [--eurostat-data-path PATH] [--reload-input]
 
 # Split a saved Yahoo Finance TTF=F page into natural_gas_TTF_<year>.csv
@@ -464,11 +464,10 @@ ENTSO-E's, if the run's heating and losses stay as they were. They respond to pr
 
 1. **Iteration 0**: a solved full-year backcast. For a new Backcast Year,
    generate the level with `--heat eurostat` first (below), and solve.
-2. Run `format` on the solved run. It writes
-   `backcastoutput/<scenario-name>/balmorel_load.csv`, which `demand-level`
-   reads. Both default to the scenario name `<folder>_R<year>`; pass the same
-   `--scenario-name` to both for another run, or `--load-results` to read any
-   `balmorel_load.csv`.
+2. Run `format` on the solved run (`--scenario-name` if it isn't
+   `<folder>_R<year>`). It writes `backcastoutput/balmorel_load.csv`,
+   which `demand-level` reads by default (`--load-results` to read
+   another), so `demand-level` takes the run formatted last.
 3. Run `demand-level` (`--heat model` is the default) and solve again.
 4. Repeat 2-3 for as long as you like. The command prints the previous
    run's residual, X_k less that run's exogenous load, summed over Europe
@@ -627,8 +626,7 @@ when Balmorel would ignore what they wrote:
 - **Output**: raw ENTSO-E data in `<entsoe-data-path>`; Eurostat data in
   `<scenario-path>/eurostatdata/`; XKFX, XKRATE, GKRATE, MUSTRUN, WNDFLH, SOLEFLH, DE,
   DE_VAR_T, fuel price and CO2 tax overrides written to `<scenario-path>/data/`;
-  summaries in `<scenario-path>/backcastoutput/`; each run's validation
-  data in `<scenario-path>/backcastoutput/<scenario-name>/`.
+  summaries and validation data in `<scenario-path>/backcastoutput/`.
 
 ## Data flow
 

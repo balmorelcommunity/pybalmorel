@@ -41,13 +41,6 @@ from .flows import (
 )
 from .plotstyle import BALMOREL_COLOUR, ENTSOE_COLOUR, UNMAPPED_CATEGORY, plot_style
 from .pricelevel import PRICE_YEAR, to_price_year
-from .runs import (
-    BALMOREL_CACHE_FILES,
-    COMPARISON_FILES,
-    default_scenario_name,
-    formatted_runs,
-    run_output_path,
-)
 from warnings import warn
 
 balmorel_to_category = {
@@ -492,6 +485,19 @@ def format_balmorel_df(df: pd.DataFrame, year: int) -> pd.DataFrame:
     return from_backcast_grid(df_out, year)
 
 
+def default_scenario_name(scenario_folder_path: str | Path, year: int) -> str:
+    """The scenario name of a rolling-horizon Backcast of `year`, <folder>_R<year>.
+
+    Args:
+        scenario_folder_path (str | Path): The Balmorel scenario folder.
+        year (int): The Backcast Year.
+
+    Returns:
+        str: E.g. 'backcast_R2023' for the folder 'backcast' and 2023.
+    """
+    return f"{Path(scenario_folder_path).resolve().name}_R{year}"
+
+
 def mainresults_scenario_names(scenario_folder_path: str | Path) -> list[str]:
     """The scenario names with a MainResults_<scenario-name>.gdx in a scenario's model folder.
 
@@ -510,7 +516,10 @@ def mainresults_scenario_names(scenario_folder_path: str | Path) -> list[str]:
 def load_balmorel_data(
     scenario_name: str, scenario_folder_path: str, year: int, overwrite: bool
 ):
-    """Load one run's results from MainResults, cached in backcastoutput/<scenario_name>/.
+    """Load one run's results from MainResults, cached in backcastoutput/.
+
+    The cache holds one run at a time: balmorel_scenario_name.txt records
+    which, and the results are read again for any other run.
 
     Args:
         scenario_name (str): The run, as in MainResults_<scenario_name>.gdx.
@@ -527,8 +536,24 @@ def load_balmorel_data(
             has no MainResults_<scenario_name>.gdx.
     """
 
-    path = run_output_path(scenario_folder_path, scenario_name)
-    if (not all(path.joinpath(file).exists() for file in BALMOREL_CACHE_FILES)) or overwrite:
+    path = Path(scenario_folder_path).joinpath("backcastoutput")
+    cached_files = [
+        "balmorel_prices.csv",
+        "balmorel_load.csv",
+        "balmorel_generation.csv",
+        "balmorel_flows.csv",
+    ]
+    cached_scenario_file = path.joinpath("balmorel_scenario_name.txt")
+    cached_scenario = (
+        cached_scenario_file.read_text().strip() if cached_scenario_file.exists() else None
+    )
+    cached = all(path.joinpath(file).exists() for file in cached_files)
+    if cached and cached_scenario != scenario_name and not overwrite:
+        print(
+            f"The cached Balmorel results are of {cached_scenario or 'an unrecorded run'}, "
+            f"not {scenario_name}"
+        )
+    if not cached or cached_scenario != scenario_name or overwrite:
         model_path = Path(scenario_folder_path).joinpath("model")
         gdx_file = f"MainResults_{scenario_name}.gdx"
         if not model_path.joinpath(gdx_file).exists():
@@ -551,11 +576,13 @@ def load_balmorel_data(
             f"Year == '{year}' and Commodity == 'ELECTRICITY'"
         )
         flows = results.get_result("X_FLOW_YCRST").query(f"Year == '{year}'")
-        path.mkdir(parents=True, exist_ok=True)
+        path.mkdir(exist_ok=True)
         load.to_csv(path.joinpath("balmorel_load.csv"), index=False)
         elprices.to_csv(path.joinpath("balmorel_prices.csv"), index=False)
         generation.to_csv(path.joinpath("balmorel_generation.csv"), index=False)
         flows.to_csv(path.joinpath("balmorel_flows.csv"), index=False)
+        # Last, so an interrupted write leaves no record of a complete cache
+        cached_scenario_file.write_text(scenario_name)
     else:
         print(
             f"Loading cached Balmorel results of {scenario_name} (set overwrite=True to reload MainResults)"
@@ -1011,8 +1038,8 @@ def load_and_align(
         year,
     )
 
-    components_file = run_output_path(balmorel_scenario_path, balmorel_scenario).joinpath(
-        "load_components.csv"
+    components_file = Path(balmorel_scenario_path).joinpath(
+        "backcastoutput/load_components.csv"
     )
     load_components_table(balmorel_load_components_twh, entsoe_load, year).to_csv(
         components_file, index=False
@@ -1346,63 +1373,6 @@ output_dir_option = click.option(
     help="Folder to save the plots in, created if missing.",
 )
 
-run_scenario_name_option = click.option(
-    "--scenario-name",
-    type=str,
-    default=None,
-    help="The run, as in model/MainResults_<scenario-name>.gdx. "
-    "Defaults to <folder>_R<YEAR>, e.g. backcast_R2023.",
-)
-
-formatted_scenario_name_option = click.option(
-    "--scenario-name",
-    type=str,
-    default=None,
-    help="The run whose `format` output to read, from backcastoutput/<scenario-name>/. "
-    "Defaults to the only run formatted in the scenario folder.",
-)
-
-
-def formatted_run_path(scenario_folder_path: str | Path, scenario_name: str | None) -> Path:
-    """The output folder of a run `format` has written, the only one if no name is given.
-
-    Args:
-        scenario_folder_path (str | Path): The Balmorel scenario folder.
-        scenario_name (str | None): The run, or None for the only formatted run.
-
-    Raises:
-        FileNotFoundError: If the run, or with no name any run, has not been formatted.
-        click.UsageError: If no name is given and several runs have been formatted.
-
-    Returns:
-        Path: <scenario_folder_path>/backcastoutput/<scenario_name>.
-    """
-    runs = formatted_runs(scenario_folder_path)
-    if scenario_name is None and len(runs) > 1:
-        raise click.UsageError(
-            f"{Path(scenario_folder_path) / 'backcastoutput'} holds several formatted runs "
-            f"({', '.join(runs)}), pick one with --scenario-name"
-        )
-    if scenario_name is None and runs:
-        scenario_name = runs[0]
-    if scenario_name not in runs:
-        output_path = Path(scenario_folder_path) / "backcastoutput"
-        if any(output_path.joinpath(file).exists() for file in COMPARISON_FILES):
-            hint = (
-                f"\n{output_path} holds output from before each run got its own folder; "
-                "run `format` again."
-            )
-        else:
-            hint = ""
-        run = f"of {scenario_name} " if scenario_name else ""
-        raise FileNotFoundError(
-            f"Couldn't find formatted results {run}in {output_path} "
-            f"(formatted runs: {', '.join(runs) or 'none'}).{hint}\n"
-            "Run `python -m pybalmorel.backcasting format`"
-        )
-    print(f"Reading the formatted results of {scenario_name}")
-    return run_output_path(scenario_folder_path, scenario_name)
-
 
 @click.group()
 def main():
@@ -1416,7 +1386,13 @@ def main():
 @click.argument("balmorel-scenario-path", type=str)
 @click.argument("entsoe-data-path", type=str)
 @click.argument("year", type=int)
-@run_scenario_name_option
+@click.option(
+    "--scenario-name",
+    type=str,
+    default=None,
+    help="The run, as in model/MainResults_<scenario-name>.gdx. "
+    "Defaults to <folder>_R<YEAR>, e.g. backcast_R2023.",
+)
 @click.option(
     "--elpriceaggfunc",
     type=str,
@@ -1459,16 +1435,16 @@ def format(
     Reads <balmorel-scenario-path>/model/MainResults_<scenario-name>.gdx and
     writes the cached results and the comparison data (loads.csv, prices.csv,
     generation.csv, flows.csv, load_components.csv) to
-    <balmorel-scenario-path>/backcastoutput/<scenario-name>/.
+    <balmorel-scenario-path>/backcastoutput/, replacing those of any run
+    formatted before.
     """
     if scenario_name is None:
         scenario_name = default_scenario_name(balmorel_scenario_path, year)
-    output_path = run_output_path(balmorel_scenario_path, scenario_name)
     load_file, price_file, generation_file, flow_file = (
-        output_path.joinpath("loads.csv"),
-        output_path.joinpath("prices.csv"),
-        output_path.joinpath("generation.csv"),
-        output_path.joinpath("flows.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/loads.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv"),
     )
 
     prices, loads, generation, flows = load_and_align(
@@ -1485,19 +1461,17 @@ def format(
     prices.to_csv(price_file)
     generation.to_csv(generation_file)
     flows.to_csv(flow_file)
-    print(f"Wrote the comparison data of {scenario_name} to {output_path}")
+    print(f"Wrote the comparison data of {scenario_name} to {load_file.parent}")
 
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-@formatted_scenario_name_option
-def statistics(balmorel_scenario_path, scenario_name):
+def statistics(balmorel_scenario_path):
 
-    output_path = formatted_run_path(balmorel_scenario_path, scenario_name)
     load_file, price_file, generation_file = (
-        output_path.joinpath("loads.csv"),
-        output_path.joinpath("prices.csv"),
-        output_path.joinpath("generation.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/loads.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv"),
+        Path(balmorel_scenario_path).joinpath("backcastoutput/generation.csv"),
     )
 
     if not (load_file.exists() and price_file.exists() and generation_file.exists()):
@@ -1528,7 +1502,7 @@ def statistics(balmorel_scenario_path, scenario_name):
         calculate_statistics(generation.loc[(slice(None), technology, slice(None))])
     print("-" * 100)
 
-    flow_file = output_path.joinpath("flows.csv")
+    flow_file = Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv")
     if flow_file.exists():
         flows = pd.read_csv(flow_file, index_col=[0, 1, 2])
         print("\n\n")
@@ -1547,17 +1521,16 @@ def statistics(balmorel_scenario_path, scenario_name):
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-@formatted_scenario_name_option
 @style_option
 @output_dir_option
-def generation(balmorel_scenario_path, scenario_name, style, output_dir):
+def generation(balmorel_scenario_path, style, output_dir):
     """Plot ENTSO-E vs Balmorel annual generation per technology category.
 
     Saves generation.png, in total, and generation_per_region.png.
     """
 
-    generation_file = formatted_run_path(balmorel_scenario_path, scenario_name).joinpath(
-        "generation.csv"
+    generation_file = Path(balmorel_scenario_path).joinpath(
+        "backcastoutput/generation.csv"
     )
 
     if not (generation_file.exists()):
@@ -1578,13 +1551,12 @@ def generation(balmorel_scenario_path, scenario_name, style, output_dir):
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-@formatted_scenario_name_option
 @style_option
 @output_dir_option
-def prices(balmorel_scenario_path, scenario_name, style, output_dir):
+def prices(balmorel_scenario_path, style, output_dir):
     """Plot daily mean ENTSO-E vs Balmorel prices, saved as prices.png."""
 
-    prices_file = formatted_run_path(balmorel_scenario_path, scenario_name).joinpath("prices.csv")
+    prices_file = Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv")
 
     if not (prices_file.exists()):
         raise FileNotFoundError(
@@ -1600,7 +1572,6 @@ def prices(balmorel_scenario_path, scenario_name, style, output_dir):
 
 @main.command(name="price-duration")
 @click.argument("balmorel-scenario-path", type=str)
-@formatted_scenario_name_option
 @click.option(
     "--ylim",
     type=(float, float),
@@ -1610,21 +1581,20 @@ def prices(balmorel_scenario_path, scenario_name, style, output_dir):
 )
 @style_option
 @output_dir_option
-def price_duration(balmorel_scenario_path, scenario_name, ylim, style, output_dir):
+def price_duration(balmorel_scenario_path, ylim, style, output_dir):
     """Plot price duration curves of Balmorel vs ENTSO-E, pooled and per region.
 
-    Reads backcastoutput/<scenario-name>/prices.csv from `format`, in
+    Reads <balmorel-scenario-path>/backcastoutput/prices.csv from `format`, in
     nominal euros of the Backcast Year, and saves price_duration_curves.png.
     """
-    run_path = formatted_run_path(balmorel_scenario_path, scenario_name)
-    prices_file = run_path.joinpath("prices.csv")
+    prices_file = Path(balmorel_scenario_path).joinpath("backcastoutput/prices.csv")
     if not prices_file.exists():
         raise FileNotFoundError(
             "Couldn't find price data and/or results.\nRun `python -m pybalmorel.backcasting format`"
         )
     prices = pd.read_csv(prices_file)
     year = pd.to_datetime(prices.Time, utc=True).dt.year.mode().iloc[0]
-    scenario = run_path.name
+    scenario = Path(balmorel_scenario_path).resolve().name
 
     fig, _ = plot_price_duration_curves(
         prices,
@@ -1638,16 +1608,15 @@ def price_duration(balmorel_scenario_path, scenario_name, ylim, style, output_di
 
 @main.command()
 @click.argument("balmorel-scenario-path", type=str)
-@formatted_scenario_name_option
 @style_option
 @output_dir_option
-def flows(balmorel_scenario_path, scenario_name, style, output_dir):
+def flows(balmorel_scenario_path, style, output_dir):
     """Plot duration curves of Balmorel vs ENTSO-E flows per directed border.
 
     Saves flow_duration_curves.png.
     """
 
-    flow_file = formatted_run_path(balmorel_scenario_path, scenario_name).joinpath("flows.csv")
+    flow_file = Path(balmorel_scenario_path).joinpath("backcastoutput/flows.csv")
 
     if not (flow_file.exists()):
         raise FileNotFoundError(
@@ -1981,18 +1950,11 @@ def demand_profile(balmorel_scenario_path, entsoe_data_path, year, reload_input)
     "for heating (the first run of a new backcast year).",
 )
 @click.option(
-    "--scenario-name",
-    type=str,
-    default=None,
-    help="The previous run, for --heat model, whose balmorel_load.csv `format` wrote to "
-    "backcastoutput/<scenario-name>/. Defaults to <folder>_R<YEAR>, e.g. backcast_R2023.",
-)
-@click.option(
     "--load-results",
     type=str,
     default=None,
-    help="The previous run's balmorel_load.csv (from `format`), for --heat model, "
-    "instead of the one of --scenario-name.",
+    help="The previous run's balmorel_load.csv (from `format`), for --heat model. "
+    "Defaults to <balmorel-scenario-path>/backcastoutput/balmorel_load.csv.",
 )
 def demand_level(
     balmorel_scenario_path,
@@ -2003,7 +1965,6 @@ def demand_level(
     eurostat_data_path,
     reload_input,
     heat,
-    scenario_name,
     load_results,
 ):
     """Write DE_ENTSOE.inc: the annual electricity demand level from ENTSO-E load.
@@ -2047,7 +2008,6 @@ def demand_level(
         gams_system_directory=config("GAMS_SYSTEM_DIR", None),
         reload_input=reload_input,
         heat=heat,
-        scenario_name=scenario_name,
         load_results=load_results,
     )
 

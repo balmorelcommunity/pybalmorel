@@ -40,7 +40,6 @@ from .calendar import SEASONS, TERMS, backcast_hours, to_backcast_grid
 from .eurostat import FINAL_CONSUMPTION, HEATING_BALANCES, electricity_balances
 from .flows import canonical_region
 from .nuclear import check_input_cache
-from .runs import default_scenario_name, run_output_path
 
 # Hours outside [LOW, HIGH] x the profile's median are implausible and get interpolated
 PLAUSIBLE_LOW = 0.2
@@ -790,7 +789,6 @@ def generate_demand_level(
     gams_system_directory: str | None = None,
     reload_input: bool = False,
     heat: str = "model",
-    scenario_name: str | None = None,
     load_results: str | Path | None = None,
 ) -> IncFile:
     """Write DE_ENTSOE.inc and backcastoutput/demand_level.csv for a Balmorel scenario.
@@ -819,13 +817,8 @@ def generate_demand_level(
         heat (str, optional): 'model' takes the heating from the previous
             run, 'eurostat' from Eurostat (the first run of a new Backcast
             Year). Defaults to 'model'.
-        scenario_name (str | None, optional): The previous run, whose
-            balmorel_load.csv `format` wrote to
-            <scenario>/backcastoutput/<scenario_name>/. Defaults to
-            <scenario>_R<year>.
         load_results (str | Path | None, optional): The previous run's
-            balmorel_load.csv, instead of the one of `scenario_name`.
-            Defaults to None.
+            balmorel_load.csv. Defaults to <scenario>/backcastoutput/balmorel_load.csv.
 
     Raises:
         FileNotFoundError: With 'model' heat, if there is no previous run.
@@ -841,14 +834,10 @@ def generate_demand_level(
 
     previous = None
     if heat == "model":
-        if load_results is None:
-            scenario_name = scenario_name or default_scenario_name(scenario_path, year)
-            load_results = run_output_path(scenario_path, scenario_name) / "balmorel_load.csv"
-        load_results = Path(load_results)
+        load_results = Path(load_results) if load_results else scenario_path / "backcastoutput" / "balmorel_load.csv"
         if not load_results.exists():
             raise FileNotFoundError(
                 f"No previous backcast run at {load_results}: run `format` on a solved backcast first, "
-                "pick another run with `--scenario-name`, "
                 "or use `--heat eurostat` for the first run of a new backcast year"
             )
         previous = previous_run_heat(load_results, year)

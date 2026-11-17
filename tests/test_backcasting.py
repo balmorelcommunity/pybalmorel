@@ -13,7 +13,6 @@ Created on 15.10.2026
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
-import click
 import numpy as np
 import pandas as pd
 import pytest
@@ -1094,11 +1093,13 @@ def test_balmorel_prices_are_converted_to_the_backcast_year():
     assert prices["Value"].iloc[0] == 100.0
 
 
-def _write_balmorel_cache(scenario_path, year: int = 2023, scenario_name: str = "sc", price: float = 100.0) -> None:
-    cache = scenario_path / "backcastoutput" / scenario_name
+def _write_balmorel_cache(scenario_path, year: int = 2023, scenario_name: str | None = "sc") -> None:
+    cache = scenario_path / "backcastoutput"
     cache.mkdir(parents=True)
+    if scenario_name is not None:
+        (cache / "balmorel_scenario_name.txt").write_text(scenario_name)
     st = {"Year": year, "Season": "S01", "Time": "T001"}
-    pd.DataFrame([{**st, "Region": "DE4-E", "Value": price}]).to_csv(
+    pd.DataFrame([{**st, "Region": "DE4-E", "Value": 100.0}]).to_csv(
         cache / "balmorel_prices.csv", index=False
     )
     pd.DataFrame(
@@ -1119,13 +1120,13 @@ def test_balmorel_load_leaves_out_storage_charging_and_prices_are_nominal(tmp_pa
     from pybalmorel.backcasting.__main__ import get_and_format_balmorel, load_components_table
 
     _write_balmorel_cache(tmp_path)
-    cached_prices = (tmp_path / "backcastoutput" / "sc" / "balmorel_prices.csv").read_text()
+    cached_prices = (tmp_path / "backcastoutput" / "balmorel_prices.csv").read_text()
 
     load, prices, *_, components = get_and_format_balmorel("sc", str(tmp_path), 2023, "mean", False)
 
     assert load.Value.tolist() == [1000.0]
     assert prices.Value.iloc[0] == pytest.approx(122.87, abs=0.01)
-    assert (tmp_path / "backcastoutput" / "sc" / "balmorel_prices.csv").read_text() == cached_prices
+    assert (tmp_path / "backcastoutput" / "balmorel_prices.csv").read_text() == cached_prices
 
     entsoe_load = pd.DataFrame({"Region": "DE", "Time": _hours(1), "Value": 1100.0})
     table = load_components_table(components, entsoe_load, 2023).set_index("Category")
@@ -1139,7 +1140,7 @@ def test_lu_load_and_generation_are_compared_inside_de_but_its_price_is_not(tmp_
     from pybalmorel.backcasting.__main__ import get_and_format_balmorel, load_components_table
 
     _write_balmorel_cache(tmp_path)
-    cache = tmp_path / "backcastoutput" / "sc"
+    cache = tmp_path / "backcastoutput"
     st = {"Year": 2023, "Season": "S01", "Time": "T001"}
     for name, row in (
         ("balmorel_prices.csv", {"Value": 300.0}),
@@ -1166,7 +1167,7 @@ def test_lu_load_and_generation_are_compared_inside_de_but_its_price_is_not(tmp_
 
 
 def test_default_scenario_name_is_the_folder_and_rolling_year(tmp_path, monkeypatch):
-    from pybalmorel.backcasting.runs import default_scenario_name
+    from pybalmorel.backcasting.__main__ import default_scenario_name
 
     scenario = tmp_path / "backcast"
     scenario.mkdir()
@@ -1175,15 +1176,20 @@ def test_default_scenario_name_is_the_folder_and_rolling_year(tmp_path, monkeypa
     assert default_scenario_name(".", 2023) == "backcast_R2023"
 
 
-def test_each_run_reads_its_own_cache(tmp_path):
+@pytest.mark.parametrize("cached_scenario", ["backcast_R2023", None])
+def test_the_cache_of_another_run_is_not_reused(tmp_path, cached_scenario):
     from pybalmorel.backcasting.__main__ import load_balmorel_data
 
-    _write_balmorel_cache(tmp_path, scenario_name="backcast_R2023", price=100.0)
-    _write_balmorel_cache(tmp_path, scenario_name="backcast_SPR_R2023", price=200.0)
+    _write_balmorel_cache(tmp_path, scenario_name=cached_scenario)
+    (tmp_path / "model").mkdir()
+    (tmp_path / "model" / "MainResults_backcast_R2023.gdx").touch()
 
-    _, prices, *_ = load_balmorel_data("backcast_SPR_R2023", str(tmp_path), 2023, False)
-
-    assert prices.Value.tolist() == [200.0]
+    # Reading the requested run's MainResults, which is missing, is what fails
+    with pytest.raises(FileNotFoundError, match="MainResults_backcast_SPR_R2023.gdx"):
+        load_balmorel_data("backcast_SPR_R2023", str(tmp_path), 2023, False)
+    if cached_scenario is not None:
+        _, prices, *_ = load_balmorel_data(cached_scenario, str(tmp_path), 2023, False)
+        assert prices.Value.tolist() == [100.0]
 
 
 def test_missing_mainresults_lists_the_scenario_names(tmp_path):
@@ -1196,64 +1202,6 @@ def test_missing_mainresults_lists_the_scenario_names(tmp_path):
     with pytest.raises(FileNotFoundError, match="backcast_F2023, backcast_R2023"):
         load_balmorel_data("backcast_R2024", str(tmp_path), 2024, False)
     assert not (tmp_path / "backcastoutput").exists()
-
-
-@pytest.mark.parametrize(
-    "runs, scenario_name, expected",
-    [
-        (["a"], None, "a"),
-        (["a", "b"], "b", "b"),
-        (["a", "b"], None, click.UsageError),
-        ([], None, FileNotFoundError),
-        (["a"], "c", FileNotFoundError),
-    ],
-)
-def test_formatted_run_is_named_or_the_only_one(tmp_path, runs, scenario_name, expected):
-    from pybalmorel.backcasting.__main__ import formatted_run_path
-
-    for run in runs:
-        (tmp_path / "backcastoutput" / run).mkdir(parents=True)
-        (tmp_path / "backcastoutput" / run / "prices.csv").touch()
-    # A folder `format` didn't write is not a run
-    (tmp_path / "backcastoutput" / "plots").mkdir(parents=True)
-
-    if isinstance(expected, str):
-        assert formatted_run_path(tmp_path, scenario_name) == tmp_path / "backcastoutput" / expected
-    else:
-        with pytest.raises(expected):
-            formatted_run_path(tmp_path, scenario_name)
-
-
-def test_flat_backcastoutput_asks_to_format_again(tmp_path):
-    from pybalmorel.backcasting.__main__ import formatted_run_path
-
-    (tmp_path / "backcastoutput").mkdir()
-    (tmp_path / "backcastoutput" / "prices.csv").touch()
-
-    with pytest.raises(FileNotFoundError, match="before each run got its own folder"):
-        formatted_run_path(tmp_path, None)
-
-
-def test_plot_commands_need_a_scenario_name_with_several_runs(tmp_path):
-    from click.testing import CliRunner
-    from pybalmorel.backcasting.__main__ import main
-
-    for run in ["backcast_R2023", "backcast_SPR_R2023"]:
-        (tmp_path / "backcastoutput" / run).mkdir(parents=True)
-        _synthetic_prices().to_csv(tmp_path / "backcastoutput" / run / "prices.csv", index=False)
-
-    result = CliRunner().invoke(main, ["price-duration", str(tmp_path), "--output-dir", str(tmp_path)])
-
-    assert result.exit_code == 2
-    assert "backcast_R2023, backcast_SPR_R2023" in result.output
-
-
-def test_demand_level_reads_the_default_runs_load(tmp_path):
-    from pybalmorel.backcasting.demand import generate_demand_level
-
-    expected = tmp_path / "backcast" / "backcastoutput" / "backcast_R2023" / "balmorel_load.csv"
-    with pytest.raises(FileNotFoundError, match=str(expected)):
-        generate_demand_level(tmp_path, "backcast", 2023, pd.DataFrame())
 
 
 def test_storage_and_flexibility_is_split():
@@ -1419,8 +1367,8 @@ def test_price_duration_command_saves_in_the_output_dir(tmp_path, style, corner_
     from pybalmorel.backcasting.__main__ import main
 
     scenario = tmp_path / "backcast"
-    (scenario / "backcastoutput" / "backcast_R2023").mkdir(parents=True)
-    _synthetic_prices().to_csv(scenario / "backcastoutput" / "backcast_R2023" / "prices.csv", index=False)
+    (scenario / "backcastoutput").mkdir(parents=True)
+    _synthetic_prices().to_csv(scenario / "backcastoutput" / "prices.csv", index=False)
     output_dir = tmp_path / "analysis" / "plots"
 
     result = CliRunner().invoke(
