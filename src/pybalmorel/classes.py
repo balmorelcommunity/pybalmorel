@@ -28,6 +28,7 @@ from .weatheryear.additional_inc import create_additional_inc
 from .weatheryear.demand2btc import generate_demand_balmorel_inc_files
 from .weatheryear.hydro_to_btc import create_hydro_inc
 from .weatheryear.cop_to_btc import create_cop_inc
+from .iamc import to_iamc
 #%% ------------------------------- ###
 ###           1. Outputs            ###
 ### ------------------------------- ###
@@ -340,6 +341,18 @@ class MainResults:
         else:
             return plot_map(path, scenario, year, commodity, lines, generation, background, save_fig, path_to_geofile, geo_file_region_column, **kwargs)
         
+    ## Reporting
+    def to_iamc(self, model: str, **kwargs) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Convert the results to IAMC data, see pybalmorel.iamc.to_iamc for the options.
+
+        Args:
+            model (str): The IAMC Model label, e.g. 'Balmorel-DTU'.
+
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame]: The IAMC data and the Conversion Notes.
+        """
+        return to_iamc(self, model, **kwargs)
+
     # For wrapping functions, makes it possible to add imported functions in __init__ easily
     def _existing_func_wrapper(self, function, *args, **kwargs):
         return function(self, *args, **kwargs)     

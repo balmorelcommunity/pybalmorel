@@ -1,6 +1,6 @@
 # pybalmorel
 
-Python tooling for pre- and post-processing around the Balmorel energy system model, including the `weatheryear` module that converts external model outputs (CorRES, demand, hydro, COP) into Balmorel-ready `.inc` files for a chosen historical weather year. Also includes a backcasting toolbox that validates simulated Balmorel behaviour against historical ENTSO-E data.
+Python tooling for pre- and post-processing around the Balmorel energy system model, including the `weatheryear` module that converts external model outputs (CorRES, demand, hydro, COP) into Balmorel-ready `.inc` files for a chosen historical weather year. Also includes a backcasting toolbox that validates simulated Balmorel behaviour against historical ENTSO-E data, and a converter that reports MainResults in the IAMC format used by model intercomparisons.
 
 ## Language
 
@@ -125,3 +125,73 @@ The comparison of Balmorel's hourly cross-border flows (`X_FLOW_YCRST`) with ENT
 
 **Series Fuel**:
 A fuel whose backcast price varies within the year (NATGAS and COAL daily; FUELOIL, HEAVYFUELOIL and LIGHTOIL weekly) rather than taking an annual value from the scenario data. The set of series fuels determines which fuels are dropped from the annual price table and flagged as non-constant.
+
+### IAMC reporting
+
+**IAMC Variable**:
+A pipe-separated name from the IAMC common definitions (e.g. `Secondary Energy|Electricity|Gas|w/ CCS`), always reported in the unit those definitions give it (EJ/yr, GW, Mt CO2/yr). Only names that exist in the common definitions are reported; pybalmorel never makes up its own.
+_Avoid_: Symbol, result (those are the Balmorel GDX parameters a variable is computed from)
+
+**Definitions Snapshot**:
+The copy of the IAMC common definitions (variable names, units, descriptions, country names) that pybalmorel ships, taken from one commit of the common-definitions repository and updated only on purpose. Every IAMC Variable and IAMC Region is checked against it. Whoever converts can pass a different copy in the same format.
+_Avoid_: Variable list, varlist (the Template)
+
+**Template**:
+The variable list an intercomparison sends its participants, e.g. NMSF Study 2's `varlist.xlsx`. Its `Extended List` sheet is the part of the common definitions that intercomparison accepts, and its `Data` sheet the part it asks for. pybalmorel ships none; whoever converts passes one in. With a Template, output is limited to what its Extended List accepts; without one, every IAMC Variable Balmorel's results cover is reported. The `Data` sheet never limits what is reported.
+_Avoid_: Variable list (ambiguous between the Template and the Definitions Snapshot)
+
+**IAMC Model**:
+The model label of a submission, e.g. `Balmorel-DTU`. Given by whoever converts, never derived from the files.
+
+**IAMC Scenario**:
+The scenario name of a submission, e.g. `NMSF2-LTS`. One or more Balmorel scenarios map to one IAMC Scenario, as long as their years don't overlap; without a mapping, it is the Balmorel scenario name.
+_Avoid_: Scenario (alone, when the Balmorel run name is meant)
+
+**IAMC Region**:
+A country, spelled as in the common definitions' region list (e.g. `Czechia` for Balmorel's `CZECH_REPUBLIC`). Always a Balmorel country (`C`), never a Balmorel region (`R`) or area (`A`), and never an aggregate of countries.
+_Avoid_: Region (alone, ambiguous with Balmorel's `R`)
+
+**Coverage**:
+Whether Balmorel's results account for everything an IAMC Variable's definition includes. A variable is reported only where they do. A parent whose definition reaches beyond the sectors Balmorel models (e.g. `Emissions|CO2`, or a `Primary Energy` total) is never reported, even when some of its children are. Only modelled years are reported, never interpolated ones.
+
+**Other**:
+The `…|Other` child of an IAMC Variable, which takes Balmorel output that fits none of its other children, such as a fuel with no known classification. Conversion continues, and a warning names what was put there.
+_Avoid_: Unclassified (it is classified, as Other)
+
+**OptiFlow Mapping**:
+A table, specific to one study, saying which OptiFlow flows and processes capture, store and use CO2. OptiFlow names and the meaning of OptiFlow rows in Balmorel's emissions differ from study to study, so no mapping holds for all. Without one, an OptiFlow-coupled run still reports every variable those rows don't affect.
+
+**Fuel Category**:
+The IAMC fuel segment (`Coal`, `Gas`, `Oil`, `Biomass`, `Hydrogen`, `Nuclear`, `Hydro`, …) that a Balmorel fuel (`FFF`) is reported under. Only segments that occur in IAMC Variable names can be chosen. Defaults ship with pybalmorel, and whoever converts can override them, e.g. to move `MUNIWASTE` from `Biomass` to `Other`. A fuel belongs wholly to one category; it is never split between two.
+
+**Mapping Rule**:
+A row in pybalmorel's mapping tables that sends Balmorel output with a given technology type, fuel and commodity (and, optionally, only units whose names match a pattern) to segments of an IAMC Variable name. Defaults ship with pybalmorel; rows passed by whoever converts take precedence. Output no rule covers goes to Other.
+_Avoid_: Mapping (alone, ambiguous with the OptiFlow Mapping)
+
+**CCS Unit**:
+A Balmorel unit (a `GGG` member) whose name carries the token `CCS`, e.g. `NGASCCS` or `STEAM-REFORMING-CCS`. Reported under `w/ CCS`; every other unit is `w/o CCS`. No fuel or technology type marks CCS, so the unit name is the only evidence.
+_Avoid_: CC (Balmorel names use it for combined cycle)
+
+**District-Heating Area / Individual Area / Industry Area**:
+The three kinds of Balmorel heat area, told apart by name: individual areas contain `IDVU`, industry areas contain `IND-` (usually after a country or region prefix, e.g. `DE4-W_IND-LT-DH`), and every other heat area is a district-heating area. Centralized heat, which IAMC reports as `Secondary Energy|Heat` and `Final Energy|Heat`, is made and used in district-heating areas, and crosses into other areas only as Heat Exchange. Individual areas heat buildings on site, and industry areas supply process heat on site. Their fuel use, heat and emissions are not reported, because no IAMC Variable matches what they cover; the Conversion Notes give the amounts. Only the electricity they use is reported, as part of `Final Energy|Electricity`.
+_Avoid_: Heat area (alone, when the kind matters)
+
+**Heat Exchange**:
+Heat that Balmorel's heat transmission moves between a district-heating area and an individual or industry area. It is netted per pair of areas and year, because much of it only makes a round trip, e.g. into an industry area's heat storage and back. A net flow out of district heating is consumption of centralized heat, reported in `Final Energy|Heat`. It is not reported as `Final Energy|Industry|Heat`, because the district-heating areas' own demand may include industrial customers. A net flow into district heating is centralized heat production. It is divided between the sending area's units in proportion to their yearly heat output (storage left out), and brings that share of their fuel input and emissions. The Conversion Notes report the method.
+_Avoid_: Excess heat (only one of its sources), heat transmission (also covers flows between district-heating areas, which stay inside centralized heat)
+
+**Storage**:
+Units that store electricity, heat or hydrogen. Never part of Capacity or Secondary Energy, since the common definitions have no storage names and discharge is not generation.
+
+**Backup Unit**:
+A `GNR_BACKUP…` unit that dispatch runs place in every region with near-unlimited capacity, so that demand is always met. Its capacity is never reported. By default its output counts as supply, under its fuel, so that supply still meets demand; whoever converts can leave it out instead. Either way the Conversion Notes give the amounts.
+
+**Output-Share Split**:
+How the fuel input, emissions and captured CO2 of a unit with two outputs (a CHP plant, or an electrolyser that also delivers heat) are divided between them: in proportion to the energy of each output. The method is reported with the results.
+
+**Net CO2 Emissions**:
+Fossil CO2 emitted, minus the captured biogenic CO2 that is stored, as the IAMC emission variables define it ("the sum of sources and sinks"). Captured and stored CO2 are also reported on their own as Carbon Capture and Carbon Removal. Where a run doesn't say how much captured biogenic CO2 is stored, only the fossil CO2 is reported, with a warning.
+
+**Conversion Notes**:
+The table returned with the IAMC data that says how its numbers were made and what was left out: the split methods used, fossil-only fallbacks, what went into Other, backup output, and amounts left out under Coverage. Each note names its IAMC Scenario, Region and Variable. They are also printed as warnings, and written as a Notes sheet next to the data.
+_Avoid_: Metadata, meta (IAMC uses those for scenario-level indicators)

@@ -1,0 +1,264 @@
+"""
+IAMC Mapping Rules and Definitions Snapshot
+
+Loads the rule tables in `rule_tables/` (with rows passed by whoever converts taking
+precedence), the Definitions Snapshot in `definitions/` (or one passed in),
+and a Template's Extended List. Also applies the Mapping Rules to units and
+checks that every rule targets names the snapshot still has.
+
+Created on 23.11.2026
+@author: Mathias Berg Rosendal
+         PostDoc at DTU Management (Energy Economics & Modelling)
+"""
+#%% ------------------------------- ###
+###        0. Script Settings       ###
+### ------------------------------- ###
+
+import re
+from pathlib import Path
+import numpy as np
+import pandas as pd
+
+rules_dir = Path(__file__).parent / "rule_tables"
+definitions_dir = Path(__file__).parent / "definitions"
+
+# Columns of each rule table, and the key whose rows a caller's rows replace
+rule_tables = {
+    "fuels": {"columns": ["fuel", "category"], "key": ["fuel"]},
+    "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments"], "key": None},
+    "stems": {"columns": ["quantity", "commodity", "stem"], "key": ["quantity", "commodity"]},
+    "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
+    "countries": {"columns": ["country", "iso3"], "key": ["country"]},
+}
+mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
+not_reported = "-"
+
+
+#%% ------------------------------- ###
+###          1. Rule Tables         ###
+### ------------------------------- ###
+
+def read_table(source: str | Path | pd.DataFrame, columns: list[str], name: str) -> pd.DataFrame:
+    """Read a rule or definitions table as strings, with empty cells as ''.
+
+    Args:
+        source (str | Path | pd.DataFrame): A CSV file ('#' starts a comment line) or a DataFrame.
+        columns (list[str]): Columns the table must have; others are dropped.
+        name (str): Name of the table, for error messages.
+
+    Returns:
+        pd.DataFrame: The table with exactly `columns`, all strings, stripped.
+    """
+    if isinstance(source, pd.DataFrame):
+        table = source.copy()
+    else:
+        table = pd.read_csv(source, dtype=str, keep_default_na=False, comment="#")
+
+    missing = [column for column in columns if column not in table.columns]
+    if missing:
+        raise Exception(f"The '{name}' table lacks the columns {missing}; it needs {columns}.")
+
+    table = table[columns].fillna("").astype(str)
+    for column in columns:
+        table[column] = table[column].str.strip()
+    return table.reset_index(drop=True)
+
+
+def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) -> dict[str, pd.DataFrame]:
+    """Load the shipped rule tables, with the caller's rows taking precedence.
+
+    Args:
+        overrides (dict[str, str | Path | pd.DataFrame] | None, optional): Rows to add per table,
+            keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries'), as a
+            CSV path or DataFrame with that table's columns. Defaults to None.
+
+    Returns:
+        dict[str, pd.DataFrame]: The tables by name. The 'mapping' table has a 'priority'
+            column: 1 for the caller's rows, 0 for the shipped ones.
+    """
+    overrides = overrides or {}
+    unknown = [name for name in overrides if name not in rule_tables]
+    if unknown:
+        raise Exception(f"Unknown rule tables {unknown}; choose from {list(rule_tables)}.")
+
+    tables = {}
+    for name, spec in rule_tables.items():
+        shipped = read_table(rules_dir / f"{name}.csv", spec["columns"], name)
+        caller = (
+            read_table(overrides[name], spec["columns"], name)
+            if name in overrides
+            else pd.DataFrame(columns=spec["columns"], dtype=str)
+        )
+
+        if name == "mapping":
+            table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
+        elif name == "aggregates":
+            replaced = shipped["aggregate"].isin(caller["aggregate"])
+            table = pd.concat((caller, shipped[~replaced]), ignore_index=True)
+        else:
+            for rows, source in ((shipped, "shipped"), (caller, "passed")):
+                repeated = rows[rows.duplicated(spec["key"], keep=False)]
+                if not repeated.empty:
+                    raise Exception(f"The {source} '{name}' rules repeat keys {spec['key']}:\n{repeated.to_string()}")
+            # The caller's rows replace shipped rows with the same key
+            replaced = shipped.set_index(spec["key"]).index.isin(caller.set_index(spec["key"]).index)
+            table = pd.concat((caller, shipped[~replaced]), ignore_index=True)
+        tables[name] = table
+
+    empty = tables["mapping"]["segments"] == ""
+    if empty.any():
+        raise Exception(
+            f"Mapping Rules need segments, or '{not_reported}' for not reported:\n"
+            f"{tables['mapping'][empty].to_string()}"
+        )
+    return tables
+
+
+def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame) -> pd.Series:
+    """Find the segments template of the Mapping Rule that wins for each unit.
+
+    Args:
+        units (pd.DataFrame): Rows with the columns 'unit_name', 'tech_type', 'fuel' and 'commodity'.
+        mapping (pd.DataFrame): The 'mapping' table from load_rules.
+
+    Returns:
+        pd.Series: The winning rule's segments per row of `units`; '' where no rule matches.
+    """
+    ordered = mapping.assign(
+        specificity=(mapping[mapping_keys] != "").sum(axis=1),
+        order=np.arange(len(mapping)),
+    ).sort_values(["priority", "specificity", "order"], ascending=False)
+
+    segments = pd.Series("", index=units.index, dtype=object)
+    for rule in ordered.itertuples():
+        open_rows = segments == ""
+        if not open_rows.any():
+            break
+        if rule.tech_type:
+            open_rows &= units["tech_type"] == rule.tech_type
+        if rule.fuel:
+            open_rows &= units["fuel"] == rule.fuel
+        if rule.commodity:
+            open_rows &= units["commodity"] == rule.commodity
+        if rule.unit_pattern:
+            pattern = re.compile(rule.unit_pattern)
+            open_rows &= units["unit_name"].map(lambda name: pattern.search(name) is not None)
+        segments[open_rows] = rule.segments
+    return segments
+
+
+#%% ------------------------------- ###
+###     2. Definitions Snapshot     ###
+### ------------------------------- ###
+
+def load_definitions(path: str | Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load a Definitions Snapshot: IAMC Variables with their units, and IAMC Regions.
+
+    Args:
+        path (str | Path | None, optional): Folder with 'variables.csv' (variable, unit, ...) and
+            'regions.csv' (region, iso3). Defaults to the snapshot shipped with pybalmorel.
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame]: The variables and regions tables.
+    """
+    folder = Path(path) if path is not None else definitions_dir
+    variables_file = folder / "variables.csv"
+    regions_file = folder / "regions.csv"
+    if not (variables_file.exists() and regions_file.exists()):
+        hint = (
+            " Generate it with `pixi run update-iamc-definitions` in the pybalmorel repository."
+            if path is None
+            else ""
+        )
+        raise Exception(f"No Definitions Snapshot in '{folder}': it needs variables.csv and regions.csv.{hint}")
+
+    variables = read_table(variables_file, ["variable", "unit"], "variables").drop_duplicates("variable")
+    regions = read_table(regions_file, ["region", "iso3"], "regions")
+    return variables, regions
+
+
+def load_template(path: str | Path) -> tuple[set[str], set[str]]:
+    """Read the names a Template accepts.
+
+    Args:
+        path (str | Path): The Template, an .xlsx with an 'Extended List' sheet (column 'variable')
+            and optionally a 'Region' sheet (column 'region'), e.g. NMSF Study 2's varlist.xlsx.
+
+    Returns:
+        tuple[set[str], set[str]]: The accepted IAMC Variables, and IAMC Regions (empty if the
+            Template has no Region sheet).
+    """
+    sheets = pd.read_excel(path, sheet_name=None)
+    by_lower_name = {name.strip().lower(): sheet for name, sheet in sheets.items()}
+    if "extended list" not in by_lower_name:
+        raise Exception(f"The Template '{path}' has no 'Extended List' sheet; it has {list(sheets)}.")
+
+    extended = by_lower_name["extended list"]
+    extended.columns = [str(column).strip().lower() for column in extended.columns]
+    variables = set(extended["variable"].dropna().astype(str).str.strip())
+
+    regions = set()
+    if "region" in by_lower_name:
+        region_sheet = by_lower_name["region"]
+        region_sheet.columns = [str(column).strip().lower() for column in region_sheet.columns]
+        regions = set(region_sheet["region"].dropna().astype(str).str.strip())
+    return variables, regions
+
+
+#%% ------------------------------- ###
+###        3. Rule Checking         ###
+### ------------------------------- ###
+
+def check_rules(definitions: str | Path | None = None,
+                rules: dict[str, str | Path | pd.DataFrame] | None = None) -> pd.DataFrame:
+    """List rule rows that target names the Definitions Snapshot doesn't have.
+
+    Run after updating the snapshot: every row listed needs fixing, or its output silently
+    moves to a parent or to Other.
+
+    Args:
+        definitions (str | Path | None, optional): Snapshot folder. Defaults to the shipped one.
+        rules (dict[str, str | Path | pd.DataFrame] | None, optional): Rule rows passed as in
+            load_rules. Defaults to None.
+
+    Returns:
+        pd.DataFrame: One row per problem, with the columns 'table', 'value' and 'problem'.
+    """
+    variables, regions = load_definitions(definitions)
+    tables = load_rules(rules)
+    names = set(variables["variable"])
+    stems = tables["stems"]["stem"].unique()
+    segment_names = {segment for name in names for segment in name.split("|")}
+    problems = []
+
+    for stem in stems:
+        if stem not in names:
+            problems.append(("stems", stem, "stem is not an IAMC Variable"))
+
+    for category in tables["fuels"]["category"].unique():
+        if category not in segment_names:
+            problems.append(("fuels", category, "category is no segment of any IAMC Variable"))
+
+    for template in tables["mapping"]["segments"].unique():
+        if template == not_reported:
+            continue
+        literal = template.replace("{category}|", "").replace("|{category}", "").replace("{category}", "")
+        if not literal:
+            continue
+        if "{category}" in template:
+            missing = [segment for segment in literal.split("|") if segment not in segment_names]
+            if missing:
+                problems.append(("mapping", template, f"segments {missing} occur in no IAMC Variable"))
+        elif not any(f"{stem}|{literal}" in names for stem in stems):
+            problems.append(("mapping", template, "is a child of no stem"))
+
+    for aggregate in tables["aggregates"]["aggregate"].unique():
+        if not any(f"{stem}|{aggregate}" in names for stem in stems):
+            problems.append(("aggregates", aggregate, "is a child of no stem"))
+
+    known_iso3 = set(regions["iso3"])
+    for country, iso3 in tables["countries"][["country", "iso3"]].itertuples(index=False):
+        if iso3 not in known_iso3:
+            problems.append(("countries", country, f"ISO3 code '{iso3}' has no IAMC Region"))
+
+    return pd.DataFrame(problems, columns=["table", "value", "problem"])

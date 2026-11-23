@@ -1,0 +1,34 @@
+# Fuel Category of each Balmorel fuel (FFF): the IAMC fuel segment its output is reported under.
+# A fuel belongs wholly to one category. A fuel missing here is reported under Other, with a note.
+# Override rows with to_iamc(..., rules={'fuels': <table with these columns>}).
+fuel,category
+BIOGAS,Biomass
+BIOMETHANE,Biomass
+BIOOIL,Biomass
+COAL,Coal
+DUMMY,Other
+ELECTRIC,Electricity
+FUELOIL,Oil
+HEAT,Heat
+HEAVYFUELOIL,Oil
+HYDROGEN,Hydrogen
+IMPORT_H2,Hydrogen
+LIGHTOIL,Oil
+LIGNITE,Coal
+LNG,Gas
+MUNIWASTE,Biomass
+NATGAS,Gas
+NUCLEAR,Nuclear
+OTHERGAS,Gas
+PEAT,Coal
+RETORTGAS,Gas
+SHALE,Coal
+STRAW,Biomass
+SUN,Solar
+WASTEHEAT,Other
+WATER,Hydro
+WIND,Wind
+WOOD,Biomass
+WOODCHIPS,Biomass
+WOODPELLETS,Biomass
+WOODWASTE,Biomass

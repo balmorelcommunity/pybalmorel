@@ -1,0 +1,19 @@
+# IAMC Variables that sum siblings instead of their own children, e.g. Fossil = Coal + Gas + Oil.
+# Under every stem (stems.csv) where '<stem>|<aggregate>' is in the Definitions Snapshot, it is
+# reported as the sum of output whose segments (mapping.csv) start with one of its components.
+# Rows passed for an aggregate replace all shipped rows for that aggregate.
+aggregate,component
+Fossil,Coal
+Fossil,Gas
+Fossil,Oil
+Fossil|w/ CCS,Coal|w/ CCS
+Fossil|w/ CCS,Gas|w/ CCS
+Fossil|w/ CCS,Oil|w/ CCS
+Fossil|w/o CCS,Coal|w/o CCS
+Fossil|w/o CCS,Gas|w/o CCS
+Fossil|w/o CCS,Oil|w/o CCS
+Non-Biomass Renewables,Geothermal
+Non-Biomass Renewables,Hydro
+Non-Biomass Renewables,Ocean
+Non-Biomass Renewables,Solar
+Non-Biomass Renewables,Wind

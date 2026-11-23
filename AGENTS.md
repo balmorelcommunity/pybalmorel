@@ -15,7 +15,9 @@ pybalmorel/
 │   ├── utils.py             ← symbol_to_df and DataFrame helpers
 │   ├── GeneralHelperFunctions.py  ← internal helpers (not public API)
 │   ├── plotting/            ← plot_bar_chart, plot_profile, plot_map
+│   ├── iamc/                ← IAMC conversion: reader, rule_tables/*.csv, definitions/ snapshot
 │   └── interactive/         ← ipywidgets GUI, Eel.js dashboard
+├── dev/                     ← maintenance scripts, run through pixi tasks
 ├── tests/                   ← pytest test suite (flat, at repo root)
 ├── docs/                    ← Sphinx documentation source (MyST Markdown)
 ├── examples/                ← example .gdx files and minimal Balmorel model
@@ -39,6 +41,7 @@ Two environments are available:
 |---|---|
 | `pixi shell` | Develop pybalmorel — editable install + all tools |
 | `pixi shell -e user` | End-user simulation — PyPI install only, no dev tools |
+| `pixi run update-iamc-definitions` | Regenerate the IAMC Definitions Snapshot (own environment with nomenclature-iamc; needs network) |
 
 ---
 
@@ -109,19 +112,10 @@ pytest tests/test_utils.py::test_symbol_to_df_mainresults
 pytest tests/test_postprocessing.py::test_MainResults
 ```
 
-**Important:** `test_utils.py` and `test_postprocessing.py` require a working GAMS
-installation and are excluded from CI. The CI pipeline (`.github/workflows/tests.yml`)
-only runs the GAMS-free tests via `tests/online_tests.sh`:
-
-```bash
-python -m pytest tests/test_preprocessing.py
-python -m pytest tests/test_execution.py
-python -m pytest tests/test_weatheryear_naming_and_filtering.py
-python -m pytest tests/test_weatheryear_config.py
-python -m pytest tests/test_weatheryear_scenario_data.py
-python -m pytest tests/test_backcasting.py
-python -m pytest tests/test_entsoe_maps.py
-```
+**Important:** `test_utils.py`, `test_postprocessing.py` and `test_iamc_gams.py`
+require a working GAMS installation and are excluded from CI. The CI pipeline
+(`.github/workflows/tests.yml`) only runs the GAMS-free tests listed in
+`tests/online_tests.sh`; add new GAMS-free test files there.
 
 When writing new tests, keep GAMS-dependent tests in separate files so CI can
 skip them without configuration.
@@ -283,7 +277,7 @@ delegating method on `MainResults`.
 The package's public interface is declared in `src/pybalmorel/__init__.py`:
 
 ```python
-from . import formatting, utils
+from . import formatting, utils, iamc
 from .classes import IncFile, MainResults, Balmorel, GUI, WEATHERYEAR
 from .economics.dea import TechData
 ```
@@ -291,6 +285,20 @@ from .economics.dea import TechData
 Only add to this list intentionally. Internal helpers (e.g. everything in
 `GeneralHelperFunctions.py`) are not part of the public API and should not be
 imported in user-facing documentation examples.
+
+---
+
+## IAMC conversion
+
+`pybalmorel.iamc` matches Balmorel names to IAMC names through data, not code
+(`docs/adr/0016-…`): only `iamc/reader.py` knows Balmorel symbols, the Mapping
+Rules are the CSVs in `iamc/rule_tables/`, and IAMC names and units come from
+the Definitions Snapshot in `iamc/definitions/`. Cover a new technology type,
+fuel or renamed IAMC Variable with a rule row.
+
+To move to newer common definitions: run `pixi run update-iamc-definitions`,
+review the diff of `iamc/definitions/variables.csv`, then fix the rule rows that
+`pytest tests/test_iamc.py` lists as targeting names the snapshot lacks.
 
 ---
 

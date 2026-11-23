@@ -1,0 +1,23 @@
+# Mapping Rules: the segments of an IAMC Variable name that Balmorel output is reported under,
+# below the stem its quantity and commodity give (stems.csv).
+#
+# Keys: tech_type, fuel and commodity match exactly; unit_pattern is a regular expression
+# searched for in the unit name (G). An empty key matches anything. Rows passed by whoever
+# converts are tried first; within each table the row with most non-empty keys wins, and on a
+# tie the lower row.
+#
+# segments: '|'-separated names below the stem. {category} is the fuel's Fuel Category
+# (fuels.csv). Trailing segments the Definitions Snapshot lacks are dropped, so 'Wind|w/o CCS'
+# is reported as 'Wind'; output whose first segment is missing goes to Other, with a note.
+# '-' means not reported.
+tech_type,fuel,commodity,unit_pattern,segments
+,,,,{category}|w/o CCS
+,,,CCS,{category}|w/ CCS
+WIND-ON,,,,Wind|Onshore
+WIND-OFF,,,,Wind|Offshore
+SOLAR-PV,,,,Solar|PV
+,WASTEHEAT,,(^|_)GEO(_|$),Geothermal
+INTRASEASONAL-ELECT-STORAGE,,,,-
+INTRASEASONAL-HEAT-STORAGE,,,,-
+INTERSEASONAL-HEAT-STORAGE,,,,-
+H2-STORAGE,,,,-

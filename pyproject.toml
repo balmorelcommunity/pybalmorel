@@ -33,6 +33,7 @@ entso-e = [
   'click>=8',
   'openpyxl>=3.1.5',
 ]
+iamc = ['openpyxl>=3.1.5']
 
 [project.urls]
 Repository = "https://github.com/Mathias157/pybalmorel"
@@ -49,6 +50,8 @@ build-backend = "setuptools.build_meta"
   "geofiles/*.*",
   "geofiles/**/*.*",
   "interactive/dashboard/static/*.*",
+  "iamc/rule_tables/*.csv",
+  "iamc/definitions/*",
 ]
 
 [tool.pixi.workspace]
@@ -58,6 +61,7 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 [tool.pixi.environments]
 default = ["dev"]
 user = ["user"]
+iamc-definitions = { features = ["iamc-definitions"], no-default-feature = true }
 
 # --- dev: for developing pybalmorel and building documentation ---
 [tool.pixi.feature.dev.dependencies]
@@ -112,6 +116,16 @@ docs = { depends-on = [
   "_docs-serve",
 ], description = "Build the documentation and serve it on http://127.0.0.1:8000" }
 release-update = "echo 'docs/conf.py\ndocs/get_started/installation.md\nenvironment.yaml\npyproject.toml' | xargs sed -i -e \"s/1.4.2/1.4.3/g\""
+
+# --- iamc-definitions: regenerate the IAMC Definitions Snapshot (needs network) ---
+[tool.pixi.feature.iamc-definitions.dependencies]
+python = "3.12.*"
+
+[tool.pixi.feature.iamc-definitions.pypi-dependencies]
+nomenclature-iamc = "*"
+
+[tool.pixi.feature.iamc-definitions.tasks]
+update-iamc-definitions = { cmd = "python dev/update_iamc_definitions.py", description = "Regenerate src/pybalmorel/iamc/definitions/ from IAMconsortium/common-definitions (pass --ref <commit> to pin)" }
 
 # --- user: test pybalmorel as an end-user (PyPI install only) ---
 [tool.pixi.feature.user.pypi-dependencies]

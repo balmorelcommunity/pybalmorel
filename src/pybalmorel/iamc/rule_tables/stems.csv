@@ -1,0 +1,8 @@
+# The IAMC Variable each Balmorel quantity and commodity is reported under, before the
+# Mapping Rules (mapping.csv) add segments below it. Sums never go above the stem.
+#
+# Quantities: capacity (net of G_CAP_YCRAF categories), output (PRO_YCRAGF).
+# A quantity and commodity with no row here is not reported, and the Conversion Notes say so.
+quantity,commodity,stem
+capacity,ELECTRICITY,Capacity|Electricity
+output,ELECTRICITY,Secondary Energy|Electricity
