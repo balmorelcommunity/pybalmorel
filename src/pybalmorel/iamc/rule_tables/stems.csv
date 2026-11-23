@@ -8,8 +8,9 @@
 # unit, so they are reported under the stem itself.
 # area_kind: the Area Kind (areas.csv) the row applies to; empty for any. A row for the area's
 # kind beats an empty one. Demand and trade per region have no area, so only an empty row
-# matches them. Heat counts as centralized heat, and hydrogen is reported, in district heating
-# areas only.
+# matches them. Heat counts as centralized heat in district heating areas only. Electricity and
+# hydrogen count in every kind of area, since where units can be invested in is a modelling
+# choice.
 # A quantity and commodity with no row here is not reported, and the Conversion Notes say so,
 # with the amounts.
 quantity,commodity,area_kind,stem
@@ -18,7 +19,7 @@ output,ELECTRICITY,,Secondary Energy|Electricity
 capacity,HEAT,district heating,Capacity|Heat
 output,HEAT,district heating,Secondary Energy|Heat
 demand,HEAT,district heating,Final Energy|Heat
-capacity,HYDROGEN,district heating,Capacity|Hydrogen
-output,HYDROGEN,district heating,Secondary Energy|Hydrogen
+capacity,HYDROGEN,,Capacity|Hydrogen
+output,HYDROGEN,,Secondary Energy|Hydrogen
 demand,HYDROGEN,,Final Energy|Hydrogen
 trade,HYDROGEN,,Trade|Secondary Energy|Hydrogen [Volume]

@@ -114,14 +114,14 @@ def heat(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
 
 @pytest.fixture(scope="module")
 def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.Series) -> dict[str, pd.Series]:
-    """Raw hydrogen per scenario: capacity (GW) and output (TWh) of district heating units
+    """Raw hydrogen per scenario: capacity (GW) and output (TWh) of units in any kind of area,
     without storage and import units, demand in final categories, and net exports (TWh):
     transmission to other countries, less transmission from them, less import units' output."""
     rules = load_rules()
     long = in_regions[in_regions["commodity"] == "HYDROGEN"]
     units = long[long["quantity"].isin(["capacity", "output"])]
     targets = match_mapping_rules(units, rules["mapping"])
-    made = units[(units["area_kind"] == default_area_kind) & ~targets.isin([not_reported, import_unit])]
+    made = units[~targets.isin([not_reported, import_unit])]
     imported = units[(targets == import_unit) & (units["quantity"] == "output")]
 
     categories = rules["demand_categories"]

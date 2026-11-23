@@ -159,14 +159,15 @@ def hydrogen_long() -> pd.DataFrame:
       import unit, and its storage gives 1, which is not output. It sends 6 to Germany, gets 1
       back, and sends 2 between its own regions: net exports 6 - 1 - 3 = 2. Its 12 go to
       exogenous demand (9), fuel cells (2), distribution losses and storage.
-    - Germany makes 2 TWh and gets 5 net from Denmark. Its 7 go to exogenous demand (6),
-      transport (0.5) and transmission losses.
+    - Germany makes 2 TWh with an electrolyser in an industry area and gets 5 net from Denmark.
+      Its 7 go to exogenous demand (6), transport (0.5) and transmission losses.
     """
     rows = unit_rows("S1", 2030, "DENMARK", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 2, 10, "HYDROGEN")
     rows += unit_rows("S1", 2030, "DENMARK", "GNR_SMR", "STEAMREFORMING", "NATGAS", 1, 4, "HYDROGEN")
     rows += unit_rows("S1", 2030, "DENMARK", "GNR_H2STO", "H2-STORAGE", "HYDROGEN", 1, 1, "HYDROGEN")
     rows += unit_rows("S1", 2030, "DENMARK", "GNR_H2_IMPORT", "ELECTROLYZER", "IMPORT_H2", 5, 3, "HYDROGEN")
-    rows += unit_rows("S1", 2030, "GERMANY", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 1, 2, "HYDROGEN")
+    rows += unit_rows("S1", 2030, "GERMANY", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 1, 2, "HYDROGEN",
+                      area="DE4-W_IND-HT-NODH")
     rows += [
         transmission_row("DENMARK", "GERMANY", 6),
         transmission_row("GERMANY", "DENMARK", 1),
@@ -266,6 +267,8 @@ def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> N
     assert value(data, "Secondary Energy|Hydrogen", 2030) == pytest.approx((10 + 4) * twh)
     assert value(data, "Secondary Energy|Hydrogen|Electricity", 2030) == pytest.approx(10 * twh)
     assert value(data, "Secondary Energy|Hydrogen|Fossil", 2030) == pytest.approx(4 * twh)
+    # Hydrogen units count in every kind of area, here an industry area
+    assert value(data, "Capacity|Hydrogen", 2030, "Germany") == pytest.approx(1)
     assert value(data, "Secondary Energy|Hydrogen", 2030, "Germany") == pytest.approx(2 * twh)
     # Fuel cells, losses and storage are not final
     assert value(data, "Final Energy|Hydrogen", 2030) == pytest.approx(9 * twh)
