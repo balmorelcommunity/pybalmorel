@@ -6,9 +6,24 @@
 # losses, which show as the difference between Secondary Energy|Heat and Final Energy|Heat.
 # NET_EXCHANGE is not a Balmorel category: it is the heat district heating sends net to an
 # individual or industry area (Heat Exchange), which leaves centralized heat as final energy.
+#
+# HYDROGEN categories are those of H2_DEMAND_YCR. ENDO_REGIONAL is flexible exogenous demand
+# and ENDO_OTHERTRANS the transport add-on's demand when its synthetic fuel is hydrogen.
+# ENDO_FUELCELL, ENDO_BIOMETHANE and ENDO_OPTIFLOW feed fuel cells, biomethanation and the
+# OptiFlow add-on's processes (e.g. making e-fuels), which turn it into other energy.
+# ENDO_INTERSTO is storage loading less discharge, and the LOSSES categories are losses.
 commodity,demand_category,final
 HEAT,EXOGENOUS,yes
 HEAT,NET_EXCHANGE,yes
 HEAT,ENDO_INTRASTO,no
 HEAT,ENDO_INTERSTO,no
 HEAT,TRANS_LOSSES,no
+HYDROGEN,EXOGENOUS,yes
+HYDROGEN,ENDO_REGIONAL,yes
+HYDROGEN,ENDO_OTHERTRANS,yes
+HYDROGEN,ENDO_FUELCELL,no
+HYDROGEN,ENDO_BIOMETHANE,no
+HYDROGEN,ENDO_OPTIFLOW,no
+HYDROGEN,ENDO_INTERSTO,no
+HYDROGEN,DIST_LOSSES,no
+HYDROGEN,TRANS_LOSSES,no

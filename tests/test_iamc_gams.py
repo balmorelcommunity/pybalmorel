@@ -1,8 +1,8 @@
 """
 GAMS-dependent tests of the IAMC conversion on the example MainResults: the
-IAMC totals equal the raw results, centralized heat balances, and Mapping Rules
-and Fuel Categories cover every unit. Needs a GAMS installation and the shipped
-Definitions Snapshot.
+IAMC totals of electricity, heat and hydrogen equal the raw results, centralized
+heat and hydrogen balances, and Mapping Rules and Fuel Categories cover every
+unit. Needs a GAMS installation and the shipped Definitions Snapshot.
 
 Created on 23.11.2026
 @author: Claude, Anthropic
@@ -14,7 +14,8 @@ import pytest
 
 from pybalmorel import MainResults
 from pybalmorel.iamc import load_definitions, load_rules, read_mainresults
-from pybalmorel.iamc.rules import default_area_kind, definitions_dir, match_area_kinds, match_mapping_rules, not_reported
+from pybalmorel.iamc.rules import (default_area_kind, definitions_dir, import_unit, match_area_kinds,
+                                   match_mapping_rules, not_reported)
 
 gams_system_directory = os.environ.get("GAMS_SYSTEM_DIR", None)
 assert gams_system_directory is not None, (
@@ -46,15 +47,26 @@ def converted(results: MainResults) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 @pytest.fixture(scope="module")
-def in_regions(results: MainResults) -> pd.DataFrame:
-    """The raw long table of countries with an IAMC Region, with Area Kinds."""
-    long = read_mainresults(results)
+def raw(results: MainResults) -> pd.DataFrame:
+    """The raw long table."""
+    return read_mainresults(results)
+
+
+@pytest.fixture(scope="module")
+def region_countries() -> pd.Series:
+    """The Balmorel countries with an IAMC Region."""
     _, regions = load_definitions()
-    rules = load_rules()
-    countries = rules["countries"].merge(regions, on="iso3")["country"]
-    long = long[long["country"].isin(countries)]
-    return long.assign(area_kind=match_area_kinds(long["area"], rules["areas"]),
-                       to_area_kind=match_area_kinds(long["to_area"], rules["areas"]))
+    return load_rules()["countries"].merge(regions, on="iso3")["country"]
+
+
+@pytest.fixture(scope="module")
+def in_regions(raw: pd.DataFrame, region_countries: pd.Series) -> pd.DataFrame:
+    """The raw long table of countries with an IAMC Region, with Area Kinds ('' for rows
+    without an area)."""
+    area_rules = load_rules()["areas"]
+    long = raw[raw["country"].isin(region_countries)]
+    return long.assign(area_kind=match_area_kinds(long["area"], area_rules).where(long["area"] != "", ""),
+                       to_area_kind=match_area_kinds(long["to_area"], area_rules).where(long["to_area"] != "", ""))
 
 
 @pytest.fixture(scope="module")
@@ -97,6 +109,42 @@ def heat(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
                                .groupby(demand["scenario"]).sum()),
         "net_out": per_scenario(net.clip(lower=0)),
         "net_in": per_scenario(-net.clip(upper=0)),
+    }
+
+
+@pytest.fixture(scope="module")
+def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.Series) -> dict[str, pd.Series]:
+    """Raw hydrogen per scenario: capacity (GW) and output (TWh) of district heating units
+    without storage and import units, demand in final categories, and net exports (TWh):
+    transmission to other countries, less transmission from them, less import units' output."""
+    rules = load_rules()
+    long = in_regions[in_regions["commodity"] == "HYDROGEN"]
+    units = long[long["quantity"].isin(["capacity", "output"])]
+    targets = match_mapping_rules(units, rules["mapping"])
+    made = units[(units["area_kind"] == default_area_kind) & ~targets.isin([not_reported, import_unit])]
+    imported = units[(targets == import_unit) & (units["quantity"] == "output")]
+
+    categories = rules["demand_categories"]
+    final = categories.loc[(categories["commodity"] == "HYDROGEN") & (categories["final"] == "yes"),
+                           "demand_category"]
+    demand = long[(long["quantity"] == "demand") & long["demand_category"].isin(final)]
+
+    exchange = raw[(raw["commodity"] == "HYDROGEN") & (raw["quantity"] == "exchange")]
+    abroad = exchange[(exchange["to_country"] != "") & (exchange["to_country"] != exchange["country"])]
+    exports = abroad[abroad["country"].isin(region_countries)]
+    imports = abroad[abroad["to_country"].isin(region_countries)]
+
+    def per_scenario(rows: pd.DataFrame) -> pd.Series:
+        return rows.groupby("scenario")["value"].sum().reindex(scenarios, fill_value=0.0)
+
+    assert set(long.loc[long["quantity"] != "capacity", "value_unit"]) | set(exchange["value_unit"]) <= {"TWh"}
+    assert set(made.loc[made["quantity"] == "capacity", "value_unit"]) <= {"GW"}
+    return {
+        "capacity": per_scenario(made[made["quantity"] == "capacity"]),
+        "output": per_scenario(made[made["quantity"] == "output"]),
+        "final_demand": per_scenario(demand),
+        "net_exports": per_scenario(exports) - per_scenario(imports) - per_scenario(imported),
+        "has_demand": long[long["quantity"] == "demand"].groupby("scenario").size().reindex(scenarios) > 0,
     }
 
 
@@ -147,13 +195,37 @@ def test_centralized_heat_balances(converted: tuple[pd.DataFrame, pd.DataFrame],
     transmission losses, unless the Conversion Notes say its heat doesn't add up. Example3's
     results have heat transmission (TRANS_LOSSES) but don't list it."""
     data, notes = converted
-    off = set(notes.loc[notes["Note"].str.startswith("District heating's heat doesn't add up"), "Scenario"])
+    off = set(notes.loc[notes["Note"].str.startswith("HEAT in district heating areas doesn't add up"), "Scenario"])
     assert off == {"Example3"}
 
     balanced = [scenario for scenario in scenarios if scenario not in off]
     difference = total(data, "Secondary Energy|Heat") - total(data, "Final Energy|Heat")
     pd.testing.assert_series_equal(difference[balanced], heat["losses"][balanced] * twh_to_ej,
                                    check_names=False, check_index_type=False, rtol=1e-3)
+
+
+def test_hydrogen_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
+                                           hydrogen: dict[str, pd.Series]) -> None:
+    data, _ = converted
+    pd.testing.assert_series_equal(total(data, "Capacity|Hydrogen"), hydrogen["capacity"],
+                                   check_names=False, check_index_type=False, rtol=1e-9)
+    pd.testing.assert_series_equal(total(data, "Secondary Energy|Hydrogen"), hydrogen["output"] * twh_to_ej,
+                                   check_names=False, check_index_type=False, rtol=1e-9)
+    pd.testing.assert_series_equal(total(data, "Final Energy|Hydrogen"), hydrogen["final_demand"] * twh_to_ej,
+                                   check_names=False, check_index_type=False, rtol=1e-9)
+    pd.testing.assert_series_equal(total(data, "Trade|Secondary Energy|Hydrogen [Volume]"),
+                                   hydrogen["net_exports"] * twh_to_ej,
+                                   check_names=False, check_index_type=False, rtol=1e-9, atol=1e-12)
+
+
+def test_hydrogen_balances(converted: tuple[pd.DataFrame, pd.DataFrame], hydrogen: dict[str, pd.Series]) -> None:
+    """Scenarios with hydrogen demand add up; Example3's results have hydrogen units but no
+    hydrogen demand, which the Conversion Notes say."""
+    _, notes = converted
+    assert not notes["Note"].str.startswith("HYDROGEN doesn't add up").any()
+    no_demand = notes.loc[notes["Note"].str.startswith("The results give no demand of HYDROGEN"), "Scenario"]
+    assert sorted(no_demand) == sorted(hydrogen["has_demand"].index[~hydrogen["has_demand"]])
+    assert sorted(no_demand) == ["Example3"]
 
 
 def test_rules_cover_every_unit(converted: tuple[pd.DataFrame, pd.DataFrame]) -> None:

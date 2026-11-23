@@ -173,7 +173,7 @@ A Balmorel unit (a `GGG` member) whose name carries the token `CCS`, e.g. `NGASC
 _Avoid_: CC (Balmorel names use it for combined cycle)
 
 **District-Heating Area / Individual Area / Industry Area**:
-The three kinds of Balmorel heat area, told apart by name: individual areas contain `IDVU`, industry areas contain `IND-` (usually after a country or region prefix, e.g. `DE4-W_IND-LT-DH`), and every other heat area is a district-heating area. The name patterns are rule rows (the 'areas' table, first match wins), so whoever converts can classify areas differently. Centralized heat, which IAMC reports as `Secondary Energy|Heat` and `Final Energy|Heat`, is made and used in district-heating areas, and crosses into other areas only as Heat Exchange. Individual areas heat buildings on site, and industry areas supply process heat on site. Their fuel use, heat and emissions are not reported, because no IAMC Variable matches what they cover; the Conversion Notes give the amounts. Only the electricity they use is reported, as part of `Final Energy|Electricity`.
+The three kinds of Balmorel heat area, told apart by name: individual areas contain `IDVU`, industry areas contain `IND-` (usually after a country or region prefix, e.g. `DE4-W_IND-LT-DH`), and every other heat area is a district-heating area. The name patterns are rule rows (the 'areas' table, first match wins), so whoever converts can classify areas differently. Centralized heat, which IAMC reports as `Secondary Energy|Heat` and `Final Energy|Heat`, is made and used in district-heating areas, and crosses into other areas only as Heat Exchange. Individual areas heat buildings on site, and industry areas supply process heat on site. Their fuel use, heat, hydrogen and emissions are not reported, because no IAMC Variable matches what they cover; the Conversion Notes give the amounts. Only the electricity they use is reported, as part of `Final Energy|Electricity`. Hydrogen units are reported only in district-heating areas, where every study so far places them.
 _Avoid_: Heat area (alone, when the kind matters)
 
 **Heat Exchange**:
@@ -181,10 +181,19 @@ Heat that Balmorel's heat transmission moves between a district-heating area and
 _Avoid_: Excess heat (only one of its sources), heat transmission (also covers flows between district-heating areas, which stay inside centralized heat)
 
 **Final Demand Category**:
-A Balmorel heat demand category (`H_DEMAND_YCRA`'s `Category`) that counts as consumption in `Final Energy|Heat`: exogenous demand, and the net Heat Exchange out of district heating (`NET_EXCHANGE`, not a Balmorel category). Storage loading and transmission losses are not final; they show as `Secondary Energy|Heat` less `Final Energy|Heat`. The 'demand_categories' rule table says which is which; a category it lacks (e.g. OptiFlow's `ENDO_OPTIFLOW`) is not reported, and the Conversion Notes give the amounts.
+A Balmorel demand category (the `Category` of `H_DEMAND_YCRA` or `H2_DEMAND_YCR`) that counts as consumption in `Final Energy|Heat` or `Final Energy|Hydrogen`. For heat: exogenous demand, and the net Heat Exchange out of district heating (`NET_EXCHANGE`, not a Balmorel category). For hydrogen: exogenous demand, flexible exogenous demand (`ENDO_REGIONAL`) and the transport add-on's demand (`ENDO_OTHERTRANS`). Storage loading, losses, and hydrogen that fuel cells, biomethanation or OptiFlow's processes turn into other energy are not final; they show as Secondary Energy less Final Energy. The 'demand_categories' rule table says which is which; a category it lacks (e.g. OptiFlow's heat, `ENDO_OPTIFLOW` under `HEAT`) is not reported, and the Conversion Notes give the amounts.
 
-**District Heating Balance**:
-The check that, per region and year, what district-heating units make (storage left out) plus net Heat Exchange in equals the demand in known categories plus net Heat Exchange out. Heat the results make or use where the Reader doesn't look, such as heat transmission a result file doesn't list or OptiFlow's heat, breaks it; the Conversion Notes then name the region and the gap. The conversion does not try to close it.
+**Net Exports**:
+What a country sends to other countries less what it gets from them, reported as `Trade|Secondary Energy|Hydrogen [Volume]` (negative for net imports). Taken from hydrogen transmission between regions of different countries, and from Import Units. Transmission within a country is left out, and transmission to a region whose country the results don't give is not counted; the Conversion Notes give its amount. Electricity trade is not reported yet.
+_Avoid_: Trade (alone, ambiguous between the IAMC stem and the transmission it is computed from), Net imports (the opposite sign)
+
+**Import Unit**:
+A Balmorel unit that brings a commodity in from outside the model, such as the `ELECTROLYZER` units with fuel `IMPORT_H2`, marked by a Mapping Rule with the segment `import`. Its output counts as imports in Net Exports, not as Secondary Energy, and its capacity is not reported. The Conversion Notes give the amounts.
+_Avoid_: Electrolyser (Balmorel gives import units that technology type)
+
+**Commodity Balance**:
+The check that, per region and year, a commodity's output (storage left out) less its Net Exports equals its demand in known categories, final or not. It runs for every commodity with a Final Energy stem, over the area kinds of that stem: heat over district-heating areas, with Heat Exchange counted as output and demand; hydrogen over whole regions. Results that make or use the commodity where the Reader doesn't look, such as transmission a result file doesn't list or a demand category the rules lack, break it; the Conversion Notes then name the region and the gap. Results with output of the commodity but no demand at all get one note instead. The conversion does not try to close a gap.
+_Avoid_: District Heating Balance (the earlier, heat-only check)
 
 **Storage**:
 Units that store electricity, heat or hydrogen. Never part of Capacity or Secondary Energy, since the common definitions have no storage names and discharge is not generation.

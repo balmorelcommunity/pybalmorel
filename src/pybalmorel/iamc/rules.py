@@ -34,6 +34,9 @@ rule_tables = {
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
+# Segments of Mapping Rules for units that bring a commodity in from outside the model: their
+# output is counted as imports, under trade, and their capacity is not reported
+import_unit = "import"
 # Area Kind of areas no pattern in the 'areas' table matches
 default_area_kind = "district heating"
 
@@ -278,7 +281,7 @@ def check_rules(definitions: str | Path | None = None,
             problems.append(("fuels", category, "category is no segment of any IAMC Variable"))
 
     for template in tables["mapping"]["segments"].unique():
-        if template == not_reported:
+        if template in (not_reported, import_unit):
             continue
         literal = template.replace("{category}|", "").replace("|{category}", "").replace("{category}", "")
         if not literal:

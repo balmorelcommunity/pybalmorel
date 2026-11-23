@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from .reader import read_mainresults
-from .rules import (default_area_kind, load_definitions, load_rules, load_template, match_area_kinds,
+from .rules import (default_area_kind, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
                     match_mapping_rules, not_reported)
 
 if TYPE_CHECKING:
@@ -40,12 +40,14 @@ note_columns = ["Scenario", "Region", "Variable", "Note"]
 # Conversion Notes printed at most; to_iamc returns them all
 print_limit = 30
 # Columns only some quantities have, '' for the others
-optional_columns = ["demand_category", "to_area"]
+optional_columns = ["demand_category", "to_area", "to_country"]
+# The commodity whose exchange between areas is Heat Exchange; exchange of the others is trade
+heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
 net_exchange = "NET_EXCHANGE"
-# Share of its heat a region's district heating may leave unaccounted for in a year before a
-# Conversion Note says it doesn't add up (and of all district heating heat that year, for
-# regions with little)
+# Share of a commodity's supply or demand in a region and year that may go unaccounted for before
+# a Conversion Note says it doesn't add up (and of all its demand that year, for regions with
+# little)
 balance_tolerance = 1e-2
 
 
@@ -64,9 +66,11 @@ def to_iamc(results: "MainResults",
     """Convert MainResults to IAMC data.
 
     Reports the IAMC Variables that the rule tables cover (see pybalmorel/iamc/rule_tables/), in the
-    units of the Definitions Snapshot, per Balmorel country and modelled year. Conversion Notes
-    say what was put under Other, what was left out, how backup units and Heat Exchange were
-    treated, and where district heating's heat doesn't add up; the first of them are printed.
+    units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
+    between countries, and what import units bring in from outside the model, are reported as
+    Trade (net exports). Conversion Notes say what was put under Other, what was left out, how
+    backup units, import units and Heat Exchange were treated, and where a commodity's supply and
+    demand don't add up; the first of them are printed.
 
     Args:
         results (MainResults): The loaded result files.
@@ -122,10 +126,11 @@ def convert(long: pd.DataFrame,
         long[column] = long[column].fillna("") if column in long.columns else ""
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
+    long = count_trade(long, tables["mapping"], notes)
     long = name_regions(long, tables["countries"], regions, notes)
     long = attach_area_kinds(long, tables["areas"])
     long = exchange_heat(long, tables["mapping"], notes)
-    check_heat_balance(long, tables["mapping"], tables["demand_categories"], notes)
+    check_balances(long, tables["stems"], tables["mapping"], tables["demand_categories"], notes)
     long = select_demand(long, tables["demand_categories"], notes)
     long = attach_stems(long, tables["stems"], set(variables["variable"]), notes)
     long = attach_segments(long, tables, set(variables["variable"]), notes)
@@ -165,7 +170,7 @@ def write_iamc(data: pd.DataFrame, notes: pd.DataFrame, path: str | Path) -> Non
 
 
 #%% ------------------------------- ###
-###     2. Scenarios and Regions    ###
+### 2. Scenarios, Trade and Regions ###
 ### ------------------------------- ###
 
 def name_scenarios(long: pd.DataFrame, scenarios: dict[str, str] | None) -> pd.DataFrame:
@@ -190,6 +195,66 @@ def name_scenarios(long: pd.DataFrame, scenarios: dict[str, str] | None) -> pd.D
             f"{clashes.to_string()}"
         )
     return long
+
+
+def count_trade(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Turn transmission between countries, and what import units bring in, into trade.
+
+    Trade is net exports. Transmission from one country to another counts for the sender, and
+    negative for the receiver; transmission within a country nets out and is dropped. Import units
+    (Mapping Rule 'import') bring the commodity in from outside the model: their output counts as
+    negative trade, and their capacity is left out. Exchange of heat is Heat Exchange, which
+    exchange_heat treats.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table with trade rows, which have no area or unit, in place of
+            transmission and import units' rows.
+    """
+    blank = {"quantity": "trade", "area": "", "unit_name": "", "tech_type": "", "fuel": "",
+             "demand_category": "", "to_area": "", "to_country": ""}
+    is_transmission = (long["quantity"] == "exchange") & (long["commodity"] != heat_commodity)
+    transmission = long[is_transmission]
+    long = long[~is_transmission]
+
+    unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
+    units = long.loc[long["unit_name"] != "", unit_columns].drop_duplicates().reset_index(drop=True)
+    importers = units[match_mapping_rules(units, mapping) == import_unit]
+    by_importer = np.zeros(len(long), dtype=bool)
+    if not importers.empty:
+        by_importer = pd.MultiIndex.from_frame(long[unit_columns]).isin(pd.MultiIndex.from_frame(importers))
+    imported = long[by_importer & (long["quantity"] == "output")]
+    long = long[~by_importer]
+
+    abroad = transmission[(transmission["to_country"] != "") & (transmission["to_country"] != transmission["country"])]
+    trade = pd.concat((
+        abroad.assign(**blank),
+        abroad.assign(**blank, country=abroad["to_country"], value=-abroad["value"]),
+        imported.assign(**blank, value=-imported["value"]),
+    ), ignore_index=True)
+
+    for (scenario, commodity, value_unit), rows in imported.groupby(["iamc_scenario", "commodity", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        if (by_year.abs() < noise).all():
+            continue
+        units = ", ".join(f"{tech_type}/{fuel}" for tech_type, fuel in
+                          rows[["tech_type", "fuel"]].drop_duplicates().itertuples(index=False))
+        notes.append(note(scenario, "", "", (
+            f"Import units ({units}) brought {amounts(by_year)} {value_unit} of {commodity} in from outside the "
+            "model, counted as imports under Trade, not as output. Their capacity is not reported."
+        )))
+    unknown = transmission[transmission["to_country"] == ""]
+    for (scenario, commodity, value_unit), rows in unknown.groupby(["iamc_scenario", "commodity", "value_unit"]):
+        notes.append(note(scenario, "", "", (
+            f"Transmission of {commodity} to regions whose country the results don't give is not counted as "
+            f"Trade: {amounts(rows.groupby('year')['value'].sum())} {value_unit}."
+        )))
+
+    return pd.concat((long, trade), ignore_index=True)
 
 
 def name_regions(long: pd.DataFrame, countries: pd.DataFrame, regions: pd.DataFrame,
@@ -233,10 +298,11 @@ def attach_area_kinds(long: pd.DataFrame, area_rules: pd.DataFrame) -> pd.DataFr
         area_rules (pd.DataFrame): The 'areas' rule table.
 
     Returns:
-        pd.DataFrame: The long table with 'area_kind' and 'to_area_kind' ('' without a
-            receiving area) columns.
+        pd.DataFrame: The long table with 'area_kind' ('' for rows per region, without an area)
+            and 'to_area_kind' ('' without a receiving area) columns.
     """
-    long = long.assign(area_kind=match_area_kinds(long["area"], area_rules), to_area_kind="")
+    kinds = match_area_kinds(long["area"], area_rules).where(long["area"] != "", "")
+    long = long.assign(area_kind=kinds, to_area_kind="")
     receiving = long["to_area"] != ""
     long.loc[receiving, "to_area_kind"] = match_area_kinds(long.loc[receiving, "to_area"], area_rules)
     return long
@@ -262,8 +328,9 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
         pd.DataFrame: The long table without exchange rows, with the demand and output rows
             Heat Exchange gives.
     """
-    exchange = long[long["quantity"] == "exchange"]
-    long = long[long["quantity"] != "exchange"]
+    is_exchange = (long["quantity"] == "exchange") & (long["commodity"] == heat_commodity)
+    exchange = long[is_exchange]
+    long = long[~is_exchange]
     if exchange.empty:
         return long
 
@@ -274,7 +341,8 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
     into_dh = flows[~from_dh & to_dh]
     among = flows[~from_dh & ~to_dh]
 
-    demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_area_kind="")
+    demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_country="",
+                             to_area_kind="")
     supplied = trace_heat(long, into_dh, among, out_of_dh, mapping)
 
     # Say per scenario how much crossed, and per region what no unit could be traced to
@@ -336,7 +404,7 @@ def net_flows(exchange: pd.DataFrame) -> pd.DataFrame:
     flows = flows[flows["value"] >= noise].reset_index(drop=True)
     for column in ("unit_name", "tech_type", "fuel", "demand_category"):
         flows[column] = ""
-    flows["commodity"] = "HEAT"
+    flows["commodity"] = heat_commodity
     return flows
 
 
@@ -366,7 +434,7 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
     if into_dh.empty:
         return long.iloc[0:0]
 
-    made = long[(long["quantity"] == "output") & (long["commodity"] == "HEAT")
+    made = long[(long["quantity"] == "output") & (long["commodity"] == heat_commodity)
                 & (long["area_kind"] != default_area_kind)]
     units = made[["unit_name", "tech_type", "fuel", "commodity"]].drop_duplicates()
     units["template"] = match_mapping_rules(units, mapping)
@@ -413,8 +481,8 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
         by_unit = origin < len(sources)
         unit_rows = sources.iloc[origin[by_unit]].reset_index(drop=True)
         rows_out = receivers[["scenario", "iamc_scenario", "year", "country", "region", "value_unit"]].assign(
-            area=receivers["to_area"], area_kind=default_area_kind, quantity="output", commodity="HEAT",
-            demand_category="", to_area="", to_area_kind="", value=sent[flow, origin],
+            area=receivers["to_area"], area_kind=default_area_kind, quantity="output", commodity=heat_commodity,
+            demand_category="", to_area="", to_country="", to_area_kind="", value=sent[flow, origin],
             unit_name="", tech_type="", fuel=np.where(origin == len(sources), "district heating", "untraced"),
         )
         for column in ("unit_name", "tech_type", "fuel"):
@@ -442,53 +510,82 @@ def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: li
     for (scenario, commodity, category, kind, value_unit), rows in unknown.groupby(
             ["iamc_scenario", "commodity", "demand_category", "area_kind", "value_unit"]):
         by_year = rows.groupby("year")["value"].sum()
+        where = f" in {kind} areas" if kind else ""
         notes.append(note(scenario, "", "", (
-            f"Demand of {commodity} in category {category} in {kind} areas is not reported (the "
+            f"Demand of {commodity} in category {category}{where} is not reported (the "
             f"'demand_categories' rules have no row for it): {amounts(by_year)} {value_unit}."
         )))
     kept = demand[demand["final"] == "yes"].drop(columns="final")
     return pd.concat((long[~is_demand], kept), ignore_index=True)
 
 
-def check_heat_balance(long: pd.DataFrame, mapping: pd.DataFrame, demand_categories: pd.DataFrame,
-                       notes: list[dict]) -> None:
-    """Note where district heating's heat doesn't add up.
+def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFrame,
+                   demand_categories: pd.DataFrame, notes: list[dict]) -> None:
+    """Note where a commodity's supply and demand don't add up in a region.
 
-    District heating balances when the output of its units (without storage), with the heat
-    Heat Exchange brought in, equals its demand in the categories the 'demand_categories'
-    rules know, with the heat it sent out. Heat the results make or use where the Reader doesn't
-    look, such as heat transmission they don't list or a model add-on's heat, breaks this, and
-    then Secondary Energy|Heat and Final Energy|Heat don't add up either.
+    Checked for every commodity with a stem for demand, in the Area Kinds of those stems (all of
+    them, for a stem of any Area Kind). A commodity balances when the output of its units, without
+    those whose output the Mapping Rules don't report (storage), less its trade (net exports),
+    equals its demand in the categories the 'demand_categories' rules know, final or not. Heat
+    Exchange is output and demand by now. What the results make, use or move where the Reader
+    doesn't look, such as transmission they don't list or a model add-on's, breaks this, and then
+    the reported supply and demand don't add up either. A scenario whose results give output of
+    the commodity but no demand of it gets one note instead.
 
     Args:
-        long (pd.DataFrame): The long table after Heat Exchange, with all demand categories.
+        long (pd.DataFrame): The long table after trade and Heat Exchange, with all demand categories.
+        stems (pd.DataFrame): The 'stems' rule table.
         mapping (pd.DataFrame): The 'mapping' rule table.
         demand_categories (pd.DataFrame): The 'demand_categories' rule table.
         notes (list[dict]): Conversion Notes, appended to.
     """
-    heat = long[(long["commodity"] == "HEAT") & (long["area_kind"] == default_area_kind)]
-    output = heat[heat["quantity"] == "output"]
-    output = output[(output["unit_name"] == "") | (match_mapping_rules(output, mapping) != not_reported)]
-    demand = heat[heat["quantity"] == "demand"].merge(demand_categories, on=["commodity", "demand_category"])
-
     keys = ["iamc_scenario", "region", "value_unit", "year"]
-    balance = pd.concat({"made": output.groupby(keys)["value"].sum(),
-                         "used": demand.groupby(keys)["value"].sum()}, axis=1).fillna(0.0)
-    balance["gap"] = balance["made"] - balance["used"]
-    # Off by more than the tolerance of the region's heat, and of the tolerance of all heat that year
-    all_heat = balance.groupby(level=["iamc_scenario", "value_unit", "year"])["made"].transform("sum")
-    scale = np.maximum(balance[["made", "used"]].max(axis=1), balance_tolerance * all_heat)
-    off = balance["gap"].abs() > balance_tolerance * scale
-    off = off.groupby(level=["iamc_scenario", "region", "value_unit"]).transform("any")
-    for (scenario, region, value_unit), rows in balance[off].groupby(level=["iamc_scenario", "region", "value_unit"]):
-        by_year = rows["gap"].droplevel([0, 1, 2])
-        notes.append(note(scenario, region, "", (
-            f"District heating's heat doesn't add up: its units and Heat Exchange gave "
-            f"{amounts(by_year.where(by_year.abs() >= noise, 0.0))} {value_unit} more than its demand used "
-            "(negative: less). "
-            "The results make or use heat that isn't read, such as heat transmission they don't list or "
-            "a model add-on's heat, so Secondary Energy|Heat less Final Energy|Heat isn't its losses."
-        )))
+    for commodity, demand_stems in stems[stems["quantity"] == "demand"].groupby("commodity"):
+        kinds = set(demand_stems["area_kind"])
+        rows = long[long["commodity"] == commodity]
+        where = ""
+        if "" not in kinds:
+            rows = rows[rows["area_kind"].isin(kinds)]
+            where = f" in {' and '.join(sorted(kinds))} areas"
+        if rows.empty:
+            continue
+        output = rows[rows["quantity"] == "output"]
+        output = output[(output["unit_name"] == "") | (match_mapping_rules(output, mapping) != not_reported)]
+        trade = rows[rows["quantity"] == "trade"]
+        demand = rows[rows["quantity"] == "demand"]
+        with_demand = set(demand["iamc_scenario"])
+
+        # Results that give no demand at all have nothing to balance against
+        for (scenario, value_unit), made in output[~output["iamc_scenario"].isin(with_demand)].groupby(
+                ["iamc_scenario", "value_unit"]):
+            by_year = made.groupby("year")["value"].sum()
+            if (by_year.abs() < noise).all():
+                continue
+            notes.append(note(scenario, "", "", (
+                f"The results give no demand of {commodity}{where}, though its units made {amounts(by_year)} "
+                f"{value_unit}: nothing is reported under {', '.join(sorted(set(demand_stems['stem'])))}, and "
+                f"whether {commodity} adds up isn't checked."
+            )))
+
+        known = demand.merge(demand_categories, on=["commodity", "demand_category"])
+        supply = output.groupby(keys)["value"].sum().sub(trade.groupby(keys)["value"].sum(), fill_value=0.0)
+        balance = pd.concat({"supply": supply, "used": known.groupby(keys)["value"].sum()}, axis=1).fillna(0.0)
+        balance = balance[balance.index.get_level_values("iamc_scenario").isin(with_demand)]
+        balance["gap"] = balance["supply"] - balance["used"]
+        # Off by more than the tolerance of the region's supply or demand, and of all demand that year
+        everywhere = balance.groupby(level=["iamc_scenario", "value_unit", "year"])["used"].transform("sum")
+        scale = np.maximum(balance[["supply", "used"]].abs().max(axis=1), balance_tolerance * everywhere)
+        off = balance["gap"].abs() > balance_tolerance * scale
+        off = off.groupby(level=["iamc_scenario", "region", "value_unit"]).transform("any")
+        for (scenario, region, value_unit), gaps in balance[off].groupby(level=["iamc_scenario", "region", "value_unit"]):
+            by_year = gaps["gap"].droplevel([0, 1, 2])
+            notes.append(note(scenario, region, "", (
+                f"{commodity}{where} doesn't add up: its output less net exports was "
+                f"{amounts(by_year.where(by_year.abs() >= noise, 0.0))} {value_unit} more than its demand in the "
+                "categories the 'demand_categories' rules know (negative: less). The results make, use or move "
+                f"{commodity} where the Reader doesn't look, such as transmission they don't list or a model "
+                "add-on's, so its reported supply and demand don't add up either."
+            )))
 
 
 #%% ------------------------------- ###
@@ -519,7 +616,7 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     # Name the Area Kind only where the stems tell kinds apart
     unreported = long[long["stem"] == ""]
     kind_specific = for_kind.set_index(["quantity", "commodity"]).index
-    by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific)
+    by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific) & (unreported["area_kind"] != "")
     unreported = unreported.assign(where=np.where(by_kind, " in " + unreported["area_kind"] + " areas", ""))
     for (scenario, region, quantity, commodity, where, value_unit), rows in unreported.groupby(
             ["iamc_scenario", "region", "quantity", "commodity", "where", "value_unit"]):
@@ -544,8 +641,8 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
 
     'path' holds the segments the Mapping Rules give, and 'variable' the longest of its
     prefixes in the snapshot, or '<stem>|Other' when even its first segment is missing. Rows
-    without a unit skip the Mapping Rules: demand is reported under the stem itself, and heat
-    Heat Exchange could trace to no unit under Other.
+    without a unit skip the Mapping Rules: demand and trade are reported under the stem itself,
+    and heat Heat Exchange could trace to no unit under Other.
 
     Args:
         long (pd.DataFrame): The long table with stems.
@@ -574,10 +671,10 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     unmatched = ~no_unit & (long["template"] == "")
     long.loc[unmatched, "reason"] = "no Mapping Rule matches"
     long.loc[unmatched, "template"] = "Other"
-    demand = no_unit & (long["quantity"] == "demand")
-    long.loc[demand, "template"] = ""
-    long.loc[no_unit & ~demand, "template"] = "Other"
-    long.loc[no_unit & ~demand, "reason"] = "Heat Exchange traced it to no unit"
+    under_stem = no_unit & long["quantity"].isin(["demand", "trade"])
+    long.loc[under_stem, "template"] = ""
+    long.loc[no_unit & ~under_stem, "template"] = "Other"
+    long.loc[no_unit & ~under_stem, "reason"] = "Heat Exchange traced it to no unit"
     long["path"] = [
         template.replace("{category}", category)
         for template, category in zip(long["template"], long["category"])
@@ -792,7 +889,8 @@ def note(scenario: str, region: str, variable: str, text: str) -> dict:
 
 
 def amounts(by_year: pd.Series | None) -> str:
-    """Write amounts per year for a Conversion Note, e.g. '2030: 1.2, 2050: 3.4'.
+    """Write amounts per year for a Conversion Note, e.g. '2030: 1.2, 2050: 3.4'. Amounts a
+    billion times smaller than the largest, such as rounding errors, are written as 0.
 
     Args:
         by_year (pd.Series | None): Values indexed by year; None for none.
@@ -802,6 +900,7 @@ def amounts(by_year: pd.Series | None) -> str:
     """
     if by_year is None or by_year.empty:
         return "0"
+    by_year = by_year.where(by_year.abs() > 1e-9 * by_year.abs().max(), 0.0)
     return ", ".join(f"{year}: {value:.4g}" for year, value in by_year.items())
 
 

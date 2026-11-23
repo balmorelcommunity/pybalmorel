@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from pybalmorel.iamc import check_rules, convert, load_rules, write_iamc
+from pybalmorel.iamc.convert import amounts
 from pybalmorel.iamc.rules import definitions_dir
 
 #%% ------------------------------- ###
@@ -36,14 +37,21 @@ heat_names = [
     "Secondary Energy|Heat", "Secondary Energy|Heat|Gas", "Secondary Energy|Heat|Biomass",
     "Secondary Energy|Heat|Electricity", "Secondary Energy|Heat|Other", "Final Energy|Heat",
 ]
+hydrogen_capacity_names = ["Capacity|Hydrogen", "Capacity|Hydrogen|Electricity", "Capacity|Hydrogen|Gas",
+                           "Capacity|Hydrogen|Gas|w/o CCS"]
+hydrogen_names = [
+    "Secondary Energy|Hydrogen", "Secondary Energy|Hydrogen|Electricity", "Secondary Energy|Hydrogen|Gas",
+    "Secondary Energy|Hydrogen|Gas|w/o CCS", "Secondary Energy|Hydrogen|Fossil", "Final Energy|Hydrogen",
+    "Trade|Secondary Energy|Hydrogen [Volume]",
+]
 twh = 3.6e-3
 
 
 @pytest.fixture
 def definitions(tmp_path: Path) -> Path:
     """A small Definitions Snapshot with Denmark and Germany."""
-    capacity = capacity_names + heat_capacity_names
-    energy = generation_names + heat_names
+    capacity = capacity_names + heat_capacity_names + hydrogen_capacity_names
+    energy = generation_names + heat_names + hydrogen_names
     pd.DataFrame({
         "variable": capacity + energy,
         "unit": ["GW"] * len(capacity) + ["EJ/yr"] * len(energy),
@@ -68,10 +76,11 @@ def unit_rows(scenario: str, year: int, country: str, unit_name: str, tech_type:
     return rows
 
 
-def demand_row(year: int, area: str, category: str, value: float) -> dict:
-    """A long-table row of Danish heat demand (TWh) in scenario S1."""
-    return {"scenario": "S1", "year": year, "country": "DENMARK", "area": area, "unit_name": "", "tech_type": "",
-            "fuel": "", "commodity": "HEAT", "demand_category": category, "quantity": "demand",
+def demand_row(year: int, area: str, category: str, value: float, commodity: str = "HEAT",
+               country: str = "DENMARK") -> dict:
+    """A long-table row of demand (TWh) in scenario S1, of Danish heat by default."""
+    return {"scenario": "S1", "year": year, "country": country, "area": area, "unit_name": "", "tech_type": "",
+            "fuel": "", "commodity": commodity, "demand_category": category, "quantity": "demand",
             "value_unit": "TWh", "value": value}
 
 
@@ -133,6 +142,44 @@ def heat_long(long: pd.DataFrame) -> pd.DataFrame:
         exchange_row(year, "DENMARK_A", "DENMARK_B", 5),
     ]
     return pd.concat((long, pd.DataFrame(rows)), ignore_index=True)
+
+
+def transmission_row(from_country: str, to_country: str, value: float) -> dict:
+    """A long-table row of hydrogen transmission (TWh) in scenario S1 in 2030, between regions."""
+    return {"scenario": "S1", "year": 2030, "country": from_country, "area": "", "to_area": "",
+            "to_country": to_country, "unit_name": "", "tech_type": "", "fuel": "", "commodity": "HYDROGEN",
+            "quantity": "exchange", "value_unit": "TWh", "value": value}
+
+
+@pytest.fixture
+def hydrogen_long() -> pd.DataFrame:
+    """Hydrogen in Denmark and Germany in 2030, which balances in both:
+
+    - Denmark makes 10 TWh with an electrolyser and 4 with a steam reformer, imports 3 with an
+      import unit, and its storage gives 1, which is not output. It sends 6 to Germany, gets 1
+      back, and sends 2 between its own regions: net exports 6 - 1 - 3 = 2. Its 12 go to
+      exogenous demand (9), fuel cells (2), distribution losses and storage.
+    - Germany makes 2 TWh and gets 5 net from Denmark. Its 7 go to exogenous demand (6),
+      transport (0.5) and transmission losses.
+    """
+    rows = unit_rows("S1", 2030, "DENMARK", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 2, 10, "HYDROGEN")
+    rows += unit_rows("S1", 2030, "DENMARK", "GNR_SMR", "STEAMREFORMING", "NATGAS", 1, 4, "HYDROGEN")
+    rows += unit_rows("S1", 2030, "DENMARK", "GNR_H2STO", "H2-STORAGE", "HYDROGEN", 1, 1, "HYDROGEN")
+    rows += unit_rows("S1", 2030, "DENMARK", "GNR_H2_IMPORT", "ELECTROLYZER", "IMPORT_H2", 5, 3, "HYDROGEN")
+    rows += unit_rows("S1", 2030, "GERMANY", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 1, 2, "HYDROGEN")
+    rows += [
+        transmission_row("DENMARK", "GERMANY", 6),
+        transmission_row("GERMANY", "DENMARK", 1),
+        transmission_row("DENMARK", "DENMARK", 2),
+        demand_row(2030, "", "EXOGENOUS", 9, "HYDROGEN"),
+        demand_row(2030, "", "ENDO_FUELCELL", 2, "HYDROGEN"),
+        demand_row(2030, "", "DIST_LOSSES", 0.5, "HYDROGEN"),
+        demand_row(2030, "", "ENDO_INTERSTO", 0.5, "HYDROGEN"),
+        demand_row(2030, "", "EXOGENOUS", 6, "HYDROGEN", "GERMANY"),
+        demand_row(2030, "", "ENDO_OTHERTRANS", 0.5, "HYDROGEN", "GERMANY"),
+        demand_row(2030, "", "TRANS_LOSSES", 0.5, "HYDROGEN", "GERMANY"),
+    ]
+    return pd.DataFrame(rows)
 
 
 def value(data: pd.DataFrame, variable: str, year: int, region: str = "Denmark") -> float:
@@ -205,9 +252,61 @@ def test_heat_balance_is_checked(heat_long: pd.DataFrame, definitions: Path) -> 
     and with 1 TWh it sent unused."""
     without_exchange = heat_long[heat_long["quantity"] != "exchange"]
     _, notes = convert(without_exchange, "Balmorel", definitions=definitions)
-    off = notes[notes["Note"].str.startswith("District heating's heat doesn't add up")]
+    off = notes[notes["Note"].str.startswith("HEAT in district heating areas doesn't add up")]
     assert off["Region"].tolist() == ["Denmark"]
-    assert "gave 2030: -2, 2050: 0 TWh more" in off["Note"].iloc[0]
+    assert "was 2030: -2, 2050: 0 TWh more" in off["Note"].iloc[0]
+
+
+def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
+    data, notes = convert(hydrogen_long, "Balmorel", definitions=definitions)
+
+    # Without storage and the import unit
+    assert value(data, "Capacity|Hydrogen", 2030) == pytest.approx(2 + 1)
+    assert value(data, "Capacity|Hydrogen|Gas|w/o CCS", 2030) == pytest.approx(1)
+    assert value(data, "Secondary Energy|Hydrogen", 2030) == pytest.approx((10 + 4) * twh)
+    assert value(data, "Secondary Energy|Hydrogen|Electricity", 2030) == pytest.approx(10 * twh)
+    assert value(data, "Secondary Energy|Hydrogen|Fossil", 2030) == pytest.approx(4 * twh)
+    assert value(data, "Secondary Energy|Hydrogen", 2030, "Germany") == pytest.approx(2 * twh)
+    # Fuel cells, losses and storage are not final
+    assert value(data, "Final Energy|Hydrogen", 2030) == pytest.approx(9 * twh)
+    assert value(data, "Final Energy|Hydrogen", 2030, "Germany") == pytest.approx(6.5 * twh)
+    # Net exports: transmission between countries, less imports from outside the model
+    assert value(data, "Trade|Secondary Energy|Hydrogen [Volume]", 2030) == pytest.approx((6 - 1 - 3) * twh)
+    assert value(data, "Trade|Secondary Energy|Hydrogen [Volume]", 2030, "Germany") == pytest.approx(-5 * twh)
+
+    text = " ".join(notes["Note"])
+    assert "Import units (ELECTROLYZER/IMPORT_H2) brought 2030: 3 TWh of HYDROGEN" in text
+    assert "doesn't add up" not in text
+    assert "have no row for it" not in text
+
+
+def test_hydrogen_balance_is_checked(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
+    """Results that don't list hydrogen transmission leave Denmark with 5 TWh more than it uses,
+    and Germany 5 short; transmission to a region of unknown country is noted."""
+    without_transmission = hydrogen_long[hydrogen_long["quantity"] != "exchange"]
+    lost = pd.DataFrame([transmission_row("DENMARK", "", 0.5)])
+    _, notes = convert(pd.concat((without_transmission, lost)), "Balmorel", definitions=definitions)
+
+    off = notes[notes["Note"].str.startswith("HYDROGEN doesn't add up")]
+    assert off["Region"].tolist() == ["Denmark", "Germany"]
+    assert "was 2030: 5 TWh more" in off["Note"].iloc[0]
+    assert "was 2030: -5 TWh more" in off["Note"].iloc[1]
+    assert notes["Note"].str.contains("whose country the results don't give is not counted as Trade: 2030: 0.5").any()
+
+
+def test_hydrogen_without_demand(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
+    """Results without hydrogen demand get one note, not one per region."""
+    data, notes = convert(hydrogen_long[hydrogen_long["quantity"] != "demand"], "Balmorel", definitions=definitions)
+
+    assert "Final Energy|Hydrogen" not in set(data["Variable"])
+    assert not notes["Note"].str.contains("HYDROGEN doesn't add up").any()
+    missing = notes[notes["Note"].str.startswith("The results give no demand of HYDROGEN")]
+    assert len(missing) == 1 and "made 2030: 16 TWh" in missing["Note"].iloc[0]
+
+
+def test_note_amounts_drop_rounding_errors() -> None:
+    assert amounts(pd.Series({2030: -2.297e-17, 2050: 2.273})) == "2030: 0, 2050: 2.273"
+    assert amounts(pd.Series({2030: 0.0, 2050: -0.0})) == "2030: 0, 2050: 0"
 
 
 def test_heat_exchange_without_units(long: pd.DataFrame, definitions: Path) -> None:

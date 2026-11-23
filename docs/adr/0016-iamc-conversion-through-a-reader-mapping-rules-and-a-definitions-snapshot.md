@@ -23,13 +23,15 @@ The converter therefore has three layers, each owning one side of a change:
 2. **Mapping Rules.** CSV tables shipped in the package, keyed on
    technology type, fuel and commodity, with an optional unit-name pattern
    for what only names carry (CCS). They map each row of the long table to
-   segments of IAMC Variable names, and fuels to Fuel Categories. Further
+   segments of IAMC Variable names, to `-` (not reported, e.g. storage) or
+   to `import` (Import Units), and fuels to Fuel Categories. Further
    tables tell area kinds apart by name pattern, say which demand
    categories are final demand, and pick the IAMC stem per quantity,
    commodity and area kind. Rows the caller passes take precedence over the
    shipped ones. Quantities that need arithmetic across rows stay in code:
-   Heat Exchange netting and tracing, the Output-Share Split, Net CO2
-   Emissions, electrolyser electricity input, and parent sums.
+   Heat Exchange netting and tracing, Net Exports, the Commodity Balance,
+   the Output-Share Split, Net CO2 Emissions, electrolyser electricity
+   input, and parent sums.
 3. **Definitions Snapshot.** `src/pybalmorel/iamc/definitions/` holds
    `variables.csv` (variable, unit, description, tier), `regions.csv`
    (country names and ISO3 codes) and `SOURCE` (commit hash and date),
@@ -72,11 +74,12 @@ pass it to limit the output to the names their intercomparison accepts.
 - The quantities computed in code still change with Balmorel: a renamed
   symbol behind the Output-Share Split or Net CO2 Emissions needs a code
   change in the reader.
-- Heat a result file makes or uses outside the symbols read (heat
+- Energy a result file makes or uses outside the symbols read (heat
   transmission it doesn't list, OptiFlow's heat) can't be reported. The
-  District Heating Balance check names the regions where it happens rather
-  than letting `Secondary Energy|Heat` and `Final Energy|Heat` disagree
-  silently.
+  Commodity Balance names the regions where it happens rather than letting
+  Secondary and Final Energy disagree silently. It also catches a demand
+  category the rules lack: hydrogen in three studies didn't add up until
+  OptiFlow's `ENDO_OPTIFLOW` got a rule row.
 - pybalmorel ships a copy of CC0 data, and `SOURCE` records the commit.
   common-definitions defines no countries itself, so the country names come
   from nomenclature's country list, which projects reporting by country
