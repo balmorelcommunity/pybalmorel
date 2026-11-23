@@ -26,12 +26,16 @@ definitions_dir = Path(__file__).parent / "definitions"
 rule_tables = {
     "fuels": {"columns": ["fuel", "category"], "key": ["fuel"]},
     "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments"], "key": None},
-    "stems": {"columns": ["quantity", "commodity", "stem"], "key": ["quantity", "commodity"]},
+    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem"], "key": ["quantity", "commodity", "area_kind"]},
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
+    "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
+    "demand_categories": {"columns": ["commodity", "demand_category", "final"], "key": ["commodity", "demand_category"]},
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
+# Area Kind of areas no pattern in the 'areas' table matches
+default_area_kind = "district heating"
 
 
 #%% ------------------------------- ###
@@ -69,8 +73,9 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
 
     Args:
         overrides (dict[str, str | Path | pd.DataFrame] | None, optional): Rows to add per table,
-            keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries'), as a
-            CSV path or DataFrame with that table's columns. Defaults to None.
+            keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries', 'areas',
+            'demand_categories'), as a CSV path or DataFrame with that table's columns.
+            Defaults to None.
 
     Returns:
         dict[str, pd.DataFrame]: The tables by name. The 'mapping' table has a 'priority'
@@ -111,7 +116,40 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             f"Mapping Rules need segments, or '{not_reported}' for not reported:\n"
             f"{tables['mapping'][empty].to_string()}"
         )
+    unclear = ~tables["demand_categories"]["final"].isin(["yes", "no"])
+    if unclear.any():
+        raise Exception(
+            "The 'demand_categories' rules need 'yes' or 'no' under final:\n"
+            f"{tables['demand_categories'][unclear].to_string()}"
+        )
+    for pattern in tables["areas"]["pattern"]:
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise Exception(f"The 'areas' pattern '{pattern}' is no regular expression: {error}")
     return tables
+
+
+def match_area_kinds(areas: pd.Series, area_rules: pd.DataFrame) -> pd.Series:
+    """Find the Area Kind of each area: that of the first 'areas' rule whose pattern it contains.
+
+    Args:
+        areas (pd.Series): Balmorel area names.
+        area_rules (pd.DataFrame): The 'areas' table from load_rules.
+
+    Returns:
+        pd.Series: The Area Kind per area, default_area_kind where no pattern matches.
+    """
+    patterns = [(re.compile(pattern), kind) for pattern, kind in area_rules[["pattern", "area_kind"]].itertuples(index=False)]
+
+    def kind_of(area: str) -> str:
+        for pattern, kind in patterns:
+            if pattern.search(area):
+                return kind
+        return default_area_kind
+
+    kinds = {area: kind_of(area) for area in areas.unique()}
+    return areas.map(kinds)
 
 
 def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame) -> pd.Series:
@@ -260,5 +298,9 @@ def check_rules(definitions: str | Path | None = None,
     for country, iso3 in tables["countries"][["country", "iso3"]].itertuples(index=False):
         if iso3 not in known_iso3:
             problems.append(("countries", country, f"ISO3 code '{iso3}' has no IAMC Region"))
+
+    kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
+    for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:
+        problems.append(("stems", kind, f"is no Area Kind of the 'areas' rules, which give {sorted(kinds)}"))
 
     return pd.DataFrame(problems, columns=["table", "value", "problem"])

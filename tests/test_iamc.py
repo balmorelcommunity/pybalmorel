@@ -30,16 +30,23 @@ generation_names = [
     "Secondary Energy|Electricity|Fossil|w/o CCS", "Secondary Energy|Electricity|Wind",
     "Secondary Energy|Electricity|Wind|Onshore", "Secondary Energy|Electricity|Wind|Offshore",
     "Secondary Energy|Electricity|Other", "Secondary Energy|Electricity|Non-Biomass Renewables",
-    "Secondary Energy|Heat",
 ]
+heat_capacity_names = ["Capacity|Heat", "Capacity|Heat|Gas"]
+heat_names = [
+    "Secondary Energy|Heat", "Secondary Energy|Heat|Gas", "Secondary Energy|Heat|Biomass",
+    "Secondary Energy|Heat|Electricity", "Secondary Energy|Heat|Other", "Final Energy|Heat",
+]
+twh = 3.6e-3
 
 
 @pytest.fixture
 def definitions(tmp_path: Path) -> Path:
     """A small Definitions Snapshot with Denmark and Germany."""
+    capacity = capacity_names + heat_capacity_names
+    energy = generation_names + heat_names
     pd.DataFrame({
-        "variable": capacity_names + generation_names,
-        "unit": ["GW"] * len(capacity_names) + ["EJ/yr"] * len(generation_names),
+        "variable": capacity + energy,
+        "unit": ["GW"] * len(capacity) + ["EJ/yr"] * len(energy),
     }).to_csv(tmp_path / "variables.csv", index=False)
     pd.DataFrame({"region": ["Denmark", "Germany"], "iso3": ["DNK", "DEU"]}).to_csv(
         tmp_path / "regions.csv", index=False)
@@ -47,17 +54,32 @@ def definitions(tmp_path: Path) -> Path:
 
 
 def unit_rows(scenario: str, year: int, country: str, unit_name: str, tech_type: str, fuel: str,
-              capacity: float | None, output: float | None, commodity: str = "ELECTRICITY") -> list[dict]:
-    """Long-table rows for one unit's capacity (GW) and output (TWh)."""
+              capacity: float | None, output: float | None, commodity: str = "ELECTRICITY",
+              area: str | None = None) -> list[dict]:
+    """Long-table rows for one unit's capacity (GW) and output (TWh), in area '<country>_A' by default."""
     rows = []
     for quantity, value, value_unit in (("capacity", capacity, "GW"), ("output", output, "TWh")):
         if value is not None:
             rows.append({
-                "scenario": scenario, "year": year, "country": country, "area": f"{country}_A",
+                "scenario": scenario, "year": year, "country": country, "area": area or f"{country}_A",
                 "unit_name": unit_name, "tech_type": tech_type, "fuel": fuel, "commodity": commodity,
                 "quantity": quantity, "value_unit": value_unit, "value": value,
             })
     return rows
+
+
+def demand_row(year: int, area: str, category: str, value: float) -> dict:
+    """A long-table row of Danish heat demand (TWh) in scenario S1."""
+    return {"scenario": "S1", "year": year, "country": "DENMARK", "area": area, "unit_name": "", "tech_type": "",
+            "fuel": "", "commodity": "HEAT", "demand_category": category, "quantity": "demand",
+            "value_unit": "TWh", "value": value}
+
+
+def exchange_row(year: int, from_area: str, to_area: str, value: float) -> dict:
+    """A long-table row of Danish heat transmission (TWh) in scenario S1."""
+    return {"scenario": "S1", "year": year, "country": "DENMARK", "area": from_area, "to_area": to_area,
+            "unit_name": "", "tech_type": "", "fuel": "", "commodity": "HEAT", "quantity": "exchange",
+            "value_unit": "TWh", "value": value}
 
 
 @pytest.fixture
@@ -81,6 +103,38 @@ def long() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+@pytest.fixture
+def heat_long(long: pd.DataFrame) -> pd.DataFrame:
+    """The units of `long`, with heat in a district heating area (DENMARK_A, the gas boiler's),
+    two industry areas and an individual one, in 2030:
+
+    - DK_IND-MT-DH makes 8 TWh with wood chips and sends 4 to DK_IND-LT-DH, which has no units
+      and sends 3.5 into district heating, getting 0.5 back: 3 net from the wood chips.
+    - District heating sends 1 net to DK_IND-HT-DH, and 5 to another district heating area.
+    - District heating's storage gives 0.5, which is not output.
+    - District heating balances: its 6 TWh go to demand, storage, losses and DK_IND-HT-DH; in
+      2050 its gas boiler's 3 TWh go to demand.
+    """
+    year = 2030
+    rows = unit_rows("S1", year, "DENMARK", "GNR_BO_WOOD", "BOILERS", "WOODCHIPS", 2, 8, "HEAT", "DK_IND-MT-DH")
+    rows += unit_rows("S1", year, "DENMARK", "GNR_HP", "HEATPUMP", "ELECTRIC", 1, 2, "HEAT", "DK_IDVU-SPACEHEAT")
+    rows += unit_rows("S1", year, "DENMARK", "GNR_HSTO", "INTRASEASONAL-HEAT-STORAGE", "HEAT", 1, 0.5, "HEAT")
+    rows += [
+        demand_row(year, "DENMARK_A", "EXOGENOUS", 4),
+        demand_row(year, "DENMARK_A", "ENDO_INTRASTO", 0.1),
+        demand_row(year, "DENMARK_A", "ENDO_OPTIFLOW", 0.2),
+        demand_row(year, "DENMARK_A", "TRANS_LOSSES", 0.9),
+        demand_row(2050, "DENMARK_A", "EXOGENOUS", 3),
+        demand_row(year, "DK_IND-MT-DH", "EXOGENOUS", 4),
+        exchange_row(year, "DK_IND-MT-DH", "DK_IND-LT-DH", 4),
+        exchange_row(year, "DK_IND-LT-DH", "DENMARK_A", 3.5),
+        exchange_row(year, "DENMARK_A", "DK_IND-LT-DH", 0.5),
+        exchange_row(year, "DENMARK_A", "DK_IND-HT-DH", 1),
+        exchange_row(year, "DENMARK_A", "DENMARK_B", 5),
+    ]
+    return pd.concat((long, pd.DataFrame(rows)), ignore_index=True)
+
+
 def value(data: pd.DataFrame, variable: str, year: int, region: str = "Denmark") -> float:
     """The value of one variable, region and year."""
     rows = data[(data["Variable"] == variable) & (data["Region"] == region)]
@@ -94,7 +148,6 @@ def value(data: pd.DataFrame, variable: str, year: int, region: str = "Denmark")
 
 def test_electricity_variables(long: pd.DataFrame, definitions: Path) -> None:
     data, _ = convert(long, "Balmorel", definitions=definitions)
-    twh = 3.6e-3
 
     assert list(data.columns[:5]) == ["Model", "Scenario", "Region", "Variable", "Unit"]
     assert value(data, "Capacity|Electricity", 2030) == pytest.approx(2 + 1 + 3 + 4)
@@ -111,7 +164,6 @@ def test_electricity_variables(long: pd.DataFrame, definitions: Path) -> None:
     assert value(data, "Secondary Energy|Electricity|Fossil", 2030) == pytest.approx(16 * twh)
     assert value(data, "Secondary Energy|Electricity|Fossil|w/ CCS", 2030) == pytest.approx(5 * twh)
     assert value(data, "Secondary Energy|Electricity|Other", 2030) == pytest.approx(1 * twh)
-    assert "Secondary Energy|Heat" not in set(data["Variable"])
     assert set(data["Region"]) == {"Denmark"}
 
 
@@ -121,9 +173,62 @@ def test_notes(long: pd.DataFrame, definitions: Path) -> None:
 
     assert "MYSTERYFUEL" in text and "fuel has no Fuel Category" in text
     assert "ATLANTIS" in text
-    assert "Output of HEAT is not reported" in text
     backup = notes[notes["Note"].str.startswith("Backup units produced")]
     assert backup["Variable"].tolist() == ["Secondary Energy|Electricity|Gas|w/o CCS"]
+
+
+def test_heat_variables(heat_long: pd.DataFrame, definitions: Path) -> None:
+    data, notes = convert(heat_long, "Balmorel", definitions=definitions)
+
+    # The district heating area's gas boiler, and 3 TWh traced to the wood chips boiler
+    assert value(data, "Secondary Energy|Heat", 2030) == pytest.approx((3 + 3) * twh)
+    assert value(data, "Secondary Energy|Heat|Gas", 2030) == pytest.approx(3 * twh)
+    assert value(data, "Secondary Energy|Heat|Biomass", 2030) == pytest.approx(3 * twh)
+    assert value(data, "Secondary Energy|Heat", 2050) == pytest.approx(3 * twh)
+    # Exogenous demand and the 1 TWh sent net to an industry area
+    assert value(data, "Final Energy|Heat", 2030) == pytest.approx((4 + 1) * twh)
+    # Capacity in district heating only, without storage
+    assert value(data, "Capacity|Heat", 2030) == pytest.approx(1)
+    assert "Secondary Energy|Heat|Electricity" not in set(data["Variable"])
+
+    text = " ".join(notes["Note"])
+    assert "Output of HEAT in industry areas is not reported" in text and "2030: 8 TWh" in text
+    assert "Output of HEAT in individual areas is not reported" in text
+    assert "Demand of HEAT in category ENDO_OPTIFLOW in district heating areas is not reported" in text
+    assert "Heat Exchange: district heating sent 2030: 1 TWh" in text
+    assert "received 2030: 3 TWh" in text
+    assert "doesn't add up" not in text
+
+
+def test_heat_balance_is_checked(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """Results that don't list heat transmission leave district heating short of the 3 TWh it got
+    and with 1 TWh it sent unused."""
+    without_exchange = heat_long[heat_long["quantity"] != "exchange"]
+    _, notes = convert(without_exchange, "Balmorel", definitions=definitions)
+    off = notes[notes["Note"].str.startswith("District heating's heat doesn't add up")]
+    assert off["Region"].tolist() == ["Denmark"]
+    assert "gave 2030: -2, 2050: 0 TWh more" in off["Note"].iloc[0]
+
+
+def test_heat_exchange_without_units(long: pd.DataFrame, definitions: Path) -> None:
+    """Heat an industry area sends without making it goes to Other, as does heat that went
+    out of district heating and back in."""
+    rows = unit_rows("S1", 2030, "DENMARK", "GNR_BO_WOOD", "BOILERS", "WOODCHIPS", 1, 1, "HEAT", "DK_IND-MT-DH")
+    rows += [
+        exchange_row(2030, "DK_IND-HT-DH", "DENMARK_A", 2),
+        exchange_row(2030, "DENMARK_A", "DK_IND-MT-DH", 1),
+        exchange_row(2030, "DK_IND-MT-DH", "DK_IND-LT-DH", 2),
+        exchange_row(2030, "DK_IND-LT-DH", "DENMARK_A", 2),
+    ]
+    data, notes = convert(pd.concat((long, pd.DataFrame(rows))), "Balmorel", definitions=definitions)
+
+    assert value(data, "Secondary Energy|Heat", 2030) == pytest.approx((3 + 2 + 2) * twh)
+    # Half of what DK_IND-LT-DH sends is the wood chips', half came from district heating
+    assert value(data, "Secondary Energy|Heat|Biomass", 2030) == pytest.approx(1 * twh)
+    assert value(data, "Secondary Energy|Heat|Other", 2030) == pytest.approx((2 + 1) * twh)
+    assert value(data, "Final Energy|Heat", 2030) == pytest.approx(1 * twh)
+    text = " ".join(notes["Note"])
+    assert "no unit could be traced to" in text and "came from district heating" in text
 
 
 def test_backup_units_excluded(long: pd.DataFrame, definitions: Path) -> None:
@@ -176,6 +281,14 @@ def test_write_iamc(long: pd.DataFrame, definitions: Path, tmp_path: Path) -> No
     sheets = pd.read_excel(tmp_path / "iamc.xlsx", sheet_name=None)
     assert set(sheets) == {"data", "notes"}
     assert len(sheets["data"]) == len(data)
+
+
+def test_area_kinds_follow_caller_rules(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """Calling the industry areas district heating reports their heat, and leaves no Heat Exchange to split."""
+    rules = {"areas": pd.DataFrame({"pattern": ["(^|_)IND-"], "area_kind": ["district heating"]})}
+    data, _ = convert(heat_long, "Balmorel", definitions=definitions, rules=rules)
+    assert value(data, "Secondary Energy|Heat|Biomass", 2030) == pytest.approx(8 * twh)
+    assert value(data, "Final Energy|Heat", 2030) == pytest.approx((4 + 4) * twh)
 
 
 def test_repeated_rule_keys_are_refused() -> None:

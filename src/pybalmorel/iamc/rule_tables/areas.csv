@@ -1,0 +1,9 @@
+# Area Kind of each Balmorel area (AAA), by a regular expression searched for in the area name.
+# Rows passed by whoever converts are tried first, then these from the top; the first match
+# wins. Areas no pattern matches are district heating areas.
+#
+# The stems (stems.csv) can depend on the Area Kind: heat counts as centralized heat, and so is
+# reported, in district heating areas only.
+pattern,area_kind
+(^|_)IDVU,individual
+(^|_)IND-,industry

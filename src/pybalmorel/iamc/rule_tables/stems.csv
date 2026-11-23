@@ -1,8 +1,16 @@
 # The IAMC Variable each Balmorel quantity and commodity is reported under, before the
 # Mapping Rules (mapping.csv) add segments below it. Sums never go above the stem.
 #
-# Quantities: capacity (net of G_CAP_YCRAF categories), output (PRO_YCRAGF).
-# A quantity and commodity with no row here is not reported, and the Conversion Notes say so.
-quantity,commodity,stem
-capacity,ELECTRICITY,Capacity|Electricity
-output,ELECTRICITY,Secondary Energy|Electricity
+# Quantities: capacity (net of G_CAP_YCRAF categories), output (PRO_YCRAGF), and demand
+# (H_DEMAND_YCRA, in the categories demand_categories.csv counts as final). Demand has no unit,
+# so it is reported under the stem itself.
+# area_kind: the Area Kind (areas.csv) the row applies to; empty for any. A row for the area's
+# kind beats an empty one. Heat counts as centralized heat in district heating areas only.
+# A quantity and commodity with no row here is not reported, and the Conversion Notes say so,
+# with the amounts.
+quantity,commodity,area_kind,stem
+capacity,ELECTRICITY,,Capacity|Electricity
+output,ELECTRICITY,,Secondary Energy|Electricity
+capacity,HEAT,district heating,Capacity|Heat
+output,HEAT,district heating,Secondary Energy|Heat
+demand,HEAT,district heating,Final Energy|Heat

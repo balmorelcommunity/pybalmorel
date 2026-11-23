@@ -16,10 +16,12 @@ Created on 23.11.2026
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+import numpy as np
 import pandas as pd
 
 from .reader import read_mainresults
-from .rules import load_definitions, load_rules, load_template, match_mapping_rules, not_reported
+from .rules import (default_area_kind, load_definitions, load_rules, load_template, match_area_kinds,
+                    match_mapping_rules, not_reported)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -35,6 +37,16 @@ backup_choices = ("supply", "exclude")
 # Values smaller than this, in Balmorel's units, are solver noise and reported as 0
 noise = 1e-9
 note_columns = ["Scenario", "Region", "Variable", "Note"]
+# Conversion Notes printed at most; to_iamc returns them all
+print_limit = 30
+# Columns only some quantities have, '' for the others
+optional_columns = ["demand_category", "to_area"]
+# Demand category of the heat district heating sends net to an individual or industry area
+net_exchange = "NET_EXCHANGE"
+# Share of its heat a region's district heating may leave unaccounted for in a year before a
+# Conversion Note says it doesn't add up (and of all district heating heat that year, for
+# regions with little)
+balance_tolerance = 1e-2
 
 
 #%% ------------------------------- ###
@@ -53,8 +65,8 @@ def to_iamc(results: "MainResults",
 
     Reports the IAMC Variables that the rule tables cover (see pybalmorel/iamc/rule_tables/), in the
     units of the Definitions Snapshot, per Balmorel country and modelled year. Conversion Notes
-    say what was put under Other, what was left out, and how backup units were treated; they are
-    also printed.
+    say what was put under Other, what was left out, how backup units and Heat Exchange were
+    treated, and where district heating's heat doesn't add up; the first of them are printed.
 
     Args:
         results (MainResults): The loaded result files.
@@ -68,7 +80,7 @@ def to_iamc(results: "MainResults",
             (variables.csv, regions.csv). Defaults to the snapshot shipped with pybalmorel.
         rules (dict[str, str | Path | pd.DataFrame] | None, optional): Rule rows that take
             precedence over the shipped ones, keyed by table ('fuels', 'mapping', 'stems',
-            'aggregates', 'countries'). Defaults to None.
+            'aggregates', 'countries', 'areas', 'demand_categories'). Defaults to None.
         backup_units (str, optional): 'supply' counts backup units' output as supply under their
             fuel; 'exclude' leaves it out. Their capacity is never reported. Defaults to 'supply'.
         backup_pattern (str, optional): Regular expression that marks backup units by name.
@@ -105,9 +117,16 @@ def convert(long: pd.DataFrame,
     tables = load_rules(rules)
     notes = []
 
+    long = long.copy()
+    for column in optional_columns:
+        long[column] = long[column].fillna("") if column in long.columns else ""
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
     long = name_regions(long, tables["countries"], regions, notes)
+    long = attach_area_kinds(long, tables["areas"])
+    long = exchange_heat(long, tables["mapping"], notes)
+    check_heat_balance(long, tables["mapping"], tables["demand_categories"], notes)
+    long = select_demand(long, tables["demand_categories"], notes)
     long = attach_stems(long, tables["stems"], set(variables["variable"]), notes)
     long = attach_segments(long, tables, set(variables["variable"]), notes)
     long = treat_backup_units(long, backup_units, backup_pattern, notes)
@@ -203,15 +222,287 @@ def name_regions(long: pd.DataFrame, countries: pd.DataFrame, regions: pd.DataFr
 
 
 #%% ------------------------------- ###
-###     3. Stems and Segments       ###
+###    3. Areas and Heat Exchange   ###
+### ------------------------------- ###
+
+def attach_area_kinds(long: pd.DataFrame, area_rules: pd.DataFrame) -> pd.DataFrame:
+    """Add the Area Kind of each row's area, and of the receiving area of exchange rows.
+
+    Args:
+        long (pd.DataFrame): The long table.
+        area_rules (pd.DataFrame): The 'areas' rule table.
+
+    Returns:
+        pd.DataFrame: The long table with 'area_kind' and 'to_area_kind' ('' without a
+            receiving area) columns.
+    """
+    long = long.assign(area_kind=match_area_kinds(long["area"], area_rules), to_area_kind="")
+    receiving = long["to_area"] != ""
+    long.loc[receiving, "to_area_kind"] = match_area_kinds(long.loc[receiving, "to_area"], area_rules)
+    return long
+
+
+def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Turn Heat Exchange between district heating and other areas into demand and output.
+
+    Heat transmission is netted per pair of areas and year. Heat district heating sends net to
+    an individual or industry area becomes demand of the district heating area, in the category
+    NET_EXCHANGE. Heat it receives net becomes output of the district heating area, split over
+    the units that made it: the sending area's units, and those of the individual and industry
+    areas that sent heat to it, in proportion to the heat each area had (Output-Share Split).
+    Units whose output the Mapping Rules don't report (storage) make no heat for this. Heat
+    transmission between district heating areas stays inside centralized heat.
+
+    Args:
+        long (pd.DataFrame): The long table with Area Kinds.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table without exchange rows, with the demand and output rows
+            Heat Exchange gives.
+    """
+    exchange = long[long["quantity"] == "exchange"]
+    long = long[long["quantity"] != "exchange"]
+    if exchange.empty:
+        return long
+
+    flows = net_flows(exchange)
+    from_dh = flows["area_kind"] == default_area_kind
+    to_dh = flows["to_area_kind"] == default_area_kind
+    out_of_dh = flows[from_dh & ~to_dh]
+    into_dh = flows[~from_dh & to_dh]
+    among = flows[~from_dh & ~to_dh]
+
+    demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_area_kind="")
+    supplied = trace_heat(long, into_dh, among, out_of_dh, mapping)
+
+    # Say per scenario how much crossed, and per region what no unit could be traced to
+    sent = out_of_dh.groupby(["iamc_scenario", "year"])["value"].sum()
+    received = into_dh.groupby(["iamc_scenario", "year"])["value"].sum()
+    value_unit = exchange["value_unit"].iloc[0]
+    for scenario in flows["iamc_scenario"].unique():
+        notes.append(note(scenario, "", "", (
+            f"Heat Exchange: district heating sent {amounts(sent.get(scenario))} {value_unit} net to "
+            f"individual and industry areas, counted as its demand ({net_exchange}), and received "
+            f"{amounts(received.get(scenario))} {value_unit} net from them, counted as its output and "
+            "split over the units that made the heat, traced through heat transmission between "
+            "individual and industry areas. The output noted as not reported for those areas includes "
+            "the heat they sent."
+        )))
+    untraced = supplied[supplied["unit_name"] == ""]
+    for (scenario, region, source), rows in untraced.groupby(["iamc_scenario", "region", "fuel"]):
+        by_year = rows.groupby("year")["value"].sum()
+        what = ("came from district heating through individual and industry areas" if source == "district heating"
+                else "no unit could be traced to (the sending areas sent more than their units made)")
+        notes.append(note(scenario, region, "",
+                          f"Heat Exchange brought {amounts(by_year)} {value_unit} into district heating that {what}; "
+                          "reported under Other."))
+    supplied.loc[supplied["unit_name"] == "", "fuel"] = ""
+
+    return pd.concat((long, demand, supplied), ignore_index=True)
+
+
+def net_flows(exchange: pd.DataFrame) -> pd.DataFrame:
+    """Net heat transmission per pair of areas and year, leaving out flows between district heating areas.
+
+    Args:
+        exchange (pd.DataFrame): The exchange rows, from 'area' to 'to_area'.
+
+    Returns:
+        pd.DataFrame: One row per pair of areas and year with a net flow, from 'area' to
+            'to_area', with their Area Kinds and the (positive) value.
+    """
+    exchange = exchange[(exchange["area_kind"] != default_area_kind) | (exchange["to_area_kind"] != default_area_kind)]
+    keys = ["scenario", "iamc_scenario", "year", "country", "region", "value_unit"]
+    first = exchange["area"] <= exchange["to_area"]
+    pairs = exchange[keys].assign(
+        area_a=exchange["area"].where(first, exchange["to_area"]),
+        area_b=exchange["to_area"].where(first, exchange["area"]),
+        kind_a=exchange["area_kind"].where(first, exchange["to_area_kind"]),
+        kind_b=exchange["to_area_kind"].where(first, exchange["area_kind"]),
+        value=exchange["value"].where(first, -exchange["value"]),
+    )
+    net = pairs.groupby(keys + ["area_a", "area_b", "kind_a", "kind_b"], as_index=False)["value"].sum()
+
+    forward = net["value"] >= 0
+    flows = net[keys].assign(
+        area=net["area_a"].where(forward, net["area_b"]),
+        to_area=net["area_b"].where(forward, net["area_a"]),
+        area_kind=net["kind_a"].where(forward, net["kind_b"]),
+        to_area_kind=net["kind_b"].where(forward, net["kind_a"]),
+        value=net["value"].abs(),
+    )
+    flows = flows[flows["value"] >= noise].reset_index(drop=True)
+    for column in ("unit_name", "tech_type", "fuel", "demand_category"):
+        flows[column] = ""
+    flows["commodity"] = "HEAT"
+    return flows
+
+
+def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, out_of_dh: pd.DataFrame,
+               mapping: pd.DataFrame) -> pd.DataFrame:
+    """Split heat that individual and industry areas send into district heating over the units that made it.
+
+    The heat an area has is what its units make, plus what other individual and industry
+    areas and district heating send it; whatever it sends carries the mix of all of it. With
+    A[s, t] the share of area t's heat that t sends to area s, and D the heat each area gets
+    from outside the individual and industry areas, by origin, the heat each area has by origin
+    is X = (I - A)^-1 D. An area that sends more than it has gets the gap as untraced heat.
+
+    Args:
+        long (pd.DataFrame): The long table, without exchange rows.
+        into_dh (pd.DataFrame): Net flows from individual and industry areas into district heating.
+        among (pd.DataFrame): Net flows between individual and industry areas.
+        out_of_dh (pd.DataFrame): Net flows from district heating to individual and industry areas.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+
+    Returns:
+        pd.DataFrame: Output rows on the receiving district heating areas, with the units that
+            made the heat. Heat that came from district heating or no unit could be traced to has
+            no unit, and 'district heating' or 'untraced' as fuel.
+    """
+    columns = list(long.columns)
+    if into_dh.empty:
+        return long.iloc[0:0]
+
+    made = long[(long["quantity"] == "output") & (long["commodity"] == "HEAT")
+                & (long["area_kind"] != default_area_kind)]
+    units = made[["unit_name", "tech_type", "fuel", "commodity"]].drop_duplicates()
+    units["template"] = match_mapping_rules(units, mapping)
+    made = made.merge(units, on=["unit_name", "tech_type", "fuel", "commodity"])
+    made = made[made["template"] != not_reported].drop(columns="template")
+    mixed_units = set(made["value_unit"]) | set(into_dh["value_unit"])
+    if len(mixed_units) > 1:
+        raise Exception(f"Heat output and heat transmission come in different units {mixed_units}; can't trace them.")
+
+    traced = []
+    for (scenario, year), senders in into_dh.groupby(["scenario", "year"]):
+        links = among[(among["scenario"] == scenario) & (among["year"] == year)]
+        from_dh = out_of_dh[(out_of_dh["scenario"] == scenario) & (out_of_dh["year"] == year)]
+        areas = sorted(set(senders["area"]) | set(links["area"]) | set(links["to_area"]))
+        sources = made[(made["scenario"] == scenario) & (made["year"] == year)
+                       & made["area"].isin(areas)].reset_index(drop=True)
+        index = pd.Series(np.arange(len(areas)), index=areas)
+
+        def per_area(rows: pd.DataFrame, column: str) -> np.ndarray:
+            return rows.groupby(column)["value"].sum().reindex(areas, fill_value=0.0).to_numpy()
+
+        own = per_area(sources, "area")
+        dh_in = per_area(from_dh[from_dh["to_area"].isin(areas)], "to_area")
+        supply = own + dh_in + per_area(links, "to_area")
+        total = np.maximum(supply, per_area(links, "area") + per_area(senders, "area"))
+
+        shares_sent = np.zeros((len(areas), len(areas)))
+        np.add.at(shares_sent, (index.loc[links["to_area"]].to_numpy(), index.loc[links["area"]].to_numpy()),
+                  links["value"].to_numpy() / total[index.loc[links["area"]].to_numpy()])
+        origins = np.zeros((len(areas), len(sources) + 2))
+        origins[index.loc[sources["area"]].to_numpy(), np.arange(len(sources))] = sources["value"].to_numpy()
+        origins[:, -2] = dh_in
+        origins[:, -1] = total - supply
+        try:
+            had = np.linalg.solve(np.eye(len(areas)) - shares_sent, origins)
+        except np.linalg.LinAlgError:
+            had = np.zeros_like(origins)
+            had[:, -1] = total
+
+        rows = index.loc[senders["area"]].to_numpy()
+        sent = senders["value"].to_numpy()[:, None] * had[rows] / total[rows, None]
+        flow, origin = np.nonzero(np.abs(sent) >= noise)
+        receivers = senders.iloc[flow].reset_index(drop=True)
+        by_unit = origin < len(sources)
+        unit_rows = sources.iloc[origin[by_unit]].reset_index(drop=True)
+        rows_out = receivers[["scenario", "iamc_scenario", "year", "country", "region", "value_unit"]].assign(
+            area=receivers["to_area"], area_kind=default_area_kind, quantity="output", commodity="HEAT",
+            demand_category="", to_area="", to_area_kind="", value=sent[flow, origin],
+            unit_name="", tech_type="", fuel=np.where(origin == len(sources), "district heating", "untraced"),
+        )
+        for column in ("unit_name", "tech_type", "fuel"):
+            rows_out.loc[by_unit, column] = unit_rows[column].to_numpy()
+        traced.append(rows_out)
+
+    return pd.concat(traced, ignore_index=True)[columns]
+
+
+def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Keep the demand in categories that count as final demand.
+
+    Args:
+        long (pd.DataFrame): The long table.
+        demand_categories (pd.DataFrame): The 'demand_categories' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table without demand in other categories.
+    """
+    is_demand = long["quantity"] == "demand"
+    demand = long[is_demand].merge(demand_categories, on=["commodity", "demand_category"], how="left")
+
+    unknown = demand[demand["final"].isna()]
+    for (scenario, commodity, category, kind, value_unit), rows in unknown.groupby(
+            ["iamc_scenario", "commodity", "demand_category", "area_kind", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        notes.append(note(scenario, "", "", (
+            f"Demand of {commodity} in category {category} in {kind} areas is not reported (the "
+            f"'demand_categories' rules have no row for it): {amounts(by_year)} {value_unit}."
+        )))
+    kept = demand[demand["final"] == "yes"].drop(columns="final")
+    return pd.concat((long[~is_demand], kept), ignore_index=True)
+
+
+def check_heat_balance(long: pd.DataFrame, mapping: pd.DataFrame, demand_categories: pd.DataFrame,
+                       notes: list[dict]) -> None:
+    """Note where district heating's heat doesn't add up.
+
+    District heating balances when the output of its units (without storage), with the heat
+    Heat Exchange brought in, equals its demand in the categories the 'demand_categories'
+    rules know, with the heat it sent out. Heat the results make or use where the Reader doesn't
+    look, such as heat transmission they don't list or a model add-on's heat, breaks this, and
+    then Secondary Energy|Heat and Final Energy|Heat don't add up either.
+
+    Args:
+        long (pd.DataFrame): The long table after Heat Exchange, with all demand categories.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+        demand_categories (pd.DataFrame): The 'demand_categories' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+    """
+    heat = long[(long["commodity"] == "HEAT") & (long["area_kind"] == default_area_kind)]
+    output = heat[heat["quantity"] == "output"]
+    output = output[(output["unit_name"] == "") | (match_mapping_rules(output, mapping) != not_reported)]
+    demand = heat[heat["quantity"] == "demand"].merge(demand_categories, on=["commodity", "demand_category"])
+
+    keys = ["iamc_scenario", "region", "value_unit", "year"]
+    balance = pd.concat({"made": output.groupby(keys)["value"].sum(),
+                         "used": demand.groupby(keys)["value"].sum()}, axis=1).fillna(0.0)
+    balance["gap"] = balance["made"] - balance["used"]
+    # Off by more than the tolerance of the region's heat, and of the tolerance of all heat that year
+    all_heat = balance.groupby(level=["iamc_scenario", "value_unit", "year"])["made"].transform("sum")
+    scale = np.maximum(balance[["made", "used"]].max(axis=1), balance_tolerance * all_heat)
+    off = balance["gap"].abs() > balance_tolerance * scale
+    off = off.groupby(level=["iamc_scenario", "region", "value_unit"]).transform("any")
+    for (scenario, region, value_unit), rows in balance[off].groupby(level=["iamc_scenario", "region", "value_unit"]):
+        by_year = rows["gap"].droplevel([0, 1, 2])
+        notes.append(note(scenario, region, "", (
+            f"District heating's heat doesn't add up: its units and Heat Exchange gave "
+            f"{amounts(by_year.where(by_year.abs() >= noise, 0.0))} {value_unit} more than its demand used "
+            "(negative: less). "
+            "The results make or use heat that isn't read, such as heat transmission they don't list or "
+            "a model add-on's heat, so Secondary Energy|Heat less Final Energy|Heat isn't its losses."
+        )))
+
+
+#%% ------------------------------- ###
+###     4. Stems and Segments       ###
 ### ------------------------------- ###
 
 def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
                  notes: list[dict]) -> pd.DataFrame:
     """Add the stem of each row, leaving out quantities and commodities without one.
 
+    A stem row for the row's Area Kind beats one for any Area Kind.
+
     Args:
-        long (pd.DataFrame): The long table.
+        long (pd.DataFrame): The long table with Area Kinds.
         stems (pd.DataFrame): The 'stems' rule table.
         names (set[str]): IAMC Variables in the Definitions Snapshot.
         notes (list[dict]): Conversion Notes, appended to.
@@ -219,13 +510,26 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     Returns:
         pd.DataFrame: The rows with a stem, with a 'stem' column.
     """
-    long = long.merge(stems, on=["quantity", "commodity"], how="left")
-    long["stem"] = long["stem"].fillna("")
+    for_kind = stems[stems["area_kind"] != ""]
+    for_any = stems[stems["area_kind"] == ""].drop(columns="area_kind").rename(columns={"stem": "stem_any"})
+    long = long.merge(for_kind, on=["quantity", "commodity", "area_kind"], how="left")
+    long = long.merge(for_any, on=["quantity", "commodity"], how="left")
+    long["stem"] = long["stem"].fillna(long.pop("stem_any")).fillna("")
 
-    for (scenario, quantity, commodity), _ in long[long["stem"] == ""].groupby(
-            ["iamc_scenario", "quantity", "commodity"]):
-        notes.append(note(scenario, "", "",
-                          f"{quantity.capitalize()} of {commodity} is not reported: the 'stems' rules have no row for it."))
+    # Name the Area Kind only where the stems tell kinds apart
+    unreported = long[long["stem"] == ""]
+    kind_specific = for_kind.set_index(["quantity", "commodity"]).index
+    by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific)
+    unreported = unreported.assign(where=np.where(by_kind, " in " + unreported["area_kind"] + " areas", ""))
+    for (scenario, region, quantity, commodity, where, value_unit), rows in unreported.groupby(
+            ["iamc_scenario", "region", "quantity", "commodity", "where", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        if (by_year.abs() < noise).all():
+            continue
+        notes.append(note(scenario, region, "", (
+            f"{quantity.capitalize()} of {commodity}{where} is not reported (the 'stems' rules "
+            f"have no row for it): {amounts(by_year)} {value_unit}."
+        )))
 
     for (scenario, stem), _ in long[(long["stem"] != "") & ~long["stem"].isin(names)].groupby(
             ["iamc_scenario", "stem"]):
@@ -239,7 +543,9 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     """Add the IAMC Variable each row is reported under.
 
     'path' holds the segments the Mapping Rules give, and 'variable' the longest of its
-    prefixes in the snapshot, or '<stem>|Other' when even its first segment is missing.
+    prefixes in the snapshot, or '<stem>|Other' when even its first segment is missing. Rows
+    without a unit skip the Mapping Rules: demand is reported under the stem itself, and heat
+    Heat Exchange could trace to no unit under Other.
 
     Args:
         long (pd.DataFrame): The long table with stems.
@@ -251,20 +557,27 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
         pd.DataFrame: The reported rows, with 'category', 'path' and 'variable' columns.
     """
     categories = tables["fuels"].set_index("fuel")["category"]
+    has_unit = long["unit_name"] != ""
     long = long.assign(category=long["fuel"].map(categories))
     long["reason"] = ""
-    long.loc[long["category"].isna(), "reason"] = "fuel has no Fuel Category"
+    long.loc[has_unit & long["category"].isna(), "reason"] = "fuel has no Fuel Category"
     long["category"] = long["category"].fillna("Other")
 
     # Match rules once per unit, not per row
     unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
-    units = long[unit_columns].drop_duplicates().reset_index(drop=True)
+    units = long.loc[has_unit, unit_columns].drop_duplicates().reset_index(drop=True)
     units["template"] = match_mapping_rules(units, tables["mapping"])
     long = long.merge(units, on=unit_columns, how="left")
     long = long[long["template"] != not_reported].copy()
 
-    long.loc[long["template"] == "", "reason"] = "no Mapping Rule matches"
-    long.loc[long["template"] == "", "template"] = "Other"
+    no_unit = long["unit_name"] == ""
+    unmatched = ~no_unit & (long["template"] == "")
+    long.loc[unmatched, "reason"] = "no Mapping Rule matches"
+    long.loc[unmatched, "template"] = "Other"
+    demand = no_unit & (long["quantity"] == "demand")
+    long.loc[demand, "template"] = ""
+    long.loc[no_unit & ~demand, "template"] = "Other"
+    long.loc[no_unit & ~demand, "reason"] = "Heat Exchange traced it to no unit"
     long["path"] = [
         template.replace("{category}", category)
         for template, category in zip(long["template"], long["category"])
@@ -275,14 +588,16 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     long = long.merge(resolved, on=["stem", "path"], how="left")
 
     # Note what went into Other, and why
-    other = long[(long["variable"] == long["stem"] + "|Other") | (long["variable"] == long["stem"])].copy()
+    other = long[(long["path"] != "")
+                 & ((long["variable"] == long["stem"] + "|Other") | (long["variable"] == long["stem"]))].copy()
     first_segment = other["path"].str.split("|").str[0]
     other.loc[(other["reason"] == "") & (first_segment == "Other"), "reason"] = "Fuel Category Other"
     other.loc[other["reason"] == "", "reason"] = "no such IAMC Variable"
     for (scenario, region, variable), rows in other.groupby(["iamc_scenario", "region", "variable"]):
         contents = [
             f"{tech_type}/{fuel} ({reason}: '{path}')" if reason == "no such IAMC Variable"
-            else f"{tech_type}/{fuel} ({reason})"
+            else f"{tech_type}/{fuel} ({reason})" if tech_type or fuel
+            else f"heat ({reason})"
             for tech_type, fuel, path, reason in rows[["tech_type", "fuel", "path", "reason"]]
             .drop_duplicates().itertuples(index=False)
         ]
@@ -301,9 +616,11 @@ def resolve(stem: str, path: str, names: set[str]) -> str:
         names (set[str]): IAMC Variables in the Definitions Snapshot.
 
     Returns:
-        str: The longest prefix of '<stem>|<path>' in `names` that keeps at least one segment,
-            else '<stem>|Other', else the stem.
+        str: The stem if the path is empty. Else the longest prefix of '<stem>|<path>' in
+            `names` that keeps at least one segment, else '<stem>|Other', else the stem.
     """
+    if path == "":
+        return stem
     segments = path.split("|")
     for length in range(len(segments), 0, -1):
         candidate = "|".join([stem] + segments[:length])
@@ -313,7 +630,7 @@ def resolve(stem: str, path: str, names: set[str]) -> str:
 
 
 #%% ------------------------------- ###
-###         4. Backup Units         ###
+###         5. Backup Units         ###
 ### ------------------------------- ###
 
 def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: str,
@@ -338,16 +655,15 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
         by_year = rows.groupby("year")["value"].sum()
         if (by_year.abs() < noise).all():
             continue
-        amounts = ", ".join(f"{year}: {value:.4g}" for year, value in by_year.items())
         notes.append(note(scenario, region, variable,
-                          f"Backup units produced {amounts} {value_unit}; {treatment}."))
+                          f"Backup units produced {amounts(by_year)} {value_unit}; {treatment}."))
 
     leave_out = backup & ~output if backup_units == "supply" else backup
     return long[~leave_out]
 
 
 #%% ------------------------------- ###
-###          5. Summing Up          ###
+###          6. Summing Up          ###
 ### ------------------------------- ###
 
 def sum_to_variables(long: pd.DataFrame, variables: pd.DataFrame, aggregates: pd.DataFrame) -> pd.DataFrame:
@@ -457,7 +773,7 @@ def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series) -> pd.Dat
 
 
 #%% ------------------------------- ###
-###        6. Conversion Notes      ###
+###        7. Conversion Notes      ###
 ### ------------------------------- ###
 
 def note(scenario: str, region: str, variable: str, text: str) -> dict:
@@ -475,8 +791,22 @@ def note(scenario: str, region: str, variable: str, text: str) -> dict:
     return {"Scenario": scenario, "Region": region, "Variable": variable, "Note": text}
 
 
+def amounts(by_year: pd.Series | None) -> str:
+    """Write amounts per year for a Conversion Note, e.g. '2030: 1.2, 2050: 3.4'.
+
+    Args:
+        by_year (pd.Series | None): Values indexed by year; None for none.
+
+    Returns:
+        str: The amounts, or '0' if there are none.
+    """
+    if by_year is None or by_year.empty:
+        return "0"
+    return ", ".join(f"{year}: {value:.4g}" for year, value in by_year.items())
+
+
 def print_notes(notes: pd.DataFrame) -> None:
-    """Print Conversion Notes as warnings.
+    """Print Conversion Notes as warnings, at most print_limit of them.
 
     Args:
         notes (pd.DataFrame): Conversion Notes.
@@ -484,6 +814,8 @@ def print_notes(notes: pd.DataFrame) -> None:
     if notes.empty:
         return
     print(f"IAMC conversion: {len(notes)} Conversion Notes")
-    for scenario, region, variable, text in notes.itertuples(index=False):
+    for scenario, region, variable, text in notes.head(print_limit).itertuples(index=False):
         where = " | ".join(part for part in (scenario, region, variable) if part)
         print(f"  [{where}] {text}")
+    if len(notes) > print_limit:
+        print(f"  ... and {len(notes) - print_limit} more, in the Conversion Notes to_iamc returns.")

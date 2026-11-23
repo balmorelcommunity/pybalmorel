@@ -1,0 +1,14 @@
+# Which demand categories count as final demand. Rows marked 'yes' are reported under the stem
+# for demand of the commodity (stems.csv); rows marked 'no' are left out. A category with no row
+# is left out with a Conversion Note giving the amounts.
+#
+# HEAT categories are those of H_DEMAND_YCRA. The storage categories and TRANS_LOSSES are
+# losses, which show as the difference between Secondary Energy|Heat and Final Energy|Heat.
+# NET_EXCHANGE is not a Balmorel category: it is the heat district heating sends net to an
+# individual or industry area (Heat Exchange), which leaves centralized heat as final energy.
+commodity,demand_category,final
+HEAT,EXOGENOUS,yes
+HEAT,NET_EXCHANGE,yes
+HEAT,ENDO_INTRASTO,no
+HEAT,ENDO_INTERSTO,no
+HEAT,TRANS_LOSSES,no
