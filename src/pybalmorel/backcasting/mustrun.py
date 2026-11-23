@@ -9,8 +9,8 @@ MUSTRUN_ZONE_RRR.inc, MUSTRUN_GROUP.inc, MUSTRUN_GROUP_FFF.inc and, last,
 MUSTRUN_FLOOR.inc, whose existence switches the addon on.
 
 Created on 28.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

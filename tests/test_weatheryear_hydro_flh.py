@@ -6,8 +6,8 @@ ADR 0011) on small synthetic inflow series. GAMS-free: Balmorel's capacity,
 areas and base FLH are given as DataFrames.
 
 Created on 22.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

@@ -22,8 +22,8 @@ first run of a new Backcast Year takes Eurostat's electricity for heating
 instead (`heat='eurostat'`).
 
 Created on 26.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

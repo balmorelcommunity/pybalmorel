@@ -12,8 +12,8 @@ Everything but load_balmorel_hydro_inputs works on DataFrames, so it can be
 tested without GAMS.
 
 Created on 22.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###

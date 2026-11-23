@@ -6,8 +6,8 @@ Tests write_scenario_data, which turns WEATHERYEAR's CapDev output into the
 written text is checked.
 
 Created on 14.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

@@ -17,8 +17,8 @@ Bituminous coal is the most abundant form of coal, according to this source:
 https://swannscoalsupplies.co.uk/blogs/news/what-are-the-four-different-types-of-coal
 
 Created on 09.07.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

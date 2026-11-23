@@ -23,8 +23,8 @@ Then review `git diff src/pybalmorel/iamc/definitions/` and run
 new snapshot lacks.
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###

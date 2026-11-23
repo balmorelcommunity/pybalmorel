@@ -13,8 +13,8 @@ Also defines the fuel groups and the technology selection by acronym name
 that the must-run floor shares.
 
 Created on 28.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

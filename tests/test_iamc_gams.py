@@ -4,8 +4,8 @@ IAMC totals equal the raw results, and Mapping Rules and Fuel Categories cover
 every unit. Needs a GAMS installation and the shipped Definitions Snapshot.
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 import os
 import pandas as pd

@@ -5,8 +5,8 @@ Tests of the backcast toolbox that need the GAMS GDX library, kept out of
 test_backcasting.py so CI can run that without GAMS.
 
 Created on 28.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

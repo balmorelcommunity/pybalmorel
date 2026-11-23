@@ -23,8 +23,8 @@ Sources, retrieved 2026-10-22:
   measured. Calendar years.
 
 Created on 22.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 
 hydro_natural_inflow_twh = {

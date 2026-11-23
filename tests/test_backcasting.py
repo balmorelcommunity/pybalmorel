@@ -6,8 +6,8 @@ Calendar (docs/adr/0008), Price Year conversion (docs/adr/0009), the CO2 tax
 and fuel price grids, balopt.opt checks and the cross-border flow validation.
 
 Created on 15.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

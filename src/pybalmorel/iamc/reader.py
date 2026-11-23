@@ -6,8 +6,8 @@ names. It reads MainResults into one long table of what each unit does, which
 the GAMS-free conversion in convert.py turns into IAMC Variables.
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###

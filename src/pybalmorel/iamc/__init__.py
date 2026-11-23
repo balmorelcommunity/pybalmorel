@@ -10,8 +10,8 @@ of the IAMC common definitions in `definitions/`.
     write_iamc(data, notes, 'balmorel_iamc.xlsx')
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 from .convert import convert, to_iamc, write_iamc
 from .reader import read_mainresults

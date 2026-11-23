@@ -9,8 +9,8 @@ see pybalmorel.backcasting for that.
 Raw data is downloaded with `python -m pybalmorel.backcasting download`.
 
 Created on 18.06.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

@@ -9,8 +9,8 @@ the weather year wrote them. Writes WNDFLH_ENTSOE.inc and SOLEFLH_ENTSOE.inc
 and appends their $include to the scenario's WNDFLH.inc and SOLEFLH.inc.
 
 Created on 28.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

@@ -7,8 +7,8 @@ and a Template's Extended List. Also applies the Mapping Rules to units and
 checks that every rule targets names the snapshot still has.
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###

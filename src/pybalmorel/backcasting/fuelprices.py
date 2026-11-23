@@ -12,8 +12,8 @@ backcast Price Year (see pricelevel.py) and mapped onto the UTC Backcast
 Calendar (see calendar.py).
 
 Created on 13.08.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

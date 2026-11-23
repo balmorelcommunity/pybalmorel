@@ -6,8 +6,8 @@ csv's: flows keep ENTSO-E's raw zone names, net and gross border flows, zone
 outlines and the map itself.
 
 Created on 05.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

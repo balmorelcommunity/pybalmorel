@@ -4,8 +4,8 @@ Validation through Backcasting
 Download data from ENTSO-E and compare to Balmorel simulation of similar year
 
 Created on 24.06.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

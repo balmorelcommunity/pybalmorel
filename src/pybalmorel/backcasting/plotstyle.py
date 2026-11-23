@@ -7,8 +7,8 @@ dark theme. The dark theme uses Catppuccin Mocha colours on a transparent
 background, so the plots sit on the background of a dark slide.
 
 Created on 09.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 #%% ------------------------------- ###
 ###        0. Script Settings       ###

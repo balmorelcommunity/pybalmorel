@@ -8,8 +8,8 @@ names (e.g. 'DK_1', 'DE_LU', 'IT_NORD'): nothing is translated to Balmorel
 regions (see CONTEXT.md).
 
 Created on 05.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

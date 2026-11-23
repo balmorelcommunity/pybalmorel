@@ -5,8 +5,8 @@ Tests the plausibility check on the weather-year electricity demand profiles
 (see CONTEXT.md, Demand Profile Fallback) on small synthetic profiles. GAMS-free.
 
 Created on 26.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # %% ------------------------------- ###
 ###        0. Script Settings       ###

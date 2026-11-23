@@ -7,8 +7,8 @@ platform, drawn on ENTSO-E's own bidding zones as entsoe-py names them
 Balmorel regions or Canonical Region Names (see CONTEXT.md).
 
 Created on 05.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

@@ -3,8 +3,8 @@ GAMS-free tests of the IAMC conversion: the long table the Reader would give is
 built by hand, and converted against a small Definitions Snapshot.
 
 Created on 23.11.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 from pathlib import Path
 import pandas as pd

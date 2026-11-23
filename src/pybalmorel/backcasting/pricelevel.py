@@ -12,8 +12,8 @@ reproducible offline. Extend them once a year from:
 - EUR/USD: Eurostat ert_bil_eur_a, currency=USD, statinfo=AVG (USD per EUR)
 
 Created on 15.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

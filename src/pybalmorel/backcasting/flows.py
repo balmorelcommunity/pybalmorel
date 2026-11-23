@@ -6,8 +6,8 @@ overrides (docs/adr/0005, 0006, 0010) and the validation of Balmorel's flows
 against ENTSO-E's, both aggregated to Canonical Region Names (see CONTEXT.md)
 
 Created on 09.07.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #

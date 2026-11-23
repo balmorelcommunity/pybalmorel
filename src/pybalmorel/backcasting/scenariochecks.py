@@ -6,8 +6,8 @@ inputs pybalmorel generates for it. Nothing here edits the scenario - it
 only warns (see docs/adr/0006: pybalmorel writes data files, never options).
 
 Created on 15.10.2026
-@author: Mathias Berg Rosendal
-         PostDoc at DTU Management (Energy Economics & Modelling)
+@author: Claude, Anthropic
+         Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 # ------------------------------- #
 #        0. Script Settings       #
