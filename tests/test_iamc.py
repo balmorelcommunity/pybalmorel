@@ -248,6 +248,16 @@ def test_heat_variables(heat_long: pd.DataFrame, definitions: Path) -> None:
     assert "doesn't add up" not in text
 
 
+def test_notes_name_their_regions(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """Heat left out in several regions gets one note per scenario, with the total, that names them."""
+    german = unit_rows("S1", 2030, "GERMANY", "GNR_BO_WOOD", "BOILERS", "WOODCHIPS", 1, 2, "HEAT", "DE_IND-MT-DH")
+    _, notes = convert(pd.concat((heat_long, pd.DataFrame(german)), ignore_index=True), "Balmorel",
+                       definitions=definitions)
+    industry = notes[notes["Note"].str.startswith("Output of HEAT in industry areas")]
+    assert len(industry) == 1 and industry["Region"].iloc[0] == ""
+    assert industry["Note"].iloc[0].endswith("2030: 10 TWh in 2 regions: Denmark, Germany.")
+
+
 def test_heat_balance_is_checked(heat_long: pd.DataFrame, definitions: Path) -> None:
     """Results that don't list heat transmission leave district heating short of the 3 TWh it got
     and with 1 TWh it sent unused."""

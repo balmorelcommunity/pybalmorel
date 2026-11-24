@@ -9,8 +9,11 @@
 #
 # HYDROGEN categories are those of H2_DEMAND_YCR. ENDO_REGIONAL is flexible exogenous demand
 # and ENDO_OTHERTRANS the transport add-on's demand when its synthetic fuel is hydrogen.
-# ENDO_FUELCELL, ENDO_BIOMETHANE and ENDO_OPTIFLOW feed fuel cells, biomethanation and the
-# OptiFlow add-on's processes (e.g. making e-fuels), which turn it into other energy.
+# ENDO_FUELCELL and ENDO_BIOMETHANE feed fuel cells and biomethanation, which turn it into
+# other energy. ENDO_OPTIFLOW is what the OptiFlow add-on takes, which its processes mostly turn
+# into ammonia, methanol, Fischer-Tropsch fuels, hydrotreated biofuels or methane. Some OptiFlow
+# designs also liquefy part of it for fuel-cell ships, which is final use; only the OptiFlow
+# results tell how much, so a study where that part matters can't fix it with a row here.
 # ENDO_INTERSTO is storage loading less discharge, and the LOSSES categories are losses.
 commodity,demand_category,final
 HEAT,EXOGENOUS,yes

@@ -345,7 +345,7 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
                              to_area_kind="")
     supplied = trace_heat(long, into_dh, among, out_of_dh, mapping)
 
-    # Say per scenario how much crossed, and per region what no unit could be traced to
+    # Say per scenario how much crossed, and what no unit could be traced to
     sent = out_of_dh.groupby(["iamc_scenario", "year"])["value"].sum()
     received = into_dh.groupby(["iamc_scenario", "year"])["value"].sum()
     value_unit = exchange["value_unit"].iloc[0]
@@ -359,13 +359,16 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
             "the heat they sent."
         )))
     untraced = supplied[supplied["unit_name"] == ""]
-    for (scenario, region, source), rows in untraced.groupby(["iamc_scenario", "region", "fuel"]):
-        by_year = rows.groupby("year")["value"].sum()
+    for (scenario, source), rows in untraced.groupby(["iamc_scenario", "fuel"]):
+        by_region = per_region(rows)
+        if by_region.empty:
+            continue
         what = ("came from district heating through individual and industry areas" if source == "district heating"
                 else "no unit could be traced to (the sending areas sent more than their units made)")
-        notes.append(note(scenario, region, "",
-                          f"Heat Exchange brought {amounts(by_year)} {value_unit} into district heating that {what}; "
-                          "reported under Other."))
+        notes.append(note(scenario, "", "", (
+            f"Heat Exchange brought {amounts(by_region.sum())} {value_unit} into district heating in "
+            f"{list_regions(by_region.index)} that {what}; reported under Other."
+        )))
     supplied.loc[supplied["unit_name"] == "", "fuel"] = ""
 
     return pd.concat((long, demand, supplied), ignore_index=True)
@@ -618,14 +621,14 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     kind_specific = for_kind.set_index(["quantity", "commodity"]).index
     by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific) & (unreported["area_kind"] != "")
     unreported = unreported.assign(where=np.where(by_kind, " in " + unreported["area_kind"] + " areas", ""))
-    for (scenario, region, quantity, commodity, where, value_unit), rows in unreported.groupby(
-            ["iamc_scenario", "region", "quantity", "commodity", "where", "value_unit"]):
-        by_year = rows.groupby("year")["value"].sum()
-        if (by_year.abs() < noise).all():
+    for (scenario, quantity, commodity, where, value_unit), rows in unreported.groupby(
+            ["iamc_scenario", "quantity", "commodity", "where", "value_unit"]):
+        by_region = per_region(rows)
+        if by_region.empty:
             continue
-        notes.append(note(scenario, region, "", (
+        notes.append(note(scenario, "", "", (
             f"{quantity.capitalize()} of {commodity}{where} is not reported (the 'stems' rules "
-            f"have no row for it): {amounts(by_year)} {value_unit}."
+            f"have no row for it): {amounts(by_region.sum())} {value_unit} in {list_regions(by_region.index)}."
         )))
 
     for (scenario, stem), _ in long[(long["stem"] != "") & ~long["stem"].isin(names)].groupby(
@@ -690,16 +693,22 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     first_segment = other["path"].str.split("|").str[0]
     other.loc[(other["reason"] == "") & (first_segment == "Other"), "reason"] = "Fuel Category Other"
     other.loc[other["reason"] == "", "reason"] = "no such IAMC Variable"
+    contents = []
     for (scenario, region, variable), rows in other.groupby(["iamc_scenario", "region", "variable"]):
-        contents = [
+        what = [
             f"{tech_type}/{fuel} ({reason}: '{path}')" if reason == "no such IAMC Variable"
             else f"{tech_type}/{fuel} ({reason})" if tech_type or fuel
             else f"heat ({reason})"
             for tech_type, fuel, path, reason in rows[["tech_type", "fuel", "path", "reason"]]
             .drop_duplicates().itertuples(index=False)
         ]
+        contents.append((scenario, region, variable, "; ".join(what)))
+    # One note for the regions where the same went into the same variable
+    contents = pd.DataFrame(contents, columns=["iamc_scenario", "region", "variable", "what"])
+    for (scenario, variable, what), rows in contents.groupby(["iamc_scenario", "variable", "what"]):
         where = "Other" if variable.endswith("|Other") else "the total only, as there is no Other"
-        notes.append(note(scenario, region, variable, f"Reported under {where}: {'; '.join(contents)}."))
+        notes.append(note(scenario, "", variable,
+                          f"Reported under {where} in {list_regions(rows['region'])}: {what}."))
 
     return long.drop(columns=["template", "reason"])
 
@@ -747,13 +756,14 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
     output = backup & (long["quantity"] == "output")
 
     treatment = "counted as supply" if backup_units == "supply" else "left out"
-    for (scenario, region, variable, value_unit), rows in long[output].groupby(
-            ["iamc_scenario", "region", "variable", "value_unit"]):
-        by_year = rows.groupby("year")["value"].sum()
-        if (by_year.abs() < noise).all():
+    for (scenario, variable, value_unit), rows in long[output].groupby(["iamc_scenario", "variable", "value_unit"]):
+        by_region = per_region(rows)
+        if by_region.empty:
             continue
-        notes.append(note(scenario, region, variable,
-                          f"Backup units produced {amounts(by_year)} {value_unit}; {treatment}."))
+        notes.append(note(scenario, "", variable, (
+            f"Backup units produced {amounts(by_region.sum())} {value_unit} in "
+            f"{list_regions(by_region.index)}; {treatment}."
+        )))
 
     leave_out = backup & ~output if backup_units == "supply" else backup
     return long[~leave_out]
@@ -837,9 +847,11 @@ def limit_to_template(data: pd.DataFrame, template: str | Path, notes: list[dict
     """
     accepted_variables, accepted_regions = load_template(template)
     if accepted_regions:
-        for scenario, region in data[["Scenario", "Region"]].drop_duplicates().itertuples(index=False):
-            if region not in accepted_regions:
-                notes.append(note(scenario, region, "", "The Template's Region sheet doesn't list this region."))
+        for scenario, regions in data.groupby("Scenario")["Region"]:
+            unlisted = sorted(set(regions) - set(accepted_regions))
+            if unlisted:
+                notes.append(note(scenario, "", "",
+                                  f"The Template's Region sheet doesn't list {list_regions(unlisted)}."))
     return data[data["Variable"].isin(accepted_variables)]
 
 
@@ -878,7 +890,8 @@ def note(scenario: str, region: str, variable: str, text: str) -> dict:
 
     Args:
         scenario (str): IAMC Scenario.
-        region (str): IAMC Region, or Balmorel country if it has none; '' for all.
+        region (str): IAMC Region, or Balmorel country if it has none; '' for all, or for a
+            note that names its regions.
         variable (str): IAMC Variable; '' if none.
         text (str): What the note says.
 
@@ -886,6 +899,33 @@ def note(scenario: str, region: str, variable: str, text: str) -> dict:
         dict: The note as a row.
     """
     return {"Scenario": scenario, "Region": region, "Variable": variable, "Note": text}
+
+
+def per_region(rows: pd.DataFrame) -> pd.DataFrame:
+    """Sum values per region and year, for a Conversion Note that names its regions.
+
+    Args:
+        rows (pd.DataFrame): Rows of the long table with 'region', 'year' and 'value'.
+
+    Returns:
+        pd.DataFrame: Values with regions as index and years as columns, without regions
+            whose values are all solver noise.
+    """
+    by_region = rows.groupby(["region", "year"])["value"].sum().unstack("year", fill_value=0.0)
+    return by_region[(by_region.abs() >= noise).any(axis=1)]
+
+
+def list_regions(regions: pd.Index | pd.Series | list[str]) -> str:
+    """Name the regions a Conversion Note is about, e.g. 'Denmark' or '2 regions: Denmark, Germany'.
+
+    Args:
+        regions (pd.Index | pd.Series | list[str]): The regions.
+
+    Returns:
+        str: The region, or how many there are and their names.
+    """
+    regions = sorted(set(regions))
+    return regions[0] if len(regions) == 1 else f"{len(regions)} regions: {', '.join(regions)}"
 
 
 def amounts(by_year: pd.Series | None) -> str:
