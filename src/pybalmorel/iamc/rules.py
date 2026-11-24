@@ -32,7 +32,8 @@ rule_tables = {
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
-    "demand_categories": {"columns": ["commodity", "demand_category", "final"], "key": ["commodity", "demand_category"]},
+    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category"],
+                          "optional": ["fuel_category"], "key": ["commodity", "demand_category"]},
     "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
                              "removal", "emissions", "note"], "optional": ["factor", "note"], "key": None},
 }
@@ -51,6 +52,10 @@ optiflow_patterns = ["from_process", "to_process", "flow"]
 optiflow_targets = ["variable", "removal", "emissions"]
 # Area Kind of areas no pattern in the 'areas' table matches
 default_area_kind = "district heating"
+# What the 'final' column of the 'demand_categories' table may say: 'on-site' marks a category
+# whose part that units use where what they make isn't reported counts as final demand
+on_site_final = "on-site"
+final_choices = ("yes", "no", on_site_final)
 
 
 #%% ------------------------------- ###
@@ -141,11 +146,19 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             f"Mapping Rules need segments, or '{not_reported}' for not reported:\n"
             f"{tables['mapping'][empty].to_string()}"
         )
-    unclear = ~tables["demand_categories"]["final"].isin(["yes", "no"])
+    demand_categories = tables["demand_categories"]
+    unclear = ~demand_categories["final"].isin(final_choices)
     if unclear.any():
         raise Exception(
-            "The 'demand_categories' rules need 'yes' or 'no' under final:\n"
-            f"{tables['demand_categories'][unclear].to_string()}"
+            f"The 'demand_categories' rules need one of {list(final_choices)} under final:\n"
+            f"{demand_categories[unclear].to_string()}"
+        )
+    unknown = ((demand_categories["final"] == on_site_final)
+               & ~demand_categories["fuel_category"].isin(tables["fuels"]["category"]))
+    if unknown.any():
+        raise Exception(
+            f"'demand_categories' rows marked '{on_site_final}' need a fuel_category that the 'fuels' rules give "
+            f"some fuel: that of the fuels whose input counts.\n{demand_categories[unknown].to_string()}"
         )
     for pattern in tables["areas"]["pattern"]:
         try:

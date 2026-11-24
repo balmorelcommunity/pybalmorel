@@ -40,16 +40,20 @@ long_columns = {
 extra_columns = ["to_country", "stated_unit", "from_process", "to_process", "flow"]
 
 # The symbols each quantity is read from, the commodity they are of if they don't say, whether
-# every scenario must have them, and column renames before long_columns applies. Hydrogen
-# demand and transmission are per region, so their rows have no area. Emissions and captured
-# CO2 are per unit but not per commodity; their unit is fixed, as results don't always state it
-# right, and the units they may state for it are listed. Fuel input is per unit too; it is only
-# used to derive captured CO2 where the results don't give it.
+# every scenario must have them, and column renames before long_columns applies. Electricity
+# and hydrogen demand and transmission are per region, so their rows have no area. Emissions and
+# captured CO2 are per unit but not per commodity; their unit is fixed, as results don't always
+# state it right, and the units they may state for it are listed. Fuel input is per unit too; it
+# is not reported, but restates electrolysers' capacity as input, gives the electricity that heat
+# units outside district heating use, and derives captured CO2 where the results don't give it.
 quantity_symbols = [
     {"quantity": "capacity", "symbol": "G_CAP_YCRAF", "commodity": None, "required": True, "renames": {}},
     {"quantity": "output", "symbol": "PRO_YCRAGF", "commodity": None, "required": True, "renames": {}},
+    {"quantity": "demand", "symbol": "EL_DEMAND_YCR", "commodity": "ELECTRICITY", "required": False, "renames": {}},
     {"quantity": "demand", "symbol": "H_DEMAND_YCRA", "commodity": "HEAT", "required": False, "renames": {}},
     {"quantity": "demand", "symbol": "H2_DEMAND_YCR", "commodity": "HYDROGEN", "required": False, "renames": {}},
+    {"quantity": "exchange", "symbol": "X_FLOW_YCR", "commodity": "ELECTRICITY", "required": False,
+     "renames": {"To": "To region"}},
     {"quantity": "exchange", "symbol": "XH_FLOW_YCA", "commodity": "HEAT", "required": False,
      "renames": {"From": "Area"}},
     {"quantity": "exchange", "symbol": "XH2_FLOW_YCR", "commodity": "HYDROGEN", "required": False,
@@ -79,12 +83,13 @@ def read_mainresults(results: "MainResults",
     """Read the long table of what each unit and area does from MainResults.
 
     Capacity is net: the sum of G_CAP_YCRAF's exogenous, endogenous and (negative)
-    decommissioning categories. Demand (H_DEMAND_YCRA per area, H2_DEMAND_YCR per region) and
-    exchange (XH_FLOW_YCA, heat transmission from 'area' to 'to_area'; XH2_FLOW_YCR, hydrogen
-    transmission between regions) are read where the results have them. Exchange rows say which
-    country they go to. Emissions (EMI_YCRAG), captured CO2 (CC_YCRAG) and fuel input
-    (F_CONS_YCRA) are per unit, with no commodity. Where a scenario was linked to OptiFlow, OptiFlow's flows between processes
-    (VFLOW_Opti_C) are read too.
+    decommissioning categories. Demand (EL_DEMAND_YCR and H2_DEMAND_YCR per region, H_DEMAND_YCRA
+    per area) and exchange (X_FLOW_YCR and XH2_FLOW_YCR, electricity and hydrogen transmission
+    between regions; XH_FLOW_YCA, heat transmission from 'area' to 'to_area') are read where the
+    results have them. Exchange rows say which country they go to. Emissions (EMI_YCRAG),
+    captured CO2 (CC_YCRAG) and fuel input (F_CONS_YCRA) are per unit, with no commodity. Where a
+    scenario was linked to OptiFlow, OptiFlow's flows between processes (VFLOW_Opti_C) are read
+    too.
 
     Args:
         results (MainResults): The loaded result files.

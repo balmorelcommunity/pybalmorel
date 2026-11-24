@@ -21,7 +21,9 @@
 #             Mapping Rule 'optiflow' marks): factor is its CO2 per unit of flow. Reported under
 #             emissions, which may be empty, and checked against what the results carry.
 #   report    A flow reported under variable as it is, e.g. the hydrogen ships take in under
-#             'Final Energy|Bunkers|Hydrogen'.
+#             'Final Energy|Bunkers|Hydrogen', or the electricity battery-electric ships take in
+#             under 'Final Energy|Bunkers|Electricity' (which Balmorel's ENDO_OPTIFLOW electricity
+#             demand includes, so it stays out of Final Energy|Electricity).
 # A pool's Stored Share is its stored CO2 over the CO2 entering it, summed over all countries,
 # per year, and at most 1. Fossil CO2 that Balmorel's units capture needs no pool: their
 # emissions are already net of it.

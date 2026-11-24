@@ -2,10 +2,10 @@
 # Mapping Rules (mapping.csv) add segments below it. Sums never go above the stem.
 #
 # Quantities: capacity (net of G_CAP_YCRAF categories), output (PRO_YCRAGF), demand
-# (H_DEMAND_YCRA per area and H2_DEMAND_YCR per region, in the categories demand_categories.csv
-# counts as final), and trade (net exports: transmission to other countries less transmission
-# from them, less what import units bring in from outside the model). Demand and trade have no
-# unit, so they are reported under the stem itself.
+# (H_DEMAND_YCRA per area, EL_DEMAND_YCR and H2_DEMAND_YCR per region, in the categories
+# demand_categories.csv counts as final), and trade (net exports: transmission to other countries
+# less transmission from them, less what import units bring in from outside the model). Demand
+# and trade have no unit, so they are reported under the stem itself.
 # Emissions (EMI_YCRAG) and captured CO2 (CC_YCRAG) are per unit and split over the commodities
 # it makes in proportion to its output (Output-Share Split). Emissions are net: less the stored
 # part of the CO2 captured from biomass, which is also reported as removal (Carbon Removal).
@@ -25,6 +25,8 @@
 quantity,commodity,area_kind,stem,note
 capacity,ELECTRICITY,,Capacity|Electricity
 output,ELECTRICITY,,Secondary Energy|Electricity
+demand,ELECTRICITY,,Final Energy|Electricity,"Total only: Balmorel's exogenous electricity demand isn't split by sector. Includes the electricity that heat units in individual and industry areas use, and that of electric vehicles and the transport add-on where the results give it; leaves out what carbon capture and the OptiFlow add-on use."
+trade,ELECTRICITY,,Trade|Secondary Energy|Electricity [Volume]
 capacity,HEAT,district heating,Capacity|Heat
 output,HEAT,district heating,Secondary Energy|Heat
 demand,HEAT,district heating,Final Energy|Heat

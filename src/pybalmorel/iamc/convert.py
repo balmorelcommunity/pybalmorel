@@ -21,7 +21,7 @@ import pandas as pd
 
 from .reader import read_mainresults
 from .rules import (default_area_kind, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
-                    match_mapping_rules, match_optiflow_rules, not_reported, optiflow_unit, pool_roles)
+                    match_mapping_rules, match_optiflow_rules, not_reported, on_site_final, optiflow_unit, pool_roles)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -54,6 +54,9 @@ unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
 carbon_quantities = ("emissions", "captured")
 # Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
 biogenic_category = "Biomass"
+# Commodity and Fuel Category of the units whose capacity is reported as the fuel they take in:
+# electrolysers, usually given by electricity input, while Balmorel states hydrogen output
+input_capacity = ("HYDROGEN", "Electricity")
 # How Conversion Notes name quantities that aren't plain words
 quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
                    "input": "fuel input"}
@@ -61,6 +64,8 @@ quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from bioma
 heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
 net_exchange = "NET_EXCHANGE"
+# Demand category of the part of an 'on-site' category that units use where what they make isn't reported
+on_site = "ON_SITE"
 # Share of a commodity's supply or demand in a region and year that may go unaccounted for before
 # a Conversion Note says it doesn't add up (and of all its demand that year, for regions with
 # little)
@@ -85,7 +90,9 @@ def to_iamc(results: "MainResults",
     Reports the IAMC Variables that the rule tables cover (see pybalmorel/iamc/rule_tables/), in the
     units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
     between countries, and what import units bring in from outside the model, are reported as
-    Trade (net exports). Emissions are net of the stored part of the CO2 captured from biomass,
+    Trade (net exports). Electrolysers' capacity is restated as electricity input. The electricity
+    heat units in individual and industry areas use counts as final energy, as their heat isn't
+    centralized heat. Emissions are net of the stored part of the CO2 captured from biomass,
     which is also reported as Carbon Removal. Where the results give no captured CO2, that of
     units marked w/ CCS is derived from their fuel input. Without OptiFlow, all captured CO2
     counts as stored. For scenarios linked to OptiFlow, OptiFlow's results are reported as the
@@ -159,6 +166,7 @@ def convert(long: pd.DataFrame,
     note_stated_units(long, notes)
     flows = long[long["quantity"] == "flow"]
     long = long[long["quantity"] != "flow"]
+    long = restate_electrolyser_capacity(long, tables["fuels"], notes)
     long = derive_capture(long, tables["mapping"], notes)
     shares = pool_shares(flows, tables["optiflow"], notes)
     check_fuel_rules(carried, flows, tables["optiflow"], notes)
@@ -168,6 +176,7 @@ def convert(long: pd.DataFrame,
     flows = name_regions(flows, tables["countries"], regions, notes)
     long = attach_area_kinds(long, tables["areas"])
     long = exchange_heat(long, tables["mapping"], notes)
+    long = carve_on_site(long, tables["stems"], tables["demand_categories"], tables["fuels"], notes)
     check_balances(long, tables["stems"], tables["mapping"], tables["demand_categories"], notes)
     long = select_demand(long, tables["demand_categories"], notes)
     long = net_emissions(long, shares, linked, tables, notes)
@@ -545,6 +554,90 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
     return pd.concat(traced, ignore_index=True).reindex(columns=columns, fill_value="")
 
 
+def carve_on_site(long: pd.DataFrame, stems: pd.DataFrame, demand_categories: pd.DataFrame, fuels: pd.DataFrame,
+                  notes: list[dict]) -> pd.DataFrame:
+    """Move the part of 'on-site' demand categories that is used where what it makes isn't reported, and drop fuel input.
+
+    A demand category the 'demand_categories' rules mark 'on-site', such as
+    ENDOGENOUS_ELECT2HEAT (the electricity heat units take in), is split. Units none of whose
+    output has an 'output' stem for their Area Kind, such as heat pumps in individual and
+    industry areas, whose heat isn't centralized heat, are where the energy ends up: their
+    fuel input of the row's Fuel Category moves from the category to category ON_SITE, per
+    IAMC Region and year. Totals don't change, so the Commodity Balance is checked as before.
+
+    Args:
+        long (pd.DataFrame): The long table with Area Kinds, with fuel input.
+        stems (pd.DataFrame): The 'stems' rule table.
+        demand_categories (pd.DataFrame): The 'demand_categories' rule table.
+        fuels (pd.DataFrame): The 'fuels' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table without fuel input, with demand rows moving the part used
+            on site from each 'on-site' category to ON_SITE.
+    """
+    is_input = long["quantity"] == "input"
+    used = long[is_input & (long["value"] >= noise)]
+    long = long[~is_input]
+    split = demand_categories[demand_categories["final"] == on_site_final]
+    if split.empty or used.empty:
+        return long
+
+    # Units none of whose output is reported in their kind of area
+    output = long[(long["quantity"] == "output") & (long["value"] >= noise)]
+    output_stems = stems[stems["quantity"] == "output"]
+    with_stem = set(zip(output_stems["commodity"], output_stems["area_kind"]))
+    reported = [(commodity, kind) in with_stem or (commodity, "") in with_stem
+                for commodity, kind in zip(output["commodity"], output["area_kind"])]
+    unit_keys = ["scenario", "country", "area", "unit_name", "tech_type", "fuel"]
+    any_reported = output.assign(reported=reported).groupby(unit_keys)["reported"].any()
+    on_site_units = any_reported[~any_reported].index
+    categories = fuels.set_index("fuel")["category"]
+
+    keys = ["scenario", "iamc_scenario", "year", "country", "region", "value_unit"]
+    moved = []
+    for rule in split.itertuples(index=False):
+        taken = used[(used["fuel"].map(categories) == rule.fuel_category)
+                     & pd.MultiIndex.from_frame(used[unit_keys]).isin(on_site_units)]
+        if taken.empty:
+            continue
+        amount = taken.groupby(keys)["value"].sum()
+        demand = long[(long["quantity"] == "demand") & (long["commodity"] == rule.commodity)
+                      & (long["demand_category"] == rule.demand_category)]
+        given = demand.groupby(keys)["value"].sum().reindex(amount.index, fill_value=0.0)
+        rest = demand.groupby(keys)["value"].sum().sub(amount, fill_value=0.0)
+        carved = amount.reset_index().assign(quantity="demand", commodity=rule.commodity)
+        moved += [carved.assign(demand_category=on_site),
+                  carved.assign(demand_category=rule.demand_category, value=-carved["value"])]
+
+        for (scenario, value_unit), rows in taken.groupby(["iamc_scenario", "value_unit"]):
+            kinds = " and ".join(sorted(set(rows["area_kind"])))
+            in_scenario = ((rest.index.get_level_values("iamc_scenario") == scenario)
+                           & (rest.index.get_level_values("value_unit") == value_unit))
+            left = rest[in_scenario].groupby(level="year").sum()
+            notes.append(note(scenario, "", "", (
+                f"Of {rule.commodity} demand in category {rule.demand_category}, what units in {kinds} areas take in "
+                f"as {rule.fuel_category} fuels counts as final demand ({on_site}), as what they make there isn't "
+                f"reported: {amounts(rows.groupby('year')['value'].sum())} {value_unit}. The rest, "
+                f"{amounts(left)} {value_unit}, does not. Units: {list_names(rows['tech_type'])}."
+            )))
+        over = amount[amount - given > balance_tolerance * given.abs() + noise]
+        for (scenario, value_unit), rows in over.groupby(level=["iamc_scenario", "value_unit"]):
+            regions = rows.index.get_level_values("region")
+            notes.append(note(scenario, "", "", (
+                f"In {list_regions(regions)}, units in areas whose output isn't reported took in "
+                f"{amounts(rows.groupby(level='year').sum())} {value_unit} of {rule.fuel_category} fuels, more than "
+                f"{rule.commodity} demand in category {rule.demand_category} there "
+                f"({amounts(given[rows.index].groupby(level='year').sum())} {value_unit}). All of it counts as final "
+                f"demand ({on_site}); the category may not cover all their use."
+            )))
+
+    if not moved:
+        return long
+    moved = pd.concat(moved, ignore_index=True).reindex(columns=long.columns, fill_value="")
+    return pd.concat((long, moved), ignore_index=True)
+
+
 def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
     """Keep the demand in categories that count as final demand.
 
@@ -630,15 +723,26 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
         scale = np.maximum(balance[["supply", "used"]].abs().max(axis=1), balance_tolerance * everywhere)
         off = balance["gap"].abs() > balance_tolerance * scale
         off = off.groupby(level=["iamc_scenario", "region", "value_unit"]).transform("any")
+        by_category = known.groupby(keys + ["demand_category"])["value"].sum()
         for (scenario, region, value_unit), gaps in balance[off].groupby(level=["iamc_scenario", "region", "value_unit"]):
             by_year = gaps["gap"].droplevel([0, 1, 2])
-            notes.append(note(scenario, region, "", (
+            text = (
                 f"{commodity}{where} doesn't add up: its output less net exports was "
                 f"{amounts(by_year.where(by_year.abs() >= noise, 0.0))} {value_unit} more than its demand in the "
                 "categories the 'demand_categories' rules know (negative: less). The results make, use or move "
                 f"{commodity} where the Reader doesn't look, such as transmission they don't list or a model "
                 "add-on's, so its reported supply and demand don't add up either."
-            )))
+            )
+            # Use given with the wrong sign shows as a gap of twice its size
+            place = pd.MultiIndex.from_frame(by_category.index.to_frame()[["iamc_scenario", "region", "value_unit"]])
+            negative = by_category[place.isin([(scenario, region, value_unit)]) & (by_category < -noise)]
+            negative = negative.droplevel(["iamc_scenario", "region", "value_unit"])
+            if not negative.empty:
+                listed = "; ".join(f"{category} {amounts(rows.droplevel('demand_category'))} {value_unit}"
+                                   for category, rows in negative.groupby(level="demand_category"))
+                text += (f" Its demand is negative there in categories {listed}: if that is use given with the "
+                         "wrong sign, it accounts for a gap of twice its size.")
+            notes.append(note(scenario, region, "", text))
 
 
 #%% ------------------------------- ###
@@ -708,15 +812,79 @@ def note_stated_units(long: pd.DataFrame, notes: list[dict]) -> None:
         )))
 
 
+def restate_electrolyser_capacity(long: pd.DataFrame, fuels: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Restate electrolysers' capacity from the hydrogen they make to the electricity they take in.
+
+    Electrolysers (units making the commodity of input_capacity from fuels of its Fuel Category)
+    are usually reported by electricity input, while Balmorel states their capacity as hydrogen
+    output. Each unit's capacity is multiplied by its fuel input per hydrogen output, summed over
+    the years and areas where the results give both, in the same Balmorel scenario, so years
+    it stands idle get the same factor. All its input counts, also where it delivers heat too.
+    Capacity of units that never make hydrogen, or whose fuel input the results don't give,
+    can't be restated and is left out.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios, with fuel input.
+        fuels (pd.DataFrame): The 'fuels' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table with electrolysers' capacity on the input side.
+    """
+    commodity, category = input_capacity
+    by_input = fuels.loc[fuels["category"] == category, "fuel"]
+    is_capacity = (long["quantity"] == "capacity") & (long["commodity"] == commodity) & long["fuel"].isin(by_input)
+    if not is_capacity.any():
+        return long
+
+    # Fuel input per output, where the results give both in the same unit of energy
+    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel", "value_unit"]
+    unit_keys = ["scenario", "unit_name", "tech_type", "fuel"]
+    made = long[(long["quantity"] == "output") & (long["commodity"] == commodity) & (long["value"] >= noise)]
+    used = long[(long["quantity"] == "input") & (long["value"] >= noise)]
+    both = pd.concat((made.groupby(keys)["value"].sum().rename("made"),
+                      used.groupby(keys)["value"].sum().rename("used")), axis=1, join="inner")
+    per_output = both.groupby(unit_keys)[["used", "made"]].sum()
+    per_output = (per_output["used"] / per_output["made"]).rename("per_output")
+
+    capacity = long[is_capacity].join(per_output, on=unit_keys)
+    restated = capacity[capacity["per_output"].notna()]
+    restated = restated.assign(value=restated["value"] * restated["per_output"])
+    left_out = capacity[capacity["per_output"].isna() & (capacity["value"].abs() >= noise)]
+
+    for (scenario, value_unit), rows in restated.groupby(["iamc_scenario", "value_unit"]):
+        stated = capacity.loc[rows.index]
+        lowest, highest = (f"{factor:.4g}" for factor in (rows["per_output"].min(), rows["per_output"].max()))
+        factors = lowest if lowest == highest else f"{lowest} to {highest}"
+        notes.append(note(scenario, "", "", (
+            "Electrolysers' capacity is reported as the electricity they take in, as is usual for electrolysers; "
+            "the results state it as the hydrogen they make. Each unit's capacity is multiplied by its electricity "
+            f"input per hydrogen output in the results ({factors}), counting all its input also where it delivers "
+            "heat too: "
+            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit} of electricity input, from "
+            f"{amounts(stated.groupby('year')['value'].sum())} {value_unit} of hydrogen output. Total hydrogen "
+            "capacity adds this to other units' hydrogen output capacity."
+        )))
+    for (scenario, value_unit), rows in left_out.groupby(["iamc_scenario", "value_unit"]):
+        notes.append(note(scenario, "", "", (
+            "Electrolysers that make no hydrogen in any year of the results, or whose electricity input the results "
+            "don't give, can't have their capacity restated as electricity input; not reported: "
+            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit} of hydrogen output. Units: "
+            f"{list_names(rows['unit_name'])}."
+        )))
+
+    restated = restated.drop(columns="per_output")
+    return pd.concat((long[~is_capacity], restated), ignore_index=True)
+
+
 def derive_capture(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
-    """Derive the CO2 that units marked w/ CCS capture where the results don't give it, and drop fuel input.
+    """Derive the CO2 that units marked w/ CCS capture where the results don't give it.
 
     For Balmorel scenarios whose results give no captured CO2, a unit the Mapping Rules mark
     w/ CCS captures what it would emit without CCS, less what it emits: its fuel input times
     the emission factor of its fuel, less its emissions. The emission factor is fitted to the
     units without CCS that burn the fuel in the same IAMC Scenario (their emissions over their
-    fuel input), and only used if it fits each of them to within balance_tolerance. Fuel input
-    itself isn't reported.
+    fuel input), and only used if it fits each of them to within balance_tolerance.
 
     Args:
         long (pd.DataFrame): The long table with IAMC Scenarios, without OptiFlow's flows.
@@ -724,11 +892,9 @@ def derive_capture(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict])
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table without fuel input, with the derived captured CO2.
+        pd.DataFrame: The long table with the derived captured CO2.
     """
-    is_input = long["quantity"] == "input"
-    burnt = long[is_input & (long["value"] >= noise)]
-    long = long[~is_input]
+    burnt = long[(long["quantity"] == "input") & (long["value"] >= noise)]
     without = set(burnt["scenario"]) - set(long.loc[long["quantity"] == "captured", "scenario"])
     burnt = burnt[burnt["scenario"].isin(without)]
     if burnt.empty:

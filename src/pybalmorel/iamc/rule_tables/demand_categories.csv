@@ -2,6 +2,11 @@
 # for demand of the commodity (stems.csv); rows marked 'no' are left out. A category with no row
 # is left out with a Conversion Note giving the amounts.
 #
+# 'on-site' splits a category: the part of it that units take in as fuels of Fuel Category
+# fuel_category (fuels.csv), in areas where none of what they make is reported (no 'output' stem
+# for the Area Kind), counts as final demand, in category ON_SITE; the rest is left out. ON_SITE
+# is not a Balmorel category, and needs its own row.
+#
 # HEAT categories are those of H_DEMAND_YCRA. The storage categories and TRANS_LOSSES are
 # losses, which show as the difference between Secondary Energy|Heat and Final Energy|Heat.
 # NET_EXCHANGE is not a Balmorel category: it is the heat district heating sends net to an
@@ -15,18 +20,45 @@
 # designs also liquefy part of it for fuel-cell ships, which is final use; only the OptiFlow
 # results tell how much, so a study where that part matters can't fix it with a row here.
 # ENDO_INTERSTO is storage loading less discharge, and the LOSSES categories are losses.
-commodity,demand_category,final
-HEAT,EXOGENOUS,yes
-HEAT,NET_EXCHANGE,yes
-HEAT,ENDO_INTRASTO,no
-HEAT,ENDO_INTERSTO,no
-HEAT,TRANS_LOSSES,no
-HYDROGEN,EXOGENOUS,yes
-HYDROGEN,ENDO_REGIONAL,yes
-HYDROGEN,ENDO_OTHERTRANS,yes
-HYDROGEN,ENDO_FUELCELL,no
-HYDROGEN,ENDO_BIOMETHANE,no
-HYDROGEN,ENDO_OPTIFLOW,no
-HYDROGEN,ENDO_INTERSTO,no
-HYDROGEN,DIST_LOSSES,no
-HYDROGEN,TRANS_LOSSES,no
+#
+# ELECTRICITY categories are those of EL_DEMAND_YCR. EXO_TRANS is the transport add-on's
+# demand, ENDO_EV that of electric vehicles, and ENDO_DR the net effect of demand response,
+# which can be negative. ENDOGENOUS_ELECT2HEAT is what heat units take in: those of individual
+# and industry areas make heat that isn't reported as centralized heat, so the electricity they
+# use is final; that of district heating units is not, as their heat is. ENDO_H2 and
+# ENDO_BIOMETHANE feed electrolysers and biomethanation. ENDO_CCS is what carbon capture uses;
+# IAMC has Final Energy|Carbon Management|Electricity for it, but whether IAMC counts that in
+# Final Energy|Electricity isn't settled here, so it is left out. ENDO_OPTIFLOW is what the
+# OptiFlow add-on takes, net of what it gives back; electricity OptiFlow passes on to final use,
+# such as battery-electric ships, can be reported with 'report' rules (optiflow.csv). Some
+# results give ENDO_OPTIFLOW with the wrong sign, which shows as a Commodity Balance that
+# doesn't add up. ENDO_INTRASTO is storage loading less discharge, and the LOSSES categories are
+# losses.
+commodity,demand_category,final,fuel_category
+HEAT,EXOGENOUS,yes,
+HEAT,NET_EXCHANGE,yes,
+HEAT,ENDO_INTRASTO,no,
+HEAT,ENDO_INTERSTO,no,
+HEAT,TRANS_LOSSES,no,
+HYDROGEN,EXOGENOUS,yes,
+HYDROGEN,ENDO_REGIONAL,yes,
+HYDROGEN,ENDO_OTHERTRANS,yes,
+HYDROGEN,ENDO_FUELCELL,no,
+HYDROGEN,ENDO_BIOMETHANE,no,
+HYDROGEN,ENDO_OPTIFLOW,no,
+HYDROGEN,ENDO_INTERSTO,no,
+HYDROGEN,DIST_LOSSES,no,
+HYDROGEN,TRANS_LOSSES,no,
+ELECTRICITY,EXOGENOUS,yes,
+ELECTRICITY,EXO_TRANS,yes,
+ELECTRICITY,ENDO_EV,yes,
+ELECTRICITY,ENDO_DR,yes,
+ELECTRICITY,ENDOGENOUS_ELECT2HEAT,on-site,Electricity
+ELECTRICITY,ON_SITE,yes,
+ELECTRICITY,ENDO_H2,no,
+ELECTRICITY,ENDO_BIOMETHANE,no,
+ELECTRICITY,ENDO_CCS,no,
+ELECTRICITY,ENDO_OPTIFLOW,no,
+ELECTRICITY,ENDO_INTRASTO,no,
+ELECTRICITY,DIST_LOSSES,no,
+ELECTRICITY,TRANS_LOSSES,no,

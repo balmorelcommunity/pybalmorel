@@ -1,8 +1,8 @@
 """
 GAMS-dependent tests of the IAMC conversion on the example MainResults: the
-IAMC totals of electricity, heat, hydrogen and CO2 equal the raw results, centralized
-heat and hydrogen balances, and Mapping Rules and Fuel Categories cover every
-unit. Needs a GAMS installation and the shipped Definitions Snapshot.
+IAMC totals of electricity, heat, hydrogen and CO2 equal the raw results, as does
+electricity trade per region, centralized heat and hydrogen balances, and Mapping Rules
+and Fuel Categories cover every unit. Needs a GAMS installation and the shipped Definitions Snapshot.
 
 Created on 23.11.2026
 @author: Claude, Anthropic
@@ -77,6 +77,46 @@ def reported(in_regions: pd.DataFrame) -> pd.DataFrame:
 
 
 @pytest.fixture(scope="module")
+def electricity(raw: pd.DataFrame, in_regions: pd.DataFrame) -> dict[str, pd.Series]:
+    """Raw electricity in TWh: final demand per scenario, and net exports per scenario and
+    IAMC Region. Final demand is that of the 'yes' categories, plus what heat units in
+    individual and industry areas, which make nothing else, take in as electricity fuels.
+    Net exports are transmission to other countries less transmission from them."""
+    rules = load_rules()
+    long = in_regions[in_regions["commodity"] == "ELECTRICITY"]
+    categories = rules["demand_categories"]
+    final = categories.loc[(categories["commodity"] == "ELECTRICITY") & (categories["final"] == "yes"),
+                           "demand_category"]
+    demand = long[(long["quantity"] == "demand") & long["demand_category"].isin(final)]
+
+    unit_keys = ["scenario", "country", "area", "unit_name", "tech_type", "fuel"]
+    output = in_regions[(in_regions["quantity"] == "output") & (in_regions["value"] > 0)]
+    makes_other = output.assign(other=output["commodity"] != "HEAT").groupby(unit_keys)["other"].any()
+    on_site = makes_other[~makes_other].index
+    electric = rules["fuels"].loc[rules["fuels"]["category"] == "Electricity", "fuel"]
+    used = in_regions[(in_regions["quantity"] == "input") & in_regions["fuel"].isin(electric)
+                      & ~in_regions["area_kind"].isin(["", default_area_kind])]
+    used = used[pd.MultiIndex.from_frame(used[unit_keys]).isin(on_site)]
+    assert not used.empty
+
+    _, regions = load_definitions()
+    region_of = rules["countries"].merge(regions, on="iso3").set_index("country")["region"]
+    exchange = raw[(raw["commodity"] == "ELECTRICITY") & (raw["quantity"] == "exchange")]
+    abroad = exchange[(exchange["to_country"] != "") & (exchange["to_country"] != exchange["country"])]
+    net_exports = pd.concat((
+        abroad.assign(region=abroad["country"].map(region_of)),
+        abroad.assign(region=abroad["to_country"].map(region_of), value=-abroad["value"]),
+    )).dropna(subset="region").groupby(["scenario", "region"])["value"].sum()
+
+    assert set(long.loc[long["quantity"] != "capacity", "value_unit"]) | set(exchange["value_unit"]) <= {"TWh"}
+
+    def per_scenario(rows: pd.DataFrame) -> pd.Series:
+        return rows.groupby("scenario")["value"].sum().reindex(scenarios, fill_value=0.0)
+
+    return {"final_demand": per_scenario(demand) + per_scenario(used), "net_exports": net_exports}
+
+
+@pytest.fixture(scope="module")
 def heat(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
     """Raw centralized heat per scenario, in TWh: the output of district heating units
     without storage, its demand per category, and heat exchanged with other areas, netted
@@ -116,13 +156,23 @@ def heat(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
 def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.Series) -> dict[str, pd.Series]:
     """Raw hydrogen per scenario: capacity (GW) and output (TWh) of units in any kind of area,
     without storage and import units, demand in final categories, and net exports (TWh):
-    transmission to other countries, less transmission from them, less import units' output."""
+    transmission to other countries, less transmission from them, less import units' output.
+    Electrolysers' capacity is times their electricity input per hydrogen output."""
     rules = load_rules()
     long = in_regions[in_regions["commodity"] == "HYDROGEN"]
     units = long[long["quantity"].isin(["capacity", "output"])]
     targets = match_mapping_rules(units, rules["mapping"])
     made = units[~targets.isin([not_reported, import_unit])]
     imported = units[(targets == import_unit) & (units["quantity"] == "output")]
+
+    unit_keys = ["scenario", "unit_name", "tech_type", "fuel"]
+    electric = rules["fuels"].loc[rules["fuels"]["category"] == "Electricity", "fuel"]
+    used = in_regions[in_regions["quantity"] == "input"].groupby(unit_keys)["value"].sum()
+    per_output = used / made[made["quantity"] == "output"].groupby(unit_keys)["value"].sum()
+    is_electrolyser = (made["quantity"] == "capacity") & made["fuel"].isin(electric)
+    factors = made.join(per_output.rename("per_output"), on=unit_keys)["per_output"].fillna(0.0)
+    made = made.assign(value=made["value"].where(~is_electrolyser, made["value"] * factors))
+    assert is_electrolyser.any()
 
     categories = rules["demand_categories"]
     final = categories.loc[(categories["commodity"] == "HYDROGEN") & (categories["final"] == "yes"),
@@ -198,6 +248,33 @@ def test_electricity_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.
     raw_capacity = capacity.groupby("scenario")["value"].sum().reindex(scenarios)
     pd.testing.assert_series_equal(total(data, "Capacity|Electricity"), raw_capacity,
                                    check_names=False, check_index_type=False, rtol=1e-9)
+
+
+def test_final_electricity_equals_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
+                                              electricity: dict[str, pd.Series]) -> None:
+    """Final electricity is the final categories' demand plus what heat units outside district
+    heating use, which the Conversion Notes say."""
+    data, notes = converted
+    pd.testing.assert_series_equal(total(data, "Final Energy|Electricity"),
+                                   electricity["final_demand"] * twh_to_ej,
+                                   check_names=False, check_index_type=False, rtol=1e-9)
+    on_site = notes.loc[notes["Note"].str.startswith("Of ELECTRICITY demand in category ENDOGENOUS_ELECT2HEAT"),
+                        "Scenario"]
+    assert "Example3" in set(on_site)
+
+
+def test_electricity_trade_equals_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
+                                              electricity: dict[str, pd.Series]) -> None:
+    """Net exports per region; they cancel out over all regions, so totals can't show them."""
+    data, _ = converted
+    years = [column for column in data.columns if isinstance(column, int)]
+    rows = data[data["Variable"] == "Trade|Secondary Energy|Electricity [Volume]"]
+    reported_trade = rows.groupby(["Scenario", "Region"])[years].sum().sum(axis=1)
+    expected = electricity["net_exports"] * twh_to_ej
+    assert (expected.abs() > 1e-6).any()
+    pd.testing.assert_series_equal(reported_trade.reindex(expected.index, fill_value=0.0), expected,
+                                   check_names=False, check_index_type=False, rtol=1e-9, atol=1e-12)
+    assert set(reported_trade.index) <= set(expected.index)
 
 
 def test_heat_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
