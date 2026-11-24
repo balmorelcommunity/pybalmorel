@@ -31,12 +31,22 @@ rule_tables = {
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
     "demand_categories": {"columns": ["commodity", "demand_category", "final"], "key": ["commodity", "demand_category"]},
+    "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "variable", "removal",
+                             "emissions"], "key": None},
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
 # Segments of Mapping Rules for units that bring a commodity in from outside the model: their
 # output is counted as imports, under trade, and their capacity is not reported
 import_unit = "import"
+# Segments of Mapping Rules for the rows by which results linked to OptiFlow carry OptiFlow's
+# own emissions: they are not reported, as the 'optiflow' rules report OptiFlow's results
+optiflow_unit = "optiflow"
+# Roles of 'optiflow' rules (see rule_tables/optiflow.csv), and those that need a pool
+optiflow_roles = ("balmorel", "capture", "store", "report")
+pool_roles = ("balmorel", "capture", "store")
+optiflow_patterns = ["from_process", "to_process", "flow"]
+optiflow_targets = ["variable", "removal", "emissions"]
 # Area Kind of areas no pattern in the 'areas' table matches
 default_area_kind = "district heating"
 
@@ -77,12 +87,13 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
     Args:
         overrides (dict[str, str | Path | pd.DataFrame] | None, optional): Rows to add per table,
             keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries', 'areas',
-            'demand_categories'), as a CSV path or DataFrame with that table's columns.
-            Defaults to None.
+            'demand_categories', 'optiflow'), as a CSV path or DataFrame with that table's
+            columns. Defaults to None.
 
     Returns:
         dict[str, pd.DataFrame]: The tables by name. The 'mapping' table has a 'priority'
-            column: 1 for the caller's rows, 0 for the shipped ones.
+            column: 1 for the caller's rows, 0 for the shipped ones. The 'optiflow' table has
+            the caller's rows first; every row applies to every flow it matches.
     """
     overrides = overrides or {}
     unknown = [name for name in overrides if name not in rule_tables]
@@ -100,6 +111,8 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
 
         if name == "mapping":
             table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
+        elif name == "optiflow":
+            table = pd.concat((caller, shipped), ignore_index=True)
         elif name == "aggregates":
             replaced = shipped["aggregate"].isin(caller["aggregate"])
             table = pd.concat((caller, shipped[~replaced]), ignore_index=True)
@@ -130,7 +143,62 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             re.compile(pattern)
         except re.error as error:
             raise Exception(f"The 'areas' pattern '{pattern}' is no regular expression: {error}")
+    check_optiflow_rules(tables["optiflow"])
     return tables
+
+
+def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
+    """Refuse 'optiflow' rules with an unknown role, a pattern that is no regular expression, or a
+    missing pool, unit or variable.
+
+    Args:
+        optiflow (pd.DataFrame): The 'optiflow' rule table.
+    """
+    def refuse(problem: str, rows: pd.Series) -> None:
+        if rows.any():
+            raise Exception(f"'optiflow' rules {problem}:\n{optiflow[rows].to_string()}")
+
+    refuse(f"need a role of {optiflow_roles}", ~optiflow["role"].isin(optiflow_roles))
+    refuse("need a unit", optiflow["unit"] == "")
+    refuse(f"of roles {pool_roles} need a pool", optiflow["role"].isin(pool_roles) & (optiflow["pool"] == ""))
+    refuse("of role 'report' need a variable", (optiflow["role"] == "report") & (optiflow["variable"] == ""))
+    refuse("of roles other than 'capture' take no removal or emissions",
+           (optiflow["role"] != "capture") & ((optiflow["removal"] != "") | (optiflow["emissions"] != "")))
+    for column in optiflow_patterns:
+        for pattern in optiflow[column].unique():
+            try:
+                re.compile(pattern)
+            except re.error as error:
+                raise Exception(f"The 'optiflow' {column} pattern '{pattern}' is no regular expression: {error}")
+
+
+def match_optiflow_rules(flows: pd.DataFrame, optiflow: pd.DataFrame) -> pd.DataFrame:
+    """Pair OptiFlow flows with every 'optiflow' rule they match.
+
+    Args:
+        flows (pd.DataFrame): Rows with the columns 'from_process', 'to_process' and 'flow'.
+        optiflow (pd.DataFrame): The 'optiflow' table from load_rules.
+
+    Returns:
+        pd.DataFrame: One row per flow and rule it matches: the flow's columns, and the rule's
+            under their own names, with 'unit' as 'value_unit'. A flow matching no rule is left
+            out.
+    """
+    edges = flows[optiflow_patterns].drop_duplicates()
+    pairs = []
+    for rule in optiflow.itertuples(index=False):
+        matches = pd.Series(True, index=edges.index)
+        for column in optiflow_patterns:
+            pattern = getattr(rule, column)
+            if pattern:
+                compiled = re.compile(pattern)
+                matches &= edges[column].map(lambda name: compiled.fullmatch(name) is not None)
+        rule_columns = {column: getattr(rule, column) for column in optiflow.columns if column not in optiflow_patterns}
+        pairs.append(edges[matches].assign(**rule_columns))
+    columns = optiflow_patterns + [column for column in optiflow.columns if column not in optiflow_patterns]
+    pairs = pd.concat(pairs, ignore_index=True) if pairs else pd.DataFrame(columns=columns)
+    matched = flows.drop(columns=["value_unit"], errors="ignore").merge(pairs, on=optiflow_patterns)
+    return matched.rename(columns={"unit": "value_unit"})
 
 
 def match_area_kinds(areas: pd.Series, area_rules: pd.DataFrame) -> pd.Series:
@@ -281,7 +349,7 @@ def check_rules(definitions: str | Path | None = None,
             problems.append(("fuels", category, "category is no segment of any IAMC Variable"))
 
     for template in tables["mapping"]["segments"].unique():
-        if template in (not_reported, import_unit):
+        if template in (not_reported, import_unit, optiflow_unit):
             continue
         literal = template.replace("{category}|", "").replace("|{category}", "").replace("{category}", "")
         if not literal:
@@ -301,6 +369,11 @@ def check_rules(definitions: str | Path | None = None,
     for country, iso3 in tables["countries"][["country", "iso3"]].itertuples(index=False):
         if iso3 not in known_iso3:
             problems.append(("countries", country, f"ISO3 code '{iso3}' has no IAMC Region"))
+
+    for column in optiflow_targets:
+        for target in tables["optiflow"][column].unique():
+            if target and target not in names:
+                problems.append(("optiflow", target, f"{column} is not an IAMC Variable"))
 
     kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
     for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:

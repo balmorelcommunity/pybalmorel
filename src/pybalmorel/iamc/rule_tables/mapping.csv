@@ -11,7 +11,11 @@
 # is reported as 'Wind'; output whose first segment is missing goes to Other, with a note.
 # '-' means not reported. 'import' marks units that bring the commodity in from outside the
 # model: their output is counted as imports, under trade (stems.csv), and their capacity is not
-# reported.
+# reported. 'optiflow' marks the rows by which results linked to OptiFlow carry OptiFlow's own
+# emissions: they are not reported, as the OptiFlow Mapping (optiflow.csv) reports OptiFlow.
+#
+# Captured CO2 is only reported w/ CCS for units these rules mark so, by default those with
+# 'CCS' in their name; a Conversion Note lists units that capture CO2 without it.
 tech_type,fuel,commodity,unit_pattern,segments
 ,,,,{category}|w/o CCS
 ,,,CCS,{category}|w/ CCS
@@ -24,3 +28,4 @@ INTRASEASONAL-HEAT-STORAGE,,,,-
 INTERSEASONAL-HEAT-STORAGE,,,,-
 H2-STORAGE,,,,-
 ,IMPORT_H2,,,import
+OPTIFLOW,,,,optiflow

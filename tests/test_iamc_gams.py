@@ -1,6 +1,6 @@
 """
 GAMS-dependent tests of the IAMC conversion on the example MainResults: the
-IAMC totals of electricity, heat and hydrogen equal the raw results, centralized
+IAMC totals of electricity, heat, hydrogen and CO2 equal the raw results, centralized
 heat and hydrogen balances, and Mapping Rules and Fuel Categories cover every
 unit. Needs a GAMS installation and the shipped Definitions Snapshot.
 
@@ -148,6 +148,28 @@ def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.S
     }
 
 
+@pytest.fixture(scope="module")
+def carbon(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
+    """Raw emissions and captured CO2 per scenario (Mt CO2), of the part of each unit's output
+    that is reported: electricity and hydrogen in any kind of area, heat in district heating,
+    without storage and import units."""
+    output = in_regions[(in_regions["quantity"] == "output") & (in_regions["value"] > 0)]
+    targets = match_mapping_rules(output, load_rules()["mapping"])
+    reported = (~targets.isin([not_reported, import_unit])
+                & (output["commodity"].isin(["ELECTRICITY", "HYDROGEN"])
+                   | ((output["commodity"] == "HEAT") & (output["area_kind"] == default_area_kind))))
+    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
+    share = (output["value"].where(reported, 0.0).groupby([output[key] for key in keys]).sum()
+             / output.groupby(keys)["value"].sum()).rename("share").reset_index()
+
+    rows = in_regions[in_regions["quantity"].isin(["emissions", "captured"])]
+    assert set(rows["value_unit"]) <= {"kt CO2"}
+    rows = rows.merge(share, on=keys, how="left").fillna({"share": 0.0})
+    by_quantity = (rows["value"] * rows["share"] / 1e3).groupby([rows["quantity"], rows["scenario"]]).sum()
+    return {quantity: by_quantity.get(quantity, pd.Series(dtype=float)).reindex(scenarios, fill_value=0.0)
+            for quantity in ("emissions", "captured")}
+
+
 def total(data: pd.DataFrame, variable: str) -> pd.Series:
     """Sum of one IAMC Variable over regions and years, per scenario."""
     years = [column for column in data.columns if isinstance(column, int)]
@@ -232,3 +254,24 @@ def test_rules_cover_every_unit(converted: tuple[pd.DataFrame, pd.DataFrame]) ->
     _, notes = converted
     uncovered = notes[notes["Note"].str.contains("no Mapping Rule matches|fuel has no Fuel Category")]
     assert uncovered.empty, f"Units no rule covers:\n{uncovered.to_string()}"
+
+
+def test_carbon_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
+                                         carbon: dict[str, pd.Series]) -> None:
+    """Emissions and captured CO2 of electricity, heat and hydrogen supply add up to the raw
+    results, split by output. Only Example3 captures CO2, all of it fossil, so nothing is
+    removed; Example1 and Example2 have no captured CO2, which the Conversion Notes say."""
+    data, notes = converted
+    supplies = ["Electricity", "Heat", "Hydrogen"]
+    emissions = sum(total(data, f"Emissions|CO2|Energy|Supply|{supply}") for supply in supplies)
+    captured = sum(total(data, f"Carbon Capture|Energy|Supply|{supply}") for supply in supplies)
+    pd.testing.assert_series_equal(emissions, carbon["emissions"], check_names=False, check_index_type=False,
+                                   rtol=1e-9)
+    pd.testing.assert_series_equal(captured, carbon["captured"], check_names=False, check_index_type=False,
+                                   rtol=1e-9)
+    assert (carbon["captured"]["Example3"] > 0) and (total(data, "Carbon Removal|Geological Storage") == 0).all()
+
+    no_captured = notes.loc[notes["Note"].str.startswith("The results give no captured CO2"), "Scenario"]
+    assert sorted(no_captured) == ["Example1", "Example2"]
+    assert not notes["Note"].str.contains("don't mark them w/ CCS|Units whose output the results don't give").any()
+

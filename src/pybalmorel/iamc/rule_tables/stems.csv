@@ -6,6 +6,11 @@
 # counts as final), and trade (net exports: transmission to other countries less transmission
 # from them, less what import units bring in from outside the model). Demand and trade have no
 # unit, so they are reported under the stem itself.
+# Emissions (EMI_YCRAG) and captured CO2 (CC_YCRAG) are per unit and split over the commodities
+# it makes in proportion to its output (Output-Share Split). Emissions are net: less the stored
+# part of the CO2 captured from biomass, which is also reported as removal (Carbon Removal).
+# Capture in industry can be added with e.g.
+#   captured,HEAT,industry,Carbon Capture|Energy|Demand|Industry
 # area_kind: the Area Kind (areas.csv) the row applies to; empty for any. A row for the area's
 # kind beats an empty one. Demand and trade per region have no area, so only an empty row
 # matches them. Heat counts as centralized heat in district heating areas only. Electricity and
@@ -23,3 +28,12 @@ capacity,HYDROGEN,,Capacity|Hydrogen
 output,HYDROGEN,,Secondary Energy|Hydrogen
 demand,HYDROGEN,,Final Energy|Hydrogen
 trade,HYDROGEN,,Trade|Secondary Energy|Hydrogen [Volume]
+emissions,ELECTRICITY,,Emissions|CO2|Energy|Supply|Electricity
+emissions,HEAT,district heating,Emissions|CO2|Energy|Supply|Heat
+emissions,HYDROGEN,,Emissions|CO2|Energy|Supply|Hydrogen
+captured,ELECTRICITY,,Carbon Capture|Energy|Supply|Electricity
+captured,HEAT,district heating,Carbon Capture|Energy|Supply|Heat
+captured,HYDROGEN,,Carbon Capture|Energy|Supply|Hydrogen
+removal,ELECTRICITY,,Carbon Removal|Geological Storage
+removal,HEAT,,Carbon Removal|Geological Storage
+removal,HYDROGEN,,Carbon Removal|Geological Storage

@@ -1,0 +1,30 @@
+# OptiFlow Mapping: how results of a Balmorel run linked to OptiFlow are reported. OptiFlow
+# designs differ between studies, so no rows ship; pass them per study (rules={'optiflow': ...}).
+#
+# Each row matches OptiFlow flows (VFLOW_Opti_C) by from_process, to_process and flow: regular
+# expressions the whole name must match; empty matches anything. Every row applies to every flow
+# it matches. unit is the unit of the flows the row matches, e.g. 'Mt CO2' or 'PJ'.
+#
+# role:
+#   balmorel  The flow by which the CO2 that Balmorel's units capture from biomass enters the CO2
+#             pool named under pool. The pool's Stored Share applies to that CO2: only the stored
+#             part counts as Carbon Removal and as negative emissions of the units.
+#   capture   CO2 that OptiFlow captures itself, entering the pool. Reported under variable (the
+#             captured amount), removal (the stored part) and emissions (the stored part,
+#             negative); each may be empty. A capture row with all three empty only counts the
+#             CO2 towards the pool, e.g. fossil CO2 that shares a pool with biogenic CO2.
+#   store     A flow from the pool to geological storage.
+#   report    A flow reported under variable as it is, e.g. the hydrogen ships take in under
+#             'Final Energy|Bunkers|Hydrogen'.
+# A pool's Stored Share is its stored CO2 over the CO2 entering it, summed over all countries,
+# per year, and at most 1. Fossil CO2 that Balmorel's units capture needs no pool: their
+# emissions are already net of it.
+#
+# Example, for a design with one CO2 pool and hydrogen ships. Report a ship fuel where it enters
+# the ship's engine or fuel cell: flows into Shipping_Fuel_* processes are often what comes out
+# of the engine, after its losses.
+#   CO2_Source_Biogen,CO2,,balmorel,CO2,Mt CO2,,,
+#   CO2_DAC_.*,CO2,,capture,CO2,Mt CO2,Carbon Capture|Direct Air Capture,Carbon Removal|Geological Storage|Direct Air Capture,Emissions|CO2|Other Capture and Removal
+#   CO2,CO2_SEQUESTRATION,,store,CO2,Mt CO2,,,
+#   Liquid_Hydrogen,Hydrogen_(FC_)?Eff,HYDROGEN_FLOW,report,,PJ,Final Energy|Bunkers|Hydrogen,,
+from_process,to_process,flow,role,pool,unit,variable,removal,emissions

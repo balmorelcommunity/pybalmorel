@@ -21,7 +21,7 @@ import pandas as pd
 
 from .reader import read_mainresults
 from .rules import (default_area_kind, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
-                    match_mapping_rules, not_reported)
+                    match_mapping_rules, match_optiflow_rules, not_reported, optiflow_unit, pool_roles)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -32,15 +32,30 @@ unit_factors = {
     ("GWh", "EJ/yr"): 3.6e-6,
     ("PJ", "EJ/yr"): 1e-3,
     ("MW", "GW"): 1e-3,
+    ("kt CO2", "Mt CO2/yr"): 1e-3,
+    ("Mt CO2", "Mt CO2/yr"): 1.0,
 }
+# Unit CO2 amounts are compared in
+carbon_unit = "Mt CO2/yr"
 backup_choices = ("supply", "exclude")
 # Values smaller than this, in Balmorel's units, are solver noise and reported as 0
 noise = 1e-9
+# Share of a scenario's total of a quantity in a year below which an amount left out is
+# solver residue, too small for a Conversion Note
+relative_noise = 1e-6
 note_columns = ["Scenario", "Region", "Variable", "Note"]
 # Conversion Notes printed at most; to_iamc returns them all
 print_limit = 30
 # Columns only some quantities have, '' for the others
-optional_columns = ["demand_category", "to_area", "to_country"]
+optional_columns = ["demand_category", "to_area", "to_country", "stated_unit", "from_process", "to_process", "flow"]
+# Columns that tell units apart
+unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
+# Quantities given per unit but not per commodity, split over the commodities a unit makes
+carbon_quantities = ("emissions", "captured")
+# Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
+biogenic_category = "Biomass"
+# How Conversion Notes name quantities that aren't plain words
+quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass"}
 # The commodity whose exchange between areas is Heat Exchange; exchange of the others is trade
 heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
@@ -62,15 +77,20 @@ def to_iamc(results: "MainResults",
             definitions: str | Path | None = None,
             rules: dict[str, str | Path | pd.DataFrame] | None = None,
             backup_units: str = "supply",
-            backup_pattern: str = "GNR_BACKUP") -> tuple[pd.DataFrame, pd.DataFrame]:
+            backup_pattern: str = "GNR_BACKUP",
+            optiflow: dict[str, str | Path | None] | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Convert MainResults to IAMC data.
 
     Reports the IAMC Variables that the rule tables cover (see pybalmorel/iamc/rule_tables/), in the
     units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
     between countries, and what import units bring in from outside the model, are reported as
-    Trade (net exports). Conversion Notes say what was put under Other, what was left out, how
-    backup units, import units and Heat Exchange were treated, and where a commodity's supply and
-    demand don't add up; the first of them are printed.
+    Trade (net exports). Emissions are net of the stored part of the CO2 captured from biomass,
+    which is also reported as Carbon Removal. For scenarios linked to OptiFlow, OptiFlow's
+    results are reported as the 'optiflow' rules (the OptiFlow Mapping) say, which also give the
+    stored part. Conversion Notes say what was put under Other, what was left out, how backup
+    units, import units and Heat Exchange were treated, and where a commodity's supply and
+    demand don't add up; the first of them are printed. Values that can't be known without
+    missing rules are left empty.
 
     Args:
         results (MainResults): The loaded result files.
@@ -84,17 +104,23 @@ def to_iamc(results: "MainResults",
             (variables.csv, regions.csv). Defaults to the snapshot shipped with pybalmorel.
         rules (dict[str, str | Path | pd.DataFrame] | None, optional): Rule rows that take
             precedence over the shipped ones, keyed by table ('fuels', 'mapping', 'stems',
-            'aggregates', 'countries', 'areas', 'demand_categories'). Defaults to None.
+            'aggregates', 'countries', 'areas', 'demand_categories', 'optiflow'). Defaults to None.
         backup_units (str, optional): 'supply' counts backup units' output as supply under their
-            fuel; 'exclude' leaves it out. Their capacity is never reported. Defaults to 'supply'.
+            fuel, and reports their emissions; 'exclude' leaves both out. Their capacity is never
+            reported. Defaults to 'supply'.
         backup_pattern (str, optional): Regular expression that marks backup units by name.
             Defaults to 'GNR_BACKUP'.
+        optiflow (dict[str, str | Path | None] | None, optional): OptiFlow result file per
+            Balmorel scenario, None to read none for it. Scenarios not listed use
+            'Optiflow_<MainResults file>' next to their MainResults file, if there is one.
+            A scenario is linked to OptiFlow if OptiFlow results are read for it, or if its
+            MainResults carry OptiFlow's emissions (Mapping Rule 'optiflow'). Defaults to None.
 
     Returns:
         tuple[pd.DataFrame, pd.DataFrame]: The IAMC data, and the Conversion Notes (columns
             Scenario, Region, Variable, Note).
     """
-    long = read_mainresults(results)
+    long = read_mainresults(results, optiflow)
     return convert(long, model, scenarios, template, definitions, rules, backup_units, backup_pattern)
 
 
@@ -121,20 +147,31 @@ def convert(long: pd.DataFrame,
     tables = load_rules(rules)
     notes = []
 
+    names = set(variables["variable"])
     long = long.copy()
     for column in optional_columns:
         long[column] = long[column].fillna("") if column in long.columns else ""
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
+    long, linked = drop_optiflow_units(long, tables["mapping"], notes)
+    note_stated_units(long, notes)
+    flows = long[long["quantity"] == "flow"]
+    long = long[long["quantity"] != "flow"]
+    shares = pool_shares(flows, tables["optiflow"], notes)
+    long = split_by_output(long, notes)
     long = count_trade(long, tables["mapping"], notes)
     long = name_regions(long, tables["countries"], regions, notes)
+    flows = name_regions(flows, tables["countries"], regions, notes)
     long = attach_area_kinds(long, tables["areas"])
     long = exchange_heat(long, tables["mapping"], notes)
     check_balances(long, tables["stems"], tables["mapping"], tables["demand_categories"], notes)
     long = select_demand(long, tables["demand_categories"], notes)
-    long = attach_stems(long, tables["stems"], set(variables["variable"]), notes)
-    long = attach_segments(long, tables, set(variables["variable"]), notes)
+    long = net_emissions(long, shares, linked, tables, notes)
+    long = attach_stems(long, tables["stems"], names, notes)
+    long = attach_segments(long, tables, names, notes)
     long = treat_backup_units(long, backup_units, backup_pattern, notes)
+    reported = report_optiflow(flows, tables["optiflow"], shares, tables["stems"], names, notes)
+    long = pd.concat((long, reported), ignore_index=True)
 
     data = sum_to_variables(long, variables, tables["aggregates"])
     if template is not None:
@@ -221,13 +258,13 @@ def count_trade(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) ->
     transmission = long[is_transmission]
     long = long[~is_transmission]
 
-    unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
     units = long.loc[long["unit_name"] != "", unit_columns].drop_duplicates().reset_index(drop=True)
     importers = units[match_mapping_rules(units, mapping) == import_unit]
     by_importer = np.zeros(len(long), dtype=bool)
     if not importers.empty:
         by_importer = pd.MultiIndex.from_frame(long[unit_columns]).isin(pd.MultiIndex.from_frame(importers))
     imported = long[by_importer & (long["quantity"] == "output")]
+    importer_carbon = long[by_importer & long["quantity"].isin(carbon_quantities)]
     long = long[~by_importer]
 
     abroad = transmission[(transmission["to_country"] != "") & (transmission["to_country"] != transmission["country"])]
@@ -246,6 +283,14 @@ def count_trade(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) ->
         notes.append(note(scenario, "", "", (
             f"Import units ({units}) brought {amounts(by_year)} {value_unit} of {commodity} in from outside the "
             "model, counted as imports under Trade, not as output. Their capacity is not reported."
+        )))
+    for (scenario, quantity, value_unit), rows in importer_carbon.groupby(["iamc_scenario", "quantity", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        if (by_year.abs() < noise).all():
+            continue
+        notes.append(note(scenario, "", "", (
+            f"Not reported: import units' {quantity_label(quantity)}, {amounts(by_year)} {value_unit}, as what "
+            "they bring in is made outside the model."
         )))
     unknown = transmission[transmission["to_country"] == ""]
     for (scenario, commodity, value_unit), rows in unknown.groupby(["iamc_scenario", "commodity", "value_unit"]):
@@ -356,7 +401,8 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
             f"{amounts(received.get(scenario))} {value_unit} net from them, counted as its output and "
             "split over the units that made the heat, traced through heat transmission between "
             "individual and industry areas. The output noted as not reported for those areas includes "
-            "the heat they sent."
+            "the heat they sent. Emissions and captured CO2 of the units that made it stay with their own "
+            "areas."
         )))
     untraced = supplied[supplied["unit_name"] == ""]
     for (scenario, source), rows in untraced.groupby(["iamc_scenario", "fuel"]):
@@ -492,7 +538,7 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
             rows_out.loc[by_unit, column] = unit_rows[column].to_numpy()
         traced.append(rows_out)
 
-    return pd.concat(traced, ignore_index=True)[columns]
+    return pd.concat(traced, ignore_index=True).reindex(columns=columns, fill_value="")
 
 
 def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
@@ -592,7 +638,333 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
 
 
 #%% ------------------------------- ###
-###     4. Stems and Segments       ###
+###     4. Carbon and OptiFlow      ###
+### ------------------------------- ###
+
+def drop_optiflow_units(long: pd.DataFrame, mapping: pd.DataFrame,
+                        notes: list[dict]) -> tuple[pd.DataFrame, set[str]]:
+    """Drop the rows by which Balmorel carries OptiFlow's own results, and find the scenarios linked to OptiFlow.
+
+    Mapping Rule 'optiflow' marks the units by which a Balmorel run linked to OptiFlow carries
+    OptiFlow's emissions. They are not Balmorel's, so they are not reported; the OptiFlow
+    Mapping ('optiflow' rules) reports OptiFlow's results.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        tuple[pd.DataFrame, set[str]]: The long table without those rows, and the Balmorel
+            scenarios linked to OptiFlow: those with such rows or with OptiFlow flows.
+    """
+    units = long.loc[long["unit_name"] != "", unit_columns].drop_duplicates().reset_index(drop=True)
+    marked = units[match_mapping_rules(units, mapping) == optiflow_unit]
+    carried = np.zeros(len(long), dtype=bool)
+    if not marked.empty:
+        carried = pd.MultiIndex.from_frame(long[unit_columns]).isin(pd.MultiIndex.from_frame(marked))
+
+    for (scenario, quantity, value_unit), rows in long[carried].groupby(["iamc_scenario", "quantity", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        if (by_year.abs() < noise).all():
+            continue
+        units = ", ".join(sorted(set(rows["tech_type"] + "/" + rows["fuel"])))
+        notes.append(note(scenario, "", "", (
+            f"Not reported as Balmorel's: OptiFlow's {quantity_label(quantity)} that the results carry on units "
+            f"{units}, {amounts(by_year)} {value_unit}. The OptiFlow Mapping ('optiflow' rules) reports "
+            "OptiFlow's results."
+        )))
+    linked = set(long.loc[carried, "scenario"]) | set(long.loc[long["quantity"] == "flow", "scenario"])
+    return long[~carried], linked
+
+
+def note_stated_units(long: pd.DataFrame, notes: list[dict]) -> None:
+    """Note where the results state another unit than the one the Reader takes a quantity in.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios.
+        notes (list[dict]): Conversion Notes, appended to.
+    """
+    stated = long[long["stated_unit"] != ""]
+    for (scenario, quantity, stated_unit, value_unit), _ in stated.groupby(
+            ["iamc_scenario", "quantity", "stated_unit", "value_unit"]):
+        notes.append(note(scenario, "", "", (
+            f"The results state '{stated_unit}' as the unit of {quantity_label(quantity)}; it is taken to be "
+            f"{value_unit}, the unit Balmorel writes it in. If '{stated_unit}' is right, its values are off by "
+            "the factor between the two."
+        )))
+
+
+def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Split emissions and captured CO2 over the commodities each unit makes, in proportion to its output.
+
+    Emissions and captured CO2 are per unit but not per commodity. A unit that makes several
+    commodities, such as a CHP unit, gets them split by its output of each (Output-Share
+    Split). The unit's output is looked up by its fuel, else without it. Emissions and captured
+    CO2 of units with no output are left out.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table with emissions and captured CO2 per commodity.
+    """
+    is_carbon = long["quantity"].isin(carbon_quantities)
+    carbon = long[is_carbon].drop(columns="commodity")
+    long = long[~is_carbon]
+    if carbon.empty:
+        return long
+
+    output = long[(long["quantity"] == "output") & (long["value"] >= noise)]
+    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
+    split, left = [], carbon
+    for unit_keys in (keys, [key for key in keys if key != "fuel"]):
+        made = output.groupby(unit_keys + ["commodity"], as_index=False)["value"].sum()
+        made["share"] = made["value"] / made.groupby(unit_keys)["value"].transform("sum")
+        matched = left.merge(made[unit_keys + ["commodity", "share"]], on=unit_keys, how="left")
+        found = matched["share"].notna()
+        split.append(matched[found])
+        left = matched.loc[~found, carbon.columns]
+    split = pd.concat(split, ignore_index=True)
+    split["value"] = split["value"] * split.pop("share")
+
+    # Say how the split was made, and what no output could be found for
+    several = split.groupby(["iamc_scenario"] + keys + ["quantity"])["commodity"].transform("nunique") > 1
+    for scenario, rows in split[several].groupby("iamc_scenario"):
+        commodities = " and ".join(sorted(set(rows["commodity"])))
+        notes.append(note(scenario, "", "", (
+            "Emissions and captured CO2 are given per unit, not per commodity: for units that make several "
+            f"commodities ({commodities}), they are split over them in proportion to the unit's output of each "
+            "(Output-Share Split)."
+        )))
+    for (scenario, quantity, value_unit), rows in left.groupby(["iamc_scenario", "quantity", "value_unit"]):
+        by_year = rows.groupby("year")["value"].sum()
+        same = carbon[(carbon["iamc_scenario"] == scenario) & (carbon["quantity"] == quantity)]
+        total = same["value"].abs().groupby(same["year"]).sum().reindex(by_year.index)
+        by_year = by_year[by_year.abs() >= noise + relative_noise * total]
+        if by_year.empty:
+            continue
+        notes.append(note(scenario, "", "", (
+            f"Units whose output the results don't give had {quantity_label(quantity)} of {amounts(by_year)} "
+            f"{value_unit}; not reported, as it can't be split over commodities. Units: "
+            f"{list_names(rows['unit_name'])}."
+        )))
+
+    split = split[split["value"].abs() >= noise]
+    return pd.concat((long, split), ignore_index=True)
+
+
+def pool_shares(flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Find the Stored Share of each CO2 pool of the OptiFlow Mapping.
+
+    A pool's Stored Share is the CO2 its 'store' rules take out of it over the CO2 its 'balmorel'
+    and 'capture' rules bring in, summed over all countries, per IAMC Scenario and year. A share
+    above 1 is taken as 1.
+
+    Args:
+        flows (pd.DataFrame): OptiFlow flows (quantity 'flow') with IAMC Scenarios.
+        optiflow (pd.DataFrame): The 'optiflow' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: Columns iamc_scenario, year, pool, share (NaN where nothing enters the
+            pool) and balmorel (the CO2 'balmorel' rules bring in, in Mt CO2/yr).
+    """
+    matched = match_optiflow_rules(flows, optiflow)
+    matched = matched[matched["role"].isin(pool_roles)]
+    if matched.empty:
+        return pd.DataFrame({"iamc_scenario": pd.Series(dtype=object), "year": pd.Series(dtype=int),
+                             "pool": pd.Series(dtype=object), "share": pd.Series(dtype=float),
+                             "balmorel": pd.Series(dtype=float)})
+
+    factors = {unit: factor(unit, carbon_unit) for unit in matched["value_unit"].unique()}
+    matched = matched.assign(value=matched["value"] * matched["value_unit"].map(factors))
+    by_role = matched.groupby(["iamc_scenario", "year", "pool", "role"])["value"].sum().unstack("role", fill_value=0.0)
+    by_role = by_role.reindex(columns=list(pool_roles), fill_value=0.0)
+    entering = by_role["balmorel"] + by_role["capture"]
+    shares = pd.DataFrame({
+        "share": by_role["store"] / entering.where(entering >= noise),
+        "balmorel": by_role["balmorel"],
+    }).reset_index()
+
+    for (scenario, pool), rows in shares.groupby(["iamc_scenario", "pool"]):
+        by_year = rows.set_index("year")["share"]
+        text = (f"OptiFlow stores {amounts(by_year.dropna())} of the CO2 entering pool '{pool}' (Stored Share, all "
+                "countries)." if by_year.notna().any() else f"OptiFlow's pool '{pool}' has no Stored Share.")
+        if (by_year > 1 + balance_tolerance).any():
+            text += (" Where above 1, more leaves the pool for storage than its 'balmorel' and 'capture' rules "
+                     "bring in, and 1 is taken: some flow into the pool has no rule.")
+        if by_year.isna().any():
+            text += f" Nothing enters it in {', '.join(str(year) for year in by_year.index[by_year.isna()])}."
+        notes.append(note(scenario, "", "", text))
+    shares["share"] = shares["share"].clip(upper=1.0)
+    return shares[["iamc_scenario", "year", "pool", "share", "balmorel"]]
+
+
+def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], tables: dict[str, pd.DataFrame],
+                  notes: list[dict]) -> pd.DataFrame:
+    """Count the stored part of the CO2 that units capture from biomass as negative emissions and as removal.
+
+    Emissions are kept as the results give them, but for negative emissions of biomass (Fuel
+    Category Biomass) on units that capture CO2: the stored part of the CO2 they capture from
+    biomass takes their place, as negative emissions and as removal ('removal' rows). For
+    scenarios not linked to OptiFlow, all of it counts as stored. For linked ones, the Stored
+    Share of the pools its 'balmorel' rules bring it into does, weighed by how much they bring
+    into each. Where the OptiFlow Mapping gives no share, those rows are withheld, and the
+    IAMC Variables they count towards are left empty.
+
+    Args:
+        long (pd.DataFrame): The long table after demand is selected, with Area Kinds.
+        shares (pd.DataFrame): The pools' Stored Shares, from pool_shares.
+        linked (set[str]): Balmorel scenarios linked to OptiFlow.
+        tables (dict[str, pd.DataFrame]): The rule tables.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table with a 'withheld' column and the rows for stored CO2 from biomass.
+    """
+    categories = tables["fuels"].set_index("fuel")["category"]
+    long = long.assign(withheld=False)
+    emissions = long["quantity"] == "emissions"
+    captured = long["quantity"] == "captured"
+
+    for scenario in sorted(set(long.loc[emissions, "iamc_scenario"]) - set(long.loc[captured, "iamc_scenario"])):
+        notes.append(note(scenario, "", "", (
+            "The results give no captured CO2: Carbon Capture and Carbon Removal are not reported, and emissions "
+            "are reported as the results give them. If units captured CO2 from biomass and stored it (BECCS), "
+            "that removal is missing."
+        )))
+
+    # Units that capture CO2 but whose output isn't marked w/ CCS
+    capturing = long[captured & (long["value"].abs() >= noise)]
+    units = capturing[["iamc_scenario"] + unit_columns].drop_duplicates().reset_index(drop=True)
+    unmarked = units[~match_mapping_rules(units, tables["mapping"]).str.contains("w/ CCS", regex=False)]
+    for scenario, rows in unmarked.groupby("iamc_scenario"):
+        notes.append(note(scenario, "", "", (
+            "Units capture CO2, but the Mapping Rules don't mark them w/ CCS (by default, units with 'CCS' in "
+            f"their name), so their output is reported w/o CCS: {list_names(rows['unit_name'])}."
+        )))
+
+    # Negative emissions of biomass the results give make way for the stored part of captured CO2
+    keys = ["scenario", "year", "country", "area"] + unit_columns
+    on_capture = pd.MultiIndex.from_frame(long[keys]).isin(pd.MultiIndex.from_frame(long.loc[captured, keys]))
+    biogenic = long["fuel"].map(categories) == biogenic_category
+    replaced = emissions & biogenic & on_capture & (long["value"] < 0)
+    for (scenario, value_unit), rows in long[replaced].groupby(["iamc_scenario", "value_unit"]):
+        by_region = per_region(rows)
+        if by_region.empty:
+            continue
+        notes.append(note(scenario, "", "", (
+            f"The results give negative emissions of biomass on units that capture CO2, {amounts(by_region.sum())} "
+            f"{value_unit} in {list_regions(by_region.index)}; minus the stored part of the CO2 they capture "
+            "from biomass is reported instead."
+        )))
+
+    # The share of CO2 captured from biomass that is stored
+    stored = long[captured & biogenic & (long["value"].abs() >= noise)]
+    entering = shares[shares["balmorel"] > 0].assign(weighted=lambda rows: rows["share"] * rows["balmorel"])
+    by_share = entering.groupby(["iamc_scenario", "year"], as_index=False)[["weighted", "balmorel"]].sum()
+    by_share["share"] = by_share.pop("weighted") / by_share["balmorel"]
+    brought = by_share.set_index(["iamc_scenario", "year"])["balmorel"]
+    stored = stored.merge(by_share.drop(columns="balmorel"), on=["iamc_scenario", "year"], how="left")
+    is_linked = stored["scenario"].isin(linked)
+    stored["share"] = stored["share"].where(is_linked, 1.0)
+    withheld = stored["share"].isna()
+    value = stored["value"] * stored.pop("share").fillna(0.0)
+
+    for (scenario, value_unit), rows in stored[~is_linked].groupby(["iamc_scenario", "value_unit"]):
+        notes.append(note(scenario, "", "", (
+            f"Not linked to OptiFlow, so all CO2 that units capture from biomass is taken to be stored: "
+            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit}."
+        )))
+    for (scenario, value_unit), rows in stored[withheld].groupby(["iamc_scenario", "value_unit"]):
+        by_region = per_region(rows)
+        notes.append(note(scenario, "", "", (
+            "Linked to OptiFlow, but the OptiFlow Mapping ('optiflow' rules) gives no share stored of the CO2 "
+            f"that units capture from biomass: {amounts(by_region.sum())} {value_unit} in "
+            f"{list_regions(by_region.index)}. Carbon Removal, and the emissions it counts towards, are left "
+            "empty there; emissions of other fuels are reported."
+        )))
+    # The CO2 captured from biomass should be what the 'balmorel' rules bring into the pools
+    known = stored[is_linked & ~withheld]
+    for scenario, rows in known.groupby("iamc_scenario"):
+        factors = rows["value_unit"].map(lambda unit: factor(unit, carbon_unit))
+        captured_by_year = (rows["value"] * factors).groupby(rows["year"]).sum()
+        brought_by_year = brought[scenario].reindex(captured_by_year.index)
+        share_by_year = (by_share[by_share["iamc_scenario"] == scenario].set_index("year")["share"]
+                         .reindex(captured_by_year.index))
+        text = (f"Of the CO2 that units capture from biomass, the share stored in OptiFlow is taken: "
+                f"{amounts(share_by_year)}.")
+        if ((captured_by_year - brought_by_year).abs() > balance_tolerance * captured_by_year.abs()).any():
+            text += (f" But units captured {amounts(captured_by_year)} {carbon_unit}, while the 'balmorel' rules "
+                     f"bring {amounts(brought_by_year)} {carbon_unit} into the pools: check those rules.")
+        notes.append(note(scenario, "", "", text))
+
+    negative = stored.assign(quantity="emissions", value=-value, withheld=withheld)
+    removal = stored.assign(quantity="removal", value=value, withheld=withheld)
+    return pd.concat((long[~replaced], negative, removal), ignore_index=True)
+
+
+def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.DataFrame, stems: pd.DataFrame,
+                    names: set[str], notes: list[dict]) -> pd.DataFrame:
+    """Report OptiFlow's results as the OptiFlow Mapping says.
+
+    'capture' rules report the CO2 OptiFlow captures under their variable, and the stored part
+    of it, by its pool's Stored Share, under removal and, negative, under emissions. 'report'
+    rules report the flow as it is under their variable. Each sums up to the longest stem of
+    the 'stems' rules its variable starts with, if there is one.
+
+    Args:
+        flows (pd.DataFrame): OptiFlow flows with IAMC Regions.
+        optiflow (pd.DataFrame): The 'optiflow' rule table.
+        shares (pd.DataFrame): The pools' Stored Shares, from pool_shares.
+        stems (pd.DataFrame): The 'stems' rule table.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: Reported rows with the columns sum_to_variables needs.
+    """
+    columns = ["iamc_scenario", "scenario", "region", "stem", "path", "variable", "value_unit", "year", "value",
+               "withheld"]
+    for scenario in sorted(set(flows["iamc_scenario"])):
+        if optiflow.empty:
+            notes.append(note(scenario, "", "", (
+                "Linked to OptiFlow, but no OptiFlow Mapping ('optiflow' rules) was given: OptiFlow's results "
+                "are not reported. Pass the study's with rules={'optiflow': ...}."
+            )))
+    matched = match_optiflow_rules(flows, optiflow)
+    matched = matched.merge(shares[["iamc_scenario", "year", "pool", "share"]], on=["iamc_scenario", "year", "pool"],
+                            how="left")
+
+    reported = []
+    for target, sign in (("variable", 1.0), ("removal", 1.0), ("emissions", -1.0)):
+        rows = matched[matched[target] != ""]
+        share = rows["share"] if target != "variable" else pd.Series(1.0, index=rows.index)
+        reported.append(rows.assign(variable=rows[target], value=sign * rows["value"] * share.fillna(0.0),
+                                    withheld=share.isna()))
+    reported = pd.concat(reported, ignore_index=True)
+
+    for (scenario, variable), _ in reported[~reported["variable"].isin(names)].groupby(["iamc_scenario", "variable"]):
+        notes.append(note(scenario, "", variable, (
+            "The OptiFlow Mapping reports OptiFlow results under this IAMC Variable, which is not in the "
+            "Definitions Snapshot; not reported."
+        )))
+    reported = reported[reported["variable"].isin(names)]
+
+    by_length = sorted(set(stems["stem"]), key=len, reverse=True)
+    stem_of = {
+        variable: next((stem for stem in by_length if variable == stem or variable.startswith(f"{stem}|")), variable)
+        for variable in reported["variable"].unique()
+    }
+    reported = reported.assign(stem=reported["variable"].map(stem_of))
+    reported["path"] = [variable[len(stem) + 1:] for variable, stem in zip(reported["variable"], reported["stem"])]
+    return reported.reindex(columns=columns)
+
+
+#%% ------------------------------- ###
+###     5. Stems and Segments       ###
 ### ------------------------------- ###
 
 def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
@@ -626,9 +998,10 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
         by_region = per_region(rows)
         if by_region.empty:
             continue
+        what = quantity_label(quantity)
         notes.append(note(scenario, "", "", (
-            f"{quantity.capitalize()} of {commodity}{where} is not reported (the 'stems' rules "
-            f"have no row for it): {amounts(by_region.sum())} {value_unit} in {list_regions(by_region.index)}."
+            f"Not reported, as the 'stems' rules have no row for it: {what} of {commodity}{where}, "
+            f"{amounts(by_region.sum())} {value_unit} in {list_regions(by_region.index)}."
         )))
 
     for (scenario, stem), _ in long[(long["stem"] != "") & ~long["stem"].isin(names)].groupby(
@@ -664,7 +1037,6 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     long["category"] = long["category"].fillna("Other")
 
     # Match rules once per unit, not per row
-    unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
     units = long.loc[has_unit, unit_columns].drop_duplicates().reset_index(drop=True)
     units["template"] = match_mapping_rules(units, tables["mapping"])
     long = long.merge(units, on=unit_columns, how="left")
@@ -687,9 +1059,16 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     resolved["variable"] = [resolve(stem, path, names) for stem, path in zip(resolved["stem"], resolved["path"])]
     long = long.merge(resolved, on=["stem", "path"], how="left")
 
-    # Note what went into Other, and why
+    # Note what went into Other, and why. Not for stems without children, nor for the total only
+    # where an aggregate (e.g. Fossil) takes the row
     other = long[(long["path"] != "")
                  & ((long["variable"] == long["stem"] + "|Other") | (long["variable"] == long["stem"]))].copy()
+    with_children = {stem for stem in other["stem"].unique() if any(name.startswith(f"{stem}|") for name in names)}
+    pairs = other[["stem", "path"]].drop_duplicates()
+    aggregated = {(stem, path) for stem, path in pairs.itertuples(index=False)
+                  if aggregates_of(stem, path, names, tables["aggregates"])}
+    in_aggregate = pd.Series([pair in aggregated for pair in zip(other["stem"], other["path"])], index=other.index)
+    other = other[other["stem"].isin(with_children) & ~((other["variable"] == other["stem"]) & in_aggregate)]
     first_segment = other["path"].str.split("|").str[0]
     other.loc[(other["reason"] == "") & (first_segment == "Other"), "reason"] = "Fuel Category Other"
     other.loc[other["reason"] == "", "reason"] = "no such IAMC Variable"
@@ -736,16 +1115,17 @@ def resolve(stem: str, path: str, names: set[str]) -> str:
 
 
 #%% ------------------------------- ###
-###         5. Backup Units         ###
+###         6. Backup Units         ###
 ### ------------------------------- ###
 
 def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: str,
                        notes: list[dict]) -> pd.DataFrame:
-    """Drop backup units' capacity, and count or drop their output, noting the amounts.
+    """Drop backup units' capacity, and report or drop the rest of what they do, noting the amounts.
 
     Args:
         long (pd.DataFrame): The long table with variables.
-        backup_units (str): 'supply' or 'exclude'.
+        backup_units (str): 'supply' reports their output, emissions and captured CO2;
+            'exclude' leaves them out.
         backup_pattern (str): Regular expression marking backup units by name.
         notes (list[dict]): Conversion Notes, appended to.
 
@@ -753,31 +1133,36 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
         pd.DataFrame: The rows still reported.
     """
     backup = long["unit_name"].str.contains(backup_pattern, regex=True)
-    output = backup & (long["quantity"] == "output")
+    capacity = long["quantity"] == "capacity"
 
-    treatment = "counted as supply" if backup_units == "supply" else "left out"
-    for (scenario, variable, value_unit), rows in long[output].groupby(["iamc_scenario", "variable", "value_unit"]):
+    supply = backup_units == "supply"
+    for (scenario, quantity, variable, value_unit), rows in long[backup & ~capacity].groupby(
+            ["iamc_scenario", "quantity", "variable", "value_unit"]):
         by_region = per_region(rows)
         if by_region.empty:
             continue
+        if quantity == "output":
+            what, treatment = "Backup units produced", "counted as supply" if supply else "left out"
+        else:
+            what, treatment = f"Backup units' {quantity_label(quantity)} came to", "reported" if supply else "left out"
         notes.append(note(scenario, "", variable, (
-            f"Backup units produced {amounts(by_region.sum())} {value_unit} in "
-            f"{list_regions(by_region.index)}; {treatment}."
+            f"{what} {amounts(by_region.sum())} {value_unit} in {list_regions(by_region.index)}; {treatment}."
         )))
 
-    leave_out = backup & ~output if backup_units == "supply" else backup
+    leave_out = backup & capacity if supply else backup
     return long[~leave_out]
 
 
 #%% ------------------------------- ###
-###          6. Summing Up          ###
+###          7. Summing Up          ###
 ### ------------------------------- ###
 
 def sum_to_variables(long: pd.DataFrame, variables: pd.DataFrame, aggregates: pd.DataFrame) -> pd.DataFrame:
     """Sum the rows to every IAMC Variable they count towards, in its unit.
 
     A row counts towards its variable, every parent of it from the stem down that the
-    snapshot has, and every aggregate under its stem whose component its path starts with.
+    snapshot has, and every aggregate under its stem whose component its path starts with. A
+    variable that a withheld row counts towards is left empty (NaN).
 
     Args:
         long (pd.DataFrame): The reported rows.
@@ -789,7 +1174,9 @@ def sum_to_variables(long: pd.DataFrame, variables: pd.DataFrame, aggregates: pd
     """
     names = set(variables["variable"])
     keys = ["iamc_scenario", "region", "stem", "path", "variable", "value_unit", "year"]
-    leaves = long.groupby(keys, as_index=False)["value"].sum()
+    withheld = long["withheld"].eq(True) if "withheld" in long.columns else False
+    leaves = long.assign(withheld=withheld).groupby(keys, as_index=False).agg(
+        value=("value", "sum"), withheld=("withheld", "any"))
 
     # Every variable each leaf counts towards, once
     targets = []
@@ -797,9 +1184,8 @@ def sum_to_variables(long: pd.DataFrame, variables: pd.DataFrame, aggregates: pd
         segments = variable.split("|")
         for length in range(len(stem.split("|")), len(segments) + 1):
             targets.append((stem, path, variable, "|".join(segments[:length])))
-        for aggregate, component in aggregates[["aggregate", "component"]].itertuples(index=False):
-            if f"{stem}|{aggregate}" in names and (path == component or path.startswith(f"{component}|")):
-                targets.append((stem, path, variable, f"{stem}|{aggregate}"))
+        for aggregate in aggregates_of(stem, path, names, aggregates):
+            targets.append((stem, path, variable, aggregate))
     targets = pd.DataFrame(targets, columns=["stem", "path", "variable", "target"]).drop_duplicates()
 
     summed = leaves.merge(targets, on=["stem", "path", "variable"])
@@ -810,10 +1196,32 @@ def sum_to_variables(long: pd.DataFrame, variables: pd.DataFrame, aggregates: pd
     summed["value"] = summed["value"] * [factors[pair] for pair in pairs]
     summed.loc[summed["value"].abs() < noise, "value"] = 0.0
 
-    summed = summed.groupby(["iamc_scenario", "region", "target", "unit", "year"], as_index=False)["value"].sum()
+    summed = summed.groupby(["iamc_scenario", "region", "target", "unit", "year"], as_index=False).agg(
+        value=("value", "sum"), withheld=("withheld", "any"))
+    summed["value"] = summed["value"].where(~summed.pop("withheld"))
     return summed.rename(columns={
         "iamc_scenario": "Scenario", "region": "Region", "target": "Variable",
         "unit": "Unit", "year": "Year", "value": "Value",
+    })
+
+
+def aggregates_of(stem: str, path: str, names: set[str], aggregates: pd.DataFrame) -> list[str]:
+    """Find the aggregates under a stem that a row with the given segments counts towards.
+
+    Args:
+        stem (str): The stem, e.g. 'Secondary Energy|Electricity'.
+        path (str): Segments below it, e.g. 'Gas|w/ CCS'.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+        aggregates (pd.DataFrame): The 'aggregates' rule table.
+
+    Returns:
+        list[str]: The IAMC Variables '<stem>|<aggregate>' in `names` with a component the
+            path starts with, e.g. ['Secondary Energy|Electricity|Fossil', ...].
+    """
+    return sorted({
+        f"{stem}|{aggregate}"
+        for aggregate, component in aggregates[["aggregate", "component"]].itertuples(index=False)
+        if f"{stem}|{aggregate}" in names and (path == component or path.startswith(f"{component}|"))
     })
 
 
@@ -858,7 +1266,8 @@ def limit_to_template(data: pd.DataFrame, template: str | Path, notes: list[dict
 def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series) -> pd.DataFrame:
     """Pivot long IAMC data to one column per year.
 
-    A variable reported in some of a scenario's modelled years is 0 in the others.
+    A variable reported in some of a scenario's modelled years is 0 in the others. Withheld
+    values stay empty; a row empty in every year is dropped.
 
     Args:
         data (pd.DataFrame): Long IAMC data.
@@ -871,18 +1280,20 @@ def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series) -> pd.Dat
     index = ["Model", "Scenario", "Region", "Variable", "Unit"]
     if data.empty:
         return pd.DataFrame(columns=index)
-    wide = data.assign(Model=model).pivot_table(index=index, columns="Year", values="Value", aggfunc="sum")
+    cells = data.assign(Model=model).set_index(index + ["Year"])["Value"]
+    wide = cells.unstack("Year")
+    given = pd.Series(True, index=cells.index).unstack("Year", fill_value=False)
     for scenario, years in modelled_years.items():
         rows = wide.index.get_level_values("Scenario") == scenario
         columns = [year for year in years if year in wide.columns]
-        wide.loc[rows, columns] = wide.loc[rows, columns].fillna(0.0)
-    wide = wide.reindex(columns=sorted(wide.columns))
+        wide.loc[rows, columns] = wide.loc[rows, columns].mask(~given.loc[rows, columns], 0.0)
+    wide = wide.dropna(how="all").reindex(columns=sorted(wide.columns))
     wide.columns.name = None
     return wide.reset_index()
 
 
 #%% ------------------------------- ###
-###        7. Conversion Notes      ###
+###        8. Conversion Notes      ###
 ### ------------------------------- ###
 
 def note(scenario: str, region: str, variable: str, text: str) -> dict:
@@ -926,6 +1337,33 @@ def list_regions(regions: pd.Index | pd.Series | list[str]) -> str:
     """
     regions = sorted(set(regions))
     return regions[0] if len(regions) == 1 else f"{len(regions)} regions: {', '.join(regions)}"
+
+
+def list_names(names: pd.Series | list[str], limit: int = 10) -> str:
+    """Name things a Conversion Note is about, at most `limit` of them.
+
+    Args:
+        names (pd.Series | list[str]): The names.
+        limit (int, optional): How many to name. Defaults to 10.
+
+    Returns:
+        str: The names, and how many more there are.
+    """
+    names = sorted(set(names))
+    more = f" and {len(names) - limit} more" if len(names) > limit else ""
+    return ", ".join(names[:limit]) + more
+
+
+def quantity_label(quantity: str) -> str:
+    """Name a quantity of the long table in a Conversion Note.
+
+    Args:
+        quantity (str): The quantity, e.g. 'captured'.
+
+    Returns:
+        str: Its name, e.g. 'captured CO2'.
+    """
+    return quantity_labels.get(quantity, quantity)
 
 
 def amounts(by_year: pd.Series | None) -> str:

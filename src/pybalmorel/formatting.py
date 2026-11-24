@@ -228,6 +228,8 @@ balmorel_symbol_columns = {
         "Category",
     ],
     "EL_BALANCE_YCRST": ["Year", "Country", "Region", "Technology", "Season", "Time"],
+    "EMI_YCRAG": ["Year", "Country", "Region", "Area", "Generation", "Fuel", "Technology"],
+    "CC_YCRAG": ["Year", "Country", "Region", "Area", "Generation", "Fuel", "Technology"],
     "H2_DEMAND_YCR": ["Year", "Country", "Region", "Category"],
     "H2_DEMAND_YCRST": ["Year", "Country", "Region", "Season", "Time", "Category"],
     "H2_PRICE_YCR": ["Year", "Country", "Region", "Category"],
@@ -367,6 +369,8 @@ balmorel_mainresults_symbol_columns = {
         "Season",
         "Time",
     ],
+    "EMI_YCRAG": ["Scenario", "Year", "Country", "Region", "Area", "Generation", "Fuel", "Technology"],
+    "CC_YCRAG": ["Scenario", "Year", "Country", "Region", "Area", "Generation", "Fuel", "Technology"],
     "H2_DEMAND_YCR": ["Scenario", "Year", "Country", "Region", "Category"],
     "H2_DEMAND_YCRST": [
         "Scenario",
