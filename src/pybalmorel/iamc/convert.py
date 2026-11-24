@@ -153,11 +153,12 @@ def convert(long: pd.DataFrame,
         long[column] = long[column].fillna("") if column in long.columns else ""
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
-    long, linked = drop_optiflow_units(long, tables["mapping"], notes)
+    long, carried, linked = drop_optiflow_units(long, tables["mapping"], notes)
     note_stated_units(long, notes)
     flows = long[long["quantity"] == "flow"]
     long = long[long["quantity"] != "flow"]
     shares = pool_shares(flows, tables["optiflow"], notes)
+    check_fuel_rules(carried, flows, tables["optiflow"], notes)
     long = split_by_output(long, notes)
     long = count_trade(long, tables["mapping"], notes)
     long = name_regions(long, tables["countries"], regions, notes)
@@ -642,7 +643,7 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
 ### ------------------------------- ###
 
 def drop_optiflow_units(long: pd.DataFrame, mapping: pd.DataFrame,
-                        notes: list[dict]) -> tuple[pd.DataFrame, set[str]]:
+                        notes: list[dict]) -> tuple[pd.DataFrame, pd.DataFrame, set[str]]:
     """Drop the rows by which Balmorel carries OptiFlow's own results, and find the scenarios linked to OptiFlow.
 
     Mapping Rule 'optiflow' marks the units by which a Balmorel run linked to OptiFlow carries
@@ -655,8 +656,9 @@ def drop_optiflow_units(long: pd.DataFrame, mapping: pd.DataFrame,
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        tuple[pd.DataFrame, set[str]]: The long table without those rows, and the Balmorel
-            scenarios linked to OptiFlow: those with such rows or with OptiFlow flows.
+        tuple[pd.DataFrame, pd.DataFrame, set[str]]: The long table without those rows, those
+            rows, and the Balmorel scenarios linked to OptiFlow: those with such rows or with
+            OptiFlow flows.
     """
     units = long.loc[long["unit_name"] != "", unit_columns].drop_duplicates().reset_index(drop=True)
     marked = units[match_mapping_rules(units, mapping) == optiflow_unit]
@@ -672,10 +674,16 @@ def drop_optiflow_units(long: pd.DataFrame, mapping: pd.DataFrame,
         notes.append(note(scenario, "", "", (
             f"Not reported as Balmorel's: OptiFlow's {quantity_label(quantity)} that the results carry on units "
             f"{units}, {amounts(by_year)} {value_unit}. The OptiFlow Mapping ('optiflow' rules) reports "
-            "OptiFlow's results."
+            "OptiFlow's results; its 'fuel' rules give the emissions of the fuels these carry."
         )))
+        if quantity == "emissions" and (by_year < -noise).any():
+            notes[-1]["Note"] += (
+                " They are negative, so they are likely CO2 that OptiFlow stores rather than that of fuels it "
+                "burns; compare them with what goes to storage, which 'report' rules can give as "
+                "Carbon Capture|Geological Storage."
+            )
     linked = set(long.loc[carried, "scenario"]) | set(long.loc[long["quantity"] == "flow", "scenario"])
-    return long[~carried], linked
+    return long[~carried], long[carried], linked
 
 
 def note_stated_units(long: pd.DataFrame, notes: list[dict]) -> None:
@@ -802,6 +810,55 @@ def pool_shares(flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[dict]) 
     return shares[["iamc_scenario", "year", "pool", "share", "balmorel"]]
 
 
+def check_fuel_rules(carried: pd.DataFrame, flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[dict]) -> None:
+    """Compare the CO2 the 'fuel' rules give with the emissions the results carry for OptiFlow.
+
+    A 'fuel' rule gives the CO2 of a fossil fuel OptiFlow burns, as the fuel's flow times the
+    rule's factor. Balmorel's results carry the CO2 of those fuels on the units Mapping Rule
+    'optiflow' marks, so per IAMC Scenario and year, summed over all countries, the two should
+    match. Only done if there are 'fuel' rules.
+
+    Args:
+        carried (pd.DataFrame): The rows drop_optiflow_units dropped.
+        flows (pd.DataFrame): OptiFlow flows (quantity 'flow') with IAMC Scenarios.
+        optiflow (pd.DataFrame): The 'optiflow' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+    """
+    if not (optiflow["role"] == "fuel").any():
+        return
+    unitless = optiflow[(optiflow["role"] == "fuel") & ~optiflow["unit"].map(
+        lambda unit: unit == carbon_unit or (unit, carbon_unit) in unit_factors)]
+    if not unitless.empty:
+        raise Exception(
+            f"'optiflow' rules of role 'fuel' need a unit of CO2, e.g. 'Mt CO2': the unit of their flows times "
+            f"their factor.\n{unitless.to_string()}"
+        )
+
+    def in_carbon_unit(rows: pd.DataFrame) -> pd.Series:
+        return rows["value"] * rows["value_unit"].map(lambda unit: factor(unit, carbon_unit))
+
+    matched = match_optiflow_rules(flows, optiflow)
+    fuels = matched[matched["role"] == "fuel"]
+    fuels = fuels.assign(value=in_carbon_unit(fuels))
+    emissions = carried[carried["quantity"] == "emissions"]
+    emissions = emissions.assign(value=in_carbon_unit(emissions))
+
+    for scenario in sorted(set(fuels["iamc_scenario"]) | set(emissions["iamc_scenario"])):
+        given = fuels[fuels["iamc_scenario"] == scenario].groupby("year")["value"].sum()
+        held = emissions[emissions["iamc_scenario"] == scenario].groupby("year")["value"].sum()
+        given, held = given.align(held, fill_value=0.0)
+        text = (f"The 'fuel' rules give OptiFlow's fossil fuels {amounts(given)} {carbon_unit}; the results carry "
+                f"{amounts(held)} {carbon_unit} for OptiFlow (all countries).")
+        if ((given - held).abs() > balance_tolerance * held.abs() + noise).any():
+            text += " They differ: a fossil fuel may lack a 'fuel' rule, or have a factor that is off."
+        unreported = fuels[(fuels["iamc_scenario"] == scenario) & (fuels["emissions"] == "")]
+        if (unreported["value"].abs() >= noise).any():
+            edges = unreported["from_process"] + " -> " + unreported["to_process"]
+            text += (f" Not reported, as their rules give no emissions variable: {list_names(edges)}, "
+                     f"{amounts(unreported.groupby('year')['value'].sum())} {carbon_unit}.")
+        notes.append(note(scenario, "", "", text))
+
+
 def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], tables: dict[str, pd.DataFrame],
                   notes: list[dict]) -> pd.DataFrame:
     """Count the stored part of the CO2 that units capture from biomass as negative emissions and as removal.
@@ -911,9 +968,11 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     """Report OptiFlow's results as the OptiFlow Mapping says.
 
     'capture' rules report the CO2 OptiFlow captures under their variable, and the stored part
-    of it, by its pool's Stored Share, under removal and, negative, under emissions. 'report'
-    rules report the flow as it is under their variable. Each sums up to the longest stem of
-    the 'stems' rules its variable starts with, if there is one.
+    of it, by its pool's Stored Share, under removal and, negative, under emissions. 'fuel'
+    rules report the CO2 of a fossil fuel under emissions. 'report' rules report the flow as it
+    is under their variable. Flows are times the rule's factor. Each sums up to the longest
+    stem of the 'stems' rules its variable starts with, if there is one. A rule's note becomes a
+    Conversion Note on each IAMC Variable it reports values under.
 
     Args:
         flows (pd.DataFrame): OptiFlow flows with IAMC Regions.
@@ -939,9 +998,12 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
                             how="left")
 
     reported = []
-    for target, sign in (("variable", 1.0), ("removal", 1.0), ("emissions", -1.0)):
+    for target in ("variable", "removal", "emissions"):
         rows = matched[matched[target] != ""]
-        share = rows["share"] if target != "variable" else pd.Series(1.0, index=rows.index)
+        # The stored part of captured CO2 is removal, and negative emissions
+        stored = (rows["role"] == "capture") & (target != "variable")
+        share = rows["share"].where(stored, 1.0)
+        sign = np.where(stored & (target == "emissions"), -1.0, 1.0)
         reported.append(rows.assign(variable=rows[target], value=sign * rows["value"] * share.fillna(0.0),
                                     withheld=share.isna()))
     reported = pd.concat(reported, ignore_index=True)
@@ -952,6 +1014,9 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
             "Definitions Snapshot; not reported."
         )))
     reported = reported[reported["variable"].isin(names)]
+    noted = reported[(reported["note"] != "") & (reported["value"].abs() >= noise)]
+    for (scenario, variable, text), _ in noted.groupby(["iamc_scenario", "variable", "note"]):
+        notes.append(note(scenario, "", variable, text))
 
     by_length = sorted(set(stems["stem"]), key=len, reverse=True)
     stem_of = {
@@ -971,7 +1036,8 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
                  notes: list[dict]) -> pd.DataFrame:
     """Add the stem of each row, leaving out quantities and commodities without one.
 
-    A stem row for the row's Area Kind beats one for any Area Kind.
+    A stem row for the row's Area Kind beats one for any Area Kind. A stem row's note becomes a
+    Conversion Note in every IAMC Scenario with values under its stem.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -982,11 +1048,14 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     Returns:
         pd.DataFrame: The rows with a stem, with a 'stem' column.
     """
-    for_kind = stems[stems["area_kind"] != ""]
-    for_any = stems[stems["area_kind"] == ""].drop(columns="area_kind").rename(columns={"stem": "stem_any"})
+    for_kind = stems[stems["area_kind"] != ""].rename(columns={"note": "stem_note"})
+    for_any = stems[stems["area_kind"] == ""].drop(columns="area_kind").rename(
+        columns={"stem": "stem_any", "note": "stem_note_any"})
     long = long.merge(for_kind, on=["quantity", "commodity", "area_kind"], how="left")
     long = long.merge(for_any, on=["quantity", "commodity"], how="left")
+    chosen = long["stem"].notna()
     long["stem"] = long["stem"].fillna(long.pop("stem_any")).fillna("")
+    stem_notes = long.pop("stem_note").where(chosen, long.pop("stem_note_any")).fillna("")
 
     # Name the Area Kind only where the stems tell kinds apart
     unreported = long[long["stem"] == ""]
@@ -1007,6 +1076,11 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     for (scenario, stem), _ in long[(long["stem"] != "") & ~long["stem"].isin(names)].groupby(
             ["iamc_scenario", "stem"]):
         notes.append(note(scenario, "", stem, "This stem is not in the Definitions Snapshot; not reported."))
+
+    noted = long["stem"].isin(names) & (stem_notes != "") & (long["value"].abs() >= noise)
+    for (scenario, stem, text), _ in long[noted].assign(stem_note=stem_notes[noted]).groupby(
+            ["iamc_scenario", "stem", "stem_note"]):
+        notes.append(note(scenario, "", stem, text))
 
     return long[long["stem"].isin(names)]
 

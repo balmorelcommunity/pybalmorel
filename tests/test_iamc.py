@@ -55,6 +55,11 @@ carbon_names = [
     "Carbon Capture|Energy|Supply|Hydrogen|Fossil", "Carbon Capture|Direct Air Capture",
     "Carbon Removal|Geological Storage", "Carbon Removal|Geological Storage|Biomass",
     "Carbon Removal|Geological Storage|Direct Air Capture",
+    "Emissions|CO2|Energy|Demand|Industry", "Emissions|CO2|Energy|Demand|Industry|Biomass",
+    "Emissions|CO2|Energy|Demand|Residential and Commercial", "Carbon Capture|Energy|Demand|Industry",
+    "Carbon Capture|Energy|Demand|Industry|Biomass", "Carbon Capture|Geological Storage|Fossil",
+    "Emissions|CO2|Energy|Demand|Bunkers|International Aviation",
+    "Emissions|CO2|Energy|Demand|Bunkers|International Shipping",
 ]
 bunker_names = ["Final Energy|Bunkers|Hydrogen"]
 twh = 3.6e-3
@@ -197,10 +202,10 @@ def hydrogen_long() -> pd.DataFrame:
 
 
 def carbon_row(unit_name: str, tech_type: str, fuel: str, quantity: str, value: float, year: int = 2030,
-               country: str = "DENMARK", stated_unit: str = "") -> dict:
+               country: str = "DENMARK", stated_unit: str = "", area: str | None = None) -> dict:
     """A long-table row of one unit's emissions or captured CO2 (kt CO2) in scenario S1, in area
-    '<country>_A'; as from the Reader, it has no commodity."""
-    return {"scenario": "S1", "year": year, "country": country, "area": f"{country}_A", "unit_name": unit_name,
+    '<country>_A' by default; as from the Reader, it has no commodity."""
+    return {"scenario": "S1", "year": year, "country": country, "area": area or f"{country}_A", "unit_name": unit_name,
             "tech_type": tech_type, "fuel": fuel, "commodity": "", "quantity": quantity, "value_unit": "kt CO2",
             "stated_unit": stated_unit, "value": value}
 
@@ -538,6 +543,37 @@ def test_carbon_not_linked_to_optiflow(carbon_long: pd.DataFrame, definitions: P
     assert "don't mark them w/ CCS" not in text and "no captured CO2" not in text
 
 
+def test_demand_side_carbon(carbon_long: pd.DataFrame, definitions: Path) -> None:
+    """Emissions and captured CO2 of heat units in industry and individual areas are reported on
+    the demand side, with a note on what they cover; the electricity those units make counts as
+    supply."""
+    industry, individual = "DK_IND-MT-DH", "DK_IDVU-SPACEHEAT"
+    rows = unit_rows("S1", 2030, "DENMARK", "IND_ENG_NGAS", "CHP-BACK-PRESSURE", "NATGAS", 1, 1, area=industry)
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_ENG_NGAS", "CHP-BACK-PRESSURE", "NATGAS", None, 3, "HEAT", industry)
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_BO_WOODCHIPS_CCS", "BOILERS", "WOODCHIPS", 1, 2, "HEAT", industry)
+    rows += unit_rows("S1", 2030, "DENMARK", "IDVU_BO_NGAS", "BOILERS", "NATGAS", 1, 1, "HEAT", individual)
+    rows += [
+        carbon_row("IND_ENG_NGAS", "CHP-BACK-PRESSURE", "NATGAS", "emissions", 40, area=industry),
+        carbon_row("IND_BO_WOODCHIPS_CCS", "BOILERS", "WOODCHIPS", "emissions", -20, area=industry),
+        carbon_row("IND_BO_WOODCHIPS_CCS", "BOILERS", "WOODCHIPS", "captured", 20, area=industry),
+        carbon_row("IDVU_BO_NGAS", "BOILERS", "NATGAS", "emissions", 15, area=individual),
+    ]
+    data, notes = convert(pd.concat((carbon_long, pd.DataFrame(rows))), "Balmorel", definitions=definitions)
+
+    # Gas has no child of the industry stem: it counts towards the total only
+    assert value(data, "Emissions|CO2|Energy|Demand|Industry", 2030) == pytest.approx((30 - 20) / 1e3)
+    assert value(data, "Emissions|CO2|Energy|Demand|Industry|Biomass", 2030) == pytest.approx(-20 / 1e3)
+    assert value(data, "Emissions|CO2|Energy|Demand|Residential and Commercial", 2030) == pytest.approx(15 / 1e3)
+    assert value(data, "Carbon Capture|Energy|Demand|Industry|Biomass", 2030) == pytest.approx(20 / 1e3)
+    assert value(data, "Carbon Removal|Geological Storage|Biomass", 2030) == pytest.approx((200 + 20) / 1e3)
+    assert value(data, "Emissions|CO2|Energy|Supply|Electricity", 2030) == pytest.approx((50 - 150 + 10) / 1e3)
+    assert value(data, "Emissions|CO2|Energy|Supply|Heat", 2030) == pytest.approx((60 - 50) / 1e3)
+
+    covered = set(notes.loc[notes["Note"].str.startswith("Covers only the heat units"), "Variable"])
+    assert covered == {"Emissions|CO2|Energy|Demand|Industry", "Emissions|CO2|Energy|Demand|Residential and Commercial",
+                       "Carbon Capture|Energy|Demand|Industry"}
+
+
 def test_carbon_linked_to_optiflow(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
                                    definitions: Path) -> None:
     """Linked to OptiFlow, the stored part of the CO2 captured from biomass is its pool's Stored
@@ -565,13 +601,15 @@ def test_carbon_linked_to_optiflow(carbon_long: pd.DataFrame, flows: pd.DataFram
     assert "check those rules" not in text and "Not linked" not in text
 
 
-@pytest.mark.parametrize("link", ["flows", "carried"])
+@pytest.mark.parametrize("link", ["flows", "carried", "stored"])
 def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows: pd.DataFrame, definitions: Path,
                                                 link: str) -> None:
     """Linked to OptiFlow by its flows, or by OptiFlow's emissions the results carry, but without
     an OptiFlow Mapping, the stored part of the CO2 captured from biomass can't be known: what
-    it counts towards is left empty, and the rest is reported."""
-    carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", 500)])
+    it counts towards is left empty, and the rest is reported. Negative carried emissions, as
+    in 2027_madsen, are flagged as likely stored CO2."""
+    carried_kt = -500 if link == "stored" else 500
+    carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", carried_kt)])
     data, notes = convert(pd.concat((carbon_long, flows if link == "flows" else carried)), "Balmorel",
                           definitions=definitions)
 
@@ -589,8 +627,65 @@ def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows
         assert "Final Energy|Bunkers|Hydrogen" not in set(data["Variable"])
     else:
         assert "Not reported as Balmorel's: OptiFlow's emissions that the results carry on units OPTIFLOW/FUELOIL, " \
-               "2030: 500 kt CO2." in text
+               f"2030: {carried_kt} kt CO2." in text
         assert "Units whose output the results don't give" not in text
+        assert ("likely CO2 that OptiFlow stores" in text) == (link == "stored")
+
+
+@pytest.fixture
+def fuel_rules() -> pd.DataFrame:
+    """'fuel' rules for OptiFlow's fossil jet fuel, LNG for ships and diesel for road transport,
+    whose CO2 Balmorel's results carry, as in 2026_fristed. Ships capture CO2 on board into
+    pool 'occ', and the stored part of it is taken off their emissions; diesel's CO2 is not
+    reported. What 'occ' stores is reported as Geological Storage. The jet fuel rule has a note."""
+    columns = ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable", "removal",
+               "emissions", "note"]
+    aviation = "Emissions|CO2|Energy|Demand|Bunkers|International Aviation"
+    shipping = "Emissions|CO2|Energy|Demand|Bunkers|International Shipping"
+    return pd.DataFrame([
+        ["Jet_Source", "Aviation_Fuel", "", "fuel", "", "Mt CO2", "0.0732", "", "", aviation,
+         "All aviation counted as international."],
+        ["LNG_Source", "OCC", "", "fuel", "", "Mt CO2", "0.057", "", "", shipping, ""],
+        ["Diesel_Source", "Road_Fuels", "", "fuel", "", "Mt CO2", "0.0741", "", "", "", ""],
+        ["OCC", "CO2_Grid_In", "CO2_FLOW_OCC", "capture", "occ", "Mt CO2", "", "", "", shipping, ""],
+        ["CO2_Grid_Out", "CO2_Seq", "CO2_FLOW_OCC_SEQ", "store", "occ", "Mt CO2", "", "", "", "", ""],
+        ["CO2_Grid_Out", "CO2_Seq", "CO2_FLOW_OCC_SEQ", "report", "", "Mt CO2", "",
+         "Carbon Capture|Geological Storage|Fossil", "", "", ""],
+    ], columns=columns)
+
+
+@pytest.mark.parametrize("carried_kt", [1091.1, 1500])
+def test_optiflow_fuel_rules(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
+                             fuel_rules: pd.DataFrame, definitions: Path, carried_kt: float) -> None:
+    """'fuel' rules report the CO2 of OptiFlow's fossil fuels, as flow times factor, net of the
+    stored part of CO2 captured from them, and are checked against the emissions the results
+    carry for OptiFlow: 10 PJ of jet fuel, 5 of LNG and 1 of diesel make 1091.1 kt CO2."""
+    fuel_flows = pd.DataFrame([
+        flow_row("Jet_Source", "Aviation_Fuel", "JET_FLOW", 10),
+        flow_row("LNG_Source", "OCC", "LNG_FLOW", 5),
+        flow_row("Diesel_Source", "Road_Fuels", "DIESEL_FLOW", 1),
+        flow_row("OCC", "CO2_Grid_In", "CO2_FLOW_OCC", 0.2),
+        flow_row("CO2_Grid_Out", "CO2_Seq", "CO2_FLOW_OCC_SEQ", 0.16),
+    ])
+    carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", carried_kt)])
+    data, notes = convert(pd.concat((carbon_long, flows, fuel_flows, carried)), "Balmorel", definitions=definitions,
+                          rules={"optiflow": pd.concat((optiflow_rules, fuel_rules))})
+
+    assert value(data, "Emissions|CO2|Energy|Demand|Bunkers|International Aviation", 2030) == pytest.approx(0.732)
+    assert value(data, "Emissions|CO2|Energy|Demand|Bunkers|International Shipping", 2030) == pytest.approx(
+        0.285 - 0.2 * 0.8)
+    assert value(data, "Carbon Capture|Geological Storage|Fossil", 2030) == pytest.approx(0.16)
+    # Balmorel's own emissions are reported as without the fuel rules
+    assert value(data, "Emissions|CO2|Energy|Supply|Heat|Gas", 2030) == pytest.approx(60 / 1e3)
+
+    text = " ".join(notes["Note"])
+    assert ("The 'fuel' rules give OptiFlow's fossil fuels 2030: 1.091 Mt CO2/yr; the results carry "
+            f"2030: {carried_kt / 1e3:.4g} Mt CO2/yr for OptiFlow") in text
+    assert "Not reported, as their rules give no emissions variable: Diesel_Source -> Road_Fuels, 2030: 0.0741" in text
+    assert ("They differ" in text) == (carried_kt == 1500)
+    # A rule's note goes to the IAMC Variable it reports under
+    noted = notes[notes["Note"] == "All aviation counted as international."]
+    assert set(noted["Variable"]) == {"Emissions|CO2|Energy|Demand|Bunkers|International Aviation"}
 
 
 def test_carbon_notes(long: pd.DataFrame, definitions: Path) -> None:
@@ -650,4 +745,15 @@ def test_invalid_optiflow_rules_are_refused(optiflow_rules: pd.DataFrame) -> Non
         load_rules({"optiflow": optiflow_rules.assign(pool="")})
     with pytest.raises(Exception, match="no regular expression"):
         load_rules({"optiflow": optiflow_rules.assign(from_process="CO2_(")})
+    with pytest.raises(Exception, match="need a number or nothing under factor"):
+        load_rules({"optiflow": optiflow_rules.assign(factor="0,0732")})
+
+
+def test_invalid_fuel_rules_are_refused(fuel_rules: pd.DataFrame, carbon_long: pd.DataFrame, flows: pd.DataFrame,
+                                        definitions: Path) -> None:
+    with pytest.raises(Exception, match="of role 'fuel' take no variable or removal"):
+        load_rules({"optiflow": fuel_rules.assign(variable="Final Energy|Bunkers|Liquids|Oil")})
+    with pytest.raises(Exception, match="need a unit of CO2"):
+        convert(pd.concat((carbon_long, flows)), "Balmorel", definitions=definitions,
+                rules={"optiflow": fuel_rules.assign(unit="PJ")})
 

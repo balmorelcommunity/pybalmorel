@@ -22,17 +22,19 @@ import pandas as pd
 rules_dir = Path(__file__).parent / "rule_tables"
 definitions_dir = Path(__file__).parent / "definitions"
 
-# Columns of each rule table, and the key whose rows a caller's rows replace
+# Columns of each rule table, the columns a table may leave out (read as empty), and the key
+# whose rows a caller's rows replace
 rule_tables = {
     "fuels": {"columns": ["fuel", "category"], "key": ["fuel"]},
     "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments"], "key": None},
-    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem"], "key": ["quantity", "commodity", "area_kind"]},
+    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "note"], "optional": ["note"],
+              "key": ["quantity", "commodity", "area_kind"]},
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
     "demand_categories": {"columns": ["commodity", "demand_category", "final"], "key": ["commodity", "demand_category"]},
-    "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "variable", "removal",
-                             "emissions"], "key": None},
+    "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
+                             "removal", "emissions", "note"], "optional": ["factor", "note"], "key": None},
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
@@ -43,7 +45,7 @@ import_unit = "import"
 # own emissions: they are not reported, as the 'optiflow' rules report OptiFlow's results
 optiflow_unit = "optiflow"
 # Roles of 'optiflow' rules (see rule_tables/optiflow.csv), and those that need a pool
-optiflow_roles = ("balmorel", "capture", "store", "report")
+optiflow_roles = ("balmorel", "capture", "store", "report", "fuel")
 pool_roles = ("balmorel", "capture", "store")
 optiflow_patterns = ["from_process", "to_process", "flow"]
 optiflow_targets = ["variable", "removal", "emissions"]
@@ -55,13 +57,16 @@ default_area_kind = "district heating"
 ###          1. Rule Tables         ###
 ### ------------------------------- ###
 
-def read_table(source: str | Path | pd.DataFrame, columns: list[str], name: str) -> pd.DataFrame:
+def read_table(source: str | Path | pd.DataFrame, columns: list[str], name: str,
+               optional: list[str] | None = None) -> pd.DataFrame:
     """Read a rule or definitions table as strings, with empty cells as ''.
 
     Args:
         source (str | Path | pd.DataFrame): A CSV file ('#' starts a comment line) or a DataFrame.
         columns (list[str]): Columns the table must have; others are dropped.
         name (str): Name of the table, for error messages.
+        optional (list[str] | None, optional): Columns of `columns` the table may leave out;
+            they are then empty. Defaults to None.
 
     Returns:
         pd.DataFrame: The table with exactly `columns`, all strings, stripped.
@@ -71,6 +76,9 @@ def read_table(source: str | Path | pd.DataFrame, columns: list[str], name: str)
     else:
         table = pd.read_csv(source, dtype=str, keep_default_na=False, comment="#")
 
+    for column in optional or []:
+        if column not in table.columns:
+            table[column] = ""
     missing = [column for column in columns if column not in table.columns]
     if missing:
         raise Exception(f"The '{name}' table lacks the columns {missing}; it needs {columns}.")
@@ -102,9 +110,10 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
 
     tables = {}
     for name, spec in rule_tables.items():
-        shipped = read_table(rules_dir / f"{name}.csv", spec["columns"], name)
+        optional = spec.get("optional")
+        shipped = read_table(rules_dir / f"{name}.csv", spec["columns"], name, optional)
         caller = (
-            read_table(overrides[name], spec["columns"], name)
+            read_table(overrides[name], spec["columns"], name, optional)
             if name in overrides
             else pd.DataFrame(columns=spec["columns"], dtype=str)
         )
@@ -148,8 +157,8 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
 
 
 def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
-    """Refuse 'optiflow' rules with an unknown role, a pattern that is no regular expression, or a
-    missing pool, unit or variable.
+    """Refuse 'optiflow' rules with an unknown role, a pattern that is no regular expression, a
+    factor that is no number, a missing pool, unit or variable, or targets their role doesn't take.
 
     Args:
         optiflow (pd.DataFrame): The 'optiflow' rule table.
@@ -162,14 +171,33 @@ def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
     refuse("need a unit", optiflow["unit"] == "")
     refuse(f"of roles {pool_roles} need a pool", optiflow["role"].isin(pool_roles) & (optiflow["pool"] == ""))
     refuse("of role 'report' need a variable", (optiflow["role"] == "report") & (optiflow["variable"] == ""))
-    refuse("of roles other than 'capture' take no removal or emissions",
-           (optiflow["role"] != "capture") & ((optiflow["removal"] != "") | (optiflow["emissions"] != "")))
+    refuse("of roles other than 'capture' and 'fuel' take no removal or emissions",
+           ~optiflow["role"].isin(["capture", "fuel"]) & ((optiflow["removal"] != "") | (optiflow["emissions"] != "")))
+    refuse("of role 'fuel' take no variable or removal, only emissions",
+           (optiflow["role"] == "fuel") & ((optiflow["variable"] != "") | (optiflow["removal"] != "")))
+    refuse("need a number or nothing under factor", ~optiflow["factor"].map(is_number))
     for column in optiflow_patterns:
         for pattern in optiflow[column].unique():
             try:
                 re.compile(pattern)
             except re.error as error:
                 raise Exception(f"The 'optiflow' {column} pattern '{pattern}' is no regular expression: {error}")
+
+
+def is_number(text: str) -> bool:
+    """Tell whether a factor cell is empty or a number.
+
+    Args:
+        text (str): The cell.
+
+    Returns:
+        bool: True if it is empty or reads as a float.
+    """
+    try:
+        float(text or 1)
+    except ValueError:
+        return False
+    return True
 
 
 def match_optiflow_rules(flows: pd.DataFrame, optiflow: pd.DataFrame) -> pd.DataFrame:
@@ -180,9 +208,9 @@ def match_optiflow_rules(flows: pd.DataFrame, optiflow: pd.DataFrame) -> pd.Data
         optiflow (pd.DataFrame): The 'optiflow' table from load_rules.
 
     Returns:
-        pd.DataFrame: One row per flow and rule it matches: the flow's columns, and the rule's
-            under their own names, with 'unit' as 'value_unit'. A flow matching no rule is left
-            out.
+        pd.DataFrame: One row per flow and rule it matches: the flow's columns, its value times
+            the rule's factor (empty is 1), and the rule's columns under their own names, with
+            'unit' as 'value_unit'. A flow matching no rule is left out.
     """
     edges = flows[optiflow_patterns].drop_duplicates()
     pairs = []
@@ -198,6 +226,7 @@ def match_optiflow_rules(flows: pd.DataFrame, optiflow: pd.DataFrame) -> pd.Data
     columns = optiflow_patterns + [column for column in optiflow.columns if column not in optiflow_patterns]
     pairs = pd.concat(pairs, ignore_index=True) if pairs else pd.DataFrame(columns=columns)
     matched = flows.drop(columns=["value_unit"], errors="ignore").merge(pairs, on=optiflow_patterns)
+    matched["value"] = matched["value"] * matched.pop("factor").replace("", "1").astype(float)
     return matched.rename(columns={"unit": "value_unit"})
 
 
