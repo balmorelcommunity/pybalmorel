@@ -260,7 +260,8 @@ def test_carbon_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataF
                                          carbon: dict[str, pd.Series]) -> None:
     """Emissions and captured CO2 of electricity, heat and hydrogen supply add up to the raw
     results, split by output. Only Example3 captures CO2, all of it fossil, so nothing is
-    removed; Example1 and Example2 have no captured CO2, which the Conversion Notes say."""
+    removed, but it is all stored; Example1 and Example2 have no captured CO2, which the
+    Conversion Notes say."""
     data, notes = converted
     supplies = ["Electricity", "Heat", "Hydrogen"]
     emissions = sum(total(data, f"Emissions|CO2|Energy|Supply|{supply}") for supply in supplies)
@@ -270,6 +271,9 @@ def test_carbon_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataF
     pd.testing.assert_series_equal(captured, carbon["captured"], check_names=False, check_index_type=False,
                                    rtol=1e-9)
     assert (carbon["captured"]["Example3"] > 0) and (total(data, "Carbon Removal|Geological Storage") == 0).all()
+    # Not linked to OptiFlow, so all of it is stored
+    pd.testing.assert_series_equal(total(data, "Carbon Capture|Geological Storage"), carbon["captured"],
+                                   check_names=False, check_index_type=False, rtol=1e-9)
 
     no_captured = notes.loc[notes["Note"].str.startswith("The results give no captured CO2"), "Scenario"]
     assert sorted(no_captured) == ["Example1", "Example2"]

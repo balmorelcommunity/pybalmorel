@@ -170,7 +170,7 @@ A row in pybalmorel's mapping tables that sends Balmorel output with a given tec
 _Avoid_: Mapping (alone, ambiguous with the OptiFlow Mapping)
 
 **CCS Unit**:
-A Balmorel unit (a `GGG` member) whose name carries the token `CCS`, e.g. `NGASCCS` or `STEAM-REFORMING-CCS`. Reported under `w/ CCS`; every other unit is `w/o CCS`. No fuel or technology type marks CCS, so the unit name is the only evidence.
+A Balmorel unit (a `GGG` member) whose name carries the token `CCS`, e.g. `NGASCCS` or `STEAM-REFORMING-CCS`. Reported under `w/ CCS`; every other unit is `w/o CCS`. No fuel or technology type marks CCS, so the unit name is the only evidence. Some results give no captured CO2 (e.g. 2024_kountouris). Then a CCS unit's captured CO2 is derived: its fuel input times what units without CCS emit per unit of the same fuel, less its own emissions. That emission factor is used only if it fits every unit without CCS that burns the fuel; otherwise that fuel's captured CO2 is left out, with a Conversion Note.
 _Avoid_: CC (Balmorel names use it for combined cycle)
 
 **District-Heating Area / Individual Area / Industry Area**:
@@ -206,7 +206,7 @@ A `GNR_BACKUP…` unit that dispatch runs place in every region with near-unlimi
 How the fuel input, emissions and captured CO2 of a unit with two outputs (a CHP plant, or an electrolyser that also delivers heat) are divided between them: in proportion to the energy of each output. The method is reported with the results. Emissions or captured CO2 of a unit with no output in the results can't be divided; the Conversion Notes give the amounts, unless they are solver residue.
 
 **Net CO2 Emissions**:
-Fossil CO2 emitted, minus the captured biogenic CO2 that is stored, as the IAMC emission variables define it ("the sum of sources and sinks"). Captured and stored CO2 are also reported on their own as Carbon Capture and Carbon Removal. Where a run doesn't say how much captured biogenic CO2 is stored, only the fossil CO2 is reported, with a warning.
+Fossil CO2 emitted, minus the captured biogenic CO2 that is stored, as the IAMC emission variables define it ("the sum of sources and sinks"). Captured and stored CO2 are also reported on their own as Carbon Capture and Carbon Removal. Runs not linked to OptiFlow have no use for captured CO2, so all of it counts as stored, reported as `Carbon Capture|Geological Storage`; for linked runs, the OptiFlow Mapping's 'report' rows give storage. Where a run doesn't say how much captured biogenic CO2 is stored, only the fossil CO2 is reported, with a warning.
 
 **Conversion Notes**:
 The table returned with the IAMC data that says how its numbers were made and what was left out: the split methods used, fossil-only fallbacks, what went into Other, backup output, and amounts left out under Coverage. Each note names its IAMC Scenario, Region and Variable. When the same thing happens in several regions, there is one note per scenario that names the regions and gives the total, and its Region is left empty. They are also printed as warnings, and written as a Notes sheet next to the data.

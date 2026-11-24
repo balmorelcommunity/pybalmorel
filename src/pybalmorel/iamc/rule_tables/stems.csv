@@ -9,6 +9,8 @@
 # Emissions (EMI_YCRAG) and captured CO2 (CC_YCRAG) are per unit and split over the commodities
 # it makes in proportion to its output (Output-Share Split). Emissions are net: less the stored
 # part of the CO2 captured from biomass, which is also reported as removal (Carbon Removal).
+# Without OptiFlow, all captured CO2 is stored; the OptiFlow Mapping reports storage for runs
+# linked to OptiFlow, which may use some of it.
 # Emissions of heat made in individual and industry areas are demand-side emissions; they stay
 # there even when Heat Exchange sends the heat into district heating.
 # area_kind: the Area Kind (areas.csv) the row applies to; empty for any. A row for the area's
@@ -42,3 +44,6 @@ captured,HEAT,industry,Carbon Capture|Energy|Demand|Industry,Covers only the hea
 removal,ELECTRICITY,,Carbon Removal|Geological Storage
 removal,HEAT,,Carbon Removal|Geological Storage
 removal,HYDROGEN,,Carbon Removal|Geological Storage
+stored,ELECTRICITY,,Carbon Capture|Geological Storage
+stored,HEAT,,Carbon Capture|Geological Storage
+stored,HYDROGEN,,Carbon Capture|Geological Storage

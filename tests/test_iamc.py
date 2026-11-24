@@ -57,7 +57,8 @@ carbon_names = [
     "Carbon Removal|Geological Storage|Direct Air Capture",
     "Emissions|CO2|Energy|Demand|Industry", "Emissions|CO2|Energy|Demand|Industry|Biomass",
     "Emissions|CO2|Energy|Demand|Residential and Commercial", "Carbon Capture|Energy|Demand|Industry",
-    "Carbon Capture|Energy|Demand|Industry|Biomass", "Carbon Capture|Geological Storage|Fossil",
+    "Carbon Capture|Energy|Demand|Industry|Biomass", "Carbon Capture|Geological Storage",
+    "Carbon Capture|Geological Storage|Biomass", "Carbon Capture|Geological Storage|Fossil",
     "Emissions|CO2|Energy|Demand|Bunkers|International Aviation",
     "Emissions|CO2|Energy|Demand|Bunkers|International Shipping",
 ]
@@ -208,6 +209,11 @@ def carbon_row(unit_name: str, tech_type: str, fuel: str, quantity: str, value: 
     return {"scenario": "S1", "year": year, "country": country, "area": area or f"{country}_A", "unit_name": unit_name,
             "tech_type": tech_type, "fuel": fuel, "commodity": "", "quantity": quantity, "value_unit": "kt CO2",
             "stated_unit": stated_unit, "value": value}
+
+
+def input_row(unit_name: str, tech_type: str, fuel: str, value: float) -> dict:
+    """A long-table row of one Danish unit's fuel input (TWh) in scenario S1 in 2030, as from the Reader."""
+    return carbon_row(unit_name, tech_type, fuel, "input", value) | {"value_unit": "TWh"}
 
 
 def flow_row(from_process: str, to_process: str, flow: str, value: float) -> dict:
@@ -518,9 +524,9 @@ def test_shipped_rules_match_shipped_snapshot() -> None:
 
 
 def test_carbon_not_linked_to_optiflow(carbon_long: pd.DataFrame, definitions: Path) -> None:
-    """Without OptiFlow, all CO2 captured from biomass counts as stored: as Carbon Removal, and as
-    negative emissions in place of those the results give. The CHP unit's CO2 is split by its
-    output: 3/4 to electricity, 1/4 to heat."""
+    """Without OptiFlow, all captured CO2 counts as stored, as Geological Storage; that from
+    biomass also as Carbon Removal, and as negative emissions in place of those the results give.
+    The CHP unit's CO2 is split by its output: 3/4 to electricity, 1/4 to heat."""
     data, notes = convert(carbon_long, "Balmorel", definitions=definitions)
 
     assert value(data, "Emissions|CO2|Energy|Supply|Electricity", 2030) == pytest.approx((50 - 150) / 1e3)
@@ -535,12 +541,53 @@ def test_carbon_not_linked_to_optiflow(carbon_long: pd.DataFrame, definitions: P
     assert value(data, "Carbon Capture|Energy|Supply|Heat|Biomass", 2030) == pytest.approx(50 / 1e3)
     assert value(data, "Carbon Removal|Geological Storage", 2030) == pytest.approx(200 / 1e3)
     assert value(data, "Carbon Removal|Geological Storage|Biomass", 2030) == pytest.approx(200 / 1e3)
+    # Gas has no child of Geological Storage either
+    assert value(data, "Carbon Capture|Geological Storage", 2030) == pytest.approx((450 + 200) / 1e3)
+    assert value(data, "Carbon Capture|Geological Storage|Fossil", 2030) == pytest.approx(450 / 1e3)
+    assert value(data, "Carbon Capture|Geological Storage|Biomass", 2030) == pytest.approx(200 / 1e3)
 
     text = " ".join(notes["Note"])
     assert "(ELECTRICITY and HEAT)" in text and "(Output-Share Split)" in text
-    assert "Not linked to OptiFlow, so all CO2 that units capture from biomass is taken to be stored: 2030: 200" in text
+    assert ("Not linked to OptiFlow, so all CO2 that units capture is taken to be stored: 2030: 650 kt CO2, of which "
+            "from biomass, so removed: 2030: 200 kt CO2.") in text
     assert "negative emissions of biomass on units that capture CO2, 2030: -200 kt CO2 in Denmark" in text
     assert "don't mark them w/ CCS" not in text and "no captured CO2" not in text
+
+
+@pytest.mark.parametrize("case", ["consistent", "inconsistent", "given"])
+def test_capture_derived_from_fuel_input(long: pd.DataFrame, definitions: Path, case: str) -> None:
+    """Where the results give no captured CO2, that of units w/ CCS is their fuel input times what
+    units without CCS emit per unit of the same fuel, less their own emissions: 10 TWh of gas at
+    201.96 kt CO2/TWh, of which 10% is emitted, makes 1817.64 kt captured, all stored. The factor
+    must fit every unit without CCS of that fuel. Captured CO2 the results give is kept."""
+    boiler_emissions = 900 if case == "inconsistent" else 3.3 * 201.96
+    rows = [
+        input_row("GNR_CC_NGAS", "CONDENSING", "NATGAS", 20),
+        input_row("GNR_BO_NGAS", "BOILERS", "NATGAS", 3.3),
+        input_row("GNR_CC_NGASCCS", "CONDENSING", "NATGAS", 10),
+        input_row("GNR_WT_ON", "WIND-ON", "WIND", 7),
+        carbon_row("GNR_CC_NGAS", "CONDENSING", "NATGAS", "emissions", 20 * 201.96),
+        carbon_row("GNR_BO_NGAS", "BOILERS", "NATGAS", "emissions", boiler_emissions),
+        carbon_row("GNR_CC_NGASCCS", "CONDENSING", "NATGAS", "emissions", 201.96),
+    ]
+    if case == "given":
+        rows.append(carbon_row("GNR_CC_NGASCCS", "CONDENSING", "NATGAS", "captured", 1000))
+    data, notes = convert(pd.concat((long, pd.DataFrame(rows))), "Balmorel", definitions=definitions)
+
+    text = " ".join(notes["Note"])
+    captured = {"consistent": 10 * 201.96 - 201.96, "given": 1000}.get(case)
+    if captured is None:
+        assert is_empty(data, "Carbon Capture|Energy|Supply|Electricity", 2030)
+        assert "can't be derived, and is not reported, for fuels: NATGAS (units without CCS emit 201.96 to 272.73" in text
+        assert "The results give no captured CO2: Carbon Capture and Carbon Removal are not reported" in text
+    else:
+        for variable in ("Carbon Capture|Energy|Supply|Electricity", "Carbon Capture|Energy|Supply|Electricity|Fossil",
+                         "Carbon Capture|Geological Storage", "Carbon Capture|Geological Storage|Fossil"):
+            assert value(data, variable, 2030) == pytest.approx(captured / 1e3)
+        assert ("Emission factors: NATGAS 201.96 kt CO2/TWh. Captured CO2: 2030: 1818 kt CO2." in text) == (
+            case == "consistent")
+    # Fuel input itself is not reported
+    assert "input" not in " ".join(notes.loc[notes["Note"].str.contains("Not reported"), "Note"])
 
 
 def test_demand_side_carbon(carbon_long: pd.DataFrame, definitions: Path) -> None:

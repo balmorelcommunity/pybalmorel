@@ -43,7 +43,8 @@ extra_columns = ["to_country", "stated_unit", "from_process", "to_process", "flo
 # every scenario must have them, and column renames before long_columns applies. Hydrogen
 # demand and transmission are per region, so their rows have no area. Emissions and captured
 # CO2 are per unit but not per commodity; their unit is fixed, as results don't always state it
-# right, and the units they may state for it are listed.
+# right, and the units they may state for it are listed. Fuel input is per unit too; it is only
+# used to derive captured CO2 where the results don't give it.
 quantity_symbols = [
     {"quantity": "capacity", "symbol": "G_CAP_YCRAF", "commodity": None, "required": True, "renames": {}},
     {"quantity": "output", "symbol": "PRO_YCRAGF", "commodity": None, "required": True, "renames": {}},
@@ -57,6 +58,8 @@ quantity_symbols = [
      "unit": "kt CO2", "unit_aliases": {"kton", "kt"}},
     {"quantity": "captured", "symbol": "CC_YCRAG", "commodity": None, "required": False, "renames": {},
      "unit": "kt CO2", "unit_aliases": {"kton", "kt"}},
+    {"quantity": "input", "symbol": "F_CONS_YCRA", "commodity": None, "required": False, "renames": {},
+     "unit": "TWh", "unit_aliases": {"TWh"}},
 ]
 # OptiFlow's flows between processes, and the result file names next to a MainResults file
 optiflow_symbol = "VFLOW_Opti_C"
@@ -79,8 +82,8 @@ def read_mainresults(results: "MainResults",
     decommissioning categories. Demand (H_DEMAND_YCRA per area, H2_DEMAND_YCR per region) and
     exchange (XH_FLOW_YCA, heat transmission from 'area' to 'to_area'; XH2_FLOW_YCR, hydrogen
     transmission between regions) are read where the results have them. Exchange rows say which
-    country they go to. Emissions (EMI_YCRAG) and captured CO2 (CC_YCRAG) are per unit, with
-    no commodity. Where a scenario was linked to OptiFlow, OptiFlow's flows between processes
+    country they go to. Emissions (EMI_YCRAG), captured CO2 (CC_YCRAG) and fuel input
+    (F_CONS_YCRA) are per unit, with no commodity. Where a scenario was linked to OptiFlow, OptiFlow's flows between processes
     (VFLOW_Opti_C) are read too.
 
     Args:
@@ -94,7 +97,7 @@ def read_mainresults(results: "MainResults",
         pd.DataFrame: One row per scenario, year, country, area, unit, fuel, commodity, demand
             category, receiving area and country, and quantity, with the columns of long_columns,
             extra_columns and 'quantity' ('capacity', 'output', 'demand', 'exchange',
-            'emissions', 'captured' or 'flow'). Columns a quantity doesn't have are ''.
+            'emissions', 'captured', 'input' or 'flow'). Columns a quantity doesn't have are ''.
             'stated_unit' is the unit the results state where it isn't one the Reader expects.
     """
     tables = []

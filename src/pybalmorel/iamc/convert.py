@@ -55,7 +55,8 @@ carbon_quantities = ("emissions", "captured")
 # Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
 biogenic_category = "Biomass"
 # How Conversion Notes name quantities that aren't plain words
-quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass"}
+quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
+                   "input": "fuel input"}
 # The commodity whose exchange between areas is Heat Exchange; exchange of the others is trade
 heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
@@ -85,9 +86,10 @@ def to_iamc(results: "MainResults",
     units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
     between countries, and what import units bring in from outside the model, are reported as
     Trade (net exports). Emissions are net of the stored part of the CO2 captured from biomass,
-    which is also reported as Carbon Removal. For scenarios linked to OptiFlow, OptiFlow's
-    results are reported as the 'optiflow' rules (the OptiFlow Mapping) say, which also give the
-    stored part. Conversion Notes say what was put under Other, what was left out, how backup
+    which is also reported as Carbon Removal. Where the results give no captured CO2, that of
+    units marked w/ CCS is derived from their fuel input. Without OptiFlow, all captured CO2
+    counts as stored. For scenarios linked to OptiFlow, OptiFlow's results are reported as the
+    'optiflow' rules (the OptiFlow Mapping) say, which also give the stored part. Conversion Notes say what was put under Other, what was left out, how backup
     units, import units and Heat Exchange were treated, and where a commodity's supply and
     demand don't add up; the first of them are printed. Values that can't be known without
     missing rules are left empty.
@@ -157,6 +159,7 @@ def convert(long: pd.DataFrame,
     note_stated_units(long, notes)
     flows = long[long["quantity"] == "flow"]
     long = long[long["quantity"] != "flow"]
+    long = derive_capture(long, tables["mapping"], notes)
     shares = pool_shares(flows, tables["optiflow"], notes)
     check_fuel_rules(carried, flows, tables["optiflow"], notes)
     long = split_by_output(long, notes)
@@ -666,7 +669,9 @@ def drop_optiflow_units(long: pd.DataFrame, mapping: pd.DataFrame,
     if not marked.empty:
         carried = pd.MultiIndex.from_frame(long[unit_columns]).isin(pd.MultiIndex.from_frame(marked))
 
-    for (scenario, quantity, value_unit), rows in long[carried].groupby(["iamc_scenario", "quantity", "value_unit"]):
+    # Fuel input isn't reported for any unit, so leaving it out needs no note
+    noted = carried & (long["quantity"] != "input")
+    for (scenario, quantity, value_unit), rows in long[noted].groupby(["iamc_scenario", "quantity", "value_unit"]):
         by_year = rows.groupby("year")["value"].sum()
         if (by_year.abs() < noise).all():
             continue
@@ -701,6 +706,93 @@ def note_stated_units(long: pd.DataFrame, notes: list[dict]) -> None:
             f"{value_unit}, the unit Balmorel writes it in. If '{stated_unit}' is right, its values are off by "
             "the factor between the two."
         )))
+
+
+def derive_capture(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Derive the CO2 that units marked w/ CCS capture where the results don't give it, and drop fuel input.
+
+    For Balmorel scenarios whose results give no captured CO2, a unit the Mapping Rules mark
+    w/ CCS captures what it would emit without CCS, less what it emits: its fuel input times
+    the emission factor of its fuel, less its emissions. The emission factor is fitted to the
+    units without CCS that burn the fuel in the same IAMC Scenario (their emissions over their
+    fuel input), and only used if it fits each of them to within balance_tolerance. Fuel input
+    itself isn't reported.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios, without OptiFlow's flows.
+        mapping (pd.DataFrame): The 'mapping' rule table.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table without fuel input, with the derived captured CO2.
+    """
+    is_input = long["quantity"] == "input"
+    burnt = long[is_input & (long["value"] >= noise)]
+    long = long[~is_input]
+    without = set(burnt["scenario"]) - set(long.loc[long["quantity"] == "captured", "scenario"])
+    burnt = burnt[burnt["scenario"].isin(without)]
+    if burnt.empty:
+        return long
+
+    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
+    emissions = long[long["quantity"] == "emissions"]
+    emitted = emissions.groupby(keys)["value"].sum().rename("emitted")
+    burnt = burnt.join(emitted, on=keys)
+    burnt["emitted"] = burnt["emitted"].fillna(0.0)
+    # Units marked w/ CCS, by the Mapping Rule that wins for their output
+    output = long.loc[long["quantity"] == "output", unit_columns].drop_duplicates().reset_index(drop=True)
+    ccs = output[match_mapping_rules(output, mapping).str.contains("w/ CCS", regex=False)]
+    unit_keys = ["unit_name", "tech_type", "fuel"]
+    burnt["ccs"] = pd.MultiIndex.from_frame(burnt[unit_keys]).isin(pd.MultiIndex.from_frame(ccs[unit_keys]))
+
+    derived = []
+    for scenario, in_scenario in burnt.groupby("iamc_scenario"):
+        units_of_emissions = emissions.loc[emissions["iamc_scenario"] == scenario, "value_unit"].unique()
+        if not in_scenario["ccs"].any() or len(units_of_emissions) != 1:
+            continue
+        emission_unit = units_of_emissions[0]
+        factors, skipped, pieces = [], [], []
+        for fuel, rows in in_scenario.groupby("fuel"):
+            marked = rows[rows["ccs"]]
+            reference = rows[~rows["ccs"]]
+            if marked.empty:
+                continue
+            per_input = f"{emission_unit}/{rows['value_unit'].iloc[0]}"
+            if reference.empty:
+                skipped.append(f"{fuel} (no units without CCS burn it)")
+                continue
+            emission_factor = reference["emitted"].sum() / reference["value"].sum()
+            expected = emission_factor * reference["value"]
+            if ((reference["emitted"] - expected).abs() > balance_tolerance * expected.abs() + noise).any():
+                ratios = reference["emitted"] / reference["value"]
+                skipped.append(f"{fuel} (units without CCS emit {ratios.min():.5g} to {ratios.max():.5g} {per_input})")
+                continue
+            would_emit = emission_factor * marked["value"]
+            value = would_emit - marked["emitted"]
+            if (value < -(balance_tolerance * would_emit.abs() + noise)).any():
+                skipped.append(f"{fuel} (units w/ CCS emit more than units without CCS would)")
+                continue
+            factors.append(f"{fuel} {emission_factor:.5g} {per_input}")
+            pieces.append(marked.assign(quantity="captured", value=value.clip(lower=0.0), value_unit=emission_unit,
+                                       stated_unit=""))
+
+        text = ""
+        if pieces:
+            found = pd.concat(pieces).drop(columns=["emitted", "ccs"])
+            found = found[found["value"] >= noise]
+            derived.append(found)
+            text = (
+                "The results give no captured CO2, so that of units the Mapping Rules mark w/ CCS is derived: their "
+                "fuel input times what units without CCS emit per unit of the same fuel, less their own emissions. "
+                f"Emission factors: {', '.join(factors)}. Captured CO2: "
+                f"{amounts(found.groupby('year')['value'].sum())} {emission_unit}."
+            )
+        if skipped:
+            text += (f" Captured CO2 of units w/ CCS can't be derived, and is not reported, for fuels: "
+                     f"{'; '.join(skipped)}.")
+        notes.append(note(scenario, "", "", text.strip()))
+
+    return pd.concat([long] + derived, ignore_index=True)
 
 
 def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
@@ -866,7 +958,9 @@ def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], ta
     Emissions are kept as the results give them, but for negative emissions of biomass (Fuel
     Category Biomass) on units that capture CO2: the stored part of the CO2 they capture from
     biomass takes their place, as negative emissions and as removal ('removal' rows). For
-    scenarios not linked to OptiFlow, all of it counts as stored. For linked ones, the Stored
+    scenarios not linked to OptiFlow, all CO2 units capture counts as stored ('stored' rows,
+    and 'removal' rows for biomass); the OptiFlow Mapping reports storage for the linked ones,
+    whose 'report' rules can give it. For linked ones, the Stored
     Share of the pools its 'balmorel' rules bring it into does, weighed by how much they bring
     into each. Where the OptiFlow Mapping gives no share, those rows are withheld, and the
     IAMC Variables they count towards are left empty.
@@ -879,7 +973,7 @@ def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], ta
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table with a 'withheld' column and the rows for stored CO2 from biomass.
+        pd.DataFrame: The long table with a 'withheld' column and the rows for stored CO2.
     """
     categories = tables["fuels"].set_index("fuel")["category"]
     long = long.assign(withheld=False)
@@ -930,11 +1024,16 @@ def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], ta
     withheld = stored["share"].isna()
     value = stored["value"] * stored.pop("share").fillna(0.0)
 
-    for (scenario, value_unit), rows in stored[~is_linked].groupby(["iamc_scenario", "value_unit"]):
-        notes.append(note(scenario, "", "", (
-            f"Not linked to OptiFlow, so all CO2 that units capture from biomass is taken to be stored: "
-            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit}."
-        )))
+    # Without OptiFlow, nothing uses captured CO2: it is all stored
+    into_storage = long[captured & ~long["scenario"].isin(linked) & (long["value"].abs() >= noise)]
+    for (scenario, value_unit), rows in into_storage.groupby(["iamc_scenario", "value_unit"]):
+        text = (f"Not linked to OptiFlow, so all CO2 that units capture is taken to be stored: "
+                f"{amounts(rows.groupby('year')['value'].sum())} {value_unit}")
+        from_biomass = stored[~is_linked & (stored["iamc_scenario"] == scenario)
+                              & (stored["value_unit"] == value_unit)].groupby("year")["value"].sum()
+        if not from_biomass.empty:
+            text += f", of which from biomass, so removed: {amounts(from_biomass)} {value_unit}"
+        notes.append(note(scenario, "", "", text + "."))
     for (scenario, value_unit), rows in stored[withheld].groupby(["iamc_scenario", "value_unit"]):
         by_region = per_region(rows)
         notes.append(note(scenario, "", "", (
@@ -960,7 +1059,8 @@ def net_emissions(long: pd.DataFrame, shares: pd.DataFrame, linked: set[str], ta
 
     negative = stored.assign(quantity="emissions", value=-value, withheld=withheld)
     removal = stored.assign(quantity="removal", value=value, withheld=withheld)
-    return pd.concat((long[~replaced], negative, removal), ignore_index=True)
+    into_storage = into_storage.assign(quantity="stored")
+    return pd.concat((long[~replaced], negative, removal, into_storage), ignore_index=True)
 
 
 def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.DataFrame, stems: pd.DataFrame,
