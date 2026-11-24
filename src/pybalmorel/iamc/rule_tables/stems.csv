@@ -25,7 +25,7 @@
 quantity,commodity,area_kind,stem,note
 capacity,ELECTRICITY,,Capacity|Electricity
 output,ELECTRICITY,,Secondary Energy|Electricity
-demand,ELECTRICITY,,Final Energy|Electricity,"Total only: Balmorel's exogenous electricity demand isn't split by sector. Includes the electricity that heat units in individual and industry areas use, and that of electric vehicles and the transport add-on where the results give it; leaves out what carbon capture and the OptiFlow add-on use."
+demand,ELECTRICITY,,Final Energy|Electricity,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses."
 trade,ELECTRICITY,,Trade|Secondary Energy|Electricity [Volume]
 capacity,HEAT,district heating,Capacity|Heat
 output,HEAT,district heating,Secondary Energy|Heat

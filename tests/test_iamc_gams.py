@@ -156,23 +156,13 @@ def heat(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
 def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.Series) -> dict[str, pd.Series]:
     """Raw hydrogen per scenario: capacity (GW) and output (TWh) of units in any kind of area,
     without storage and import units, demand in final categories, and net exports (TWh):
-    transmission to other countries, less transmission from them, less import units' output.
-    Electrolysers' capacity is times their electricity input per hydrogen output."""
+    transmission to other countries, less transmission from them, less import units' output."""
     rules = load_rules()
     long = in_regions[in_regions["commodity"] == "HYDROGEN"]
     units = long[long["quantity"].isin(["capacity", "output"])]
     targets = match_mapping_rules(units, rules["mapping"])
     made = units[~targets.isin([not_reported, import_unit])]
     imported = units[(targets == import_unit) & (units["quantity"] == "output")]
-
-    unit_keys = ["scenario", "unit_name", "tech_type", "fuel"]
-    electric = rules["fuels"].loc[rules["fuels"]["category"] == "Electricity", "fuel"]
-    used = in_regions[in_regions["quantity"] == "input"].groupby(unit_keys)["value"].sum()
-    per_output = used / made[made["quantity"] == "output"].groupby(unit_keys)["value"].sum()
-    is_electrolyser = (made["quantity"] == "capacity") & made["fuel"].isin(electric)
-    factors = made.join(per_output.rename("per_output"), on=unit_keys)["per_output"].fillna(0.0)
-    made = made.assign(value=made["value"].where(~is_electrolyser, made["value"] * factors))
-    assert is_electrolyser.any()
 
     categories = rules["demand_categories"]
     final = categories.loc[(categories["commodity"] == "HYDROGEN") & (categories["final"] == "yes"),

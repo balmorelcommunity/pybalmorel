@@ -32,8 +32,8 @@ rule_tables = {
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
-    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category"],
-                          "optional": ["fuel_category"], "key": ["commodity", "demand_category"]},
+    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category", "sector", "note"],
+                          "optional": ["fuel_category", "sector", "note"], "key": ["commodity", "demand_category"]},
     "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
                              "removal", "emissions", "note"], "optional": ["factor", "note"], "key": None},
 }
@@ -160,6 +160,12 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             f"'demand_categories' rows marked '{on_site_final}' need a fuel_category that the 'fuels' rules give "
             f"some fuel: that of the fuels whose input counts.\n{demand_categories[unknown].to_string()}"
         )
+    sector_not_final = (demand_categories["sector"] != "") & (demand_categories["final"] != "yes")
+    if sector_not_final.any():
+        raise Exception(
+            "'demand_categories' rows with a sector need 'yes' under final, as a Final Energy Sector is a part of "
+            f"final energy:\n{demand_categories[sector_not_final].to_string()}"
+        )
     for pattern in tables["areas"]["pattern"]:
         try:
             re.compile(pattern)
@@ -167,6 +173,26 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             raise Exception(f"The 'areas' pattern '{pattern}' is no regular expression: {error}")
     check_optiflow_rules(tables["optiflow"])
     return tables
+
+
+def sector_variables(stem: str, sector: str) -> list[str]:
+    """Name the IAMC Variables that demand under a stem is also reported under, by its Final Energy Sector.
+
+    The sector goes after the stem's first segment, at each of its levels: demand under
+    'Final Energy|Electricity' in sector 'Carbon Management|Carbon Capture and Storage' is
+    also reported under 'Final Energy|Carbon Management|Electricity' and
+    'Final Energy|Carbon Management|Carbon Capture and Storage|Electricity'.
+
+    Args:
+        stem (str): The demand stem, e.g. 'Final Energy|Electricity'.
+        sector (str): The Final Energy Sector, e.g. 'Carbon Management|Carbon Capture and Storage'.
+
+    Returns:
+        list[str]: One IAMC Variable per level of the sector, the broadest first.
+    """
+    first, _, rest = stem.partition("|")
+    levels = sector.split("|")
+    return ["|".join([first, *levels[:length], rest]) for length in range(1, len(levels) + 1)]
 
 
 def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
@@ -416,6 +442,14 @@ def check_rules(definitions: str | Path | None = None,
         for target in tables["optiflow"][column].unique():
             if target and target not in names:
                 problems.append(("optiflow", target, f"{column} is not an IAMC Variable"))
+
+    demand_stems = tables["stems"][tables["stems"]["quantity"] == "demand"]
+    with_sector = tables["demand_categories"][tables["demand_categories"]["sector"] != ""]
+    for commodity, sector in with_sector[["commodity", "sector"]].drop_duplicates().itertuples(index=False):
+        for stem in demand_stems.loc[demand_stems["commodity"] == commodity, "stem"].unique():
+            for variable in sector_variables(stem, sector):
+                if variable not in names:
+                    problems.append(("demand_categories", variable, f"sector '{sector}' gives no IAMC Variable"))
 
     kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
     for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:

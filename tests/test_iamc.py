@@ -63,7 +63,11 @@ carbon_names = [
     "Emissions|CO2|Energy|Demand|Bunkers|International Shipping",
 ]
 bunker_names = ["Final Energy|Bunkers|Hydrogen"]
-electricity_names = ["Final Energy|Electricity", "Trade|Secondary Energy|Electricity [Volume]"]
+electricity_names = [
+    "Final Energy|Electricity", "Trade|Secondary Energy|Electricity [Volume]", "Final Energy|Carbon Management",
+    "Final Energy|Carbon Management|Electricity",
+    "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+]
 twh = 3.6e-3
 
 
@@ -141,8 +145,9 @@ def heat_long(long: pd.DataFrame) -> pd.DataFrame:
       and sends 3.5 into district heating, getting 0.5 back: 3 net from the wood chips.
     - District heating sends 1 net to DK_IND-HT-DH, and 5 to another district heating area.
     - District heating's storage gives 0.5, which is not output.
-    - District heating balances: its 6 TWh go to demand, storage, losses and DK_IND-HT-DH; in
-      2050 its gas boiler's 3 TWh go to demand.
+    - District heating balances: its 6 TWh go to demand, storage, the OptiFlow add-on, losses
+      and DK_IND-HT-DH; in 2050 its gas boiler's 3 TWh go to demand.
+    - Demand in a category the rules don't know (ENDO_UNKNOWN) is left out.
     """
     year = 2030
     rows = unit_rows("S1", year, "DENMARK", "GNR_BO_WOOD", "BOILERS", "WOODCHIPS", 2, 8, "HEAT", "DK_IND-MT-DH")
@@ -152,7 +157,8 @@ def heat_long(long: pd.DataFrame) -> pd.DataFrame:
         demand_row(year, "DENMARK_A", "EXOGENOUS", 4),
         demand_row(year, "DENMARK_A", "ENDO_INTRASTO", 0.1),
         demand_row(year, "DENMARK_A", "ENDO_OPTIFLOW", 0.2),
-        demand_row(year, "DENMARK_A", "TRANS_LOSSES", 0.9),
+        demand_row(year, "DENMARK_A", "TRANS_LOSSES", 0.7),
+        demand_row(year, "DENMARK_A", "ENDO_UNKNOWN", 0.3),
         demand_row(2050, "DENMARK_A", "EXOGENOUS", 3),
         demand_row(year, "DK_IND-MT-DH", "EXOGENOUS", 4),
         exchange_row(year, "DK_IND-MT-DH", "DK_IND-LT-DH", 4),
@@ -183,8 +189,8 @@ def hydrogen_long() -> pd.DataFrame:
     - Germany makes 2 TWh with an electrolyser in an industry area and gets 5 net from Denmark.
       Its 7 go to exogenous demand (6), transport (0.5) and transmission losses.
 
-    The electrolysers take in 1.25 TWh of electricity per TWh of hydrogen, so their 2 and 1 GW
-    of hydrogen output are 2.5 and 1.25 GW of electricity input.
+    The electrolysers take in 1.25 TWh of electricity per TWh of hydrogen. Their capacity, 2 and
+    1 GW, is that of the hydrogen they make, as for every unit.
     """
     rows = unit_rows("S1", 2030, "DENMARK", "GNR_ELYS", "ELECTROLYZER", "ELECTRIC", 2, 10, "HYDROGEN")
     rows += unit_rows("S1", 2030, "DENMARK", "GNR_SMR", "STEAMREFORMING", "NATGAS", 1, 4, "HYDROGEN")
@@ -396,7 +402,8 @@ def test_heat_variables(heat_long: pd.DataFrame, definitions: Path) -> None:
     text = " ".join(notes["Note"])
     assert "Not reported, as the 'stems' rules have no row for it: output of HEAT in industry areas, 2030: 8 TWh" in text
     assert "output of HEAT in individual areas" in text
-    assert "Demand of HEAT in category ENDO_OPTIFLOW in district heating areas is not reported" in text
+    assert ("Demand of HEAT in category ENDO_UNKNOWN in district heating areas is not reported (the "
+            "'demand_categories' rules have no row for it): 2030: 0.3 TWh.") in text
     assert "Heat Exchange: district heating sent 2030: 1 TWh" in text
     assert "received 2030: 3 TWh" in text
     assert "doesn't add up" not in text
@@ -425,9 +432,14 @@ def test_heat_balance_is_checked(heat_long: pd.DataFrame, definitions: Path) -> 
 def test_final_electricity(electricity_long: pd.DataFrame, definitions: Path) -> None:
     data, notes = convert(electricity_long, "Balmorel", definitions=definitions)
 
-    # Exogenous demand, electric vehicles and the heat pump outside district heating
-    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3) * twh)
+    # Exogenous demand, electric vehicles, the heat pump outside district heating and carbon capture
+    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3 + 1) * twh)
     assert value(data, "Final Energy|Electricity", 2030, "Germany") == pytest.approx(8 * twh)
+    # Carbon capture also by sector, but not the sector's total over all carriers
+    assert value(data, "Final Energy|Carbon Management|Electricity", 2030) == pytest.approx(1 * twh)
+    assert value(data, "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+                 2030) == pytest.approx(1 * twh)
+    assert "Final Energy|Carbon Management" not in set(data["Variable"])
     assert value(data, "Trade|Secondary Energy|Electricity [Volume]", 2030) == pytest.approx(4 * twh)
     assert value(data, "Trade|Secondary Energy|Electricity [Volume]", 2030, "Germany") == pytest.approx(-4 * twh)
     # Fuel input is not reported as such
@@ -441,6 +453,15 @@ def test_final_electricity(electricity_long: pd.DataFrame, definitions: Path) ->
     assert "doesn't add up" not in text
     assert "more than ELECTRICITY demand" not in text
     assert "Demand of ELECTRICITY" not in text
+    assert "Only the electricity Balmorel's CCS units use for the CO2 they capture (ENDO_CCS)." in text
+
+
+def test_negative_demand_response_lowers_final_demand(electricity_long: pd.DataFrame, definitions: Path) -> None:
+    """Demand response that gives back more than it takes lowers final demand."""
+    long = pd.concat((electricity_long, pd.DataFrame([demand_row(2030, "", "ENDO_DR", -1, "ELECTRICITY")])))
+    data, _ = convert(long, "Balmorel", definitions=definitions)
+
+    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3 + 1 - 1) * twh)
 
 
 def test_on_site_use_beyond_its_category(electricity_long: pd.DataFrame, definitions: Path) -> None:
@@ -449,13 +470,13 @@ def test_on_site_use_beyond_its_category(electricity_long: pd.DataFrame, definit
     long = electricity_long.assign(value=electricity_long["value"].where(~is_heat_units, 1.0))
     data, notes = convert(long, "Balmorel", definitions=definitions)
 
-    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3) * twh)
+    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3 + 1) * twh)
     text = " ".join(notes["Note"])
     assert ("In Denmark, units in areas whose output isn't reported took in 2030: 3 TWh of Electricity fuels, more "
             "than ELECTRICITY demand in category ENDOGENOUS_ELECT2HEAT there (2030: 1 TWh).") in text
 
 
-def test_negative_demand_category_is_hinted(electricity_long: pd.DataFrame, definitions: Path) -> None:
+def test_wrong_sign_category_is_named(electricity_long: pd.DataFrame, definitions: Path) -> None:
     """OptiFlow's use given with the wrong sign leaves Germany 4 TWh short, twice its size."""
     is_optiflow = electricity_long["demand_category"] == "ENDO_OPTIFLOW"
     long = electricity_long.assign(value=electricity_long["value"].where(~is_optiflow, -2.0))
@@ -463,24 +484,60 @@ def test_negative_demand_category_is_hinted(electricity_long: pd.DataFrame, defi
 
     assert value(data, "Final Energy|Electricity", 2030, "Germany") == pytest.approx(8 * twh)
     off = notes[notes["Note"].str.startswith("ELECTRICITY doesn't add up")]
+    assert off["Region"].tolist() == [""]
+    assert off["Note"].iloc[0] == (
+        "ELECTRICITY doesn't add up in Germany: there, its output less net exports differs from its demand in the "
+        "categories the 'demand_categories' rules know by twice its demand in category ENDO_OPTIFLOW, with the "
+        "opposite sign (ENDO_OPTIFLOW: 2030: -2 TWh). The results likely give ENDO_OPTIFLOW with the wrong sign; "
+        "taken with the opposite sign, ELECTRICITY adds up there. As the category isn't final demand, nothing "
+        "reported changes.")
+
+
+def test_wrong_sign_of_supply_is_named(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """OptiFlow gives district heating 0.2 TWh of excess heat, which goes to losses, and the
+    results give it as demand: the gap is 0.4 TWh, with the opposite sign."""
+    is_losses = heat_long["demand_category"] == "TRANS_LOSSES"
+    long = heat_long.assign(value=heat_long["value"].where(~is_losses, 0.7 + 0.2 + 0.2))
+    _, notes = convert(long, "Balmorel", definitions=definitions)
+
+    off = notes[notes["Note"].str.startswith("HEAT in district heating areas doesn't add up")]
+    assert len(off) == 1
+    assert off["Note"].iloc[0].startswith(
+        "HEAT in district heating areas doesn't add up in Denmark: there, its output less net exports differs from "
+        "its demand in the categories the 'demand_categories' rules know by twice its demand in category "
+        "ENDO_OPTIFLOW, with the opposite sign (ENDO_OPTIFLOW: 2030: 0.2, 2050: 0 TWh).")
+
+
+def test_negative_demand_category_is_hinted(electricity_long: pd.DataFrame, definitions: Path) -> None:
+    """With OptiFlow's use given with the wrong sign and 1 TWh unaccounted for, Germany's gap is
+    5 TWh: taking OptiFlow's use with the opposite sign leaves the 1 TWh."""
+    is_optiflow = electricity_long["demand_category"] == "ENDO_OPTIFLOW"
+    is_german_demand = (electricity_long["country"] == "GERMANY") & (electricity_long["demand_category"] == "EXOGENOUS")
+    long = electricity_long.assign(value=electricity_long["value"].where(~is_optiflow, -2.0)
+                                   .where(~is_german_demand, 7.0))
+    _, notes = convert(long, "Balmorel", definitions=definitions)
+
+    off = notes[notes["Note"].str.startswith("ELECTRICITY doesn't add up")]
     assert off["Region"].tolist() == ["Germany"]
-    assert "was 2030: 4 TWh more" in off["Note"].iloc[0]
-    assert ("Its demand is negative there in categories ENDO_OPTIFLOW 2030: -2 TWh: if that is use given with the "
-            "wrong sign, it accounts for a gap of twice its size.") in off["Note"].iloc[0]
+    assert "was 2030: 5 TWh more" in off["Note"].iloc[0]
+    assert off["Note"].iloc[0].endswith(
+        "Its demand there is negative in some years in categories ENDO_OPTIFLOW, 2030: -2 TWh. A category given with "
+        "the wrong sign makes a gap of twice its size, with the opposite sign: taken with the opposite sign, "
+        "ENDO_OPTIFLOW would leave a gap of 2030: 1 TWh.")
 
 
 def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
     data, notes = convert(hydrogen_long, "Balmorel", definitions=definitions)
 
-    # Without storage and the import unit; electrolysers by electricity input
-    assert value(data, "Capacity|Hydrogen", 2030) == pytest.approx(2.5 + 1)
-    assert value(data, "Capacity|Hydrogen|Electricity", 2030) == pytest.approx(2.5)
+    # Without storage and the import unit; electrolysers by hydrogen output, like every unit
+    assert value(data, "Capacity|Hydrogen", 2030) == pytest.approx(2 + 1)
+    assert value(data, "Capacity|Hydrogen|Electricity", 2030) == pytest.approx(2)
     assert value(data, "Capacity|Hydrogen|Gas|w/o CCS", 2030) == pytest.approx(1)
     assert value(data, "Secondary Energy|Hydrogen", 2030) == pytest.approx((10 + 4) * twh)
     assert value(data, "Secondary Energy|Hydrogen|Electricity", 2030) == pytest.approx(10 * twh)
     assert value(data, "Secondary Energy|Hydrogen|Fossil", 2030) == pytest.approx(4 * twh)
     # Hydrogen units count in every kind of area, here an industry area
-    assert value(data, "Capacity|Hydrogen", 2030, "Germany") == pytest.approx(1.25)
+    assert value(data, "Capacity|Hydrogen", 2030, "Germany") == pytest.approx(1)
     assert value(data, "Secondary Energy|Hydrogen", 2030, "Germany") == pytest.approx(2 * twh)
     # Fuel cells, losses and storage are not final
     assert value(data, "Final Energy|Hydrogen", 2030) == pytest.approx(9 * twh)
@@ -493,39 +550,6 @@ def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> N
     assert "Import units (ELECTROLYZER/IMPORT_H2) brought 2030: 3 TWh of HYDROGEN" in text
     assert "doesn't add up" not in text
     assert "have no row for it" not in text
-
-
-@pytest.mark.parametrize("case", ["with input", "without input"])
-def test_electrolyser_capacity_is_electricity_input(hydrogen_long: pd.DataFrame, definitions: Path,
-                                                    case: str) -> None:
-    """Electrolysers' capacity is their hydrogen output capacity times their electricity input per
-    hydrogen output, over the years they run in. A Danish electrolyser that also delivers heat
-    takes in 6 TWh for 4 of hydrogen (1.5), all of which counts: its 0.8 GW are 1.2 GW in 2030,
-    and in 2050, when it stands idle. One that never runs can't be restated, nor can any without
-    fuel input in the results."""
-    rows = unit_rows("S1", 2030, "DENMARK", "GNR_ELYS_DH", "ELECTROLYZER", "ELECTRIC", 0.8, 4, "HYDROGEN")
-    rows += unit_rows("S1", 2030, "DENMARK", "GNR_ELYS_DH", "ELECTROLYZER", "ELECTRIC", None, 1, "HEAT")
-    rows += unit_rows("S1", 2050, "DENMARK", "GNR_ELYS_DH", "ELECTROLYZER", "ELECTRIC", 0.8, 0, "HYDROGEN")
-    rows += unit_rows("S1", 2030, "DENMARK", "GNR_ELYS_NEW", "ELECTROLYZER", "ELECTRIC", 0.5, None, "HYDROGEN")
-    rows.append(input_row("GNR_ELYS_DH", "ELECTROLYZER", "ELECTRIC", 6))
-    long = pd.concat((hydrogen_long, pd.DataFrame(rows)), ignore_index=True)
-    if case == "without input":
-        long = long[long["quantity"] != "input"]
-    data, notes = convert(long, "Balmorel", definitions=definitions)
-
-    text = " ".join(notes["Note"])
-    if case == "with input":
-        assert value(data, "Capacity|Hydrogen|Electricity", 2030) == pytest.approx(2.5 + 1.2)
-        assert value(data, "Capacity|Hydrogen|Electricity", 2050) == pytest.approx(1.2)
-        assert "electricity input per hydrogen output in the results (1.25 to 1.5)" in text
-        assert "2030: 4.95, 2050: 1.2 GW of electricity input, from 2030: 3.8, 2050: 0.8 GW" in text
-        assert "not reported: 2030: 0.5 GW of hydrogen output. Units: GNR_ELYS_NEW." in text
-    else:
-        assert is_empty(data, "Capacity|Hydrogen|Electricity", 2030)
-        assert value(data, "Capacity|Hydrogen", 2030) == pytest.approx(1)
-        assert "not reported: 2030: 4.3, 2050: 0.8 GW of hydrogen output." in text
-    # Steam reforming stays on the output side
-    assert value(data, "Capacity|Hydrogen|Gas|w/o CCS", 2030) == pytest.approx(1)
 
 
 def test_hydrogen_balance_is_checked(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
@@ -638,16 +662,19 @@ def test_area_kinds_follow_caller_rules(heat_long: pd.DataFrame, definitions: Pa
     assert value(data, "Final Energy|Heat", 2030) == pytest.approx((4 + 4) * twh)
 
 
-@pytest.mark.parametrize("change", ["final", "fuel_category"])
+@pytest.mark.parametrize("change", ["final", "fuel_category", "sector"])
 def test_unclear_demand_categories_are_refused(change: str) -> None:
     demand_categories = load_rules()["demand_categories"]
     on_site = demand_categories["final"] == "on-site"
     if change == "final":
         demand_categories.loc[on_site, "final"] = "maybe"
         message = "need one of"
-    else:
+    elif change == "fuel_category":
         demand_categories.loc[on_site, "fuel_category"] = "Moonlight"
         message = "need a fuel_category"
+    else:
+        demand_categories.loc[on_site, "sector"] = "Residential and Commercial"
+        message = "with a sector need 'yes'"
     with pytest.raises(Exception, match=message):
         load_rules({"demand_categories": demand_categories[on_site]})
 
@@ -663,6 +690,16 @@ def test_repeated_rule_keys_are_refused() -> None:
 def test_shipped_rules_match_shipped_snapshot() -> None:
     problems = check_rules()
     assert problems.empty, f"Rules target names the Definitions Snapshot lacks:\n{problems.to_string()}"
+
+
+def test_sector_without_variables_is_listed(definitions: Path) -> None:
+    """A Final Energy Sector is checked at each of its levels, under every demand stem of its commodity."""
+    demand_categories = pd.DataFrame([{"commodity": "ELECTRICITY", "demand_category": "ENDO_CCS", "final": "yes",
+                                       "sector": "Carbon Management|Moonlight"}])
+    problems = check_rules(definitions, {"demand_categories": demand_categories})
+
+    listed = problems[problems["table"] == "demand_categories"]
+    assert listed["value"].tolist() == ["Final Energy|Carbon Management|Moonlight|Electricity"]
 
 
 def test_carbon_not_linked_to_optiflow(carbon_long: pd.DataFrame, definitions: Path) -> None:

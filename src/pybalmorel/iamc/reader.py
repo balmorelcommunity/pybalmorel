@@ -44,8 +44,8 @@ extra_columns = ["to_country", "stated_unit", "from_process", "to_process", "flo
 # and hydrogen demand and transmission are per region, so their rows have no area. Emissions and
 # captured CO2 are per unit but not per commodity; their unit is fixed, as results don't always
 # state it right, and the units they may state for it are listed. Fuel input is per unit too; it
-# is not reported, but restates electrolysers' capacity as input, gives the electricity that heat
-# units outside district heating use, and derives captured CO2 where the results don't give it.
+# is not reported, but gives the electricity that heat units outside district heating use, and
+# derives captured CO2 where the results don't give it.
 quantity_symbols = [
     {"quantity": "capacity", "symbol": "G_CAP_YCRAF", "commodity": None, "required": True, "renames": {}},
     {"quantity": "output", "symbol": "PRO_YCRAGF", "commodity": None, "required": True, "renames": {}},

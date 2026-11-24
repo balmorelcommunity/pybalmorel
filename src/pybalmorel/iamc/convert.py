@@ -21,7 +21,8 @@ import pandas as pd
 
 from .reader import read_mainresults
 from .rules import (default_area_kind, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
-                    match_mapping_rules, match_optiflow_rules, not_reported, on_site_final, optiflow_unit, pool_roles)
+                    match_mapping_rules, match_optiflow_rules, not_reported, on_site_final, optiflow_unit, pool_roles,
+                    sector_variables)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -54,9 +55,6 @@ unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
 carbon_quantities = ("emissions", "captured")
 # Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
 biogenic_category = "Biomass"
-# Commodity and Fuel Category of the units whose capacity is reported as the fuel they take in:
-# electrolysers, usually given by electricity input, while Balmorel states hydrogen output
-input_capacity = ("HYDROGEN", "Electricity")
 # How Conversion Notes name quantities that aren't plain words
 quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
                    "input": "fuel input"}
@@ -90,13 +88,16 @@ def to_iamc(results: "MainResults",
     Reports the IAMC Variables that the rule tables cover (see pybalmorel/iamc/rule_tables/), in the
     units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
     between countries, and what import units bring in from outside the model, are reported as
-    Trade (net exports). Electrolysers' capacity is restated as electricity input. The electricity
-    heat units in individual and industry areas use counts as final energy, as their heat isn't
-    centralized heat. Emissions are net of the stored part of the CO2 captured from biomass,
-    which is also reported as Carbon Removal. Where the results give no captured CO2, that of
-    units marked w/ CCS is derived from their fuel input. Without OptiFlow, all captured CO2
-    counts as stored. For scenarios linked to OptiFlow, OptiFlow's results are reported as the
-    'optiflow' rules (the OptiFlow Mapping) say, which also give the stored part. Conversion Notes say what was put under Other, what was left out, how backup
+    Trade (net exports). Capacity is that of the commodity a unit makes, so electrolysers' is
+    their hydrogen output, as Balmorel states it. The electricity heat units in individual and
+    industry areas use counts as final energy, as their heat isn't centralized heat. Demand
+    categories with a Final Energy Sector are also reported under that sector, e.g. what carbon
+    capture uses under Final Energy|Carbon Management. Emissions are net of the stored part of
+    the CO2 captured from biomass, which is also reported as Carbon Removal. Where the results
+    give no captured CO2, that of units marked w/ CCS is derived from their fuel input. Without
+    OptiFlow, all captured CO2 counts as stored. For scenarios linked to OptiFlow, OptiFlow's
+    results are reported as the 'optiflow' rules (the OptiFlow Mapping) say, which also give the
+    stored part. Conversion Notes say what was put under Other, what was left out, how backup
     units, import units and Heat Exchange were treated, and where a commodity's supply and
     demand don't add up; the first of them are printed. Values that can't be known without
     missing rules are left empty.
@@ -166,7 +167,6 @@ def convert(long: pd.DataFrame,
     note_stated_units(long, notes)
     flows = long[long["quantity"] == "flow"]
     long = long[long["quantity"] != "flow"]
-    long = restate_electrolyser_capacity(long, tables["fuels"], notes)
     long = derive_capture(long, tables["mapping"], notes)
     shares = pool_shares(flows, tables["optiflow"], notes)
     check_fuel_rules(carried, flows, tables["optiflow"], notes)
@@ -181,6 +181,7 @@ def convert(long: pd.DataFrame,
     long = select_demand(long, tables["demand_categories"], notes)
     long = net_emissions(long, shares, linked, tables, notes)
     long = attach_stems(long, tables["stems"], names, notes)
+    long = attach_sectors(long, tables["demand_categories"], names, notes)
     long = attach_segments(long, tables, names, notes)
     long = treat_backup_units(long, backup_units, backup_pattern, notes)
     reported = report_optiflow(flows, tables["optiflow"], shares, tables["stems"], names, notes)
@@ -661,7 +662,7 @@ def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: li
             f"Demand of {commodity} in category {category}{where} is not reported (the "
             f"'demand_categories' rules have no row for it): {amounts(by_year)} {value_unit}."
         )))
-    kept = demand[demand["final"] == "yes"].drop(columns="final")
+    kept = demand.loc[demand["final"] == "yes", long.columns]
     return pd.concat((long[~is_demand], kept), ignore_index=True)
 
 
@@ -675,8 +676,11 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
     equals its demand in the categories the 'demand_categories' rules know, final or not. Heat
     Exchange is output and demand by now. What the results make, use or move where the Reader
     doesn't look, such as transmission they don't list or a model add-on's, breaks this, and then
-    the reported supply and demand don't add up either. A scenario whose results give output of
-    the commodity but no demand of it gets one note instead.
+    the reported supply and demand don't add up either. A category given with the wrong sign
+    makes a gap of twice its size, with the opposite sign: regions where taking one category with
+    the opposite sign closes the gap in every year get one note per scenario and category, so the
+    gaps that remain stand out. A scenario whose results give output of the commodity but no
+    demand of it gets one note instead.
 
     Args:
         long (pd.DataFrame): The long table after trade and Heat Exchange, with all demand categories.
@@ -723,9 +727,19 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
         scale = np.maximum(balance[["supply", "used"]].abs().max(axis=1), balance_tolerance * everywhere)
         off = balance["gap"].abs() > balance_tolerance * scale
         off = off.groupby(level=["iamc_scenario", "region", "value_unit"]).transform("any")
-        by_category = known.groupby(keys + ["demand_category"])["value"].sum()
+        by_category = known.groupby(keys + ["demand_category"])["value"].sum().unstack(fill_value=0.0)
+        wrong_sign = {}
         for (scenario, region, value_unit), gaps in balance[off].groupby(level=["iamc_scenario", "region", "value_unit"]):
             by_year = gaps["gap"].droplevel([0, 1, 2])
+            categories = by_category.reindex(gaps.index, fill_value=0.0).droplevel([0, 1, 2])
+            categories = categories.loc[:, (categories.abs() > noise).any()]
+            # A category given with the wrong sign makes a gap of twice its size, with the opposite sign
+            flipped = categories.mul(2.0).add(by_year, axis=0)
+            closes = flipped.abs().le(balance_tolerance * scale[gaps.index].to_numpy(), axis=0).all()
+            if closes.sum() == 1:
+                category = closes[closes].index[0]
+                wrong_sign.setdefault((scenario, value_unit, category), []).append((region, categories[category]))
+                continue
             text = (
                 f"{commodity}{where} doesn't add up: its output less net exports was "
                 f"{amounts(by_year.where(by_year.abs() >= noise, 0.0))} {value_unit} more than its demand in the "
@@ -733,16 +747,31 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
                 f"{commodity} where the Reader doesn't look, such as transmission they don't list or a model "
                 "add-on's, so its reported supply and demand don't add up either."
             )
-            # Use given with the wrong sign shows as a gap of twice its size
-            place = pd.MultiIndex.from_frame(by_category.index.to_frame()[["iamc_scenario", "region", "value_unit"]])
-            negative = by_category[place.isin([(scenario, region, value_unit)]) & (by_category < -noise)]
-            negative = negative.droplevel(["iamc_scenario", "region", "value_unit"])
-            if not negative.empty:
-                listed = "; ".join(f"{category} {amounts(rows.droplevel('demand_category'))} {value_unit}"
-                                   for category, rows in negative.groupby(level="demand_category"))
-                text += (f" Its demand is negative there in categories {listed}: if that is use given with the "
-                         "wrong sign, it accounts for a gap of twice its size.")
+            negative = [category for category in categories if (categories[category] < -noise).any()]
+            if negative:
+                listed = "; ".join(f"{category}, {amounts(categories[category])} {value_unit}" for category in negative)
+                left = "; ".join(f"{category} would leave a gap of {amounts(flipped[category])} {value_unit}"
+                                 for category in negative)
+                text += (f" Its demand there is negative in some years in categories {listed}. A category given with "
+                         f"the wrong sign makes a gap of twice its size, with the opposite sign: taken with the "
+                         f"opposite sign, {left}.")
             notes.append(note(scenario, region, "", text))
+        final = demand_categories.set_index(["commodity", "demand_category"])["final"]
+        for (scenario, value_unit, category), places in wrong_sign.items():
+            regions = [region for region, _ in places]
+            total = pd.concat([amount for _, amount in places]).groupby(level=0).sum()
+            several = len(regions) > 1
+            effect = ("As the category isn't final demand, nothing reported changes." if final[commodity, category] == "no"
+                      else "Final Energy reports it as the results give it.")
+            notes.append(note(scenario, "", "", (
+                f"{commodity}{where} doesn't add up in "
+                f"{f'{len(regions)} regions, ' if several else ''}{', '.join(regions)}: "
+                f"{'in each' if several else 'there'}, its output less net exports differs from its demand in the "
+                "categories the 'demand_categories' rules know by twice its demand in category "
+                f"{category}, with the opposite sign ({category}{' in all of them' if several else ''}: "
+                f"{amounts(total)} {value_unit}). The results likely give {category} with the wrong sign; taken with "
+                f"the opposite sign, {commodity} adds up {'in all of them' if several else 'there'}. {effect}"
+            )))
 
 
 #%% ------------------------------- ###
@@ -810,71 +839,6 @@ def note_stated_units(long: pd.DataFrame, notes: list[dict]) -> None:
             f"{value_unit}, the unit Balmorel writes it in. If '{stated_unit}' is right, its values are off by "
             "the factor between the two."
         )))
-
-
-def restate_electrolyser_capacity(long: pd.DataFrame, fuels: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
-    """Restate electrolysers' capacity from the hydrogen they make to the electricity they take in.
-
-    Electrolysers (units making the commodity of input_capacity from fuels of its Fuel Category)
-    are usually reported by electricity input, while Balmorel states their capacity as hydrogen
-    output. Each unit's capacity is multiplied by its fuel input per hydrogen output, summed over
-    the years and areas where the results give both, in the same Balmorel scenario, so years
-    it stands idle get the same factor. All its input counts, also where it delivers heat too.
-    Capacity of units that never make hydrogen, or whose fuel input the results don't give,
-    can't be restated and is left out.
-
-    Args:
-        long (pd.DataFrame): The long table with IAMC Scenarios, with fuel input.
-        fuels (pd.DataFrame): The 'fuels' rule table.
-        notes (list[dict]): Conversion Notes, appended to.
-
-    Returns:
-        pd.DataFrame: The long table with electrolysers' capacity on the input side.
-    """
-    commodity, category = input_capacity
-    by_input = fuels.loc[fuels["category"] == category, "fuel"]
-    is_capacity = (long["quantity"] == "capacity") & (long["commodity"] == commodity) & long["fuel"].isin(by_input)
-    if not is_capacity.any():
-        return long
-
-    # Fuel input per output, where the results give both in the same unit of energy
-    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel", "value_unit"]
-    unit_keys = ["scenario", "unit_name", "tech_type", "fuel"]
-    made = long[(long["quantity"] == "output") & (long["commodity"] == commodity) & (long["value"] >= noise)]
-    used = long[(long["quantity"] == "input") & (long["value"] >= noise)]
-    both = pd.concat((made.groupby(keys)["value"].sum().rename("made"),
-                      used.groupby(keys)["value"].sum().rename("used")), axis=1, join="inner")
-    per_output = both.groupby(unit_keys)[["used", "made"]].sum()
-    per_output = (per_output["used"] / per_output["made"]).rename("per_output")
-
-    capacity = long[is_capacity].join(per_output, on=unit_keys)
-    restated = capacity[capacity["per_output"].notna()]
-    restated = restated.assign(value=restated["value"] * restated["per_output"])
-    left_out = capacity[capacity["per_output"].isna() & (capacity["value"].abs() >= noise)]
-
-    for (scenario, value_unit), rows in restated.groupby(["iamc_scenario", "value_unit"]):
-        stated = capacity.loc[rows.index]
-        lowest, highest = (f"{factor:.4g}" for factor in (rows["per_output"].min(), rows["per_output"].max()))
-        factors = lowest if lowest == highest else f"{lowest} to {highest}"
-        notes.append(note(scenario, "", "", (
-            "Electrolysers' capacity is reported as the electricity they take in, as is usual for electrolysers; "
-            "the results state it as the hydrogen they make. Each unit's capacity is multiplied by its electricity "
-            f"input per hydrogen output in the results ({factors}), counting all its input also where it delivers "
-            "heat too: "
-            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit} of electricity input, from "
-            f"{amounts(stated.groupby('year')['value'].sum())} {value_unit} of hydrogen output. Total hydrogen "
-            "capacity adds this to other units' hydrogen output capacity."
-        )))
-    for (scenario, value_unit), rows in left_out.groupby(["iamc_scenario", "value_unit"]):
-        notes.append(note(scenario, "", "", (
-            "Electrolysers that make no hydrogen in any year of the results, or whose electricity input the results "
-            "don't give, can't have their capacity restated as electricity input; not reported: "
-            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit} of hydrogen output. Units: "
-            f"{list_names(rows['unit_name'])}."
-        )))
-
-    restated = restated.drop(columns="per_output")
-    return pd.concat((long[~is_capacity], restated), ignore_index=True)
 
 
 def derive_capture(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
@@ -1349,6 +1313,48 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
         notes.append(note(scenario, "", stem, text))
 
     return long[long["stem"].isin(names)]
+
+
+def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: set[str],
+                   notes: list[dict]) -> pd.DataFrame:
+    """Copy final demand in categories with a Final Energy Sector to the sector's IAMC Variables.
+
+    Each copy takes one of the sector's variables (sector_variables) as its stem, so it counts
+    towards that variable only, while the demand still counts under its own stem, e.g.
+    'Final Energy|Electricity'. A category's note becomes a Conversion Note on each sector
+    variable with values under it.
+
+    Args:
+        long (pd.DataFrame): The long table with stems.
+        demand_categories (pd.DataFrame): The 'demand_categories' rule table.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The long table with the copies added.
+    """
+    with_sector = demand_categories.loc[demand_categories["sector"] != "",
+                                        ["commodity", "demand_category", "sector", "note"]]
+    demand = long[long["quantity"] == "demand"].merge(with_sector, on=["commodity", "demand_category"])
+    copies = [
+        rows.assign(stem=variable)
+        for (stem, sector), rows in demand.groupby(["stem", "sector"])
+        for variable in sector_variables(stem, sector)
+    ]
+    if not copies:
+        return long
+    copies = pd.concat(copies, ignore_index=True)
+
+    for (scenario, stem), _ in copies[~copies["stem"].isin(names)].groupby(["iamc_scenario", "stem"]):
+        notes.append(note(scenario, "", stem, (
+            "The 'demand_categories' rules report a Final Energy Sector under this IAMC Variable, which is not in "
+            "the Definitions Snapshot; not reported."
+        )))
+    copies = copies[copies["stem"].isin(names)]
+    noted = copies[(copies["note"] != "") & (copies["value"].abs() >= noise)]
+    for (scenario, stem, text), _ in noted.groupby(["iamc_scenario", "stem", "note"]):
+        notes.append(note(scenario, "", stem, text))
+    return pd.concat((long, copies.drop(columns=["sector", "note"])), ignore_index=True)
 
 
 def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: set[str],
