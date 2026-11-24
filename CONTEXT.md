@@ -152,7 +152,7 @@ A country, spelled as in the common definitions' region list (e.g. `Czechia` for
 _Avoid_: Region (alone, ambiguous with Balmorel's `R`)
 
 **Coverage**:
-Whether Balmorel's results account for everything an IAMC Variable's definition includes. A variable is reported only where they do. A parent whose definition reaches beyond the sectors Balmorel models (e.g. `Emissions|CO2`, or a `Primary Energy` total) is never reported, even when some of its children are. The exception is a variable Balmorel covers only in part, such as the demand-side emissions of industry, which Balmorel gives only for its heat units: it is reported when its share is known to be partial, with a note saying what it covers. A stem's note, or an OptiFlow Mapping row's note, gives that. Only modelled years are reported, never interpolated ones.
+Whether Balmorel's results account for everything an IAMC Variable's definition includes. A variable is reported only where they do. A parent whose definition reaches beyond the sectors Balmorel models (e.g. `Emissions|CO2`, or `Primary Energy` and its totals per Source, such as `Primary Energy|Gas`, which also count what transport, industry and buildings burn) is never reported, even when some of its children are. The exception is a variable Balmorel covers only in part, such as the demand-side emissions of industry, which Balmorel gives only for its heat units: it is reported when its share is known to be partial, with a note saying what it covers. A stem's note, or an OptiFlow Mapping row's note, gives that. Only modelled years are reported, never interpolated ones.
 
 **Other**:
 The `…|Other` child of an IAMC Variable, which takes Balmorel output that fits none of its other children, such as a fuel with no known classification. Conversion continues, and a warning names what was put there.
@@ -163,10 +163,10 @@ A table, specific to one study, saying which OptiFlow flows bring CO2 into a CO2
 _Avoid_: Mapping (alone, ambiguous with the Mapping Rule)
 
 **Fuel Category**:
-The IAMC fuel segment (`Coal`, `Gas`, `Oil`, `Biomass`, `Hydrogen`, `Nuclear`, `Hydro`, …) that a Balmorel fuel (`FFF`) is reported under. Only segments that occur in IAMC Variable names can be chosen. Defaults ship with pybalmorel, and whoever converts can override them, e.g. to move `MUNIWASTE` from `Biomass` to `Other`. A fuel belongs wholly to one category; it is never split between two.
+The IAMC fuel segment (`Coal`, `Gas`, `Oil`, `Biomass`, `Hydrogen`, `Nuclear`, `Hydro`, …) that a Balmorel fuel (`FFF`) is reported under. Only segments that occur in IAMC Variable names can be chosen. Defaults ship with pybalmorel, and whoever converts can override them, e.g. to move `MUNIWASTE` from `Biomass` to `Other`. A fuel belongs wholly to one category; it is never split between two. The same table says how units count the fuel as Primary Energy: by input, by output (Direct Equivalent), or not at all.
 
 **Mapping Rule**:
-A row in pybalmorel's mapping tables that sends Balmorel output with a given technology type, fuel and commodity (and, optionally, only units whose names match a pattern) to segments of an IAMC Variable name. Defaults ship with pybalmorel; rows passed by whoever converts take precedence. Output no rule covers goes to Other.
+A row in pybalmorel's mapping tables that sends Balmorel output with a given technology type, fuel and commodity (and, optionally, only units whose names match a pattern) to segments of an IAMC Variable name. Defaults ship with pybalmorel; rows passed by whoever converts take precedence. Output no rule covers goes to Other. A rule can also say how its units count as Primary Energy, overriding their fuel's, e.g. geothermal units, whose Balmorel fuel is waste heat, count by what they make.
 _Avoid_: Mapping (alone, ambiguous with the OptiFlow Mapping)
 
 **CCS Unit**:
@@ -193,7 +193,7 @@ The part of a demand category that units take in where what they make isn't repo
 _Avoid_: Individual demand (only one of the area kinds)
 
 **Net Exports**:
-What a country sends to other countries less what it gets from them, reported as `Trade|Secondary Energy|Electricity [Volume]` and `Trade|Secondary Energy|Hydrogen [Volume]` (negative for net imports). Taken from electricity and hydrogen transmission between regions of different countries, and from Import Units. Transmission within a country is left out, and transmission to a region whose country the results don't give is not counted; the Conversion Notes give its amount.
+What a country sends to other countries less what it gets from them, reported as `Trade|Secondary Energy|Electricity [Volume]` and `Trade|Secondary Energy|Hydrogen [Volume]` (negative for net imports). Taken from electricity and hydrogen transmission between regions of different countries, and from Import Units. Transmission within a country is left out, and transmission to a region whose country the results don't give is not counted; the Conversion Notes give its amount. Net Exports with the opposite sign, the net imports, are also reported as `Primary Energy|Secondary Energy Trade`; summed over all countries they cancel out, apart from Import Units and trade with regions that have no IAMC Region.
 _Avoid_: Trade (alone, ambiguous between the IAMC stem and the transmission it is computed from), Net imports (the opposite sign)
 
 **Import Unit**:
@@ -203,6 +203,18 @@ _Avoid_: Electrolyser (Balmorel gives import units that technology type)
 **Electrolyser Capacity**:
 The capacity of units that make hydrogen from electricity, reported as the hydrogen they make, as Balmorel states it. Every `Capacity|<output>|<input>` variable is measured on the output side: `Capacity|Electricity|Gas` is gas plants' electric output, and `Capacity|Electricity|Hydrogen` fuel cells', so `Capacity|Hydrogen|Electricity` is electrolysers' hydrogen output, and `Capacity|Hydrogen` adds electrolysers and steam reformers on the same side. The common definitions don't say which side capacity is measured on ("capacity to produce hydrogen from electrolysis"), and electrolysers are often quoted by electricity input elsewhere, which is larger by their input per output.
 _Avoid_: Hydrogen capacity (for electrolysers, ambiguous between input and output side)
+
+**Primary Energy**:
+The energy that enters the units Balmorel models from outside the system it models, reported as `Primary Energy|<Source>|<what it is used for>` (e.g. `Primary Energy|Gas|Electricity|w/ CCS`), or as `Primary Energy|<Source>` where the common definitions don't split the Source by use (e.g. `Primary Energy|Wind`). Per unit, it is the fuel input, or what the unit makes (Direct Equivalent) for nuclear and the non-biomass renewables, divided over what the unit makes by the Output-Share Split. Units whose fuel other units made (electricity, heat, hydrogen, biomethane), or whose fuel is waste heat, count none, so nothing counts twice. Uses follow Secondary Energy: electricity, hydrogen, centralized heat, and the biogas that upgrading turns into biomethane (`Primary Energy|Biomass|Gases`). What units in individual and industry areas use for heat is not reported; the Conversion Notes give it. That includes the heat they send into district heating as Heat Exchange, whose Primary Energy stays with the areas that made it, as its emissions do. Net imports of electricity and hydrogen count as `Primary Energy|Secondary Energy Trade` (see Net Exports). Units counted by fuel input whose input the results don't give are not estimated; the Conversion Notes name them. OptiFlow's fuel input is not reported as Balmorel's, and the Conversion Notes give it. Under Coverage, `Primary Energy` itself and its totals per Source are never reported.
+_Avoid_: Fuel input (only one way of counting it), Fuel consumption
+
+**Direct Equivalent**:
+Counting a unit's Primary Energy as the energy it makes, which the common definitions use for nuclear and the non-biomass renewables. The `primary` column of the Fuel Category table says, per fuel, whether its units count by input (the default), by output (Direct Equivalent: `NUCLEAR`, `SUN`, `WATER`, `WIND`), or not at all (`ELECTRIC`, `HEAT`, `HYDROGEN`, `IMPORT_H2`, `BIOMETHANE`, `WASTEHEAT`). A Mapping Rule can set it for some units instead, e.g. geothermal units. Balmorel gives nuclear units a fuel input, but it is not used, so that nuclear is counted as the other models count it.
+_Avoid_: Substitution method (the other convention, not used)
+
+**Source**:
+The first segment below `Primary Energy`: the Fuel Category of a unit's fuel, or the segment its Mapping Rule gives (e.g. `Wind`, `Geothermal`). A stem's `{source}` is filled with it, so `Primary Energy|{source}|Electricity` becomes `Primary Energy|Gas|Electricity`, or `Primary Energy|Wind` where the Definitions Snapshot has no `Primary Energy|Wind|Electricity` and `Primary Energy|Wind` has no children. Where `Primary Energy|<Source>` has children but none for this use, the amount is not reported, since that total would also count use outside Balmorel; the Conversion Notes give it. A Source the common definitions lack goes to `Primary Energy|Other`.
+_Avoid_: Fuel (a Balmorel `FFF`, of which many share a Source)
 
 **Commodity Balance**:
 The check that, per region and year, a commodity's output (storage left out) less its Net Exports equals its demand in known categories, final or not. It runs for every commodity with a Final Energy stem, over the area kinds of that stem: heat over district-heating areas, with Heat Exchange counted as output and demand; electricity and hydrogen over whole regions. Results that make or use the commodity where the Reader doesn't look, such as transmission a result file doesn't list or a demand category the rules lack, break it; the Conversion Notes then name the region and the gap. A category given with the wrong sign makes a gap of twice its size, with the opposite sign: regions where taking one category with the opposite sign closes the gap in every year share one note per scenario, which names the category, so the gaps that remain stand out; elsewhere, the note gives the gap that taking a negative category with the opposite sign would leave. Results of Balmorel runs linked to OptiFlow have been seen to give `ENDO_OPTIFLOW` of electricity and heat as OptiFlow's net supply (`VFLOWBUFFER`), where Balmorel's balances count its negative as demand; the category isn't final, so nothing reported changes. Results with output of the commodity but no demand at all get one note instead. The conversion does not try to close a gap.
@@ -215,10 +227,25 @@ Units that store electricity, heat or hydrogen. Never part of Capacity or Second
 A `GNR_BACKUP…` unit that dispatch runs place in every region with near-unlimited capacity, so that demand is always met. Its capacity is never reported. By default its output counts as supply, under its fuel, so that supply still meets demand; whoever converts can leave it out instead. Either way the Conversion Notes give the amounts.
 
 **Output-Share Split**:
-How the fuel input, emissions and captured CO2 of a unit with two outputs (a CHP plant, or an electrolyser that also delivers heat) are divided between them: in proportion to the energy of each output. The method is reported with the results. Emissions or captured CO2 of a unit with no output in the results can't be divided; the Conversion Notes give the amounts, unless they are solver residue.
+How the fuel input, Primary Energy, emissions and captured CO2 of a unit with two outputs (a CHP plant, or an electrolyser that also delivers heat) are divided between them: in proportion to the energy of each output. The method is reported with the results. Emissions or captured CO2 of a unit with no output in the results can't be divided; the Conversion Notes give the amounts, unless they are solver residue.
 
 **Net CO2 Emissions**:
 Fossil CO2 emitted, minus the captured biogenic CO2 that is stored, as the IAMC emission variables define it ("the sum of sources and sinks"). Captured and stored CO2 are also reported on their own as Carbon Capture and Carbon Removal. Runs not linked to OptiFlow have no use for captured CO2, so all of it counts as stored, reported as `Carbon Capture|Geological Storage`; for linked runs, the OptiFlow Mapping's 'report' rows give storage. Where a run doesn't say how much captured biogenic CO2 is stored, only the fossil CO2 is reported, with a warning.
+
+**Price**:
+Balmorel's average price of electricity, hydrogen or district heat: the mean over the year of the hourly marginal price of its balance, not weighted by consumption. A country's price is the mean over its regions (electricity, hydrogen) or district-heating areas (heat) weighted by their annual demand for the commodity, or their plain mean where none has demand. Reported as `Price|Secondary Energy|<commodity>` only, not split by source, and empty, not 0, for years without prices. A price beyond ±10,000 money per MWh is more like the penalty on an unmet balance than a market price; the Conversion Notes name the regions where one enters the reported price.
+_Avoid_: Marginal cost (one hour's), Consumption-weighted price (Balmorel can give one, but MainResults doesn't hold it)
+
+**Carbon Price**:
+The CO2 tax that emitting units pay over their emissions, counting the units that pay any, reported as `Price|Carbon`. Where units pay different rates, the Conversion Notes give the range. A run that caps emissions instead of taxing them has no carbon price here, since MainResults doesn't hold the cap's shadow price.
+_Avoid_: CO2 tax (what one unit pays), Emission price
+
+**Currency**:
+What one unit of the money in Balmorel's results is worth in a currency the IAMC units name, given to `to_iamc` as `currency={'USD_2010': <worth>}`. Balmorel doesn't say which currency or year its money is in, so prices are only reported where `currency` names the currency of their IAMC unit.
+_Avoid_: Exchange rate (it also covers the price year)
+
+**Investment Cost**:
+Not reported: MainResults holds investment costs only as annuities spread over the years, not as the investments made, so `Investment|…` and `Capital Cost|…` can't be derived from it.
 
 **Conversion Notes**:
 The table returned with the IAMC data that says how its numbers were made and what was left out: the split methods used, fossil-only fallbacks, what went into Other, backup output, and amounts left out under Coverage. Each note names its IAMC Scenario, Region and Variable. When the same thing happens in several regions, there is one note per scenario that names the regions and gives the total, and its Region is left empty. They are also printed as warnings, and written as a Notes sheet next to the data.

@@ -45,7 +45,9 @@ extra_columns = ["to_country", "stated_unit", "from_process", "to_process", "flo
 # captured CO2 are per unit but not per commodity; their unit is fixed, as results don't always
 # state it right, and the units they may state for it are listed. Fuel input is per unit too; it
 # is not reported, but gives the electricity that heat units outside district heating use, and
-# derives captured CO2 where the results don't give it.
+# derives captured CO2 where the results don't give it. The CO2 tax units pay (ECO_G_YCRAG's
+# GENERATION_CO2_TAX) is per unit too; with their emissions it gives the carbon price. 'columns'
+# names a symbol's columns where pybalmorel has no format for it, and 'keep' the rows read.
 quantity_symbols = [
     {"quantity": "capacity", "symbol": "G_CAP_YCRAF", "commodity": None, "required": True, "renames": {}},
     {"quantity": "output", "symbol": "PRO_YCRAGF", "commodity": None, "required": True, "renames": {}},
@@ -64,7 +66,23 @@ quantity_symbols = [
      "unit": "kt CO2", "unit_aliases": {"kton", "kt"}},
     {"quantity": "input", "symbol": "F_CONS_YCRA", "commodity": None, "required": False, "renames": {},
      "unit": "TWh", "unit_aliases": {"TWh"}},
+    {"quantity": "tax", "symbol": "ECO_G_YCRAG", "commodity": None, "required": False, "renames": {},
+     "columns": ["Year", "Country", "Region", "Area", "Generation", "Fuel", "Technology", "Cost category", "Cost",
+                 "Unit", "Value"],
+     "keep": {"Cost": "GENERATION_CO2_TAX"}, "unit": "Mmoney", "unit_aliases": {"Mmoney"}},
 ]
+# The symbols prices are read from, the commodity they are the price of, the column that says
+# where in a country each price holds, and the symbol of the demand there, whose annual sum
+# weighs the price when a country has several. Balmorel's AVERAGE price is the mean of the
+# hourly marginal prices over the year, not weighted by consumption.
+price_symbols = [
+    {"symbol": "EL_PRICE_YCR", "commodity": "ELECTRICITY", "place": "Region", "demand": "EL_DEMAND_YCR"},
+    {"symbol": "H2_PRICE_YCR", "commodity": "HYDROGEN", "place": "Region", "demand": "H2_DEMAND_YCR"},
+    {"symbol": "H_PRICE_YCRA", "commodity": "HEAT", "place": "Area", "demand": "H_DEMAND_YCRA"},
+]
+price_category = "AVERAGE"
+price_unit = "money/MWh"
+price_unit_aliases = {"Money_per_MWh"}
 # OptiFlow's flows between processes, and the result file names next to a MainResults file
 optiflow_symbol = "VFLOW_Opti_C"
 optiflow_columns = {"Y": "year", "CCC": "country", "IPROCFROM": "from_process", "IPROCTO": "to_process",
@@ -87,9 +105,10 @@ def read_mainresults(results: "MainResults",
     per area) and exchange (X_FLOW_YCR and XH2_FLOW_YCR, electricity and hydrogen transmission
     between regions; XH_FLOW_YCA, heat transmission from 'area' to 'to_area') are read where the
     results have them. Exchange rows say which country they go to. Emissions (EMI_YCRAG),
-    captured CO2 (CC_YCRAG) and fuel input (F_CONS_YCRA) are per unit, with no commodity. Where a
-    scenario was linked to OptiFlow, OptiFlow's flows between processes (VFLOW_Opti_C) are read
-    too.
+    captured CO2 (CC_YCRAG), fuel input (F_CONS_YCRA) and CO2 tax (ECO_G_YCRAG) are per unit, with
+    no commodity. Prices (EL_PRICE_YCR, H2_PRICE_YCR, H_PRICE_YCRA) are per region or area, with
+    the commodity's annual demand there as weight. Where a scenario was linked to OptiFlow,
+    OptiFlow's flows between processes (VFLOW_Opti_C) are read too.
 
     Args:
         results (MainResults): The loaded result files.
@@ -102,8 +121,11 @@ def read_mainresults(results: "MainResults",
         pd.DataFrame: One row per scenario, year, country, area, unit, fuel, commodity, demand
             category, receiving area and country, and quantity, with the columns of long_columns,
             extra_columns and 'quantity' ('capacity', 'output', 'demand', 'exchange',
-            'emissions', 'captured', 'input' or 'flow'). Columns a quantity doesn't have are ''.
-            'stated_unit' is the unit the results state where it isn't one the Reader expects.
+            'emissions', 'captured', 'input', 'tax', 'price' or 'flow'). Columns a quantity
+            doesn't have are ''. 'stated_unit' is the unit the results state where it isn't one
+            the Reader expects. Price rows are one per region or area, so a country can have
+            several with the same columns; their 'weight' is the demand they hold for, NaN for
+            the other quantities.
     """
     tables = []
     # Country of each region and area, for where exchange goes
@@ -112,11 +134,13 @@ def read_mainresults(results: "MainResults",
         symbol = spec["symbol"]
         if not spec["required"] and not any(has_symbol(results, scenario, symbol) for scenario in results.sc):
             continue
-        table = results.get_result(symbol)
+        table = results.get_result(symbol, cols=spec.get("columns"))
         if table.empty:
             if spec["required"]:
                 raise Exception(f"No scenario has '{symbol}', which IAMC {spec['quantity']} is read from.")
             continue
+        for column, kept in spec.get("keep", {}).items():
+            table = table[table[column].astype(str) == kept]
 
         for column in place_columns:
             if column in table.columns:
@@ -141,6 +165,9 @@ def read_mainresults(results: "MainResults",
         table["quantity"] = spec["quantity"]
         tables.append(table)
 
+    prices = read_prices(results)
+    if not prices.empty:
+        tables.append(prices)
     flows = read_optiflow(results, optiflow or {})
     if not flows.empty:
         tables.append(flows)
@@ -152,6 +179,52 @@ def read_mainresults(results: "MainResults",
             long[column] = long[column].fillna("")
     long["year"] = long["year"].astype(int)
     return long
+
+
+def read_prices(results: "MainResults") -> pd.DataFrame:
+    """Read Balmorel's average prices per region or area, with the demand they hold for.
+
+    Args:
+        results (MainResults): The loaded result files.
+
+    Returns:
+        pd.DataFrame: Rows of quantity 'price' with scenario, year, country, area ('' for prices
+            per region), commodity, value_unit, stated_unit, value and weight (the commodity's
+            annual demand at the same place, summed over demand categories, 0 if negative or
+            none); no rows if no scenario has prices.
+    """
+    tables = []
+    for spec in price_symbols:
+        if not any(has_symbol(results, scenario, spec["symbol"]) for scenario in results.sc):
+            continue
+        prices = results.get_result(spec["symbol"])
+        if prices.empty:
+            continue
+        place = ["Scenario", "Year", "Country", spec["place"]]
+        prices = prices[prices["Category"].astype(str) == price_category].astype({column: str for column in place})
+
+        weights = pd.DataFrame({column: pd.Series(dtype=str) for column in place})
+        if any(has_symbol(results, scenario, spec["demand"]) for scenario in results.sc):
+            demand = results.get_result(spec["demand"])
+            if not demand.empty:
+                weights = demand.astype({column: str for column in place}).groupby(place, as_index=False)["Value"].sum()
+        weights = weights.rename(columns={"Value": "weight"})
+        prices = prices.merge(weights, on=place, how="left")
+
+        stated = prices["Unit"].astype(str)
+        tables.append(pd.DataFrame({
+            "scenario": prices["Scenario"],
+            "year": prices["Year"],
+            "country": prices["Country"],
+            "area": prices[spec["place"]] if spec["place"] == "Area" else "",
+            "commodity": spec["commodity"],
+            "value_unit": price_unit,
+            "stated_unit": stated.where(~stated.isin(price_unit_aliases), ""),
+            "value": prices["Value"],
+            "weight": prices.get("weight", pd.Series(0.0, index=prices.index)).fillna(0.0).clip(lower=0.0),
+            "quantity": "price",
+        }))
+    return pd.concat(tables, ignore_index=True) if tables else pd.DataFrame()
 
 
 def read_optiflow(results: "MainResults", optiflow: dict[str, str | Path | None]) -> pd.DataFrame:

@@ -1,34 +1,44 @@
 # Fuel Category of each Balmorel fuel (FFF): the IAMC fuel segment its output is reported under.
 # A fuel belongs wholly to one category. A fuel missing here is reported under Other, with a note.
-# Override rows with to_iamc(..., rules={'fuels': <table with these columns>}).
-fuel,category
-BIOGAS,Biomass
-BIOMETHANE,Biomass
-BIOOIL,Biomass
-COAL,Coal
-DUMMY,Other
-ELECTRIC,Electricity
-FUELOIL,Oil
-HEAT,Heat
-HEAVYFUELOIL,Oil
-HYDROGEN,Hydrogen
-IMPORT_H2,Hydrogen
-LIGHTOIL,Oil
-LIGNITE,Coal
-LNG,Gas
-MUNIWASTE,Biomass
-NATGAS,Gas
-NUCLEAR,Nuclear
-OTHERGAS,Gas
-PEAT,Coal
-RETORTGAS,Gas
-SHALE,Coal
-STRAW,Biomass
-SUN,Solar
-WASTEHEAT,Other
-WATER,Hydro
-WIND,Wind
-WOOD,Biomass
-WOODCHIPS,Biomass
-WOODPELLETS,Biomass
-WOODWASTE,Biomass
+#
+# primary (optional): how a unit's use of the fuel counts as Primary Energy.
+#   input (or empty): its fuel input, split over what the unit makes (Output-Share Split).
+#   output: what the unit makes (direct equivalent), as the common definitions count nuclear and
+#     the non-biomass renewables.
+#   no: not at all, for carriers made by other units (electricity, heat, hydrogen, biomethane
+#     from upgraded biogas) and for waste heat, so that nothing counts twice.
+# A Mapping Rule's own primary (mapping.csv) overrides the fuel's, e.g. for geothermal units.
+#
+# Override rows with to_iamc(..., rules={'fuels': <table with these columns>}). A row passed for a
+# fuel replaces the shipped row, its primary included.
+fuel,category,primary
+BIOGAS,Biomass,
+BIOMETHANE,Biomass,no
+BIOOIL,Biomass,
+COAL,Coal,
+DUMMY,Other,
+ELECTRIC,Electricity,no
+FUELOIL,Oil,
+HEAT,Heat,no
+HEAVYFUELOIL,Oil,
+HYDROGEN,Hydrogen,no
+IMPORT_H2,Hydrogen,no
+LIGHTOIL,Oil,
+LIGNITE,Coal,
+LNG,Gas,
+MUNIWASTE,Biomass,
+NATGAS,Gas,
+NUCLEAR,Nuclear,output
+OTHERGAS,Gas,
+PEAT,Coal,
+RETORTGAS,Gas,
+SHALE,Coal,
+STRAW,Biomass,
+SUN,Solar,output
+WASTEHEAT,Other,no
+WATER,Hydro,output
+WIND,Wind,output
+WOOD,Biomass,
+WOODCHIPS,Biomass,
+WOODPELLETS,Biomass,
+WOODWASTE,Biomass,

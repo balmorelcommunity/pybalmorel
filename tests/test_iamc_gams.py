@@ -1,8 +1,8 @@
 """
 GAMS-dependent tests of the IAMC conversion on the example MainResults: the
-IAMC totals of electricity, heat, hydrogen and CO2 equal the raw results, as does
-electricity trade per region, centralized heat and hydrogen balances, and Mapping Rules
-and Fuel Categories cover every unit. Needs a GAMS installation and the shipped Definitions Snapshot.
+IAMC totals of electricity, heat, hydrogen, CO2 and primary energy equal the raw results, as
+do electricity trade per region, centralized heat and hydrogen balances, and the electricity and
+carbon prices, and Mapping Rules and Fuel Categories cover every unit. Needs a GAMS installation and the shipped Definitions Snapshot.
 
 Created on 23.11.2026
 @author: Claude, Anthropic
@@ -61,10 +61,10 @@ def region_countries() -> pd.Series:
 
 @pytest.fixture(scope="module")
 def in_regions(raw: pd.DataFrame, region_countries: pd.Series) -> pd.DataFrame:
-    """The raw long table of countries with an IAMC Region, with Area Kinds ('' for rows
-    without an area)."""
+    """The raw long table of amounts of countries with an IAMC Region, with Area Kinds ('' for
+    rows without an area). Leaves out prices and CO2 tax."""
     area_rules = load_rules()["areas"]
-    long = raw[raw["country"].isin(region_countries)]
+    long = raw[raw["country"].isin(region_countries) & ~raw["quantity"].isin(["price", "tax"])]
     return long.assign(area_kind=match_area_kinds(long["area"], area_rules).where(long["area"] != "", ""),
                        to_area_kind=match_area_kinds(long["to_area"], area_rules).where(long["to_area"] != "", ""))
 
@@ -188,26 +188,60 @@ def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.S
     }
 
 
+unit_keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
+
+
+def reported_output(in_regions: pd.DataFrame) -> pd.DataFrame:
+    """Units' output, with whether it is reported: electricity, hydrogen and biomethane in any
+    kind of area, heat in district heating, without storage and import units."""
+    output = in_regions[(in_regions["quantity"] == "output") & (in_regions["value"] > 0)]
+    targets = match_mapping_rules(output, load_rules()["mapping"])
+    return output.assign(reported=~targets.isin([not_reported, import_unit])
+                         & (output["commodity"].isin(["ELECTRICITY", "HYDROGEN", "BIOMETHANE"])
+                            | ((output["commodity"] == "HEAT") & (output["area_kind"] == default_area_kind))))
+
+
+def reported_share(in_regions: pd.DataFrame) -> pd.DataFrame:
+    """The share of each unit's output that is reported, per unit and year."""
+    output = reported_output(in_regions)
+    share = (output["value"].where(output["reported"], 0.0).groupby([output[key] for key in unit_keys]).sum()
+             / output.groupby(unit_keys)["value"].sum())
+    return share.rename("share").reset_index()
+
+
 @pytest.fixture(scope="module")
 def carbon(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
     """Raw emissions and captured CO2 per scenario (Mt CO2), of the part of each unit's output
-    that is reported: electricity and hydrogen in any kind of area, heat in district heating,
-    without storage and import units."""
-    output = in_regions[(in_regions["quantity"] == "output") & (in_regions["value"] > 0)]
-    targets = match_mapping_rules(output, load_rules()["mapping"])
-    reported = (~targets.isin([not_reported, import_unit])
-                & (output["commodity"].isin(["ELECTRICITY", "HYDROGEN"])
-                   | ((output["commodity"] == "HEAT") & (output["area_kind"] == default_area_kind))))
-    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
-    share = (output["value"].where(reported, 0.0).groupby([output[key] for key in keys]).sum()
-             / output.groupby(keys)["value"].sum()).rename("share").reset_index()
-
+    that is reported (reported_output)."""
     rows = in_regions[in_regions["quantity"].isin(["emissions", "captured"])]
     assert set(rows["value_unit"]) <= {"kt CO2"}
-    rows = rows.merge(share, on=keys, how="left").fillna({"share": 0.0})
+    rows = rows.merge(reported_share(in_regions), on=unit_keys, how="left").fillna({"share": 0.0})
     by_quantity = (rows["value"] * rows["share"] / 1e3).groupby([rows["quantity"], rows["scenario"]]).sum()
     return {quantity: by_quantity.get(quantity, pd.Series(dtype=float)).reindex(scenarios, fill_value=0.0)
             for quantity in ("emissions", "captured")}
+
+
+@pytest.fixture(scope="module")
+def primary(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
+    """Raw primary energy per scenario (TWh), of the part of each unit's output that is reported
+    (reported_output): the fuel input of units whose fuel the 'fuels' rules count by input, and
+    the output of units of each fuel they count by output, per Fuel Category (direct
+    equivalent). Geothermal units, whose fuel is waste heat, are left out."""
+    fuels = load_rules()["fuels"]
+    by_input = fuels.loc[fuels["primary"].isin(["", "input"]), "fuel"]
+    rows = in_regions[(in_regions["quantity"] == "input") & in_regions["fuel"].isin(by_input)]
+    assert set(rows["value_unit"]) <= {"TWh"}
+    rows = rows.merge(reported_share(in_regions), on=unit_keys, how="left").fillna({"share": 0.0})
+
+    output = reported_output(in_regions)
+    output = output[output["reported"]].merge(fuels[fuels["primary"] == "output"], on="fuel")
+    by_category = output.groupby(["category", "scenario"])["value"].sum()
+
+    def per_scenario(values: pd.Series) -> pd.Series:
+        return values.groupby("scenario").sum().reindex(scenarios, fill_value=0.0)
+
+    return {"input": per_scenario((rows["value"] * rows["share"]).groupby(rows["scenario"]).sum())} | {
+        category: per_scenario(by_category[category]) for category in by_category.index.unique("category")}
 
 
 def total(data: pd.DataFrame, variable: str) -> pd.Series:
@@ -346,3 +380,60 @@ def test_carbon_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataF
     assert sorted(no_captured) == ["Example1", "Example2"]
     assert not notes["Note"].str.contains("don't mark them w/ CCS|Units whose output the results don't give").any()
 
+
+
+def test_primary_energy_equals_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
+                                           primary: dict[str, pd.Series], electricity: dict[str, pd.Series],
+                                           hydrogen: dict[str, pd.Series]) -> None:
+    """Primary Energy by Source and purpose adds up to the fuel input of the reported part of
+    units' output; nuclear and the renewables count what they make. Net imports of electricity
+    and hydrogen, which cancel out between regions but for import units and trade with countries
+    without an IAMC Region, are Secondary Energy Trade. Totals that would count use Balmorel
+    doesn't cover are not reported."""
+    data, _ = converted
+    by_input = sum(total(data, f"Primary Energy|{source}|{purpose}")
+                   for source in ("Coal", "Gas", "Oil", "Biomass")
+                   for purpose in ("Electricity", "Heat", "Hydrogen", "Gases"))
+    by_input += total(data, "Primary Energy|Other")
+    pd.testing.assert_series_equal(by_input, primary["input"] * twh_to_ej, check_names=False,
+                                   check_index_type=False, rtol=1e-9)
+    assert {"Nuclear", "Solar", "Wind", "Hydro"} <= set(primary)
+    for category in set(primary) - {"input"}:
+        pd.testing.assert_series_equal(total(data, f"Primary Energy|{category}"), primary[category] * twh_to_ej,
+                                       check_names=False, check_index_type=False, rtol=1e-9)
+
+    net_imports = -electricity["net_exports"].groupby(level="scenario").sum().reindex(scenarios, fill_value=0.0)
+    net_imports -= hydrogen["net_exports"]
+    pd.testing.assert_series_equal(total(data, "Primary Energy|Secondary Energy Trade"), net_imports * twh_to_ej,
+                                   check_names=False, check_index_type=False, rtol=1e-9, atol=1e-12)
+
+    beyond = {"Primary Energy", "Primary Energy|Coal", "Primary Energy|Gas", "Primary Energy|Oil",
+              "Primary Energy|Biomass", "Primary Energy|Fossil"}
+    assert not beyond & set(data["Variable"])
+
+
+def test_prices_equal_raw_results(results: MainResults, raw: pd.DataFrame) -> None:
+    """Denmark's electricity price is its regions' prices weighted by their demand, and its
+    carbon price the CO2 tax over the emissions of the units that pay it, in each scenario and
+    year. Without a currency, no price is reported."""
+    data, _ = results.to_iamc("Balmorel", currency={"USD_2010": 1.0})
+    data = data[data["Region"] == "Denmark"].set_index(["Scenario", "Variable"])
+    long = raw[raw["country"] == "DENMARK"]
+
+    electricity = long[(long["quantity"] == "price") & (long["commodity"] == "ELECTRICITY")]
+    assert not electricity.empty
+    for (scenario, year), rows in electricity.groupby(["scenario", "year"]):
+        expected = (rows["value"] * rows["weight"]).sum() / rows["weight"].sum() / 3.6
+        assert data.loc[(scenario, "Price|Secondary Energy|Electricity"), year] == pytest.approx(expected)
+
+    keys = ["scenario", "year", "area", "unit_name", "tech_type", "fuel"]
+    units = pd.concat([long[long["quantity"] == quantity].groupby(keys)["value"].sum().rename(quantity)
+                       for quantity in ("tax", "emissions")], axis=1, join="inner")
+    units = units[(units["emissions"] > 0) & (units["tax"] > 0)]
+    assert not units.empty
+    for (scenario, year), rows in units.groupby(level=["scenario", "year"]):
+        expected = rows["tax"].sum() / rows["emissions"].sum() * 1e3
+        assert data.loc[(scenario, "Price|Carbon"), year] == pytest.approx(expected)
+
+    unpriced, _ = results.to_iamc("Balmorel")
+    assert not unpriced["Variable"].str.startswith("Price|").any()

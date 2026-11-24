@@ -25,8 +25,9 @@ definitions_dir = Path(__file__).parent / "definitions"
 # Columns of each rule table, the columns a table may leave out (read as empty), and the key
 # whose rows a caller's rows replace
 rule_tables = {
-    "fuels": {"columns": ["fuel", "category"], "key": ["fuel"]},
-    "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments"], "key": None},
+    "fuels": {"columns": ["fuel", "category", "primary"], "optional": ["primary"], "key": ["fuel"]},
+    "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments", "primary"],
+                "optional": ["primary"], "key": None},
     "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "note"], "optional": ["note"],
               "key": ["quantity", "commodity", "area_kind"]},
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
@@ -56,6 +57,12 @@ default_area_kind = "district heating"
 # whose part that units use where what they make isn't reported counts as final demand
 on_site_final = "on-site"
 final_choices = ("yes", "no", on_site_final)
+# How a unit counts as Primary Energy ('primary' column of the 'fuels' and 'mapping' tables): by
+# its fuel input, by what it makes (direct equivalent), or not at all; empty is left to the
+# next rule, and to 'input' in the end
+primary_choices = ("input", "output", "no")
+# Placeholder in a stem for the Source: the first segment the Mapping Rules give, e.g. 'Gas'
+source_placeholder = "{source}"
 
 
 #%% ------------------------------- ###
@@ -140,11 +147,24 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             table = pd.concat((caller, shipped[~replaced]), ignore_index=True)
         tables[name] = table
 
-    empty = tables["mapping"]["segments"] == ""
+    mapping = tables["mapping"]
+    empty = mapping["segments"] == ""
     if empty.any():
         raise Exception(
-            f"Mapping Rules need segments, or '{not_reported}' for not reported:\n"
-            f"{tables['mapping'][empty].to_string()}"
+            f"Mapping Rules need segments, or '{not_reported}' for not reported:\n{mapping[empty].to_string()}"
+        )
+    for name in ("fuels", "mapping"):
+        unclear = ~tables[name]["primary"].isin(primary_choices + ("",))
+        if unclear.any():
+            raise Exception(
+                f"The '{name}' rules need one of {list(primary_choices)}, or nothing, under primary:\n"
+                f"{tables[name][unclear].to_string()}"
+            )
+    per_commodity = (mapping["primary"] != "") & (mapping["commodity"] != "")
+    if per_commodity.any():
+        raise Exception(
+            "Mapping Rules with a commodity can't set primary, as primary energy is per unit, not per commodity:\n"
+            f"{mapping[per_commodity].to_string()}"
         )
     demand_categories = tables["demand_categories"]
     unclear = ~demand_categories["final"].isin(final_choices)
@@ -165,6 +185,15 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         raise Exception(
             "'demand_categories' rows with a sector need 'yes' under final, as a Final Energy Sector is a part of "
             f"final energy:\n{demand_categories[sector_not_final].to_string()}"
+        )
+    stems = tables["stems"]["stem"]
+    misplaced = stems.str.contains(source_placeholder, regex=False) & (
+        (stems.str.count(re.escape(source_placeholder)) != 1)
+        | ~stems.map(lambda stem: source_placeholder in stem.split("|")[1:]))
+    if misplaced.any():
+        raise Exception(
+            f"A stem may hold '{source_placeholder}' once, as a whole segment after the first:\n"
+            f"{tables['stems'][misplaced].to_string()}"
         )
     for pattern in tables["areas"]["pattern"]:
         try:
@@ -291,19 +320,23 @@ def match_area_kinds(areas: pd.Series, area_rules: pd.DataFrame) -> pd.Series:
     return areas.map(kinds)
 
 
-def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame) -> pd.Series:
-    """Find the segments template of the Mapping Rule that wins for each unit.
+def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame, column: str = "segments") -> pd.Series:
+    """Find the segments template, or another column, of the Mapping Rule that wins for each unit.
 
     Args:
         units (pd.DataFrame): Rows with the columns 'unit_name', 'tech_type', 'fuel' and 'commodity'.
         mapping (pd.DataFrame): The 'mapping' table from load_rules.
+        column (str, optional): The rule column to give, e.g. 'primary'. Rules that leave it
+            empty are passed over, so the next matching rule that fills it wins (segments are
+            never empty). Defaults to 'segments'.
 
     Returns:
-        pd.Series: The winning rule's segments per row of `units`; '' where no rule matches.
+        pd.Series: The winning rule's value per row of `units`; '' where no rule matches.
     """
-    ordered = mapping.assign(
-        specificity=(mapping[mapping_keys] != "").sum(axis=1),
-        order=np.arange(len(mapping)),
+    ordered = mapping[mapping[column] != ""]
+    ordered = ordered.assign(
+        specificity=(ordered[mapping_keys] != "").sum(axis=1),
+        order=np.arange(len(ordered)),
     ).sort_values(["priority", "specificity", "order"], ascending=False)
 
     segments = pd.Series("", index=units.index, dtype=object)
@@ -320,8 +353,31 @@ def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame) -> pd.Series
         if rule.unit_pattern:
             pattern = re.compile(rule.unit_pattern)
             open_rows &= units["unit_name"].map(lambda name: pattern.search(name) is not None)
-        segments[open_rows] = rule.segments
+        segments[open_rows] = getattr(rule, column)
     return segments
+
+
+def fill_source(stem: str, source: str, names: set[str]) -> str:
+    """Fill the Source into a stem that has the '{source}' placeholder.
+
+    Args:
+        stem (str): The stem, e.g. 'Primary Energy|{source}|Electricity'.
+        source (str): The Source, the first segment the Mapping Rules give, e.g. 'Gas'.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+
+    Returns:
+        str: The filled stem if the snapshot has it, e.g. 'Primary Energy|Gas|Electricity'.
+            Else the stem cut back to the Source, e.g. 'Primary Energy|Wind', if the snapshot has
+            it without children, as for sources whose use the common definitions don't split.
+            Else ''.
+    """
+    filled = stem.replace(source_placeholder, source)
+    if filled in names:
+        return filled
+    cut_back = f"{stem.split(f'|{source_placeholder}')[0]}|{source}"
+    if cut_back in names and not any(name.startswith(f"{cut_back}|") for name in names):
+        return cut_back
+    return ""
 
 
 #%% ------------------------------- ###
@@ -408,9 +464,30 @@ def check_rules(definitions: str | Path | None = None,
     segment_names = {segment for name in names for segment in name.split("|")}
     problems = []
 
+    templated = [stem for stem in stems if source_placeholder in stem]
     for stem in stems:
-        if stem not in names:
+        if stem not in names and stem not in templated:
             problems.append(("stems", stem, "stem is not an IAMC Variable"))
+
+    # Sources: the Fuel Categories of fuels that count as Primary Energy, and the first
+    # segments the Mapping Rules give literally
+    fuels = tables["fuels"]
+    sources = set(fuels.loc[fuels["primary"] != "no", "category"])
+    for template in tables["mapping"]["segments"].unique():
+        first = template.split("|")[0]
+        if template not in (not_reported, import_unit, optiflow_unit) and "{category}" not in first:
+            sources.add(first)
+    for stem in templated:
+        top = stem.split(f"|{source_placeholder}")[0]
+        for source in sorted(sources):
+            if fill_source(stem, source, names):
+                continue
+            if f"{top}|{source}" in names:
+                problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', which is not reported"))
+            elif not fill_source(stem, "Other", names):
+                problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', nor for Other"))
+            else:
+                problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', reported under Other"))
 
     for category in tables["fuels"]["category"].unique():
         if category not in segment_names:
@@ -430,7 +507,12 @@ def check_rules(definitions: str | Path | None = None,
             problems.append(("mapping", template, "is a child of no stem"))
 
     for aggregate in tables["aggregates"]["aggregate"].unique():
-        if not any(f"{stem}|{aggregate}" in names for stem in stems):
+        first, _, rest = aggregate.partition("|")
+        in_templated = any(
+            fill_source(stem, first, names) and "|".join(filter(None, [fill_source(stem, first, names), rest])) in names
+            for stem in templated
+        )
+        if not in_templated and not any(f"{stem}|{aggregate}" in names for stem in stems):
             problems.append(("aggregates", aggregate, "is a child of no stem"))
 
     known_iso3 = set(regions["iso3"])
