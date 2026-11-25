@@ -432,7 +432,7 @@ def test_primary_energy_equals_raw_results(converted: tuple[pd.DataFrame, pd.Dat
 def test_prices_equal_raw_results(results: MainResults, raw: pd.DataFrame) -> None:
     """Denmark's electricity price is its regions' prices weighted by their demand, and its
     carbon price the CO2 tax over the emissions of the units that pay it, in each scenario and
-    year. Without a currency, no price is reported."""
+    year. Without a currency, pybalmorel's price-level tables give USD_2010 (docs/adr/0017)."""
     data, _ = results.to_iamc("Balmorel", currency={"USD_2010": 1.0})
     data = data[data["Region"] == "Denmark"].set_index(["Scenario", "Variable"])
     long = raw[raw["country"] == "DENMARK"]
@@ -452,5 +452,10 @@ def test_prices_equal_raw_results(results: MainResults, raw: pd.DataFrame) -> No
         expected = rows["tax"].sum() / rows["emissions"].sum() * 1e3
         assert data.loc[(scenario, "Price|Carbon"), year] == pytest.approx(expected)
 
-    unpriced, _ = results.to_iamc("Balmorel")
-    assert not unpriced["Variable"].str.startswith("Price|").any()
+    by_tables, _ = results.to_iamc("Balmorel")
+    by_tables = by_tables[by_tables["Region"] == "Denmark"].set_index(["Scenario", "Variable"])
+    prices = data.index.get_level_values("Variable").str.startswith("Price|")
+    years = [column for column in data.columns if isinstance(column, int)]
+    worth = (by_tables.loc[data.index[prices], years] / data.loc[prices, years]).stack().dropna()
+    assert len(worth) > 0
+    assert worth.to_numpy() == pytest.approx(1.2319, abs=1e-4)

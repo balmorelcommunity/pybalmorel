@@ -37,7 +37,8 @@ rule_tables = {
     "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category", "sector", "note"],
                           "optional": ["fuel_category", "sector", "note"], "key": ["commodity", "demand_category"]},
     "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
-                             "removal", "emissions", "note"], "optional": ["factor", "note"], "key": None},
+                             "removal", "emissions", "note", "sector"], "optional": ["factor", "note", "sector"],
+                 "key": None},
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
@@ -315,7 +316,8 @@ def fill_carrier(stem: str, carrier: str) -> tuple[str, str]:
 
 def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
     """Refuse 'optiflow' rules with an unknown role, a pattern that is no regular expression, a
-    factor that is no number, a missing pool, unit or variable, or targets their role doesn't take.
+    factor that is no number, a missing pool, unit or variable, or targets or a sector their role
+    doesn't take.
 
     Args:
         optiflow (pd.DataFrame): The 'optiflow' rule table.
@@ -332,6 +334,7 @@ def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
            ~optiflow["role"].isin(["capture", "fuel"]) & ((optiflow["removal"] != "") | (optiflow["emissions"] != "")))
     refuse("of role 'fuel' take no variable or removal, only emissions",
            (optiflow["role"] == "fuel") & ((optiflow["variable"] != "") | (optiflow["removal"] != "")))
+    refuse("of roles other than 'report' take no sector", (optiflow["role"] != "report") & (optiflow["sector"] != ""))
     refuse("need a number or nothing under factor", ~optiflow["factor"].map(is_number))
     for column in optiflow_patterns:
         for pattern in optiflow[column].unique():
@@ -633,6 +636,11 @@ def check_rules(definitions: str | Path | None = None,
         for target in tables["optiflow"][column].unique():
             if target and target not in names:
                 problems.append(("optiflow", target, f"{column} is not an IAMC Variable"))
+    with_sector = tables["optiflow"][tables["optiflow"]["sector"] != ""]
+    for target, sector in with_sector[["variable", "sector"]].drop_duplicates().itertuples(index=False):
+        for variable in sector_variables(target, sector):
+            if variable not in names:
+                problems.append(("optiflow", variable, f"sector '{sector}' gives no IAMC Variable"))
 
     demand_stems = tables["stems"][tables["stems"]["quantity"] == "demand"]
     with_sector = tables["demand_categories"][tables["demand_categories"]["sector"] != ""]

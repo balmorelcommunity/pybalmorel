@@ -1415,8 +1415,12 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     rules report the CO2 of a fossil fuel under emissions. 'report' rules report the flow as it
     is under their variable. Flows are times the rule's factor. Each counts towards the IAMC
     Variables place_reported says, e.g. 'Final Energy|Bunkers|Hydrogen' towards Final Energy,
-    unless the Mapping reports 'Final Energy|Bunkers' too. A rule's note becomes a Conversion
-    Note on each IAMC Variable it reports values under.
+    unless the Mapping reports 'Final Energy|Bunkers' too. A 'report' rule with a Final Energy
+    Sector also reports the flow under the sector's variables (sector_variables), e.g.
+    'Final Energy|Heat' in sector 'Carbon Management|Direct Air Capture' under
+    'Final Energy|Carbon Management|Heat' and 'Final Energy|Carbon Management|Direct Air Capture|Heat';
+    those copies count towards themselves only, so the flow counts towards Final Energy once. A
+    rule's note becomes a Conversion Note on each IAMC Variable it reports values under.
 
     Args:
         flows (pd.DataFrame): OptiFlow flows with IAMC Regions.
@@ -1453,7 +1457,14 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
         sign = np.where(stored & (target == "emissions"), -1.0, 1.0)
         reported.append(rows.assign(variable=rows[target], value=sign * rows["value"] * share.fillna(0.0),
                                     withheld=share.isna()))
-    reported = pd.concat(reported, ignore_index=True)
+    reported = pd.concat(reported, ignore_index=True).assign(sector_copy=False)
+    # A 'report' rule with a sector also reports its flow under the sector's variables, as
+    # attach_sectors does demand; the copies count towards nothing else
+    with_sector = reported[reported["sector"] != ""]
+    copies = [rows.assign(variable=variable, sector_copy=True)
+              for (stem, sector), rows in with_sector.groupby(["variable", "sector"])
+              for variable in sector_variables(stem, sector)]
+    reported = pd.concat([reported, *copies], ignore_index=True)
 
     for (scenario, variable), _ in reported[~reported["variable"].isin(names)].groupby(["iamc_scenario", "variable"]):
         notes.append(note(scenario, "", variable, (
@@ -1465,9 +1476,10 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     for (scenario, variable, text), _ in noted.groupby(["iamc_scenario", "variable", "note"]):
         notes.append(note(scenario, "", variable, text))
 
+    direct = reported[~reported["sector_copy"]]
     placed = pd.DataFrame([
         (scenario, variable, *place_reported(variable, set(variables), stems))
-        for scenario, variables in reported.groupby("iamc_scenario")["variable"].unique().items()
+        for scenario, variables in direct.groupby("iamc_scenario")["variable"].unique().items()
         for variable in variables
     ], columns=["iamc_scenario", "variable", "parent", "stem", "path", "stem_total", "template_stem", "source_path"])
     for (scenario, parent), rows in placed[placed["parent"] != ""].groupby(["iamc_scenario", "parent"]):
@@ -1475,7 +1487,10 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
             "The OptiFlow Mapping reports this IAMC Variable itself, so what it reports below it "
             f"({list_names(rows['variable'])}) doesn't add to it, nor to the IAMC Variables above it."
         )))
-    reported = reported.merge(placed.drop(columns="parent"), on=["iamc_scenario", "variable"])
+    direct = direct.merge(placed.drop(columns="parent"), on=["iamc_scenario", "variable"])
+    copies = reported[reported["sector_copy"]]
+    copies = copies.assign(stem=copies["variable"], path="", stem_total="", template_stem="", source_path="")
+    reported = pd.concat([direct, copies], ignore_index=True)
     return reported.assign(quantity=optiflow_quantity).reindex(columns=columns)
 
 
@@ -2128,7 +2143,7 @@ def table_worth(unit: str) -> tuple[str, float, str] | None:
     price-level tables (backcasting/pricelevel.py).
 
     Balmorel's money (balmorel_currency) is brought to the currency's year by the euro-area HICP,
-    then, for USD, exchanged at that year's mean EUR/USD rate.
+    then, for USD, exchanged at that year's mean EUR/USD rate (docs/adr/0017).
 
     Args:
         unit (str): The IAMC unit, e.g. 'USD_2010/GJ'.

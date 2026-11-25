@@ -1180,6 +1180,8 @@ def test_invalid_optiflow_rules_are_refused(optiflow_rules: pd.DataFrame) -> Non
         load_rules({"optiflow": optiflow_rules.assign(from_process="CO2_(")})
     with pytest.raises(Exception, match="need a number or nothing under factor"):
         load_rules({"optiflow": optiflow_rules.assign(factor="0,0732")})
+    with pytest.raises(Exception, match="of roles other than 'report' take no sector"):
+        load_rules({"optiflow": optiflow_rules.assign(sector="Carbon Management|Direct Air Capture")})
 
 
 def test_invalid_fuel_rules_are_refused(fuel_rules: pd.DataFrame, carbon_long: pd.DataFrame, flows: pd.DataFrame,
@@ -1331,6 +1333,58 @@ def test_final_energy_total(electricity_long: pd.DataFrame, total_definitions: P
     assert total.str.startswith("Counts only demand of ELECTRICITY, HEAT in district heating areas, HYDROGEN; and "
                                 "on-site fuel use for HEAT in individual and industry areas, as Balmorel's results "
                                 "give them. What Balmorel doesn't model").any()
+
+
+def test_optiflow_report_rows_by_sector(electricity_long: pd.DataFrame, total_definitions: Path) -> None:
+    """An OptiFlow Mapping 'report' row with a Final Energy Sector reports its flow under its
+    carrier and under the sector's variables, as final demand with a sector: direct air capture's
+    3 PJ of heat and 1 PJ of electricity from OptiFlow's buffers count towards Final Energy|Heat,
+    |Electricity and Final Energy once, and by sector beside carbon capture's electricity, still
+    without the sector's total over all carriers. Heat other processes take is not reported."""
+    variables = pd.read_csv(total_definitions / "variables.csv")
+    sector = pd.DataFrame({
+        "variable": ["Final Energy|Carbon Management|Heat", "Final Energy|Carbon Management|Direct Air Capture",
+                     "Final Energy|Carbon Management|Direct Air Capture|Heat",
+                     "Final Energy|Carbon Management|Direct Air Capture|Electricity"],
+        "unit": "EJ/yr",
+    })
+    pd.concat((variables, sector)).to_csv(total_definitions / "variables.csv", index=False)
+    columns = ["from_process", "to_process", "flow", "role", "pool", "unit", "variable", "removal", "emissions",
+               "sector"]
+    rules = pd.DataFrame([
+        ["HeatBuffer_GJ", "CO2_DAC_.*", "HEATFLOW_GJ", "report", "", "PJ", "Final Energy|Heat", "", "",
+         "Carbon Management|Direct Air Capture"],
+        ["ElecBuffer_GJ", "CO2_DAC_.*", "ELECFLOW_GJ", "report", "", "PJ", "Final Energy|Electricity", "", "",
+         "Carbon Management|Direct Air Capture"],
+    ], columns=columns)
+    dac = pd.DataFrame([
+        flow_row("HeatBuffer_GJ", "CO2_DAC_Large", "HEATFLOW_GJ", 3),
+        flow_row("ElecBuffer_GJ", "CO2_DAC_Large", "ELECFLOW_GJ", 1),
+        flow_row("HeatBuffer_GJ", "Biogas_Digester", "HEATFLOW_GJ", 7),
+    ])
+    data, _ = convert(pd.concat((electricity_long, dac)), "Balmorel", definitions=total_definitions,
+                      rules={"optiflow": rules})
+
+    pj = 1e-3
+    assert value(data, "Final Energy|Heat", 2030) == pytest.approx(2 * twh + 3 * pj)
+    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx(21 * twh + 1 * pj)
+    assert value(data, "Final Energy", 2030) == pytest.approx(25 * twh + 4 * pj)
+    assert value(data, "Final Energy|Carbon Management|Heat", 2030) == pytest.approx(3 * pj)
+    assert value(data, "Final Energy|Carbon Management|Direct Air Capture|Heat", 2030) == pytest.approx(3 * pj)
+    assert value(data, "Final Energy|Carbon Management|Direct Air Capture|Electricity",
+                 2030) == pytest.approx(1 * pj)
+    assert value(data, "Final Energy|Carbon Management|Electricity", 2030) == pytest.approx(1 * twh + 1 * pj)
+    assert value(data, "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+                 2030) == pytest.approx(1 * twh)
+    assert not {"Final Energy|Carbon Management",
+                "Final Energy|Carbon Management|Direct Air Capture"} & set(data["Variable"])
+
+    # The sector's variables must be in the snapshot
+    problems = check_rules(definitions=total_definitions,
+                           rules={"optiflow": rules.assign(sector="Carbon Management|Moonlight")})
+    listed = problems[(problems["table"] == "optiflow") & problems["problem"].str.startswith("sector")]
+    assert set(listed["value"]) == {"Final Energy|Carbon Management|Moonlight|Heat",
+                                    "Final Energy|Carbon Management|Moonlight|Electricity"}
 
 
 def test_on_site_fuel_use(on_site_long: pd.DataFrame, final_definitions: Path) -> None:
@@ -1595,8 +1649,11 @@ def test_prices_by_price_level_tables(long: pd.DataFrame, price_definitions: Pat
     EUR/USD rate. A worth in `currency` beats the tables."""
     long = pd.concat((long, pd.DataFrame([price_row("ELECTRICITY", 50, 30)])))
     hicp, usd_per_eur = pricelevel.hicp_euro_area, pricelevel.usd_per_eur
+    # The common definitions' USD_2010 (docs/adr/0017)
+    assert usd_per_eur[2010] * hicp[2010] / hicp[2016] == pytest.approx(1.2319, abs=1e-4)
     for unit, worth in (("USD_2016", usd_per_eur[2016]), ("EUR_2020", hicp[2020] / hicp[2016]),
-                        ("USD_2020", usd_per_eur[2020] * hicp[2020] / hicp[2016])):
+                        ("USD_2020", usd_per_eur[2020] * hicp[2020] / hicp[2016]),
+                        ("USD_2010", usd_per_eur[2010] * hicp[2010] / hicp[2016])):
         set_price_currency(price_definitions, unit)
         data, notes = convert(long, "Balmorel", definitions=price_definitions)
         assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx(50 / 3.6 * worth)

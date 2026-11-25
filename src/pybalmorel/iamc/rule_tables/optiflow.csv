@@ -11,9 +11,9 @@
 #               Secondary Energy|Electricity|Other.
 # What OptiFlow takes from district heating and the grid (out of the buffers) is not reported
 # here: it is final energy only for some processes, e.g. direct air capture, whose names differ
-# between studies, so a study's rows report it, e.g. under
-# 'Final Energy|Carbon Management|Direct Air Capture|Heat' (from 'HeatBuffer_GJ' to its
-# processes, in PJ). Fuel and biogas production that takes it is energy transformation.
+# between studies, so a study's rows report it, e.g. under 'Final Energy|Heat' with sector
+# 'Carbon Management|Direct Air Capture' (from 'HeatBuffer_GJ' to its processes, in PJ). Fuel
+# and biogas production that takes it is energy transformation.
 # A study's rows must not report these flows again, as every row applies to every flow it matches.
 #
 # Each row matches OptiFlow flows (VFLOW_Opti_C) by from_process, to_process and flow: regular
@@ -39,6 +39,12 @@
 #             'Final Energy|Bunkers|Hydrogen', or the electricity battery-electric ships take in
 #             under 'Final Energy|Bunkers|Electricity' (which Balmorel's ENDO_OPTIFLOW electricity
 #             demand includes, so it stays out of Final Energy|Electricity).
+#             sector (optional) is a Final Energy Sector the flow is also reported under, as
+#             final demand in demand_categories.csv: 'Final Energy|Heat' with sector 'Carbon
+#             Management|Direct Air Capture' is also reported under 'Final Energy|Carbon
+#             Management|Heat' and 'Final Energy|Carbon Management|Direct Air Capture|Heat',
+#             which count towards nothing else, so Final Energy counts the heat once. Other
+#             roles take no sector.
 # A variable the rows report takes nothing from what they report below it: with rows for both
 # 'Final Energy|Bunkers' and 'Final Energy|Bunkers|Liquids', the second counts towards the
 # variables below 'Final Energy|Bunkers' only, so neither it nor Final Energy counts the fuel
@@ -57,6 +63,7 @@
 #   CO2,CO2_SEQUESTRATION,,store,CO2,Mt CO2,,,,,
 #   Liquid_Hydrogen,Hydrogen_(FC_)?Eff,HYDROGEN_FLOW,report,,PJ,,Final Energy|Bunkers|Hydrogen,,,
 #   Jet_Source,Aviation_Fuel,,fuel,,Mt CO2,0.0732,,,Emissions|CO2|Energy|Demand|Bunkers|International Aviation,All aviation counted as international.
-from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note
-.*,HeatBuffer,HEATFLOW,report,,TWh,,Secondary Energy|Heat|Other,,,"The heat OptiFlow's processes give to district heating, e.g. excess heat from fuel synthesis or direct air capture. Not net of the heat OptiFlow takes from district heating, which counts as final energy only where the study's OptiFlow Mapping reports it, e.g. that of direct air capture."
-.*,ElecBuffer,ELECFLOW,report,,TWh,,Secondary Energy|Electricity|Other,,,"The electricity OptiFlow's processes give to the grid. Not net of the electricity OptiFlow takes from the grid, which counts as final energy only where the study's OptiFlow Mapping reports it, e.g. that of direct air capture or battery-electric ships."
+#   HeatBuffer_GJ,CO2_DAC_.*,HEATFLOW_GJ,report,,PJ,,Final Energy|Heat,,,,Carbon Management|Direct Air Capture
+from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note,sector
+.*,HeatBuffer,HEATFLOW,report,,TWh,,Secondary Energy|Heat|Other,,,"The heat OptiFlow's processes give to district heating, e.g. excess heat from fuel synthesis or direct air capture. Not net of the heat OptiFlow takes from district heating, which counts as final energy only where the study's OptiFlow Mapping reports it, e.g. that of direct air capture.",
+.*,ElecBuffer,ELECFLOW,report,,TWh,,Secondary Energy|Electricity|Other,,,"The electricity OptiFlow's processes give to the grid. Not net of the electricity OptiFlow takes from the grid, which counts as final energy only where the study's OptiFlow Mapping reports it, e.g. that of direct air capture or battery-electric ships.",

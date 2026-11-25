@@ -10,6 +10,11 @@ reproducible offline. Extend them once a year from:
 - HICP: Eurostat prc_hicp_aind, geo=EA (changing composition), coicop=CP00,
   unit=INX_A_AVG (annual average index, 2015=100)
 - EUR/USD: Eurostat ert_bil_eur_a, currency=USD, statinfo=AVG (USD per EUR)
+Eurostat's own site no longer gives years before 2016 for prc_hicp_aind. The
+DBnomics mirror of both datasets still does (api.db.nomics.world, series
+Eurostat/prc_hicp_aind/A.INX_A_AVG.CP00.EA and
+Eurostat/ert_bil_eur_a/A.AVG.NAC.USD); its 2015 and 2016 values equal the
+ones below, so it is the same series and base year.
 
 Created on 15.10.2026
 @author: Claude, Anthropic
@@ -23,8 +28,12 @@ import pandas as pd
 
 PRICE_YEAR = 2016
 
-# Retrieved from Eurostat on 15.10.2026 (prc_hicp_aind updated 06.02.2026)
+# Retrieved from Eurostat on 15.10.2026 (prc_hicp_aind updated 06.02.2026);
+# 2010-2011 from DBnomics' mirror on 25.11.2026 (updated 19.01.2026), for USD_2010
+# in IAMC reporting (docs/adr/0017)
 hicp_euro_area = {
+    2010: 93.14,
+    2011: 95.66,
     2012: 98.05,
     2013: 99.38,
     2014: 99.81,
@@ -41,8 +50,11 @@ hicp_euro_area = {
     2025: 128.75,
 }
 
-# Retrieved from Eurostat on 15.10.2026 (ert_bil_eur_a updated 08.07.2026)
+# Retrieved from Eurostat on 15.10.2026 (ert_bil_eur_a updated 08.07.2026);
+# 2010-2011 from DBnomics' mirror on 25.11.2026 (updated 14.01.2026)
 usd_per_eur = {
+    2010: 1.3257,
+    2011: 1.3920,
     2012: 1.2848,
     2013: 1.3281,
     2014: 1.3285,
