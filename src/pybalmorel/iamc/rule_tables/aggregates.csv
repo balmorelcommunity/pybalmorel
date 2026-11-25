@@ -1,6 +1,9 @@
 # IAMC Variables that sum siblings instead of their own children, e.g. Fossil = Coal + Gas + Oil.
 # Under every stem (stems.csv) where '<stem>|<aggregate>' is in the Definitions Snapshot, it is
 # reported as the sum of output whose segments (mapping.csv) start with one of its components.
+# Under a stem with the Source placeholder, the aggregate takes the Source's place, e.g.
+# Primary Energy|Fossil|Electricity. Biomass|Modern is all of Biomass, as Balmorel has no
+# traditional biomass.
 # Rows passed for an aggregate replace all shipped rows for that aggregate.
 aggregate,component
 Fossil,Coal
@@ -17,3 +20,6 @@ Non-Biomass Renewables,Hydro
 Non-Biomass Renewables,Ocean
 Non-Biomass Renewables,Solar
 Non-Biomass Renewables,Wind
+Biomass|Modern,Biomass
+Biomass|Modern|w/ CCS,Biomass|w/ CCS
+Biomass|Modern|w/o CCS,Biomass|w/o CCS

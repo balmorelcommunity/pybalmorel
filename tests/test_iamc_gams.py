@@ -191,19 +191,20 @@ def hydrogen(raw: pd.DataFrame, in_regions: pd.DataFrame, region_countries: pd.S
 unit_keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
 
 
-def reported_output(in_regions: pd.DataFrame) -> pd.DataFrame:
+def reported_output(in_regions: pd.DataFrame, all_heat: bool = False) -> pd.DataFrame:
     """Units' output, with whether it is reported: electricity, hydrogen and biomethane in any
-    kind of area, heat in district heating, without storage and import units."""
+    kind of area, heat in district heating (in any kind of area with `all_heat`), without
+    storage and import units."""
     output = in_regions[(in_regions["quantity"] == "output") & (in_regions["value"] > 0)]
     targets = match_mapping_rules(output, load_rules()["mapping"])
+    heat = (output["commodity"] == "HEAT") & (all_heat | (output["area_kind"] == default_area_kind))
     return output.assign(reported=~targets.isin([not_reported, import_unit])
-                         & (output["commodity"].isin(["ELECTRICITY", "HYDROGEN", "BIOMETHANE"])
-                            | ((output["commodity"] == "HEAT") & (output["area_kind"] == default_area_kind))))
+                         & (output["commodity"].isin(["ELECTRICITY", "HYDROGEN", "BIOMETHANE"]) | heat))
 
 
-def reported_share(in_regions: pd.DataFrame) -> pd.DataFrame:
+def reported_share(in_regions: pd.DataFrame, all_heat: bool = False) -> pd.DataFrame:
     """The share of each unit's output that is reported, per unit and year."""
-    output = reported_output(in_regions)
+    output = reported_output(in_regions, all_heat)
     share = (output["value"].where(output["reported"], 0.0).groupby([output[key] for key in unit_keys]).sum()
              / output.groupby(unit_keys)["value"].sum())
     return share.rename("share").reset_index()
@@ -222,26 +223,31 @@ def carbon(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
 
 
 @pytest.fixture(scope="module")
-def primary(in_regions: pd.DataFrame) -> dict[str, pd.Series]:
-    """Raw primary energy per scenario (TWh), of the part of each unit's output that is reported
-    (reported_output): the fuel input of units whose fuel the 'fuels' rules count by input, and
-    the output of units of each fuel they count by output, per Fuel Category (direct
-    equivalent). Geothermal units, whose fuel is waste heat, are left out."""
+def primary(in_regions: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Raw primary energy per Fuel Category (rows) and scenario (columns), in TWh, of the part of
+    each unit's output that is reported (reported_output), with heat in any kind of area:
+
+    - 'input': the fuel input of units whose fuel the 'fuels' rules count by input,
+    - 'input_by_use': the same with heat in district heating only, which has variables by use,
+    - 'output': the output of units whose fuel they count by output (direct equivalent).
+
+    Geothermal units, whose fuel is waste heat, are left out."""
     fuels = load_rules()["fuels"]
-    by_input = fuels.loc[fuels["primary"].isin(["", "input"]), "fuel"]
-    rows = in_regions[(in_regions["quantity"] == "input") & in_regions["fuel"].isin(by_input)]
-    assert set(rows["value_unit"]) <= {"TWh"}
-    rows = rows.merge(reported_share(in_regions), on=unit_keys, how="left").fillna({"share": 0.0})
+    by_input = fuels.loc[fuels["primary"].isin(["", "input"]), ["fuel", "category"]]
+    inputs = in_regions[in_regions["quantity"] == "input"].merge(by_input, on="fuel")
+    assert set(inputs["value_unit"]) <= {"TWh"}
 
-    output = reported_output(in_regions)
+    def per_category(rows: pd.DataFrame, values: pd.Series) -> pd.DataFrame:
+        return values.groupby([rows["category"], rows["scenario"]]).sum().unstack("scenario").reindex(
+            columns=scenarios, fill_value=0.0).fillna(0.0)
+
+    def counted(all_heat: bool) -> pd.DataFrame:
+        rows = inputs.merge(reported_share(in_regions, all_heat), on=unit_keys, how="left").fillna({"share": 0.0})
+        return per_category(rows, rows["value"] * rows["share"])
+
+    output = reported_output(in_regions, all_heat=True)
     output = output[output["reported"]].merge(fuels[fuels["primary"] == "output"], on="fuel")
-    by_category = output.groupby(["category", "scenario"])["value"].sum()
-
-    def per_scenario(values: pd.Series) -> pd.Series:
-        return values.groupby("scenario").sum().reindex(scenarios, fill_value=0.0)
-
-    return {"input": per_scenario((rows["value"] * rows["share"]).groupby(rows["scenario"]).sum())} | {
-        category: per_scenario(by_category[category]) for category in by_category.index.unique("category")}
+    return {"input": counted(True), "input_by_use": counted(False), "output": per_category(output, output["value"])}
 
 
 def total(data: pd.DataFrame, variable: str) -> pd.Series:
@@ -383,33 +389,44 @@ def test_carbon_totals_equal_raw_results(converted: tuple[pd.DataFrame, pd.DataF
 
 
 def test_primary_energy_equals_raw_results(converted: tuple[pd.DataFrame, pd.DataFrame],
-                                           primary: dict[str, pd.Series], electricity: dict[str, pd.Series],
+                                           primary: dict[str, pd.DataFrame], electricity: dict[str, pd.Series],
                                            hydrogen: dict[str, pd.Series]) -> None:
     """Primary Energy by Source and purpose adds up to the fuel input of the reported part of
-    units' output; nuclear and the renewables count what they make. Net imports of electricity
-    and hydrogen, which cancel out between regions but for import units and trade with countries
-    without an IAMC Region, are Secondary Energy Trade. Totals that would count use Balmorel
-    doesn't cover are not reported."""
+    units' output; nuclear and the renewables count what they make. Heat units outside district
+    heating count towards the totals per Source only. Net imports of electricity and hydrogen,
+    which cancel out between regions but for import units and trade with countries without an
+    IAMC Region, are Secondary Energy Trade. Primary Energy sums all of it, each Source once."""
     data, _ = converted
-    by_input = sum(total(data, f"Primary Energy|{source}|{purpose}")
-                   for source in ("Coal", "Gas", "Oil", "Biomass")
-                   for purpose in ("Electricity", "Heat", "Hydrogen", "Gases"))
-    by_input += total(data, "Primary Energy|Other")
-    pd.testing.assert_series_equal(by_input, primary["input"] * twh_to_ej, check_names=False,
-                                   check_index_type=False, rtol=1e-9)
-    assert {"Nuclear", "Solar", "Wind", "Hydro"} <= set(primary)
-    for category in set(primary) - {"input"}:
-        pd.testing.assert_series_equal(total(data, f"Primary Energy|{category}"), primary[category] * twh_to_ej,
-                                       check_names=False, check_index_type=False, rtol=1e-9)
+    by_input = ["Coal", "Gas", "Oil", "Biomass"]
+    by_use = sum(total(data, f"Primary Energy|{source}|{purpose}")
+                 for source in by_input for purpose in ("Electricity", "Heat", "Hydrogen", "Gases"))
+    expected = primary["input_by_use"].reindex(by_input, fill_value=0.0).sum()
+    pd.testing.assert_series_equal(by_use, expected * twh_to_ej, check_names=False, check_index_type=False,
+                                   rtol=1e-9)
+    assert (primary["input"].sum() > primary["input_by_use"].sum()).any()
+
+    counted = primary["input"].add(primary["output"], fill_value=0.0)
+    assert {"Nuclear", "Solar", "Wind", "Hydro", "Biomass"} <= set(counted.index)
+    for category in set(counted.index) - {"Geothermal"}:
+        pd.testing.assert_series_equal(total(data, f"Primary Energy|{category}"), counted.loc[category] * twh_to_ej,
+                                       check_names=False, check_index_type=False, rtol=1e-9, atol=1e-12)
 
     net_imports = -electricity["net_exports"].groupby(level="scenario").sum().reindex(scenarios, fill_value=0.0)
     net_imports -= hydrogen["net_exports"]
     pd.testing.assert_series_equal(total(data, "Primary Energy|Secondary Energy Trade"), net_imports * twh_to_ej,
                                    check_names=False, check_index_type=False, rtol=1e-9, atol=1e-12)
 
-    beyond = {"Primary Energy", "Primary Energy|Coal", "Primary Energy|Gas", "Primary Energy|Oil",
-              "Primary Energy|Biomass", "Primary Energy|Fossil"}
-    assert not beyond & set(data["Variable"])
+    def sum_of(sources: list[str]) -> pd.Series:
+        return sum(total(data, f"Primary Energy|{source}") for source in sources)
+
+    renewables = ["Geothermal", "Hydro", "Ocean", "Solar", "Wind"]
+    sources = by_input + renewables + ["Nuclear", "Other", "Secondary Energy Trade"]
+    for variable, expected in (("Primary Energy", sum_of(sources)), ("Primary Energy|Fossil", sum_of(by_input[:3])),
+                               ("Primary Energy|Non-Biomass Renewables", sum_of(renewables)),
+                               ("Primary Energy|Biomass|Modern", sum_of(["Biomass"]))):
+        pd.testing.assert_series_equal(total(data, variable), expected, check_names=False, check_index_type=False,
+                                       rtol=1e-9, atol=1e-12)
+    assert (total(data, "Primary Energy") > 0).all()
 
 
 def test_prices_equal_raw_results(results: MainResults, raw: pd.DataFrame) -> None:

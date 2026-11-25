@@ -28,7 +28,7 @@ rule_tables = {
     "fuels": {"columns": ["fuel", "category", "primary"], "optional": ["primary"], "key": ["fuel"]},
     "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments", "primary"],
                 "optional": ["primary"], "key": None},
-    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "note"], "optional": ["note"],
+    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "total", "note"], "optional": ["total", "note"],
               "key": ["quantity", "commodity", "area_kind"]},
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
@@ -195,6 +195,16 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             f"A stem may hold '{source_placeholder}' once, as a whole segment after the first:\n"
             f"{tables['stems'][misplaced].to_string()}"
         )
+    below_total = [
+        stem_top(stem).startswith(f"{total}|") or (stem_top(stem) == total and source_placeholder in stem)
+        for stem, total in tables["stems"][["stem", "total"]].itertuples(index=False)
+    ]
+    misplaced = (tables["stems"]["total"] != "") & ~pd.Series(below_total, index=tables["stems"].index, dtype=bool)
+    if misplaced.any():
+        raise Exception(
+            f"A stem's total must be above it, or above or at the part before '{source_placeholder}':\n"
+            f"{tables['stems'][misplaced].to_string()}"
+        )
     for pattern in tables["areas"]["pattern"]:
         try:
             re.compile(pattern)
@@ -357,6 +367,18 @@ def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame, column: str 
     return segments
 
 
+def stem_top(stem: str) -> str:
+    """The part of a stem before the Source placeholder, or the whole stem if it has none.
+
+    Args:
+        stem (str): The stem, e.g. 'Primary Energy|{source}|Electricity'.
+
+    Returns:
+        str: E.g. 'Primary Energy'.
+    """
+    return stem.split(f"|{source_placeholder}")[0]
+
+
 def fill_source(stem: str, source: str, names: set[str]) -> str:
     """Fill the Source into a stem that has the '{source}' placeholder.
 
@@ -374,7 +396,7 @@ def fill_source(stem: str, source: str, names: set[str]) -> str:
     filled = stem.replace(source_placeholder, source)
     if filled in names:
         return filled
-    cut_back = f"{stem.split(f'|{source_placeholder}')[0]}|{source}"
+    cut_back = f"{stem_top(stem)}|{source}"
     if cut_back in names and not any(name.startswith(f"{cut_back}|") for name in names):
         return cut_back
     return ""
@@ -468,6 +490,11 @@ def check_rules(definitions: str | Path | None = None,
     for stem in stems:
         if stem not in names and stem not in templated:
             problems.append(("stems", stem, "stem is not an IAMC Variable"))
+    totals = tables["stems"].loc[tables["stems"]["total"] != "", ["stem", "total"]].drop_duplicates()
+    for total in totals["total"].unique():
+        if total not in names:
+            problems.append(("stems", total, "total is not an IAMC Variable"))
+    with_total = set(totals["stem"])
 
     # Sources: the Fuel Categories of fuels that count as Primary Energy, and the first
     # segments the Mapping Rules give literally
@@ -478,11 +505,14 @@ def check_rules(definitions: str | Path | None = None,
         if template not in (not_reported, import_unit, optiflow_unit) and "{category}" not in first:
             sources.add(first)
     for stem in templated:
-        top = stem.split(f"|{source_placeholder}")[0]
+        top = stem_top(stem)
         for source in sorted(sources):
             if fill_source(stem, source, names):
                 continue
-            if f"{top}|{source}" in names:
+            if f"{top}|{source}" in names and stem in with_total:
+                problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', which counts towards "
+                                                f"'{top}|{source}' and the totals above it only"))
+            elif f"{top}|{source}" in names:
                 problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', which is not reported"))
             elif not fill_source(stem, "Other", names):
                 problems.append(("stems", stem, f"has no IAMC Variable for Source '{source}', nor for Other"))

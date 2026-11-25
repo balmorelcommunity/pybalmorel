@@ -75,7 +75,9 @@ primary_names = [
     "Primary Energy|Fossil|Electricity|w/o CCS", "Primary Energy|Fossil|Hydrogen", "Primary Energy|Biomass",
     "Primary Energy|Biomass|Electricity", "Primary Energy|Biomass|Heat", "Primary Energy|Wind",
     "Primary Energy|Nuclear", "Primary Energy|Geothermal", "Primary Energy|Non-Biomass Renewables",
-    "Primary Energy|Other", "Primary Energy|Secondary Energy Trade",
+    "Primary Energy|Other", "Primary Energy|Secondary Energy Trade", "Primary Energy|Gas|w/ CCS",
+    "Primary Energy|Gas|w/o CCS", "Primary Energy|Fossil|w/ CCS", "Primary Energy|Fossil|w/o CCS",
+    "Primary Energy|Biomass|w/o CCS", "Primary Energy|Biomass|Modern", "Primary Energy|Biomass|Modern|w/o CCS",
 ]
 twh = 3.6e-3
 
@@ -1083,7 +1085,9 @@ def test_primary_energy(primary_long: pd.DataFrame, primary_definitions: Path) -
     """Primary Energy is units' fuel input, split over what they make by output; nuclear, wind
     and geothermal count what they make (direct equivalent); secondary carriers and waste heat
     count nothing. Fossil and Non-Biomass Renewables are copied from their Sources, and net
-    imports of electricity and hydrogen are Secondary Energy Trade."""
+    imports of electricity and hydrogen are Secondary Energy Trade. Primary Energy and its
+    totals per Source sum all of it once, with what has no variable by use: the gas boiler's
+    heat, as there is no 'Primary Energy|Gas|Heat', and the individual boiler's."""
     data, notes = convert(primary_long, "Balmorel", definitions=primary_definitions)
 
     expected = {
@@ -1098,20 +1102,28 @@ def test_primary_energy(primary_long: pd.DataFrame, primary_definitions: Path) -
         "Primary Energy|Gas|Hydrogen": 5, "Primary Energy|Fossil|Hydrogen": 5,
         # Net exports of 4 TWh of electricity, and 3 of hydrogen brought in by the import unit
         "Primary Energy|Secondary Energy Trade": -1,
+        # Totals per Source: the gas boiler's 3.3 TWh and the individual boiler's 2.2 count there only
+        "Primary Energy|Gas": 32 + 5 + 3.3, "Primary Energy|Gas|w/ CCS": 12, "Primary Energy|Gas|w/o CCS": 20 + 5 + 3.3,
+        "Primary Energy|Fossil": 40.3, "Primary Energy|Fossil|w/ CCS": 12, "Primary Energy|Fossil|w/o CCS": 28.3,
+        "Primary Energy|Biomass": 10 + 2.2, "Primary Energy|Biomass|w/o CCS": 12.2,
+        "Primary Energy|Biomass|Modern": 12.2, "Primary Energy|Biomass|Modern|w/o CCS": 12.2,
+        # Each Source once: Fossil and Non-Biomass Renewables don't count again
+        "Primary Energy": 40.3 + 12.2 + 18 + 8 + 2 + 1 - 1,
     }
     for variable, twh_value in expected.items():
         assert value(data, variable, 2030) == pytest.approx(twh_value * twh), variable
     assert value(data, "Primary Energy|Secondary Energy Trade", 2030, "Germany") == pytest.approx(4 * twh)
-    # Totals that would count use Balmorel doesn't cover are not reported
-    for variable in ("Primary Energy", "Primary Energy|Gas", "Primary Energy|Biomass", "Primary Energy|Fossil"):
-        assert is_empty(data, variable, 2030), variable
+    assert value(data, "Primary Energy", 2030, "Germany") == pytest.approx(4 * twh)
 
     text = " ".join(notes["Note"])
-    assert ("Not reported, as the Definitions Snapshot has no 'Primary Energy|Gas|Heat', and 'Primary Energy|Gas' "
-            "would count use of Gas that Balmorel doesn't cover: primary energy of BOILERS/NATGAS, 2030: 3.3 TWh "
-            "in Denmark.") in text
-    assert ("Not reported, as the 'stems' rules have no row for it: primary energy of HEAT in individual areas, "
-            "2030: 2.2 TWh in Denmark. Fuels: WOODCHIPS.") in text
+    assert ("Counted only towards 'Primary Energy|Gas' and the totals above it, as the Definitions Snapshot has no "
+            "'Primary Energy|Gas|Heat': primary energy of BOILERS/NATGAS, 2030: 3.3 TWh in Denmark.") in text
+    assert "the 'stems' rules have no row for it: primary energy" not in text
+    total = notes.loc[notes["Variable"] == "Primary Energy", "Note"]
+    assert total.str.startswith("Counts only primary energy of ELECTRICITY, HEAT in district heating, individual and "
+                                "industry areas, HYDROGEN, BIOMETHANE; and net imports of ELECTRICITY, HYDROGEN").any()
+    assert total.str.contains("heat units of Balmorel's individual areas").any()
+    assert not notes.loc[notes["Variable"] != "Primary Energy", "Note"].str.contains("individual areas use").any()
     assert ("Instead, the 'primary' rules count units of NUCLEAR, WIND and units GNR_GEO_HEAT (WASTEHEAT) by what "
             "they make (direct equivalent); and units of ELECTRIC, IMPORT_H2, WASTEHEAT (other units) not at all") in text
     assert "(ELECTRICITY and HEAT)" in text
@@ -1160,38 +1172,65 @@ def test_invalid_primary_rules_are_refused() -> None:
                               "stem": [stem]})
         with pytest.raises(Exception, match="once, as a whole segment after the first"):
             load_rules({"stems": stems})
+    for stem, total in (("Primary Energy|{source}|Electricity", "Primary Energy|Gas"),
+                        ("Primary Energy|Secondary Energy Trade", "Primary Energy|Secondary Energy Trade"),
+                        ("Primary Energy|Secondary Energy Trade", "Secondary Energy")):
+        stems = pd.DataFrame({"quantity": ["primary"], "commodity": ["ELECTRICITY"], "area_kind": [""],
+                              "stem": [stem], "total": [total]})
+        with pytest.raises(Exception, match="A stem's total must be above it"):
+            load_rules({"stems": stems})
 
 
 def test_check_rules_lists_missing_sources(primary_definitions: Path) -> None:
     """For a stem with the Source placeholder, check_rules lists the Sources the snapshot has no
-    variable for: whether their use isn't reported, or goes to Other."""
+    variable for: whether their use counts towards the totals only, isn't reported, or goes to
+    Other."""
     problems = check_rules(primary_definitions)
     heat = problems[(problems["table"] == "stems") & (problems["value"] == "Primary Energy|{source}|Heat")]
-    assert "has no IAMC Variable for Source 'Gas', which is not reported" in set(heat["problem"])
+    assert ("has no IAMC Variable for Source 'Gas', which counts towards 'Primary Energy|Gas' and the totals above it "
+            "only") in set(heat["problem"])
     assert "has no IAMC Variable for Source 'Solar', reported under Other" in set(heat["problem"])
     # Sources that count no primary energy are not listed
     assert not heat["problem"].str.contains("'Electricity'|'Hydrogen'").any()
 
+    # Without a total, use the Source's variable would count beyond Balmorel's is not reported
+    stems = load_rules()["stems"]
+    problems = check_rules(primary_definitions, {"stems": stems.assign(total="")})
+    heat = problems[(problems["table"] == "stems") & (problems["value"] == "Primary Energy|{source}|Heat")]
+    assert "has no IAMC Variable for Source 'Gas', which is not reported" in set(heat["problem"])
+
+
+def test_check_rules_lists_missing_totals(definitions: Path) -> None:
+    """check_rules lists a stem's total that the snapshot doesn't have."""
+    problems = check_rules(definitions)
+    assert "total is not an IAMC Variable" in set(problems.loc[problems["value"] == "Primary Energy", "problem"])
+
 
 def test_prices_weighted_by_demand(long: pd.DataFrame, price_definitions: Path) -> None:
-    """A country's price is its regions' mean weighted by demand, or their plain mean where none
-    has demand, in the IAMC unit's currency. Years without prices stay empty."""
+    """A country's price is its regions' mean weighted by demand, in the IAMC unit's currency. A
+    country without demand has no price, as it would be an artifact of the LP. Years without
+    prices stay empty."""
     prices = pd.DataFrame([
-        price_row("ELECTRICITY", 50, 30), price_row("ELECTRICITY", 80, 10),
+        price_row("ELECTRICITY", 50, 30), price_row("ELECTRICITY", 80, 10), price_row("ELECTRICITY", 900, 0),
         price_row("HYDROGEN", 40, 0), price_row("HYDROGEN", 60, 0),
     ])
     data, notes = convert(pd.concat((long, prices)), "Balmorel", definitions=price_definitions,
                           currency={"USD_2010": 2.0})
 
     assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx((50 * 30 + 80 * 10) / 40 * 2 / 3.6)
-    assert value(data, "Price|Secondary Energy|Hydrogen", 2030) == pytest.approx(50 * 2 / 3.6)
+    assert is_empty(data, "Price|Secondary Energy|Hydrogen", 2030)
     assert is_empty(data, "Price|Secondary Energy|Electricity", 2050)
     electricity = notes.loc[notes["Variable"] == "Price|Secondary Energy|Electricity", "Note"]
     assert electricity.str.contains("weighted by their annual electricity demand").any()
+    hydrogen = notes.loc[notes["Variable"] == "Price|Secondary Energy|Hydrogen", "Note"]
+    assert hydrogen.str.startswith("Not reported for Denmark in 2030: the results give no demand for it there").any()
+    # The price of a region without demand is not warned about either
+    assert not notes["Note"].str.contains("Average prices above").any()
 
 
 def test_heat_price_in_district_heating(long: pd.DataFrame, price_definitions: Path) -> None:
-    """Heat prices count in district heating areas only; those of other areas are noted."""
+    """Heat prices count in district heating areas only; those of other areas are left out
+    without a note."""
     prices = pd.DataFrame([
         price_row("HEAT", 30, 10, "DENMARK_A"), price_row("HEAT", 60, 20, "DENMARK_B"),
         price_row("HEAT", 100, 50, "DK_IDVU-SPACEHEAT"),
@@ -1200,13 +1239,11 @@ def test_heat_price_in_district_heating(long: pd.DataFrame, price_definitions: P
                           currency={"USD_2010": 1.0})
 
     assert value(data, "Price|Secondary Energy|Heat", 2030) == pytest.approx(50 / 3.6)
-    assert notes["Note"].str.contains("Not reported, as the 'stems' rules have no row for it: price of HEAT in "
-                                      "individual areas in Denmark.", regex=False).any()
+    assert not notes["Note"].str.contains("price of HEAT", regex=False).any()
 
 
-def test_penalty_prices_noted(long: pd.DataFrame, price_definitions: Path) -> None:
-    """Prices beyond the bound that enter a country's price are noted but still reported; those
-    of areas without demand, left out of the weighted mean, are not noted."""
+def test_high_prices_noted(long: pd.DataFrame, price_definitions: Path) -> None:
+    """Average prices beyond the bound in regions with demand are noted but still reported."""
     prices = pd.DataFrame([
         price_row("HEAT", 30, 10, "DENMARK_A"), price_row("HEAT", 2e7, 0, "DENMARK_B"),
         price_row("ELECTRICITY", 50, 30), price_row("ELECTRICITY", -2e4, 1e-3),
@@ -1216,20 +1253,27 @@ def test_penalty_prices_noted(long: pd.DataFrame, price_definitions: Path) -> No
 
     assert value(data, "Price|Secondary Energy|Heat", 2030) == pytest.approx(30 / 3.6)
     assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx((50 * 30 - 2e4 * 1e-3) / 30.001 / 3.6)
-    penalty = notes.loc[notes["Note"].str.contains("more like the penalty on an unmet balance"), ["Variable", "Note"]]
-    assert list(penalty["Variable"]) == ["Price|Secondary Energy|Electricity"]
-    assert penalty["Note"].iloc[0].startswith("Prices beyond ±10000 money/MWh")
-    assert "the price of Denmark in 2030" in penalty["Note"].iloc[0]
+    high = notes.loc[notes["Note"].str.contains("may be the penalty on an unmet balance"), ["Variable", "Note"]]
+    assert list(high["Variable"]) == ["Price|Secondary Energy|Electricity"]
+    assert high["Note"].iloc[0].startswith("Average prices above 500 EUR_2016/MWh in magnitude")
+    assert "the price of Denmark in 2030" in high["Note"].iloc[0]
 
 
 def test_prices_need_currency(long: pd.DataFrame, price_definitions: Path) -> None:
-    """Prices are only reported in currencies `currency` values Balmorel's money in."""
+    """Prices are only reported in currencies `currency` values Balmorel's money in; Balmorel's
+    own, EUR_2016, needs none."""
     long = pd.concat((long, pd.DataFrame([price_row("ELECTRICITY", 50, 30)])))
-    for currency, given in ((None, "no currency was given"), ({"EUR_2020": 1.0}, "currency gives only EUR_2020")):
+    for currency in (None, {"EUR_2020": 1.0}):
         data, notes = convert(long, "Balmorel", definitions=price_definitions, currency=currency)
         assert is_empty(data, "Price|Secondary Energy|Electricity", 2030)
-        assert notes["Note"].str.contains(f"Not reported, as {given}: Price|Secondary Energy|Electricity, in "
-                                          "USD_2010/GJ.", regex=False).any()
+        assert notes["Note"].str.contains("Not reported, as currency gives no worth in USD_2010: Price|Secondary "
+                                          "Energy|Electricity. Pass currency=", regex=False).any()
+
+    variables = pd.read_csv(price_definitions / "variables.csv")
+    variables["unit"] = variables["unit"].str.replace("USD_2010", "EUR_2016")
+    variables.to_csv(price_definitions / "variables.csv", index=False)
+    data, notes = convert(long, "Balmorel", definitions=price_definitions)
+    assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx(50 / 3.6)
 
 
 def test_money_factor() -> None:
