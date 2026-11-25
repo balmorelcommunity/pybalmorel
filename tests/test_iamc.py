@@ -447,6 +447,62 @@ def primary_long() -> pd.DataFrame:
     ]
     return pd.DataFrame(rows)
 
+@pytest.fixture
+def final_definitions(total_definitions: Path) -> Path:
+    """The Definitions Snapshot with Final Energy and its totals, and Final Energy by carrier, also
+    under Industry and Residential and Commercial. It has no
+    'Final Energy|Residential and Commercial|Solar', nor Liquids."""
+    variables = pd.read_csv(total_definitions / "variables.csv")
+    final = pd.DataFrame({"variable": [
+        "Final Energy|Gases", "Final Energy|Gases|Gas", "Final Energy|Gases|Biomass", "Final Energy|Gases|Fossil",
+        "Final Energy|Solids", "Final Energy|Solids|Biomass", "Final Energy|Solar", "Final Energy|Industry",
+        "Final Energy|Industry|Gases", "Final Energy|Industry|Gases|Gas", "Final Energy|Industry|Gases|Biomass",
+        "Final Energy|Industry|Gases|Fossil", "Final Energy|Residential and Commercial",
+        "Final Energy|Residential and Commercial|Solids", "Final Energy|Residential and Commercial|Solids|Biomass",
+        "Final Energy|Residential and Commercial|Other",
+    ], "unit": "EJ/yr"})
+    pd.concat((variables, final)).to_csv(total_definitions / "variables.csv", index=False)
+    return total_definitions
+
+
+@pytest.fixture
+def on_site_long() -> pd.DataFrame:
+    """Danish heat units in 2030 that burn fuel where their heat isn't reported, with their fuel
+    input (TWh). Heat and electricity balance:
+
+    - In an individual area, a wood chips boiler makes 2 TWh of heat from 2.5, and solar heating
+      1 from 1.
+    - In an industry area, a gas boiler makes 4 TWh of heat from 5 and sends 2 into district
+      heating; in another, a heat pump makes 4 from 1 of electricity and sends 1 into district
+      heating. The heat units' electricity demand (ENDOGENOUS_ELECT2HEAT) is the heat pump's.
+    - In a third industry area, a biogas CHP unit makes 1 TWh of electricity and 3 of heat from 5.
+    - District heating's gas boiler makes 3 TWh of heat from 3.5; with the 3 it gets, that meets
+      its demand of 6.
+    """
+    individual, gas_area, pump_area = "DK_IDVU-SPACEHEAT", "DK_IND-MT-DH", "DK_IND-LT-DH"
+    rows = unit_rows("S1", 2030, "DENMARK", "IDVU_BO_WOODCHIPS", "BOILERS", "WOODCHIPS", 1, 2, "HEAT", individual)
+    rows += unit_rows("S1", 2030, "DENMARK", "IDVU_SH", "SOLARHEATING", "SUN", 1, 1, "HEAT", individual)
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_BO_NGAS", "BOILERS", "NATGAS", 1, 4, "HEAT", gas_area)
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_HP", "HEATPUMP", "ELECTRIC", 1, 4, "HEAT", pump_area)
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_CHP_BIOGAS", "CHP-BACK-PRESSURE", "BIOGAS", 1, 1,
+                      area="DK_IND-HT-NODH")
+    rows += unit_rows("S1", 2030, "DENMARK", "IND_CHP_BIOGAS", "CHP-BACK-PRESSURE", "BIOGAS", None, 3, "HEAT",
+                      "DK_IND-HT-NODH")
+    rows += unit_rows("S1", 2030, "DENMARK", "GNR_BO_NGAS", "BOILERS", "NATGAS", 1, 3, "HEAT")
+    rows += [
+        input_row("IDVU_BO_WOODCHIPS", "BOILERS", "WOODCHIPS", 2.5, area=individual),
+        input_row("IDVU_SH", "SOLARHEATING", "SUN", 1, area=individual),
+        input_row("IND_BO_NGAS", "BOILERS", "NATGAS", 5, area=gas_area),
+        input_row("IND_HP", "HEATPUMP", "ELECTRIC", 1, area=pump_area),
+        input_row("IND_CHP_BIOGAS", "CHP-BACK-PRESSURE", "BIOGAS", 5, area="DK_IND-HT-NODH"),
+        input_row("GNR_BO_NGAS", "BOILERS", "NATGAS", 3.5),
+        exchange_row(2030, gas_area, "DENMARK_A", 2),
+        exchange_row(2030, pump_area, "DENMARK_A", 1),
+        demand_row(2030, "DENMARK_A", "EXOGENOUS", 6),
+        demand_row(2030, "", "ENDOGENOUS_ELECT2HEAT", 1, "ELECTRICITY"),
+    ]
+    return pd.DataFrame(rows)
+
 
 def value(data: pd.DataFrame, variable: str, year: int, region: str = "Denmark") -> float:
     """The value of one variable, region and year."""
@@ -972,25 +1028,33 @@ def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows
 @pytest.mark.parametrize("mapping", [False, True])
 def test_heat_buffer(long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame, definitions: Path,
                      mapping: bool) -> None:
-    """The heat OptiFlow gives district heating through the add-on's HeatBuffer (in TWh) is
-    reported by the shipped 'optiflow' rule under Secondary Energy|Heat|Other, with or without a
-    study's Mapping, and counts towards Secondary Energy|Heat. The heat OptiFlow takes from
-    district heating is not netted out of it, and the electricity buffer is not reported."""
+    """The heat and electricity OptiFlow gives district heating and the grid through the add-on's
+    HeatBuffer and ElecBuffer (in TWh) are reported by the shipped 'optiflow' rules under
+    Secondary Energy|Heat|Other and Secondary Energy|Electricity|Other, with or without a study's
+    Mapping, and count towards Secondary Energy|Heat and |Electricity. What OptiFlow takes from
+    them is not netted out."""
     buffer = pd.DataFrame([
         flow_row("Heat_Opti_to_Bal_Conv", "HeatBuffer", "HEATFLOW", 2),
         flow_row("HeatBuffer", "Heat_Bal_to_Opti_Conv", "HEATFLOW", 5),
         flow_row("EL_Opti_to_Bal_Conv", "ElecBuffer", "ELECFLOW", 1),
+        flow_row("ElecBuffer", "EL_Bal_to_Opti_Conv", "ELECFLOW", 4),
     ])
     data, notes = convert(pd.concat((long, flows, buffer)), "Balmorel", definitions=definitions,
                           rules={"optiflow": optiflow_rules} if mapping else None)
+    without, _ = convert(pd.concat((long, flows)), "Balmorel", definitions=definitions,
+                         rules={"optiflow": optiflow_rules} if mapping else None)
     assert value(data, "Secondary Energy|Heat|Other", 2030) == pytest.approx(2 * twh)
     assert value(data, "Secondary Energy|Heat", 2030) == pytest.approx((3 + 2) * twh)
-    assert value(data, "Secondary Energy|Electricity", 2030) == pytest.approx((10 + 5 + 6 + 12 + 1 + 1) * twh)
+    assert value(data, "Secondary Energy|Electricity", 2030) == pytest.approx((10 + 5 + 6 + 12 + 1 + 1 + 1) * twh)
+    assert (value(data, "Secondary Energy|Electricity|Other", 2030)
+            - value(without, "Secondary Energy|Electricity|Other", 2030)) == pytest.approx(1 * twh)
 
     text = " ".join(notes["Note"])
     assert "The heat OptiFlow's processes give to district heating" in text
+    assert "The electricity OptiFlow's processes give to the grid" in text
     shipped_only = ("no OptiFlow Mapping ('optiflow' rules) was given: of OptiFlow's results, only what the rules "
-                    "shipped with pybalmorel cover is reported (Secondary Energy|Heat|Other)")
+                    "shipped with pybalmorel cover is reported (Secondary Energy|Electricity|Other, "
+                    "Secondary Energy|Heat|Other)")
     assert (shipped_only in text) == (not mapping)
 
 
@@ -1264,8 +1328,88 @@ def test_final_energy_total(electricity_long: pd.DataFrame, total_definitions: P
     assert value(data, "Final Energy", 2030, "Germany") == pytest.approx(8 * twh)
     assert "Final Energy|Carbon Management" not in set(data["Variable"])
     total = notes.loc[notes["Variable"] == "Final Energy", "Note"]
-    assert total.str.startswith("Counts only demand of ELECTRICITY, HEAT in district heating areas, HYDROGEN, as "
-                                "Balmorel's results give them. What Balmorel doesn't model").any()
+    assert total.str.startswith("Counts only demand of ELECTRICITY, HEAT in district heating areas, HYDROGEN; and "
+                                "on-site fuel use for HEAT in individual and industry areas, as Balmorel's results "
+                                "give them. What Balmorel doesn't model").any()
+
+
+def test_on_site_fuel_use(on_site_long: pd.DataFrame, final_definitions: Path) -> None:
+    """The fuel heat units in individual and industry areas burn is final energy by carrier, and
+    under Residential and Commercial or Industry, or the sector's Other where it has no such
+    variable. A CHP unit's is split by its output, and the heat sent into district heating takes
+    its share of the fuel and electricity out. District heating's own fuel is not final energy."""
+    data, notes = convert(on_site_long, "Balmorel", definitions=final_definitions)
+
+    expected = {
+        "Final Energy|Solids|Biomass": 2.5, "Final Energy|Residential and Commercial|Solids|Biomass": 2.5,
+        "Final Energy|Residential and Commercial|Solids": 2.5, "Final Energy|Solar": 1,
+        "Final Energy|Residential and Commercial|Other": 1,
+        # The industry gas boiler sends half its heat into district heating
+        "Final Energy|Gases|Gas": 2.5, "Final Energy|Gases|Fossil": 2.5, "Final Energy|Industry|Gases|Gas": 2.5,
+        "Final Energy|Industry|Gases|Fossil": 2.5,
+        # The CHP unit's 5 TWh are split by its output: 3 of 4 is heat
+        "Final Energy|Gases|Biomass": 3.75, "Final Energy|Industry|Gases|Biomass": 3.75,
+        "Final Energy|Gases": 6.25, "Final Energy|Industry|Gases": 6.25,
+        # The heat pump sends a quarter of its heat into district heating
+        "Final Energy|Electricity": 0.75, "Final Energy|Heat": 6, "Secondary Energy|Heat": 6,
+        "Final Energy": 2.5 + 1 + 6.25 + 0.75 + 6,
+    }
+    for variable, twh_value in expected.items():
+        assert value(data, variable, 2030) == pytest.approx(twh_value * twh), variable
+    for sector in ("Industry", "Residential and Commercial"):
+        assert f"Final Energy|{sector}" not in set(data["Variable"])
+
+    text = " ".join(notes["Note"])
+    other = notes[notes["Variable"] == "Final Energy|Residential and Commercial|Other"]
+    assert (other["Note"] == ("Reported under Other, as the Definitions Snapshot has no "
+                              "'Final Energy|Residential and Commercial|Solar'.")).any()
+    for variable in ("Final Energy|Gases", "Final Energy|Industry|Gases", "Final Energy|Solar"):
+        assert notes.loc[notes["Variable"] == variable, "Note"].str.startswith(
+            "Only the fuel that the heat units of Balmorel's individual and industry areas take in").any(), variable
+    assert "no longer count as final energy there" in text
+    assert "on-site fuel use for HEAT in individual and industry areas" in text
+    assert "primary energy and on-site fuel use are per unit" in text
+    assert "on-site fuel use of" not in text
+
+
+def test_on_site_fuel_use_rules_are_checked(final_definitions: Path) -> None:
+    """check_rules lists carriers a stem of on-site fuel use has no variable for, and sector
+    variables that have neither the carrier nor an Other."""
+    problems = check_rules(final_definitions)
+    listed = problems[(problems["table"] == "stems") & (problems["value"] == "Final Energy|{carrier}")]
+    assert "has no IAMC Variable for carrier 'Liquids|Oil'" in set(listed["problem"])
+    assert "has no IAMC Variable for carrier 'Gases|Gas'" not in set(listed["problem"])
+    stems = pd.DataFrame([{"quantity": "final", "commodity": "HEAT", "area_kind": "individual",
+                           "stem": "Final Energy|{carrier}", "total": "Final Energy", "sector": "Moonlight"}])
+    problems = check_rules(final_definitions, {"stems": stems})
+    assert "sector 'Moonlight' gives no IAMC Variable, nor an Other" in set(
+        problems.loc[problems["value"] == "Final Energy|Moonlight|Gases", "problem"])
+
+
+def test_invalid_on_site_fuel_use_rules_are_refused() -> None:
+    """A Mapping Rule with a commodity sets no carrier; only stems of on-site fuel use hold the
+    carrier placeholder, as their last segment, and take a sector; and they can't cover what an
+    'output' stem covers."""
+    mapping = pd.DataFrame({"tech_type": [""], "fuel": ["NATGAS"], "commodity": ["HEAT"], "unit_pattern": [""],
+                            "segments": ["Gas"], "carrier": ["Gases|Gas"]})
+    with pytest.raises(Exception, match="can't set primary or carrier"):
+        load_rules({"mapping": mapping})
+
+    def stem_rule(quantity: str, commodity: str, area_kind: str, stem: str, sector: str = "") -> dict:
+        return {"stems": pd.DataFrame([{"quantity": quantity, "commodity": commodity, "area_kind": area_kind,
+                                        "stem": stem, "sector": sector}])}
+
+    for rule in (stem_rule("demand", "HEAT", "individual", "Final Energy|{carrier}"),
+                 stem_rule("final", "HEAT", "individual", "Final Energy|{carrier}|Heat")):
+        with pytest.raises(Exception, match="may hold"):
+            load_rules(rule)
+    with pytest.raises(Exception, match="can't hold"):
+        load_rules(stem_rule("final", "HEAT", "individual", "Final Energy|{source}"))
+    with pytest.raises(Exception, match="take a sector"):
+        load_rules(stem_rule("emissions", "HEAT", "industry", "Emissions|CO2|Energy|Demand|Industry", "Industry"))
+    for commodity, kind in (("HEAT", "district heating"), ("HEAT", ""), ("ELECTRICITY", "individual")):
+        with pytest.raises(Exception, match="can't cover a commodity and Area Kind"):
+            load_rules(stem_rule("final", commodity, kind, "Final Energy|{carrier}"))
 
 
 def test_carbon_totals(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
@@ -1292,6 +1436,77 @@ def test_carbon_totals(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_
     assert total.str.startswith("Counts only emissions of ELECTRICITY, HEAT in district heating, industry and individual "
                                 "areas, HYDROGEN, as Balmorel's results give them, and what the OptiFlow Mapping "
                                 "('optiflow' rules) reports under it.").any()
+
+
+def test_reported_parent_takes_nothing_from_children(carbon_long: pd.DataFrame, flows: pd.DataFrame,
+                                                     optiflow_rules: pd.DataFrame, total_definitions: Path) -> None:
+    """Where the OptiFlow Mapping reports a variable and variables below it, e.g. all of the
+    ships' fuel under Final Energy|Bunkers and each fuel under Final Energy|Bunkers|<fuel>, those
+    below count towards the variables below the reported one only, so it and the totals above it
+    count every flow once. Carbon Capture|Geological Storage likewise."""
+    variables = pd.read_csv(total_definitions / "variables.csv")
+    pd.concat((variables, pd.DataFrame({
+        "variable": ["Final Energy|Bunkers|Liquids", "Final Energy|Bunkers|Liquids|Biomass"], "unit": "EJ/yr",
+    }))).to_csv(total_definitions / "variables.csv", index=False)
+    columns = ["from_process", "to_process", "flow", "role", "unit", "variable"]
+    rules = pd.concat((optiflow_rules, pd.DataFrame([
+        ["Liquid_Hydrogen|Bio_Oil", "Hydrogen_(FC_)?Eff|Oil_Eff", "", "report", "PJ", "Final Energy|Bunkers"],
+        ["Bio_Oil", "Oil_Eff", "", "report", "PJ", "Final Energy|Bunkers|Liquids"],
+        ["Bio_Oil", "Oil_Eff", "", "report", "PJ", "Final Energy|Bunkers|Liquids|Biomass"],
+        ["CO2_Grid", "CO2_Seq", "", "report", "kt CO2", "Carbon Capture|Geological Storage"],
+        ["CO2_Grid", "CO2_Seq", "CO2_FLOW_BIO", "report", "kt CO2", "Carbon Capture|Geological Storage|Biomass"],
+    ], columns=columns))).fillna("")
+    oil = pd.DataFrame([flow_row("Bio_Oil", "Oil_Eff", "BIOOIL_FLOW", 3)])
+    data, notes = convert(pd.concat((carbon_long, flows, oil)), "Balmorel", definitions=total_definitions,
+                          rules={"optiflow": rules})
+
+    assert value(data, "Final Energy|Bunkers", 2030) == pytest.approx(13 / 1e3)
+    assert value(data, "Final Energy|Bunkers|Hydrogen", 2030) == pytest.approx(10 / 1e3)
+    assert value(data, "Final Energy|Bunkers|Liquids", 2030) == pytest.approx(3 / 1e3)
+    assert value(data, "Final Energy|Bunkers|Liquids|Biomass", 2030) == pytest.approx(3 / 1e3)
+    assert value(data, "Final Energy", 2030) == pytest.approx(5 * twh + 13 / 1e3)
+    assert value(data, "Carbon Capture|Geological Storage", 2030) == pytest.approx(250 / 1e3)
+    assert value(data, "Carbon Capture|Geological Storage|Biomass", 2030) == pytest.approx(150 / 1e3)
+
+    bunkers = notes.loc[notes["Variable"] == "Final Energy|Bunkers", "Note"]
+    assert bunkers.str.startswith("The OptiFlow Mapping reports this IAMC Variable itself, so what it reports below it "
+                                  "(Final Energy|Bunkers|Hydrogen, Final Energy|Bunkers|Liquids").any()
+
+
+def test_reported_primary_energy_counts_towards_aggregates(long: pd.DataFrame, flows: pd.DataFrame,
+                                                           optiflow_rules: pd.DataFrame,
+                                                           primary_definitions: Path) -> None:
+    """What the OptiFlow Mapping reports under Primary Energy counts towards the Source's
+    aggregates too, as Balmorel's primary energy does: biomass for liquid fuels towards
+    Primary Energy|Biomass|Modern, gas for electricity with CCS towards Primary Energy|Fossil and
+    its use and CCS levels."""
+    variables = pd.read_csv(primary_definitions / "variables.csv")
+    pd.concat((variables, pd.DataFrame({"variable": ["Primary Energy|Biomass|Liquids"], "unit": "EJ/yr"}))).to_csv(
+        primary_definitions / "variables.csv", index=False)
+    columns = ["from_process", "to_process", "flow", "role", "unit", "variable"]
+    rules = pd.concat((optiflow_rules, pd.DataFrame([
+        ["Wood_Source", "Pyrolysis", "", "report", "PJ", "Primary Energy|Biomass|Liquids"],
+        ["Gas_Source", "Gas_CCS_Plant", "", "report", "PJ", "Primary Energy|Gas|Electricity|w/ CCS"],
+    ], columns=columns))).fillna("")
+    reported = pd.DataFrame([flow_row("Wood_Source", "Pyrolysis", "WOOD_FLOW", 4),
+                             flow_row("Gas_Source", "Gas_CCS_Plant", "GAS_FLOW", 2)])
+    data, _ = convert(pd.concat((long, flows, reported)), "Balmorel", definitions=primary_definitions,
+                      rules={"optiflow": rules})
+    without, _ = convert(pd.concat((long, flows)), "Balmorel", definitions=primary_definitions,
+                         rules={"optiflow": optiflow_rules})
+
+    def added(variable: str) -> float:
+        return value(data, variable, 2030) - (0.0 if is_empty(without, variable, 2030) else value(without, variable, 2030))
+
+    for variable in ["Primary Energy|Biomass|Liquids", "Primary Energy|Biomass", "Primary Energy|Biomass|Modern"]:
+        assert added(variable) == pytest.approx(4 / 1e3), variable
+    for variable in ["Primary Energy|Gas|Electricity|w/ CCS", "Primary Energy|Gas|Electricity",
+                     "Primary Energy|Gas|w/ CCS", "Primary Energy|Gas", "Primary Energy|Fossil",
+                     "Primary Energy|Fossil|w/ CCS", "Primary Energy|Fossil|Electricity",
+                     "Primary Energy|Fossil|Electricity|w/ CCS"]:
+        assert added(variable) == pytest.approx(2 / 1e3), variable
+    assert added("Primary Energy") == pytest.approx(6 / 1e3)
+    assert added("Primary Energy|Non-Biomass Renewables") == pytest.approx(0.0)
 
 
 def test_prices_weighted_by_demand(long: pd.DataFrame, price_definitions: Path) -> None:

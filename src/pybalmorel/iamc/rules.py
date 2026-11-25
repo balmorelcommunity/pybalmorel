@@ -25,11 +25,12 @@ definitions_dir = Path(__file__).parent / "definitions"
 # Columns of each rule table, the columns a table may leave out (read as empty), and the key
 # whose rows a caller's rows replace
 rule_tables = {
-    "fuels": {"columns": ["fuel", "category", "primary"], "optional": ["primary"], "key": ["fuel"]},
-    "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments", "primary"],
-                "optional": ["primary"], "key": None},
-    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "total", "note"], "optional": ["total", "note"],
-              "key": ["quantity", "commodity", "area_kind"]},
+    "fuels": {"columns": ["fuel", "category", "primary", "carrier"], "optional": ["primary", "carrier"],
+              "key": ["fuel"]},
+    "mapping": {"columns": ["tech_type", "fuel", "commodity", "unit_pattern", "segments", "primary", "carrier"],
+                "optional": ["primary", "carrier"], "key": None},
+    "stems": {"columns": ["quantity", "commodity", "area_kind", "stem", "total", "sector", "note"],
+              "optional": ["total", "sector", "note"], "key": ["quantity", "commodity", "area_kind"]},
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
@@ -63,6 +64,11 @@ final_choices = ("yes", "no", on_site_final)
 primary_choices = ("input", "output", "no")
 # Placeholder in a stem for the Source: the first segment the Mapping Rules give, e.g. 'Gas'
 source_placeholder = "{source}"
+# Placeholder at the end of a stem of on-site fuel use for the first segment of the fuel's
+# carrier ('carrier' column of the 'fuels' and 'mapping' tables), e.g. 'Gases' of 'Gases|Gas'
+carrier_placeholder = "{carrier}"
+# Quantity of on-site fuel use: fuel input of units whose output isn't reported, as final energy
+final_quantity = "final"
 
 
 #%% ------------------------------- ###
@@ -160,11 +166,11 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
                 f"The '{name}' rules need one of {list(primary_choices)}, or nothing, under primary:\n"
                 f"{tables[name][unclear].to_string()}"
             )
-    per_commodity = (mapping["primary"] != "") & (mapping["commodity"] != "")
+    per_commodity = ((mapping["primary"] != "") | (mapping["carrier"] != "")) & (mapping["commodity"] != "")
     if per_commodity.any():
         raise Exception(
-            "Mapping Rules with a commodity can't set primary, as primary energy is per unit, not per commodity:\n"
-            f"{mapping[per_commodity].to_string()}"
+            "Mapping Rules with a commodity can't set primary or carrier, as primary energy and fuel input are per "
+            f"unit, not per commodity:\n{mapping[per_commodity].to_string()}"
         )
     demand_categories = tables["demand_categories"]
     unclear = ~demand_categories["final"].isin(final_choices)
@@ -185,6 +191,43 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         raise Exception(
             "'demand_categories' rows with a sector need 'yes' under final, as a Final Energy Sector is a part of "
             f"final energy:\n{demand_categories[sector_not_final].to_string()}"
+        )
+    stem_rules = tables["stems"]
+    misplaced = stem_rules["stem"].str.contains(carrier_placeholder, regex=False) & (
+        (stem_rules["quantity"] != final_quantity)
+        | (stem_rules["stem"].str.count(re.escape(carrier_placeholder)) != 1)
+        | ~stem_rules["stem"].str.endswith(f"|{carrier_placeholder}"))
+    if misplaced.any():
+        raise Exception(
+            f"Only stems of quantity '{final_quantity}' may hold '{carrier_placeholder}', once, as their last segment "
+            f"after the first:\n{stem_rules[misplaced].to_string()}"
+        )
+    misplaced = (stem_rules["quantity"] == final_quantity) & stem_rules["stem"].str.contains(source_placeholder,
+                                                                                              regex=False)
+    if misplaced.any():
+        raise Exception(
+            f"Stems of quantity '{final_quantity}' can't hold '{source_placeholder}', as the Mapping Rules give no "
+            f"segments for on-site fuel use:\n{stem_rules[misplaced].to_string()}"
+        )
+    misplaced = (stem_rules["sector"] != "") & (stem_rules["quantity"] != final_quantity)
+    if misplaced.any():
+        raise Exception(
+            f"Only stems of quantity '{final_quantity}' take a sector; the 'demand_categories' rules give demand its "
+            f"Final Energy Sectors:\n{stem_rules[misplaced].to_string()}"
+        )
+    output_rows = stem_rules[stem_rules["quantity"] == "output"]
+    output_kinds = set(zip(output_rows["commodity"], output_rows["area_kind"]))
+    overlapping = [
+        (commodity, kind) in output_kinds or (commodity, "") in output_kinds
+        or (kind == "" and commodity in set(output_rows["commodity"]))
+        for commodity, kind in stem_rules[["commodity", "area_kind"]].itertuples(index=False)
+    ]
+    misplaced = (stem_rules["quantity"] == final_quantity) & pd.Series(overlapping, index=stem_rules.index, dtype=bool)
+    if misplaced.any():
+        raise Exception(
+            f"Stems of quantity '{final_quantity}' can't cover a commodity and Area Kind that an 'output' stem "
+            "covers: the fuel there makes reported output, so it would count twice.\n"
+            f"{stem_rules[misplaced].to_string()}"
         )
     stems = tables["stems"]["stem"]
     misplaced = stems.str.contains(source_placeholder, regex=False) & (
@@ -232,6 +275,42 @@ def sector_variables(stem: str, sector: str) -> list[str]:
     first, _, rest = stem.partition("|")
     levels = sector.split("|")
     return ["|".join([first, *levels[:length], rest]) for length in range(1, len(levels) + 1)]
+
+
+def sector_other(variable: str, sector: str) -> str:
+    """Name the sector's Other that a sector variable (sector_variables) falls back to.
+
+    Args:
+        variable (str): A sector variable, e.g. 'Final Energy|Residential and Commercial|Solar'.
+        sector (str): The Final Energy Sector it was made with, e.g. 'Residential and Commercial'.
+
+    Returns:
+        str: The variable cut back to the sector, with 'Other' below it, e.g.
+            'Final Energy|Residential and Commercial|Other'.
+    """
+    first = variable.split("|")[0]
+    levels = sector.split("|")
+    depth = next(length for length in range(len(levels), 0, -1)
+                 if variable.startswith("|".join([first, *levels[:length]]) + "|"))
+    return "|".join([first, *levels[:depth], "Other"])
+
+
+def fill_carrier(stem: str, carrier: str) -> tuple[str, str]:
+    """Fill a carrier into a stem of on-site fuel use.
+
+    Args:
+        stem (str): The stem, e.g. 'Final Energy|{carrier}'.
+        carrier (str): The carrier, e.g. 'Gases|Gas'.
+
+    Returns:
+        tuple[str, str]: The stem with the carrier's first segment for the placeholder, and the
+            carrier's other segments, to go below it: ('Final Energy|Gases', 'Gas'). A stem
+            without the placeholder is given back with the whole carrier.
+    """
+    if not stem.endswith(f"|{carrier_placeholder}"):
+        return stem, carrier
+    first, _, rest = carrier.partition("|")
+    return stem.replace(carrier_placeholder, first), rest
 
 
 def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
@@ -488,7 +567,7 @@ def check_rules(definitions: str | Path | None = None,
 
     templated = [stem for stem in stems if source_placeholder in stem]
     for stem in stems:
-        if stem not in names and stem not in templated:
+        if stem not in names and stem not in templated and carrier_placeholder not in stem:
             problems.append(("stems", stem, "stem is not an IAMC Variable"))
     totals = tables["stems"].loc[tables["stems"]["total"] != "", ["stem", "total"]].drop_duplicates()
     for total in totals["total"].unique():
@@ -562,6 +641,22 @@ def check_rules(definitions: str | Path | None = None,
             for variable in sector_variables(stem, sector):
                 if variable not in names:
                     problems.append(("demand_categories", variable, f"sector '{sector}' gives no IAMC Variable"))
+
+    # On-site fuel use: every carrier under each of its stems, and under their sectors (or the sector's Other)
+    carriers = sorted((set(tables["fuels"]["carrier"]) | set(tables["mapping"]["carrier"])) - {"", not_reported})
+    final_stems = tables["stems"][tables["stems"]["quantity"] == final_quantity]
+    for stem, sector in final_stems[["stem", "sector"]].drop_duplicates().itertuples(index=False):
+        for carrier in carriers:
+            filled, rest = fill_carrier(stem, carrier)
+            if filled not in names or (rest and f"{filled}|{rest}" not in names):
+                problems.append(("stems", stem, f"has no IAMC Variable for carrier '{carrier}'"))
+                continue
+            for variable in sector_variables(filled, sector) if sector else []:
+                if variable in names and rest and f"{variable}|{rest}" not in names:
+                    problems.append(("stems", variable, f"sector '{sector}' has no IAMC Variable for carrier "
+                                                        f"'{carrier}'"))
+                elif variable not in names and sector_other(variable, sector) not in names:
+                    problems.append(("stems", variable, f"sector '{sector}' gives no IAMC Variable, nor an Other"))
 
     kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
     for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:

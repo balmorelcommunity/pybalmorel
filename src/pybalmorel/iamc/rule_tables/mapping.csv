@@ -21,16 +21,21 @@
 # (fuels.csv): input, output or no. Empty leaves it to the next matching row with one, then to
 # the fuel. Primary energy is per unit, so a row with a commodity can't set it. The GEO row
 # counts geothermal units, whose fuel is waste heat, by what they make.
-tech_type,fuel,commodity,unit_pattern,segments,primary
-,,,,{category}|w/o CCS,
-,,,CCS,{category}|w/ CCS,
-WIND-ON,,,,Wind|Onshore,
-WIND-OFF,,,,Wind|Offshore,
-SOLAR-PV,,,,Solar|PV,
-,WASTEHEAT,,(^|_)GEO(_|$),Geothermal,output
-INTRASEASONAL-ELECT-STORAGE,,,,-,
-INTRASEASONAL-HEAT-STORAGE,,,,-,
-INTERSEASONAL-HEAT-STORAGE,,,,-,
-H2-STORAGE,,,,-,
-,IMPORT_H2,,,import,
-OPTIFLOW,,,,optiflow,
+#
+# carrier (optional): the final energy carrier the units' fuel input counts as where it is
+# final energy, overriding their fuel's carrier (fuels.csv); '-' for none. Empty leaves it to
+# the next matching row with one, then to the fuel. Per unit, like primary, so a row with a
+# commodity can't set it. The GEO row counts geothermal units' waste heat as Geothermal.
+tech_type,fuel,commodity,unit_pattern,segments,primary,carrier
+,,,,{category}|w/o CCS,,
+,,,CCS,{category}|w/ CCS,,
+WIND-ON,,,,Wind|Onshore,,
+WIND-OFF,,,,Wind|Offshore,,
+SOLAR-PV,,,,Solar|PV,,
+,WASTEHEAT,,(^|_)GEO(_|$),Geothermal,output,Geothermal
+INTRASEASONAL-ELECT-STORAGE,,,,-,,
+INTRASEASONAL-HEAT-STORAGE,,,,-,,
+INTERSEASONAL-HEAT-STORAGE,,,,-,,
+H2-STORAGE,,,,-,,
+,IMPORT_H2,,,import,,
+OPTIFLOW,,,,optiflow,,

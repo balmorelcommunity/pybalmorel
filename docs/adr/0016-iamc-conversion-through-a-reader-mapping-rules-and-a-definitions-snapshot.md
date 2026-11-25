@@ -30,8 +30,8 @@ The converter therefore has three layers, each owning one side of a change:
    commodity and area kind. Rows the caller passes take precedence over the
    shipped ones. Quantities that need arithmetic across rows stay in code:
    Heat Exchange netting and tracing, Net Exports, the Commodity Balance,
-   the Output-Share Split, Net CO2 Emissions, On-Site Use, and parent
-   sums.
+   the Output-Share Split, Net CO2 Emissions, On-Site Use and On-Site
+   Fuel Use, and parent sums.
 3. **Definitions Snapshot.** `src/pybalmorel/iamc/definitions/` holds
    `variables.csv` (variable, unit, description, tier), `regions.csv`
    (country names and ISO3 codes) and `SOURCE` (commit hash and date),

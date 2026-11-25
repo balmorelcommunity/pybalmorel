@@ -40,16 +40,33 @@
 # (quantity 'imports', trade with the opposite sign) count as Primary Energy|Secondary Energy
 # Trade.
 #
+# On-site fuel use (quantity 'final') is the fuel input of units with a carrier (fuels.csv,
+# mapping.csv), split over the commodities they make (Output-Share Split). It counts as final
+# energy only where a 'final' row here gives a stem, e.g. for the gas boilers of individual
+# areas, whose heat isn't reported; elsewhere the fuel is turned into energy reported as output,
+# and is left out without a note. So a 'final' row can't cover what an 'output' row covers. Less
+# the share of their heat that Heat Exchange sends to district heating, which is then
+# centralized heat. Its stems may end in {carrier}, filled with the carrier's first segment,
+# the rest going below the stem: carrier 'Gases|Gas' under 'Final Energy|{carrier}' is
+# reported under 'Final Energy|Gases|Gas', and counts towards the aggregates (aggregates.csv)
+# under 'Final Energy|Gases', e.g. Final Energy|Gases|Fossil.
+# sector (optional, for 'final' rows only; demand gets its sectors from demand_categories.csv):
+# the Final Energy Sector the stem's rows also count under: with sector Industry,
+# 'Final Energy|Gases|Gas' is also reported under 'Final Energy|Industry|Gases|Gas'. Where the
+# sector has no such IAMC Variable, the rows go to the sector's Other, e.g. solar heating to
+# 'Final Energy|Residential and Commercial|Other'. Like demand's, the sector copies don't count
+# towards the total again.
+#
 # Prices (quantity 'price') are per region or area: a country's is their mean weighted by the
 # commodity's annual demand there, and a country without demand has none. They are reported
 # under the stem only, in the IAMC unit's currency: what to_iamc's 'currency' values Balmorel's
 # money (EUR_2016) at, else pybalmorel's price-level tables (backcasting/pricelevel.py) for
 # EUR or USD of a year they cover. The carbon price (commodity CO2) is the CO2 tax per tonne that emitting units pay. Prices
 # with no row here are left out without a Conversion Note.
-quantity,commodity,area_kind,stem,total,note
+quantity,commodity,area_kind,stem,total,sector,note
 capacity,ELECTRICITY,,Capacity|Electricity
 output,ELECTRICITY,,Secondary Energy|Electricity
-demand,ELECTRICITY,,Final Energy|Electricity,Final Energy,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses."
+demand,ELECTRICITY,,Final Energy|Electricity,Final Energy,,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses."
 trade,ELECTRICITY,,Trade|Secondary Energy|Electricity [Volume]
 capacity,HEAT,district heating,Capacity|Heat
 output,HEAT,district heating,Secondary Energy|Heat
@@ -57,16 +74,18 @@ demand,HEAT,district heating,Final Energy|Heat,Final Energy
 capacity,HYDROGEN,,Capacity|Hydrogen
 output,HYDROGEN,,Secondary Energy|Hydrogen
 demand,HYDROGEN,,Final Energy|Hydrogen,Final Energy
+final,HEAT,individual,Final Energy|{carrier},Final Energy,Residential and Commercial,"Only the fuel that the heat units of Balmorel's individual and industry areas take in for the heat they keep there, not for heat they send to district heating. The electricity they use is under Final Energy|Electricity. Other fuel use in buildings and industry is not in Balmorel."
+final,HEAT,industry,Final Energy|{carrier},Final Energy,Industry,"Only the fuel that the heat units of Balmorel's individual and industry areas take in for the heat they keep there, not for heat they send to district heating. The electricity they use is under Final Energy|Electricity. Other fuel use in buildings and industry is not in Balmorel."
 trade,HYDROGEN,,Trade|Secondary Energy|Hydrogen [Volume]
 emissions,ELECTRICITY,,Emissions|CO2|Energy|Supply|Electricity,Emissions|CO2
 emissions,HEAT,district heating,Emissions|CO2|Energy|Supply|Heat,Emissions|CO2
 emissions,HYDROGEN,,Emissions|CO2|Energy|Supply|Hydrogen,Emissions|CO2
-emissions,HEAT,industry,Emissions|CO2|Energy|Demand|Industry,Emissions|CO2,"Covers only the heat units of Balmorel's industry areas, for the heat they make. Industry's other fuel use is not in Balmorel."
-emissions,HEAT,individual,Emissions|CO2|Energy|Demand|Residential and Commercial,Emissions|CO2,"Covers only the heat units of Balmorel's individual areas, for the heat they make. Other fuel use in buildings is not in Balmorel."
+emissions,HEAT,industry,Emissions|CO2|Energy|Demand|Industry,Emissions|CO2,,"Covers only the heat units of Balmorel's industry areas, for the heat they make. Industry's other fuel use is not in Balmorel."
+emissions,HEAT,individual,Emissions|CO2|Energy|Demand|Residential and Commercial,Emissions|CO2,,"Covers only the heat units of Balmorel's individual areas, for the heat they make. Other fuel use in buildings is not in Balmorel."
 captured,ELECTRICITY,,Carbon Capture|Energy|Supply|Electricity
 captured,HEAT,district heating,Carbon Capture|Energy|Supply|Heat
 captured,HYDROGEN,,Carbon Capture|Energy|Supply|Hydrogen
-captured,HEAT,industry,Carbon Capture|Energy|Demand|Industry,,Covers only the heat units of Balmorel's industry areas.
+captured,HEAT,industry,Carbon Capture|Energy|Demand|Industry,,,Covers only the heat units of Balmorel's industry areas.
 removal,ELECTRICITY,,Carbon Removal|Geological Storage
 removal,HEAT,,Carbon Removal|Geological Storage
 removal,HYDROGEN,,Carbon Removal|Geological Storage
@@ -76,12 +95,12 @@ stored,HYDROGEN,,Carbon Capture|Geological Storage
 primary,ELECTRICITY,,Primary Energy|{source}|Electricity,Primary Energy
 primary,HEAT,district heating,Primary Energy|{source}|Heat,Primary Energy
 primary,HYDROGEN,,Primary Energy|{source}|Hydrogen,Primary Energy
-primary,BIOMETHANE,,Primary Energy|{source}|Gases,Primary Energy,"Counts the biogas that upgrading turns into biomethane. Units that burn biomethane count none, so it counts once."
-primary,HEAT,individual,Primary Energy|{source},Primary Energy,"The fuel that the heat units of Balmorel's individual areas use counts only towards Primary Energy and its totals per Source, as the common definitions have Primary Energy|<Source>|Heat for centralized heat only. Other fuel use in buildings is not in Balmorel."
-primary,HEAT,industry,Primary Energy|{source},Primary Energy,"The fuel that the heat units of Balmorel's industry areas use counts only towards Primary Energy and its totals per Source, as the common definitions have Primary Energy|<Source>|Heat for centralized heat only. Industry's other fuel use is not in Balmorel."
-imports,ELECTRICITY,,Primary Energy|Secondary Energy Trade,Primary Energy,"Net imports of electricity and hydrogen, from other countries and from outside the model (import units); negative for net exporters. Balmorel trades no other secondary energy carriers."
-imports,HYDROGEN,,Primary Energy|Secondary Energy Trade,Primary Energy,"Net imports of electricity and hydrogen, from other countries and from outside the model (import units); negative for net exporters. Balmorel trades no other secondary energy carriers."
-price,ELECTRICITY,,Price|Secondary Energy|Electricity,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its regions weighted by their annual electricity demand."
-price,HYDROGEN,,Price|Secondary Energy|Hydrogen,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its regions weighted by their annual hydrogen demand."
-price,HEAT,district heating,Price|Secondary Energy|Heat,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its district heating areas weighted by their annual heat demand."
-price,CO2,,Price|Carbon,,"The CO2 tax per tonne that emitting units pay. A scenario that caps emissions instead has no carbon price, as MainResults doesn't hold the cap's shadow price."
+primary,BIOMETHANE,,Primary Energy|{source}|Gases,Primary Energy,,"Counts the biogas that upgrading turns into biomethane. Units that burn biomethane count none, so it counts once."
+primary,HEAT,individual,Primary Energy|{source},Primary Energy,,"The fuel that the heat units of Balmorel's individual areas use counts only towards Primary Energy and its totals per Source, as the common definitions have Primary Energy|<Source>|Heat for centralized heat only. Other fuel use in buildings is not in Balmorel."
+primary,HEAT,industry,Primary Energy|{source},Primary Energy,,"The fuel that the heat units of Balmorel's industry areas use counts only towards Primary Energy and its totals per Source, as the common definitions have Primary Energy|<Source>|Heat for centralized heat only. Industry's other fuel use is not in Balmorel."
+imports,ELECTRICITY,,Primary Energy|Secondary Energy Trade,Primary Energy,,"Net imports of electricity and hydrogen, from other countries and from outside the model (import units); negative for net exporters. Balmorel trades no other secondary energy carriers."
+imports,HYDROGEN,,Primary Energy|Secondary Energy Trade,Primary Energy,,"Net imports of electricity and hydrogen, from other countries and from outside the model (import units); negative for net exporters. Balmorel trades no other secondary energy carriers."
+price,ELECTRICITY,,Price|Secondary Energy|Electricity,,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its regions weighted by their annual electricity demand."
+price,HYDROGEN,,Price|Secondary Energy|Hydrogen,,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its regions weighted by their annual hydrogen demand."
+price,HEAT,district heating,Price|Secondary Energy|Heat,,,"Balmorel's average price: the mean of the hourly marginal prices over the year, not weighted by consumption. A country's is the mean over its district heating areas weighted by their annual heat demand."
+price,CO2,,Price|Carbon,,,"The CO2 tax per tonne that emitting units pay. A scenario that caps emissions instead has no carbon price, as MainResults doesn't hold the cap's shadow price."

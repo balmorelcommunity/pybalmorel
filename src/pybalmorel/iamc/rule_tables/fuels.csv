@@ -9,36 +9,44 @@
 #     from upgraded biogas) and for waste heat, so that nothing counts twice.
 # A Mapping Rule's own primary (mapping.csv) overrides the fuel's, e.g. for geothermal units.
 #
+# carrier (optional): the final energy carrier the fuel is, as the IAMC Variables below
+#   'Final Energy' name it, e.g. 'Gases|Gas' or 'Solar'. Fuel input of units whose output isn't
+#   reported, such as boilers of individual and industry areas, counts as final energy of this
+#   carrier (quantity 'final', stems.csv). Empty or '-' means not counted, for carriers whose
+#   final use other rows report (electricity, heat; hydrogen) and for what isn't final energy
+#   (nuclear, wind, water, waste heat). A Mapping Rule's own carrier overrides the fuel's.
+#   MUNIWASTE counts as Waste, though the common definitions also count waste with biomass.
+#
 # Override rows with to_iamc(..., rules={'fuels': <table with these columns>}). A row passed for a
 # fuel replaces the shipped row, its primary included.
-fuel,category,primary
-BIOGAS,Biomass,
-BIOMETHANE,Biomass,no
-BIOOIL,Biomass,
-COAL,Coal,
-DUMMY,Other,
-ELECTRIC,Electricity,no
-FUELOIL,Oil,
-HEAT,Heat,no
-HEAVYFUELOIL,Oil,
-HYDROGEN,Hydrogen,no
-IMPORT_H2,Hydrogen,no
-LIGHTOIL,Oil,
-LIGNITE,Coal,
-LNG,Gas,
-MUNIWASTE,Biomass,
-NATGAS,Gas,
-NUCLEAR,Nuclear,output
-OTHERGAS,Gas,
-PEAT,Coal,
-RETORTGAS,Gas,
-SHALE,Coal,
-STRAW,Biomass,
-SUN,Solar,output
-WASTEHEAT,Other,no
-WATER,Hydro,output
-WIND,Wind,output
-WOOD,Biomass,
-WOODCHIPS,Biomass,
-WOODPELLETS,Biomass,
-WOODWASTE,Biomass,
+fuel,category,primary,carrier
+BIOGAS,Biomass,,Gases|Biomass
+BIOMETHANE,Biomass,no,Gases|Biomass
+BIOOIL,Biomass,,Liquids|Biomass
+COAL,Coal,,Solids|Coal
+DUMMY,Other,,Other
+ELECTRIC,Electricity,no,
+FUELOIL,Oil,,Liquids|Oil
+HEAT,Heat,no,
+HEAVYFUELOIL,Oil,,Liquids|Oil
+HYDROGEN,Hydrogen,no,
+IMPORT_H2,Hydrogen,no,
+LIGHTOIL,Oil,,Liquids|Oil
+LIGNITE,Coal,,Solids|Coal
+LNG,Gas,,Gases|Gas
+MUNIWASTE,Biomass,,Waste
+NATGAS,Gas,,Gases|Gas
+NUCLEAR,Nuclear,output,
+OTHERGAS,Gas,,Gases|Gas
+PEAT,Coal,,Solids|Coal
+RETORTGAS,Gas,,Gases|Gas
+SHALE,Coal,,Solids|Coal
+STRAW,Biomass,,Solids|Biomass
+SUN,Solar,output,Solar
+WASTEHEAT,Other,no,
+WATER,Hydro,output,
+WIND,Wind,output,
+WOOD,Biomass,,Solids|Biomass
+WOODCHIPS,Biomass,,Solids|Biomass
+WOODPELLETS,Biomass,,Solids|Biomass
+WOODWASTE,Biomass,,Solids|Biomass

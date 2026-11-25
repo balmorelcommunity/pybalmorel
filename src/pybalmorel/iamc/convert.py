@@ -21,9 +21,10 @@ import numpy as np
 import pandas as pd
 
 from .reader import read_mainresults
-from .rules import (default_area_kind, fill_source, import_unit, load_definitions, load_rules, load_template,
-                    match_area_kinds, match_mapping_rules, match_optiflow_rules, not_reported, on_site_final,
-                    optiflow_unit, pool_roles, sector_variables, source_placeholder, stem_top)
+from .rules import (carrier_placeholder, default_area_kind, fill_carrier, fill_source, final_quantity, import_unit,
+                    load_definitions, load_rules, load_template, match_area_kinds, match_mapping_rules,
+                    match_optiflow_rules, not_reported, on_site_final, optiflow_unit, pool_roles, sector_other,
+                    sector_variables, source_placeholder, stem_top)
 from ..backcasting import pricelevel
 
 if TYPE_CHECKING:
@@ -67,13 +68,14 @@ note_columns = ["Scenario", "Region", "Variable", "Note"]
 # Conversion Notes printed at most; to_iamc returns them all
 print_limit = 30
 # Columns only some quantities have, '' for the others
-optional_columns = ["demand_category", "to_area", "to_country", "stated_unit", "from_process", "to_process", "flow"]
+optional_columns = ["demand_category", "to_area", "to_country", "stated_unit", "from_process", "to_process", "flow",
+                    "carrier"]
 # Columns that tell units apart
 unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
 # Quantities of CO2 given per unit but not per commodity
 carbon_quantities = ("emissions", "captured")
 # Quantities per unit but not per commodity, split over the commodities a unit makes
-per_unit_quantities = carbon_quantities + ("primary",)
+per_unit_quantities = carbon_quantities + ("primary", final_quantity)
 # Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
 biogenic_category = "Biomass"
 # Quantities that are means rather than amounts, so Conversion Notes don't sum them
@@ -82,7 +84,8 @@ mean_quantities = ("price",)
 optiflow_quantity = "optiflow"
 # How Conversion Notes name quantities that aren't plain words
 quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
-                   "input": "fuel input", "primary": "primary energy", "imports": "net imports", "tax": "CO2 tax"}
+                   "input": "fuel input", "primary": "primary energy", "imports": "net imports", "tax": "CO2 tax",
+                   final_quantity: "on-site fuel use"}
 # The commodity whose exchange between areas is Heat Exchange; exchange of the others is trade
 heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
@@ -116,9 +119,11 @@ def to_iamc(results: "MainResults",
     between countries, and what import units bring in from outside the model, are reported as
     Trade (net exports). Capacity is that of the commodity a unit makes, so electrolysers' is
     their hydrogen output, as Balmorel states it. The electricity heat units in individual and
-    industry areas use counts as final energy, as their heat isn't centralized heat. Demand
-    categories with a Final Energy Sector are also reported under that sector, e.g. what carbon
-    capture uses under Final Energy|Carbon Management. Emissions are net of the stored part of
+    industry areas use counts as final energy, as their heat isn't centralized heat, and so does
+    the fuel they burn, by carrier (e.g. Final Energy|Gases|Gas) and under Residential and
+    Commercial (individual areas) or Industry; not for the share of their heat that Heat Exchange
+    sends to district heating. Demand categories with a Final Energy Sector are also reported
+    under that sector, e.g. what carbon capture uses under Final Energy|Carbon Management. Emissions are net of the stored part of
     the CO2 captured from biomass, which is also reported as Carbon Removal. Where the results
     give no captured CO2, that of units marked w/ CCS is derived from their fuel input. Without
     OptiFlow, all captured CO2 counts as stored. For scenarios linked to OptiFlow, OptiFlow's
@@ -128,8 +133,8 @@ def to_iamc(results: "MainResults",
     of electricity and hydrogen count as Secondary Energy Trade. Primary Energy and its totals
     per Source (e.g. Primary Energy|Gas) sum all of that, with the fuel of heat units in
     individual and industry areas, which has no variable by use. Final Energy and Emissions|CO2
-    sum the demand and emissions reported below them, with what the OptiFlow Mapping reports
-    there. These totals count only what Balmorel models, as a Conversion Note says, so they can
+    sum the demand, on-site fuel use and emissions reported below them, with what the OptiFlow
+    Mapping reports there. These totals count only what Balmorel models, as a Conversion Note says, so they can
     be lower than a whole-economy model's. The prices of electricity, hydrogen and district heat
     are Balmorel's yearly means of hourly marginal prices, averaged over a country's regions or
     district heating areas weighted by their annual demand; a country without demand has no
@@ -221,6 +226,7 @@ def convert(long: pd.DataFrame,
     long = long[long["quantity"] != "flow"]
     long = derive_capture(long, tables["mapping"], notes)
     long = derive_primary(long, tables, notes)
+    long = derive_final(long, tables)
     shares = pool_shares(flows, tables["optiflow"], notes)
     check_fuel_rules(carried, flows, tables["optiflow"], notes)
     long = split_by_output(long, notes)
@@ -437,7 +443,9 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
     the units that made it: the sending area's units, and those of the individual and industry
     areas that sent heat to it, in proportion to the heat each area had (Output-Share Split).
     Units whose output the Mapping Rules don't report (storage) make no heat for this. Heat
-    transmission between district heating areas stays inside centralized heat.
+    transmission between district heating areas stays inside centralized heat. The fuel input
+    and on-site fuel use of the units for the heat district heating gets from them shrink by
+    its share of what they make, so that neither counts as final energy where they are.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -464,6 +472,8 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
     demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_country="",
                              to_area_kind="")
     supplied = trace_heat(long, into_dh, among, out_of_dh, mapping)
+    long = deduct_sent(long, supplied)
+    supplied = supplied.drop(columns="origin_area")
 
     # Say per scenario how much crossed, and what no unit could be traced to
     sent = out_of_dh.groupby(["iamc_scenario", "year"])["value"].sum()
@@ -477,7 +487,8 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
             "split over the units that made the heat, traced through heat transmission between "
             "individual and industry areas. The output noted as not reported for those areas includes "
             "the heat they sent. Emissions, captured CO2 and primary energy of the units that made it stay "
-            "with their own areas."
+            "with their own areas, but the fuel and electricity they used for it no longer count as final "
+            "energy there."
         )))
     untraced = supplied[supplied["unit_name"] == ""]
     for (scenario, source), rows in untraced.groupby(["iamc_scenario", "fuel"]):
@@ -551,12 +562,13 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
 
     Returns:
         pd.DataFrame: Output rows on the receiving district heating areas, with the units that
-            made the heat. Heat that came from district heating or no unit could be traced to has
-            no unit, and 'district heating' or 'untraced' as fuel.
+            made the heat and the area they are in ('origin_area'). Heat that came from district
+            heating or no unit could be traced to has no unit nor origin area, and 'district
+            heating' or 'untraced' as fuel.
     """
-    columns = list(long.columns)
+    columns = list(long.columns) + ["origin_area"]
     if into_dh.empty:
-        return long.iloc[0:0]
+        return long.iloc[0:0].reindex(columns=columns)
 
     made = long[(long["quantity"] == "output") & (long["commodity"] == heat_commodity)
                 & (long["area_kind"] != default_area_kind)]
@@ -608,12 +620,47 @@ def trace_heat(long: pd.DataFrame, into_dh: pd.DataFrame, among: pd.DataFrame, o
             area=receivers["to_area"], area_kind=default_area_kind, quantity="output", commodity=heat_commodity,
             demand_category="", to_area="", to_country="", to_area_kind="", value=sent[flow, origin],
             unit_name="", tech_type="", fuel=np.where(origin == len(sources), "district heating", "untraced"),
+            origin_area="",
         )
+        rows_out.loc[by_unit, "origin_area"] = unit_rows["area"].to_numpy()
         for column in ("unit_name", "tech_type", "fuel"):
             rows_out.loc[by_unit, column] = unit_rows[column].to_numpy()
         traced.append(rows_out)
 
     return pd.concat(traced, ignore_index=True).reindex(columns=columns, fill_value="")
+
+
+def deduct_sent(long: pd.DataFrame, supplied: pd.DataFrame) -> pd.DataFrame:
+    """Take the heat units send into district heating out of their fuel input and on-site fuel use.
+
+    A unit whose heat Heat Exchange brings into district heating made it for centralized heat,
+    so its fuel input shrinks by that heat's share of all it makes, and its on-site fuel use for
+    heat by that heat's share of the heat it makes. Its emissions, captured CO2 and primary
+    energy stay as they are.
+
+    Args:
+        long (pd.DataFrame): The long table, without exchange rows.
+        supplied (pd.DataFrame): Output rows trace_heat gives, with 'origin_area'.
+
+    Returns:
+        pd.DataFrame: The long table with fuel input and on-site fuel use less what the sent heat took.
+    """
+    keys = ["scenario", "year", "country", "area", "unit_name", "tech_type", "fuel"]
+    traced = supplied[supplied["unit_name"] != ""]
+    if traced.empty:
+        return long
+    sent = traced.assign(area=traced["origin_area"]).groupby(keys)["value"].sum()
+    output = long[(long["quantity"] == "output") & (long["value"] >= noise)]
+    made = output.groupby(keys)["value"].sum()
+    heat = output[output["commodity"] == heat_commodity].groupby(keys)["value"].sum()
+
+    long = long.copy()
+    at = pd.MultiIndex.from_frame(long[keys])
+    for rows, of in ((long["quantity"] == "input", made),
+                     (long["quantity"].eq(final_quantity) & long["commodity"].eq(heat_commodity), heat)):
+        kept = 1 - (sent / of).clip(0.0, 1.0)
+        long.loc[rows, "value"] *= kept.reindex(at[rows.to_numpy()]).fillna(1.0).to_numpy()
+    return long
 
 
 def carve_on_site(long: pd.DataFrame, stems: pd.DataFrame, demand_categories: pd.DataFrame, fuels: pd.DataFrame,
@@ -1059,10 +1106,40 @@ def derive_primary(long: pd.DataFrame, tables: dict[str, pd.DataFrame], notes: l
     return pd.concat((long, primary), ignore_index=True)
 
 
-def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
-    """Split emissions, captured CO2 and primary energy over the commodities each unit makes, by its output.
+def derive_final(long: pd.DataFrame, tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Add the fuel input of each unit with a final energy carrier as on-site fuel use.
 
-    Emissions, captured CO2 and primary energy are per unit but not per commodity. A unit that
+    A unit's carrier is that of the winning Mapping Rule that sets one, else its fuel's ('-' or
+    empty for none). On-site fuel use is per unit, and split_by_output splits it over the
+    commodities the unit makes. It counts as final energy only where a 'final' stem rule
+    covers the commodity and Area Kind, such as heat in individual and industry areas, whose
+    output isn't reported; elsewhere the fuel is turned into reported energy, and the rows are
+    dropped without a Conversion Note.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios, with fuel input.
+        tables (dict[str, pd.DataFrame]): The rule tables.
+
+    Returns:
+        pd.DataFrame: The long table with rows of quantity 'final', which have no commodity and
+            have the carrier, e.g. 'Gases|Gas'.
+    """
+    used = long[(long["quantity"] == "input") & (long["unit_name"] != "") & (long["value"] >= noise)]
+    unit_keys = ["unit_name", "tech_type", "fuel"]
+    units = used[unit_keys].drop_duplicates().reset_index(drop=True).assign(commodity="")
+    by_rule = match_mapping_rules(units, tables["mapping"], column="carrier")
+    by_fuel = units["fuel"].map(tables["fuels"].set_index("fuel")["carrier"]).fillna("")
+    units["carrier"] = by_rule.where(by_rule != "", by_fuel).replace(not_reported, "")
+    units = units[units["carrier"] != ""].drop(columns="commodity")
+    final = used.drop(columns="carrier").merge(units, on=unit_keys)
+    return pd.concat((long, final.assign(quantity=final_quantity)[long.columns]), ignore_index=True)
+
+
+def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
+    """Split emissions, captured CO2, primary energy and on-site fuel use over the commodities each unit makes, by its output.
+
+    Emissions, captured CO2, primary energy and on-site fuel use are per unit but not per
+    commodity. A unit that
     makes several commodities, such as a CHP unit, gets them split by its output of each
     (Output-Share Split). The unit's output is looked up by its fuel, else without it. What
     units with no output have of them is left out.
@@ -1072,7 +1149,8 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table with emissions, captured CO2 and primary energy per commodity.
+        pd.DataFrame: The long table with emissions, captured CO2, primary energy and on-site fuel use
+            per commodity.
     """
     is_per_unit = long["quantity"].isin(per_unit_quantities)
     per_unit = long[is_per_unit].drop(columns="commodity")
@@ -1098,7 +1176,8 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
     for scenario, rows in split[several].groupby("iamc_scenario"):
         commodities = " and ".join(sorted(set(rows["commodity"])))
         notes.append(note(scenario, "", "", (
-            "Emissions, captured CO2 and primary energy are per unit, not per commodity: for units that make "
+            "Emissions, captured CO2, primary energy and on-site fuel use are per unit, not per commodity: for units "
+            "that make "
             f"several commodities ({commodities}), they are split over them in proportion to the unit's output of "
             "each (Output-Share Split)."
         )))
@@ -1334,11 +1413,10 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     'capture' rules report the CO2 OptiFlow captures under their variable, and the stored part
     of it, by its pool's Stored Share, under removal and, negative, under emissions. 'fuel'
     rules report the CO2 of a fossil fuel under emissions. 'report' rules report the flow as it
-    is under their variable. Flows are times the rule's factor. Each sums up to the longest
-    stem of the 'stems' rules its variable starts with, if there is one, and counts towards the
-    broadest total of the 'stems' rules that is its variable or above it (copy_to_aggregates),
-    e.g. 'Final Energy|Bunkers|Hydrogen' towards Final Energy. A rule's note becomes a
-    Conversion Note on each IAMC Variable it reports values under.
+    is under their variable. Flows are times the rule's factor. Each counts towards the IAMC
+    Variables place_reported says, e.g. 'Final Energy|Bunkers|Hydrogen' towards Final Energy,
+    unless the Mapping reports 'Final Energy|Bunkers' too. A rule's note becomes a Conversion
+    Note on each IAMC Variable it reports values under.
 
     Args:
         flows (pd.DataFrame): OptiFlow flows with IAMC Regions.
@@ -1387,20 +1465,66 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     for (scenario, variable, text), _ in noted.groupby(["iamc_scenario", "variable", "note"]):
         notes.append(note(scenario, "", variable, text))
 
-    by_length = sorted(set(stems["stem"]), key=len, reverse=True)
-    stem_of = {
-        variable: next((stem for stem in by_length if variable == stem or variable.startswith(f"{stem}|")), variable)
-        for variable in reported["variable"].unique()
-    }
-    by_breadth = sorted(set(stems["total"]) - {""}, key=len)
-    total_of = {
-        variable: next((total for total in by_breadth if variable == total or variable.startswith(f"{total}|")), "")
-        for variable in reported["variable"].unique()
-    }
-    reported = reported.assign(stem=reported["variable"].map(stem_of), stem_total=reported["variable"].map(total_of),
-                               quantity=optiflow_quantity, template_stem="", source_path="")
-    reported["path"] = [variable[len(stem) + 1:] for variable, stem in zip(reported["variable"], reported["stem"])]
-    return reported.reindex(columns=columns)
+    placed = pd.DataFrame([
+        (scenario, variable, *place_reported(variable, set(variables), stems))
+        for scenario, variables in reported.groupby("iamc_scenario")["variable"].unique().items()
+        for variable in variables
+    ], columns=["iamc_scenario", "variable", "parent", "stem", "path", "stem_total", "template_stem", "source_path"])
+    for (scenario, parent), rows in placed[placed["parent"] != ""].groupby(["iamc_scenario", "parent"]):
+        notes.append(note(scenario, "", parent, (
+            "The OptiFlow Mapping reports this IAMC Variable itself, so what it reports below it "
+            f"({list_names(rows['variable'])}) doesn't add to it, nor to the IAMC Variables above it."
+        )))
+    reported = reported.merge(placed.drop(columns="parent"), on=["iamc_scenario", "variable"])
+    return reported.assign(quantity=optiflow_quantity).reindex(columns=columns)
+
+
+def place_reported(variable: str, reported: set[str], stems: pd.DataFrame) -> tuple[str, str, str, str, str, str]:
+    """Say which IAMC Variables a variable the OptiFlow Mapping reports counts towards.
+
+    Below a variable the Mapping reports itself in the same IAMC Scenario (the nearest one, its
+    parent here), it counts towards the variables below that one only, as that one has it
+    already: e.g. 'Final Energy|Bunkers|Liquids' when 'Final Energy|Bunkers' is reported too.
+    Else it sums up to the longest stem of the 'stems' rules it starts with, or is its own stem,
+    and counts towards the broadest total of the 'stems' rules that is it or above it. Under the
+    part of a stem with the Source placeholder before it (e.g. 'Primary Energy'), it takes that
+    stem, the one with its use where its segments after the Source start with one (e.g.
+    'Primary Energy|{source}|Electricity'), else '<top>|{source}', so that copy_to_aggregates
+    counts it towards the Source's aggregates too, e.g. 'Primary Energy|Biomass|Liquids' towards
+    'Primary Energy|Biomass|Modern'.
+
+    Args:
+        variable (str): The IAMC Variable the Mapping reports, e.g. 'Final Energy|Bunkers|Liquids'.
+        reported (set[str]): Every IAMC Variable the Mapping reports in the IAMC Scenario.
+        stems (pd.DataFrame): The 'stems' rule table.
+
+    Returns:
+        tuple[str, str, str, str, str, str]: The parent ('' for none), stem, path, stem_total,
+            template_stem and source_path, as copy_to_aggregates and sum_to_variables take them.
+    """
+    segments = variable.split("|")
+    above = next((length for length in range(len(segments) - 1, 0, -1) if "|".join(segments[:length]) in reported), 0)
+    if above:
+        stem = "|".join(segments[:above + 1])
+        return "|".join(segments[:above]), stem, variable[len(stem) + 1:], "", "", ""
+
+    totals = sorted(set(stems["total"]) - {""}, key=len)
+    total = next((total for total in totals if variable == total or variable.startswith(f"{total}|")), "")
+    templated = {stem for stem in stems["stem"] if source_placeholder in stem}
+    templated |= {f"{stem_top(stem)}|{source_placeholder}" for stem in templated}
+    for template in sorted(templated, key=len, reverse=True):
+        top = stem_top(template)
+        if not variable.startswith(f"{top}|"):
+            continue
+        source, *after = variable[len(top) + 1:].split("|")
+        use = [segment for segment in template.split(source_placeholder)[1].split("|") if segment]
+        if after[:len(use)] == use:
+            stem = template.replace(source_placeholder, source)
+            return "", stem, variable[len(stem) + 1:], total, template, "|".join([source, *after[len(use):]])
+
+    plain = [stem for stem in set(stems["stem"]) - templated if variable == stem or variable.startswith(f"{stem}|")]
+    stem = max(plain, key=len) if plain else variable
+    return "", stem, variable[len(stem) + 1:], total, "", ""
 
 
 #%% ------------------------------- ###
@@ -1413,7 +1537,9 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
 
     A stem row's note becomes a Conversion Note in every IAMC Scenario with values under its
     stem. A stem with the Source placeholder, e.g. 'Primary Energy|{source}|Electricity', is
-    filled in by attach_segments, which also gives its note.
+    filled in by attach_segments, which also gives its note. The carrier is filled into a stem
+    with the carrier placeholder (match_stems). A stem row's sector is left for attach_sectors,
+    which also gives its note under the sector.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -1422,7 +1548,8 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The rows with a stem, with 'stem' and 'stem_note' columns.
+        pd.DataFrame: The rows with a stem, with 'stem', 'stem_note' (kept for stems with the
+            Source placeholder or a sector), 'stem_total' and 'stem_sector' columns.
     """
     long = match_stems(long, stems, names, notes)
     templated = long["stem"].str.contains(source_placeholder, regex=False)
@@ -1430,13 +1557,16 @@ def attach_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str],
     noted = long["stem"].isin(names) & (long["stem_note"] != "") & (long["value"].abs() >= noise)
     for (scenario, stem, text), _ in long[noted].groupby(["iamc_scenario", "stem", "stem_note"]):
         notes.append(note(scenario, "", stem, text))
-    return long.assign(stem_note=long["stem_note"].where(templated, ""))[kept]
+    return long.assign(stem_note=long["stem_note"].where(templated | (long["stem_sector"] != ""), ""))[kept]
 
 
 def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes: list[dict]) -> pd.DataFrame:
     """Find the stem of each row, and note rows without one and stems the snapshot lacks.
 
-    A stem row for the row's Area Kind beats one for any Area Kind.
+    A stem row for the row's Area Kind beats one for any Area Kind. In a stem ending in the
+    carrier placeholder, the carrier's first segment fills it in, and the rest stays as the
+    row's carrier (fill_carrier). On-site fuel use without a stem is not final energy, so it
+    goes unnoted.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -1445,22 +1575,30 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table with 'stem' ('' for none), 'stem_note' and 'stem_total'
-            columns.
+        pd.DataFrame: The long table with 'stem' ('' for none), 'stem_note', 'stem_total' and
+            'stem_sector' columns.
     """
-    for_kind = stems[stems["area_kind"] != ""].rename(columns={"note": "stem_note", "total": "stem_total"})
+    for_kind = stems[stems["area_kind"] != ""].rename(
+        columns={"note": "stem_note", "total": "stem_total", "sector": "stem_sector"})
     for_any = stems[stems["area_kind"] == ""].drop(columns="area_kind").rename(
-        columns={"stem": "stem_any", "note": "stem_note_any", "total": "stem_total_any"})
+        columns={"stem": "stem_any", "note": "stem_note_any", "total": "stem_total_any", "sector": "stem_sector_any"})
     long = long.merge(for_kind, on=["quantity", "commodity", "area_kind"], how="left")
     long = long.merge(for_any, on=["quantity", "commodity"], how="left")
     chosen = long["stem"].notna()
     long["stem"] = long["stem"].fillna(long.pop("stem_any")).fillna("")
-    long["stem_note"] = long.pop("stem_note").where(chosen, long.pop("stem_note_any")).fillna("")
-    long["stem_total"] = long.pop("stem_total").where(chosen, long.pop("stem_total_any")).fillna("")
+    for column in ("stem_note", "stem_total", "stem_sector"):
+        long[column] = long.pop(column).where(chosen, long.pop(f"{column}_any")).fillna("")
+    carried = long["stem"].str.endswith(f"|{carrier_placeholder}")
+    if carried.any():
+        filled = [fill_carrier(stem, carrier) for stem, carrier in long.loc[carried, ["stem", "carrier"]].itertuples(
+            index=False)]
+        long.loc[carried, "stem"] = [stem for stem, _ in filled]
+        long.loc[carried, "carrier"] = [rest for _, rest in filled]
 
     # Name the Area Kind only where the stems tell kinds apart. Prices without a stem go unnoted:
-    # they say nothing of what is left out of a reported total.
-    unreported = long[(long["stem"] == "") & ~long["quantity"].isin(mean_quantities)]
+    # they say nothing of what is left out of a reported total. Nor does on-site fuel use, which is
+    # final energy only where it has a stem.
+    unreported = long[(long["stem"] == "") & ~long["quantity"].isin(mean_quantities + (final_quantity,))]
     kind_specific = for_kind.set_index(["quantity", "commodity"]).index
     by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific) & (unreported["area_kind"] != "")
     unreported = unreported.assign(where=np.where(by_kind, " in " + unreported["area_kind"] + " areas", ""))
@@ -1485,12 +1623,17 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
 
 def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: set[str],
                    notes: list[dict]) -> pd.DataFrame:
-    """Copy final demand in categories with a Final Energy Sector to the sector's IAMC Variables.
+    """Copy final demand in categories with a Final Energy Sector, and rows of stems with one, to the sector's IAMC Variables.
 
     Each copy takes one of the sector's variables (sector_variables) as its stem, so it counts
-    towards that variable only, while the demand still counts under its own stem, e.g.
+    towards that variable only, while the row still counts under its own stem, e.g.
     'Final Energy|Electricity', and towards the stem's total (e.g. Final Energy) once. A
-    category's note becomes a Conversion Note on each sector variable with values under it.
+    category's note becomes a Conversion Note on each sector variable with values under it. The
+    sector of a stem row (stems.csv), e.g. Industry for on-site fuel use in industry areas,
+    copies 'Final Energy|Gases' rows to 'Final Energy|Industry|Gases'; where the snapshot lacks
+    a sector variable, the copies go to the sector's Other (sector_other) without their carrier,
+    e.g. solar heating in individual areas to 'Final Energy|Residential and Commercial|Other'.
+    The stem row's note becomes a Conversion Note on the copies' variables too.
 
     Args:
         long (pd.DataFrame): The long table with stems.
@@ -1499,7 +1642,8 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table with the copies added.
+        pd.DataFrame: The long table with the copies added, without the 'stem_sector' column, and
+            with 'stem_note' kept only for stems with the Source placeholder.
     """
     with_sector = demand_categories.loc[demand_categories["sector"] != "",
                                         ["commodity", "demand_category", "sector", "note"]]
@@ -1509,14 +1653,31 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
         for (stem, sector), rows in demand.groupby(["stem", "sector"])
         for variable in sector_variables(stem, sector)
     ]
+
+    # Rows of stems with a sector, under the sector's variable or else its Other
+    by_stem = long[long["stem_sector"] != ""]
+    for (stem, sector), rows in by_stem.groupby(["stem", "stem_sector"]):
+        rows = rows.assign(sector=sector, note=rows["stem_note"])
+        for variable in sector_variables(stem, sector):
+            other = sector_other(variable, sector)
+            if variable in names or other not in names:
+                copies.append(rows.assign(stem=variable, stem_total=""))
+                continue
+            copies.append(rows.assign(stem=other, carrier="", stem_total=""))
+            for scenario in rows.loc[rows["value"].abs() >= noise, "iamc_scenario"].unique():
+                notes.append(note(scenario, "", other, (
+                    f"Reported under Other, as the Definitions Snapshot has no '{variable}'."
+                )))
+    long = long.assign(stem_note=long["stem_note"].where(long["stem_sector"] == "", "")).drop(columns="stem_sector")
     if not copies:
         return long
-    copies = pd.concat(copies, ignore_index=True)
+    copies = pd.concat(copies, ignore_index=True).drop(columns="stem_sector")
+    copies["stem_note"] = ""
 
     for (scenario, stem), _ in copies[~copies["stem"].isin(names)].groupby(["iamc_scenario", "stem"]):
         notes.append(note(scenario, "", stem, (
-            "The 'demand_categories' rules report a Final Energy Sector under this IAMC Variable, which is not in "
-            "the Definitions Snapshot; not reported."
+            "The rules report a Final Energy Sector under this IAMC Variable, which is not in the Definitions "
+            "Snapshot; not reported."
         )))
     copies = copies[copies["stem"].isin(names)]
     noted = copies[(copies["note"] != "") & (copies["value"].abs() >= noise)]
@@ -1532,7 +1693,8 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     'path' holds the segments the Mapping Rules give, and 'variable' the longest of its
     prefixes in the snapshot, or '<stem>|Other' when even its first segment is missing. Rows
     without a unit skip the Mapping Rules: demand, trade and net imports are reported under the
-    stem itself, and heat Heat Exchange could trace to no unit under Other.
+    stem itself, and heat Heat Exchange could trace to no unit under Other. On-site fuel use
+    takes the rest of its carrier as its path instead, e.g. 'Gas' under 'Final Energy|Gases'.
 
     In a stem with the Source placeholder, e.g. 'Primary Energy|{source}|Electricity', the
     first segment is the Source and fills it in (fill_source): 'Gas|w/ CCS' is reported under
@@ -1576,6 +1738,9 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     long.loc[under_stem, "template"] = ""
     long.loc[no_unit & ~under_stem, "template"] = "Other"
     long.loc[no_unit & ~under_stem, "reason"] = "Heat Exchange traced it to no unit"
+    on_site_use = long["quantity"] == final_quantity
+    long.loc[on_site_use, "template"] = long.loc[on_site_use, "carrier"]
+    long.loc[on_site_use, "reason"] = ""
     long["path"] = [
         template.replace("{category}", category)
         for template, category in zip(long["template"], long["category"])
@@ -2010,7 +2175,8 @@ def note_totals(long: pd.DataFrame, stems: pd.DataFrame, notes: list[dict]) -> N
                 where = (f" in {', '.join(kinds[:-1])} and {kinds[-1]} areas" if len(kinds) > 1
                          else f" in {kinds[0]} areas" if kinds else "")
                 commodities.append(f"{commodity}{where}")
-            parts.append(f"{quantity_label(quantity)} of {', '.join(commodities)}")
+            of = "for" if quantity == final_quantity else "of"
+            parts.append(f"{quantity_label(quantity)} {of} {', '.join(commodities)}")
         text = f"Counts only {'; and '.join(parts)}, as Balmorel's results give them"
         if (rows["quantity"] == optiflow_quantity).any():
             text += ", and what the OptiFlow Mapping ('optiflow' rules) reports under it"
