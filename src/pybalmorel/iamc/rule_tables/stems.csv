@@ -21,8 +21,10 @@
 # A quantity and commodity with no row here is not reported, and the Conversion Notes say so,
 # with the amounts.
 # total (optional): an IAMC Variable above the stem that its rows also count towards, with every
-# variable between them, e.g. Primary Energy. A Conversion Note says what the total counts, as it
-# holds only what Balmorel models.
+# variable between them, e.g. Primary Energy, Final Energy or Emissions|CO2. What the OptiFlow
+# Mapping reports under a total counts towards it too. A Conversion Note says what the total
+# counts, as it holds only what Balmorel models. Demand that the sector rules (demand_categories.csv)
+# also report by sector counts towards the total once.
 # note (optional): a Conversion Note for every IAMC Scenario with values under the stem, e.g. on
 # what Balmorel's results leave out of it.
 #
@@ -40,26 +42,27 @@
 #
 # Prices (quantity 'price') are per region or area: a country's is their mean weighted by the
 # commodity's annual demand there, and a country without demand has none. They are reported
-# under the stem only, in the currency to_iamc's 'currency' values Balmorel's money (EUR_2016)
-# in. The carbon price (commodity CO2) is the CO2 tax per tonne that emitting units pay. Prices
+# under the stem only, in the IAMC unit's currency: what to_iamc's 'currency' values Balmorel's
+# money (EUR_2016) at, else pybalmorel's price-level tables (backcasting/pricelevel.py) for
+# EUR or USD of a year they cover. The carbon price (commodity CO2) is the CO2 tax per tonne that emitting units pay. Prices
 # with no row here are left out without a Conversion Note.
 quantity,commodity,area_kind,stem,total,note
 capacity,ELECTRICITY,,Capacity|Electricity
 output,ELECTRICITY,,Secondary Energy|Electricity
-demand,ELECTRICITY,,Final Energy|Electricity,,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses."
+demand,ELECTRICITY,,Final Energy|Electricity,Final Energy,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses."
 trade,ELECTRICITY,,Trade|Secondary Energy|Electricity [Volume]
 capacity,HEAT,district heating,Capacity|Heat
 output,HEAT,district heating,Secondary Energy|Heat
-demand,HEAT,district heating,Final Energy|Heat
+demand,HEAT,district heating,Final Energy|Heat,Final Energy
 capacity,HYDROGEN,,Capacity|Hydrogen
 output,HYDROGEN,,Secondary Energy|Hydrogen
-demand,HYDROGEN,,Final Energy|Hydrogen
+demand,HYDROGEN,,Final Energy|Hydrogen,Final Energy
 trade,HYDROGEN,,Trade|Secondary Energy|Hydrogen [Volume]
-emissions,ELECTRICITY,,Emissions|CO2|Energy|Supply|Electricity
-emissions,HEAT,district heating,Emissions|CO2|Energy|Supply|Heat
-emissions,HYDROGEN,,Emissions|CO2|Energy|Supply|Hydrogen
-emissions,HEAT,industry,Emissions|CO2|Energy|Demand|Industry,,"Covers only the heat units of Balmorel's industry areas, for the heat they make. Industry's other fuel use is not in Balmorel."
-emissions,HEAT,individual,Emissions|CO2|Energy|Demand|Residential and Commercial,,"Covers only the heat units of Balmorel's individual areas, for the heat they make. Other fuel use in buildings is not in Balmorel."
+emissions,ELECTRICITY,,Emissions|CO2|Energy|Supply|Electricity,Emissions|CO2
+emissions,HEAT,district heating,Emissions|CO2|Energy|Supply|Heat,Emissions|CO2
+emissions,HYDROGEN,,Emissions|CO2|Energy|Supply|Hydrogen,Emissions|CO2
+emissions,HEAT,industry,Emissions|CO2|Energy|Demand|Industry,Emissions|CO2,"Covers only the heat units of Balmorel's industry areas, for the heat they make. Industry's other fuel use is not in Balmorel."
+emissions,HEAT,individual,Emissions|CO2|Energy|Demand|Residential and Commercial,Emissions|CO2,"Covers only the heat units of Balmorel's individual areas, for the heat they make. Other fuel use in buildings is not in Balmorel."
 captured,ELECTRICITY,,Carbon Capture|Energy|Supply|Electricity
 captured,HEAT,district heating,Carbon Capture|Energy|Supply|Heat
 captured,HYDROGEN,,Carbon Capture|Energy|Supply|Hydrogen

@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from pybalmorel.backcasting import pricelevel
 from pybalmorel.iamc import check_rules, convert, load_rules, write_iamc
 from pybalmorel.iamc.convert import amounts, money_factor
 from pybalmorel.iamc.rules import definitions_dir
@@ -116,6 +117,20 @@ def price_definitions(definitions: Path) -> Path:
         "unit": ["USD_2010/GJ"] * 3 + ["USD_2010/t CO2"],
     })
     pd.concat((variables, prices)).to_csv(definitions / "variables.csv", index=False)
+    return definitions
+
+
+@pytest.fixture
+def total_definitions(definitions: Path) -> Path:
+    """The small Definitions Snapshot with Final Energy and Emissions|CO2, and the variables
+    between them and their stems."""
+    variables = pd.read_csv(definitions / "variables.csv")
+    totals = pd.DataFrame({
+        "variable": ["Final Energy", "Final Energy|Bunkers", "Emissions|CO2", "Emissions|CO2|Energy",
+                     "Emissions|CO2|Energy|Supply", "Emissions|CO2|Energy|Demand", "Emissions|CO2|Energy|Demand|Bunkers"],
+        "unit": ["EJ/yr"] * 2 + ["Mt CO2/yr"] * 5,
+    })
+    pd.concat((variables, totals)).to_csv(definitions / "variables.csv", index=False)
     return definitions
 
 
@@ -954,6 +969,31 @@ def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows
         assert ("likely CO2 that OptiFlow stores" in text) == (link == "stored")
 
 
+@pytest.mark.parametrize("mapping", [False, True])
+def test_heat_buffer(long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame, definitions: Path,
+                     mapping: bool) -> None:
+    """The heat OptiFlow gives district heating through the add-on's HeatBuffer (in TWh) is
+    reported by the shipped 'optiflow' rule under Secondary Energy|Heat|Other, with or without a
+    study's Mapping, and counts towards Secondary Energy|Heat. The heat OptiFlow takes from
+    district heating is not netted out of it, and the electricity buffer is not reported."""
+    buffer = pd.DataFrame([
+        flow_row("Heat_Opti_to_Bal_Conv", "HeatBuffer", "HEATFLOW", 2),
+        flow_row("HeatBuffer", "Heat_Bal_to_Opti_Conv", "HEATFLOW", 5),
+        flow_row("EL_Opti_to_Bal_Conv", "ElecBuffer", "ELECFLOW", 1),
+    ])
+    data, notes = convert(pd.concat((long, flows, buffer)), "Balmorel", definitions=definitions,
+                          rules={"optiflow": optiflow_rules} if mapping else None)
+    assert value(data, "Secondary Energy|Heat|Other", 2030) == pytest.approx(2 * twh)
+    assert value(data, "Secondary Energy|Heat", 2030) == pytest.approx((3 + 2) * twh)
+    assert value(data, "Secondary Energy|Electricity", 2030) == pytest.approx((10 + 5 + 6 + 12 + 1 + 1) * twh)
+
+    text = " ".join(notes["Note"])
+    assert "The heat OptiFlow's processes give to district heating" in text
+    shipped_only = ("no OptiFlow Mapping ('optiflow' rules) was given: of OptiFlow's results, only what the rules "
+                    "shipped with pybalmorel cover is reported (Secondary Energy|Heat|Other)")
+    assert (shipped_only in text) == (not mapping)
+
+
 @pytest.fixture
 def fuel_rules() -> pd.DataFrame:
     """'fuel' rules for OptiFlow's fossil jet fuel, LNG for ships and diesel for road transport,
@@ -976,19 +1016,26 @@ def fuel_rules() -> pd.DataFrame:
     ], columns=columns)
 
 
-@pytest.mark.parametrize("carried_kt", [1091.1, 1500])
-def test_optiflow_fuel_rules(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
-                             fuel_rules: pd.DataFrame, definitions: Path, carried_kt: float) -> None:
-    """'fuel' rules report the CO2 of OptiFlow's fossil fuels, as flow times factor, net of the
-    stored part of CO2 captured from them, and are checked against the emissions the results
-    carry for OptiFlow: 10 PJ of jet fuel, 5 of LNG and 1 of diesel make 1091.1 kt CO2."""
-    fuel_flows = pd.DataFrame([
+@pytest.fixture
+def fuel_flows() -> pd.DataFrame:
+    """OptiFlow's fuels in Denmark in 2030, for fuel_rules: 10 PJ of jet fuel, 5 of LNG and 1 of
+    diesel, which make 1091.1 kt CO2. Ships capture 0.2 Mt CO2 on board, of which 0.16 is stored."""
+    return pd.DataFrame([
         flow_row("Jet_Source", "Aviation_Fuel", "JET_FLOW", 10),
         flow_row("LNG_Source", "OCC", "LNG_FLOW", 5),
         flow_row("Diesel_Source", "Road_Fuels", "DIESEL_FLOW", 1),
         flow_row("OCC", "CO2_Grid_In", "CO2_FLOW_OCC", 0.2),
         flow_row("CO2_Grid_Out", "CO2_Seq", "CO2_FLOW_OCC_SEQ", 0.16),
     ])
+
+
+@pytest.mark.parametrize("carried_kt", [1091.1, 1500])
+def test_optiflow_fuel_rules(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
+                             fuel_rules: pd.DataFrame, fuel_flows: pd.DataFrame, definitions: Path,
+                             carried_kt: float) -> None:
+    """'fuel' rules report the CO2 of OptiFlow's fossil fuels, as flow times factor, net of the
+    stored part of CO2 captured from them, and are checked against the emissions the results
+    carry for OptiFlow."""
     carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", carried_kt)])
     data, notes = convert(pd.concat((carbon_long, flows, fuel_flows, carried)), "Balmorel", definitions=definitions,
                           rules={"optiflow": pd.concat((optiflow_rules, fuel_rules))})
@@ -1203,7 +1250,48 @@ def test_check_rules_lists_missing_sources(primary_definitions: Path) -> None:
 def test_check_rules_lists_missing_totals(definitions: Path) -> None:
     """check_rules lists a stem's total that the snapshot doesn't have."""
     problems = check_rules(definitions)
-    assert "total is not an IAMC Variable" in set(problems.loc[problems["value"] == "Primary Energy", "problem"])
+    for total in ("Primary Energy", "Final Energy", "Emissions|CO2"):
+        assert "total is not an IAMC Variable" in set(problems.loc[problems["value"] == total, "problem"]), total
+
+
+def test_final_energy_total(electricity_long: pd.DataFrame, total_definitions: Path) -> None:
+    """Final Energy sums final demand of electricity, district heat and hydrogen once: carbon
+    capture's electricity, also reported by sector, doesn't count again. A note says what it
+    counts."""
+    data, notes = convert(electricity_long, "Balmorel", definitions=total_definitions)
+
+    assert value(data, "Final Energy", 2030) == pytest.approx((21 + 2 + 2) * twh)
+    assert value(data, "Final Energy", 2030, "Germany") == pytest.approx(8 * twh)
+    assert "Final Energy|Carbon Management" not in set(data["Variable"])
+    total = notes.loc[notes["Variable"] == "Final Energy", "Note"]
+    assert total.str.startswith("Counts only demand of ELECTRICITY, HEAT in district heating areas, HYDROGEN, as "
+                                "Balmorel's results give them. What Balmorel doesn't model").any()
+
+
+def test_carbon_totals(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
+                       fuel_rules: pd.DataFrame, fuel_flows: pd.DataFrame, total_definitions: Path) -> None:
+    """Emissions|CO2 sums Balmorel's net emissions and what the OptiFlow Mapping reports under it:
+    direct air capture's stored CO2 and the bunkers' fuels. Final Energy counts the bunkers'
+    hydrogen too."""
+    carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", 1091.1)])
+    data, notes = convert(pd.concat((carbon_long, flows, fuel_flows, carried)), "Balmorel",
+                          definitions=total_definitions, rules={"optiflow": pd.concat((optiflow_rules, fuel_rules))})
+
+    supply = (50 + 60 - 200 * 0.75) / 1e3
+    removal = -80 * 0.5 / 1e3
+    bunkers = 0.732 + 0.285 - 0.16
+    assert value(data, "Emissions|CO2|Energy|Supply", 2030) == pytest.approx(supply)
+    assert value(data, "Emissions|CO2|Energy|Demand|Bunkers", 2030) == pytest.approx(bunkers)
+    assert value(data, "Emissions|CO2|Energy|Demand", 2030) == pytest.approx(bunkers)
+    assert value(data, "Emissions|CO2|Energy", 2030) == pytest.approx(supply + bunkers)
+    assert value(data, "Emissions|CO2", 2030) == pytest.approx(supply + bunkers + removal)
+    assert value(data, "Final Energy|Bunkers", 2030) == pytest.approx(10 / 1e3)
+    assert value(data, "Final Energy", 2030) == pytest.approx(5 * twh + 10 / 1e3)
+
+    total = notes.loc[notes["Variable"] == "Emissions|CO2", "Note"]
+    assert total.str.startswith("Counts only emissions of ELECTRICITY, HEAT in district heating, industry and individual "
+                                "areas, HYDROGEN, as Balmorel's results give them, and what the OptiFlow Mapping "
+                                "('optiflow' rules) reports under it.").any()
 
 
 def test_prices_weighted_by_demand(long: pd.DataFrame, price_definitions: Path) -> None:
@@ -1259,21 +1347,51 @@ def test_high_prices_noted(long: pd.DataFrame, price_definitions: Path) -> None:
     assert "the price of Denmark in 2030" in high["Note"].iloc[0]
 
 
-def test_prices_need_currency(long: pd.DataFrame, price_definitions: Path) -> None:
-    """Prices are only reported in currencies `currency` values Balmorel's money in; Balmorel's
-    own, EUR_2016, needs none."""
-    long = pd.concat((long, pd.DataFrame([price_row("ELECTRICITY", 50, 30)])))
-    for currency in (None, {"EUR_2020": 1.0}):
-        data, notes = convert(long, "Balmorel", definitions=price_definitions, currency=currency)
-        assert is_empty(data, "Price|Secondary Energy|Electricity", 2030)
-        assert notes["Note"].str.contains("Not reported, as currency gives no worth in USD_2010: Price|Secondary "
-                                          "Energy|Electricity. Pass currency=", regex=False).any()
+def set_price_currency(definitions: Path, currency: str) -> None:
+    """Put the small Definitions Snapshot's prices in another currency."""
+    variables = pd.read_csv(definitions / "variables.csv")
+    prices = variables["variable"].str.startswith("Price|")
+    variables.loc[prices, "unit"] = currency + "/" + variables.loc[prices, "unit"].str.split("/", n=1).str[1]
+    variables.to_csv(definitions / "variables.csv", index=False)
 
-    variables = pd.read_csv(price_definitions / "variables.csv")
-    variables["unit"] = variables["unit"].str.replace("USD_2010", "EUR_2016")
-    variables.to_csv(price_definitions / "variables.csv", index=False)
+
+def test_prices_need_currency(long: pd.DataFrame, price_definitions: Path) -> None:
+    """Prices are only reported in currencies that `currency` or the price-level tables value
+    Balmorel's money in; Balmorel's own, EUR_2016, needs neither."""
+    long = pd.concat((long, pd.DataFrame([price_row("ELECTRICITY", 50, 30)])))
+    for unit in ("GBP_2016", "USD_2050"):
+        set_price_currency(price_definitions, unit)
+        for currency in (None, {"EUR_2020": 1.0}):
+            data, notes = convert(long, "Balmorel", definitions=price_definitions, currency=currency)
+            assert is_empty(data, "Price|Secondary Energy|Electricity", 2030)
+            assert notes["Note"].str.contains(
+                f"Not reported, as neither currency nor pybalmorel's price-level tables give a worth in {unit}: "
+                "Price|Secondary Energy|Electricity. Pass currency=", regex=False).any()
+
+    set_price_currency(price_definitions, "EUR_2016")
     data, notes = convert(long, "Balmorel", definitions=price_definitions)
     assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx(50 / 3.6)
+    assert not notes["Note"].str.contains("price-level tables").any()
+
+
+def test_prices_by_price_level_tables(long: pd.DataFrame, price_definitions: Path) -> None:
+    """Without a worth from `currency`, prices in EUR or USD of a year pybalmorel's price-level
+    tables cover are converted by them: by the euro-area HICP, and for USD by that year's mean
+    EUR/USD rate. A worth in `currency` beats the tables."""
+    long = pd.concat((long, pd.DataFrame([price_row("ELECTRICITY", 50, 30)])))
+    hicp, usd_per_eur = pricelevel.hicp_euro_area, pricelevel.usd_per_eur
+    for unit, worth in (("USD_2016", usd_per_eur[2016]), ("EUR_2020", hicp[2020] / hicp[2016]),
+                        ("USD_2020", usd_per_eur[2020] * hicp[2020] / hicp[2016])):
+        set_price_currency(price_definitions, unit)
+        data, notes = convert(long, "Balmorel", definitions=price_definitions)
+        assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx(50 / 3.6 * worth)
+        assert notes["Note"].str.contains(
+            f"Converted from EUR_2016 (Balmorel's money) to {unit} by pybalmorel's price-level tables", regex=False).any()
+        assert notes["Note"].str.contains(f"one EUR_2016 is worth {worth:.4g} {unit}", regex=False).any()
+
+        data, notes = convert(long, "Balmorel", definitions=price_definitions, currency={unit: 2.0})
+        assert value(data, "Price|Secondary Energy|Electricity", 2030) == pytest.approx(50 / 3.6 * 2.0)
+        assert not notes["Note"].str.contains("price-level tables").any()
 
 
 def test_money_factor() -> None:

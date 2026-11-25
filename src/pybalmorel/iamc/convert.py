@@ -24,6 +24,7 @@ from .reader import read_mainresults
 from .rules import (default_area_kind, fill_source, import_unit, load_definitions, load_rules, load_template,
                     match_area_kinds, match_mapping_rules, match_optiflow_rules, not_reported, on_site_final,
                     optiflow_unit, pool_roles, sector_variables, source_placeholder, stem_top)
+from ..backcasting import pricelevel
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -49,8 +50,11 @@ rate_tolerance = 1e-2
 # Magnitude of an average price, in Balmorel's money per MWh, above which it may be the penalty
 # on an unmet balance rather than a market price, so a Conversion Note points it out
 price_bound = 500.0
-# The currency and price year of Balmorel's money, which its input data are in
-balmorel_currency = "EUR_2016"
+# The price year of Balmorel's money, which its input data are in, and that money as a currency
+balmorel_price_year = 2016
+balmorel_currency = f"EUR_{balmorel_price_year}"
+# A currency the price-level tables (backcasting/pricelevel.py) can value Balmorel's money in
+table_currency = r"(?<!\w)(EUR|USD)_(\d{4})(?!\w)"
 # Unit CO2 amounts are compared in
 carbon_unit = "Mt CO2/yr"
 backup_choices = ("supply", "exclude")
@@ -74,6 +78,8 @@ per_unit_quantities = carbon_quantities + ("primary",)
 biogenic_category = "Biomass"
 # Quantities that are means rather than amounts, so Conversion Notes don't sum them
 mean_quantities = ("price",)
+# Quantity of the rows the OptiFlow Mapping reports
+optiflow_quantity = "optiflow"
 # How Conversion Notes name quantities that aren't plain words
 quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
                    "input": "fuel input", "primary": "primary energy", "imports": "net imports", "tax": "CO2 tax"}
@@ -121,18 +127,21 @@ def to_iamc(results: "MainResults",
     non-biomass renewables (direct equivalent), per Source and what it is used for; net imports
     of electricity and hydrogen count as Secondary Energy Trade. Primary Energy and its totals
     per Source (e.g. Primary Energy|Gas) sum all of that, with the fuel of heat units in
-    individual and industry areas, which has no variable by use; they count only what Balmorel
-    models, as a Conversion Note says, so they can be lower than a whole-economy model's. The
-    prices of electricity, hydrogen and district heat are Balmorel's yearly means of hourly
-    marginal prices, averaged over a country's regions or district heating areas weighted by
-    their annual demand; a country without demand has no price. The carbon price is the CO2
-    tax per tonne that emitting units pay; an emission cap's shadow price is not in MainResults.
-    Prices are only reported in currencies that `currency` values Balmorel's money (EUR_2016)
-    in. Investment and capital costs are not reported, as MainResults holds only the annuities
-    of capital costs. Conversion Notes say what was put under Other, what was left out, how
-    backup units, import units and Heat Exchange were treated, and where a commodity's supply
-    and demand don't add up; the first of them are printed. Values that can't be known without
-    missing rules are left empty.
+    individual and industry areas, which has no variable by use. Final Energy and Emissions|CO2
+    sum the demand and emissions reported below them, with what the OptiFlow Mapping reports
+    there. These totals count only what Balmorel models, as a Conversion Note says, so they can
+    be lower than a whole-economy model's. The prices of electricity, hydrogen and district heat
+    are Balmorel's yearly means of hourly marginal prices, averaged over a country's regions or
+    district heating areas weighted by their annual demand; a country without demand has no
+    price. The carbon price is the CO2 tax per tonne that emitting units pay; an emission cap's
+    shadow price is not in MainResults. Prices are converted from Balmorel's money (EUR_2016) to
+    the IAMC unit's currency at the worth `currency` gives, else by pybalmorel's price-level
+    tables (backcasting/pricelevel.py) for EUR or USD of a year they cover, with a Conversion
+    Note giving the worth; otherwise they are left out. Investment and capital costs are not
+    reported, as MainResults holds only the annuities of capital costs. Conversion Notes say
+    what was put under Other, what was left out, how backup units, import units and Heat
+    Exchange were treated, and where a commodity's supply and demand don't add up; the first of
+    them are printed. Values that can't be known without missing rules are left empty.
 
     Args:
         results (MainResults): The loaded result files.
@@ -159,8 +168,9 @@ def to_iamc(results: "MainResults",
             MainResults carry OptiFlow's emissions (Mapping Rule 'optiflow'). Defaults to None.
         currency (dict[str, float] | None, optional): What one unit of Balmorel's money,
             EUR_2016, is worth in the currencies the IAMC units are in, keyed as the units name
-            them, e.g. {'USD_2010': 1.1} if it is worth 1.1 USD_2010. Prices in other currencies
-            are left out. Defaults to None.
+            them, e.g. {'USD_2010': 1.1} if it is worth 1.1 USD_2010. It beats pybalmorel's
+            price-level tables, which give EUR and USD of the years they cover. Prices in other
+            currencies are left out. Defaults to None.
 
     Returns:
         tuple[pd.DataFrame, pd.DataFrame]: The IAMC data, and the Conversion Notes (columns
@@ -227,11 +237,14 @@ def convert(long: pd.DataFrame,
     long = attach_sectors(long, tables["demand_categories"], names, notes)
     long = attach_segments(long, tables, names, notes)
     long = treat_backup_units(long, backup_units, backup_pattern, notes)
+    reported = report_optiflow(flows, tables["optiflow"], shares, tables["stems"], names, notes)
+    if not reported.empty:
+        long = pd.concat((long, reported), ignore_index=True)
     note_totals(long, tables["stems"], notes)
     long = copy_to_aggregates(long, tables["aggregates"], names)
-    reported = report_optiflow(flows, tables["optiflow"], shares, tables["stems"], names, notes)
     prices = report_prices(prices, tables, regions, variables, currency, notes)
-    long = pd.concat([long] + [rows for rows in (reported, prices) if not rows.empty], ignore_index=True)
+    if not prices.empty:
+        long = pd.concat((long, prices), ignore_index=True)
 
     data = sum_to_variables(long, variables, tables["aggregates"])
     if template is not None:
@@ -1322,7 +1335,9 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     of it, by its pool's Stored Share, under removal and, negative, under emissions. 'fuel'
     rules report the CO2 of a fossil fuel under emissions. 'report' rules report the flow as it
     is under their variable. Flows are times the rule's factor. Each sums up to the longest
-    stem of the 'stems' rules its variable starts with, if there is one. A rule's note becomes a
+    stem of the 'stems' rules its variable starts with, if there is one, and counts towards the
+    broadest total of the 'stems' rules that is its variable or above it (copy_to_aggregates),
+    e.g. 'Final Energy|Bunkers|Hydrogen' towards Final Energy. A rule's note becomes a
     Conversion Note on each IAMC Variable it reports values under.
 
     Args:
@@ -1334,15 +1349,18 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: Reported rows with the columns sum_to_variables needs.
+        pd.DataFrame: Reported rows (quantity optiflow_quantity) with the columns
+            copy_to_aggregates and sum_to_variables need.
     """
-    columns = ["iamc_scenario", "scenario", "region", "stem", "path", "variable", "value_unit", "year", "value",
-               "withheld"]
-    for scenario in sorted(set(flows["iamc_scenario"])):
-        if optiflow.empty:
+    columns = ["iamc_scenario", "scenario", "region", "quantity", "stem", "path", "variable", "value_unit", "year",
+               "value", "withheld", "template_stem", "source_path", "stem_total"]
+    if not (optiflow["priority"] == 1).any():
+        shipped = list_names(optiflow["variable"][optiflow["variable"] != ""])
+        for scenario in sorted(set(flows["iamc_scenario"])):
             notes.append(note(scenario, "", "", (
-                "Linked to OptiFlow, but no OptiFlow Mapping ('optiflow' rules) was given: OptiFlow's results "
-                "are not reported. Pass the study's with rules={'optiflow': ...}."
+                "Linked to OptiFlow, but no OptiFlow Mapping ('optiflow' rules) was given: of OptiFlow's results, "
+                f"only what the rules shipped with pybalmorel cover is reported ({shipped or 'nothing'}). Pass the "
+                "study's with rules={'optiflow': ...}."
             )))
     matched = match_optiflow_rules(flows, optiflow)
     matched = matched.merge(shares[["iamc_scenario", "year", "pool", "share"]], on=["iamc_scenario", "year", "pool"],
@@ -1374,7 +1392,13 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
         variable: next((stem for stem in by_length if variable == stem or variable.startswith(f"{stem}|")), variable)
         for variable in reported["variable"].unique()
     }
-    reported = reported.assign(stem=reported["variable"].map(stem_of))
+    by_breadth = sorted(set(stems["total"]) - {""}, key=len)
+    total_of = {
+        variable: next((total for total in by_breadth if variable == total or variable.startswith(f"{total}|")), "")
+        for variable in reported["variable"].unique()
+    }
+    reported = reported.assign(stem=reported["variable"].map(stem_of), stem_total=reported["variable"].map(total_of),
+                               quantity=optiflow_quantity, template_stem="", source_path="")
     reported["path"] = [variable[len(stem) + 1:] for variable, stem in zip(reported["variable"], reported["stem"])]
     return reported.reindex(columns=columns)
 
@@ -1465,8 +1489,8 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
 
     Each copy takes one of the sector's variables (sector_variables) as its stem, so it counts
     towards that variable only, while the demand still counts under its own stem, e.g.
-    'Final Energy|Electricity'. A category's note becomes a Conversion Note on each sector
-    variable with values under it.
+    'Final Energy|Electricity', and towards the stem's total (e.g. Final Energy) once. A
+    category's note becomes a Conversion Note on each sector variable with values under it.
 
     Args:
         long (pd.DataFrame): The long table with stems.
@@ -1481,7 +1505,7 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
                                         ["commodity", "demand_category", "sector", "note"]]
     demand = long[long["quantity"] == "demand"].merge(with_sector, on=["commodity", "demand_category"])
     copies = [
-        rows.assign(stem=variable)
+        rows.assign(stem=variable, stem_total="")
         for (stem, sector), rows in demand.groupby(["stem", "sector"])
         for variable in sector_variables(stem, sector)
     ]
@@ -1751,9 +1775,10 @@ def report_prices(prices: pd.DataFrame, tables: dict[str, pd.DataFrame], regions
     hold for. Where none holds any, there is no price, as the LP's marginal cost of a demand that
     doesn't exist is no market price. The carbon price comes from the CO2 tax units pay
     (derive_carbon_price). Prices are reported under their stem, in the unit the snapshot gives
-    it, if `currency` values Balmorel's money (balmorel_currency) in that unit's currency.
-    Conversion Notes name the countries without demand, and those whose price takes in an
-    average price beyond ±price_bound.
+    it, if `currency` values Balmorel's money (balmorel_currency) in that unit's currency, or
+    else pybalmorel's price-level tables do (table_worth). Conversion Notes name the countries
+    without demand, those whose price takes in an average price beyond ±price_bound, the worth
+    the tables gave, and the prices no worth was found for.
 
     Args:
         prices (pd.DataFrame): Rows of quantity 'price' (with 'weight'), 'tax' and 'emissions'
@@ -1762,7 +1787,8 @@ def report_prices(prices: pd.DataFrame, tables: dict[str, pd.DataFrame], regions
         regions (pd.DataFrame): The snapshot's regions (region, iso3).
         variables (pd.DataFrame): The snapshot's variables (variable, unit).
         currency (dict[str, float] | None): What one unit of Balmorel's money is worth, per
-            currency, as in to_iamc; one balmorel_currency is always worth 1 of itself.
+            currency, as in to_iamc; one balmorel_currency is always worth 1 of itself. It beats
+            the price-level tables.
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
@@ -1808,20 +1834,36 @@ def report_prices(prices: pd.DataFrame, tables: dict[str, pd.DataFrame], regions
             f"{list_names(rows['year'].astype(str))}. Check those results."
         )))
 
-    # Into the IAMC unit's currency
+    # Into the IAMC unit's currency, as `currency` values Balmorel's money, else by the price-level tables
     currency = {balmorel_currency: 1.0} | (currency or {})
     means["unit"] = means["stem"].map(variables.set_index("variable")["unit"])
-    factors = {
-        (from_unit, to_unit): money_factor(from_unit, to_unit, currency)
-        for from_unit, to_unit in means[["value_unit", "unit"]].drop_duplicates().itertuples(index=False)
-    }
+    factors, by_tables = {}, {}
+    for from_unit, to_unit in means[["value_unit", "unit"]].drop_duplicates().itertuples(index=False):
+        found = money_factor(from_unit, to_unit, currency)
+        worth = table_worth(to_unit) if found is None else None
+        if worth is not None:
+            found = money_factor(from_unit, to_unit, {worth[0]: worth[1]})
+            by_tables[to_unit] = worth
+        factors[(from_unit, to_unit)] = found
     means["factor"] = [factors[pair] for pair in zip(means["value_unit"], means["unit"])]
+    means["by_tables"] = means["unit"].map(lambda unit: by_tables.get(unit, ("",))[0])
+    worths = {name: (worth, how) for name, worth, how in by_tables.values()}
+    for (scenario, name), rows in means[means["by_tables"] != ""].groupby(["iamc_scenario", "by_tables"]):
+        worth, how = worths[name]
+        notes.append(note(scenario, "", "", (
+            f"Converted from {balmorel_currency} (Balmorel's money) to {name} by pybalmorel's price-level tables "
+            f"(backcasting/pricelevel.py: {how}): one {balmorel_currency} is worth {worth:.4g} {name}. Prices: "
+            f"{list_names(rows['stem'])}. Pass currency={{'{name}': <worth>}} to use another worth."
+        )))
     unconverted = means[means["factor"].isna()]
     for scenario, rows in unconverted.groupby("iamc_scenario"):
         wanted = list_names(rows["unit"].str.split("/").str[0])
         notes.append(note(scenario, "", "", (
-            f"Not reported, as currency gives no worth in {wanted}: {list_names(rows['stem'])}. Pass "
-            f"currency={{'<currency>': <worth>}}, what one {balmorel_currency} (Balmorel's money) is worth in it."
+            f"Not reported, as neither currency nor pybalmorel's price-level tables give a worth in {wanted}: "
+            f"{list_names(rows['stem'])}. Pass currency={{'<currency>': <worth>}}, what one {balmorel_currency} "
+            f"(Balmorel's money) is worth in it, or, for EUR or USD of a year the tables don't cover "
+            f"(they cover {min(pricelevel.hicp_euro_area)} to {max(pricelevel.hicp_euro_area)}), extend them in "
+            "pybalmorel/backcasting/pricelevel.py."
         )))
     means = means[means["factor"].notna()]
     return means.assign(path="", variable=means["stem"], value_unit=means["unit"],
@@ -1916,6 +1958,32 @@ def money_factor(from_unit: str, to_unit: str, currency: dict[str, float] | None
     return None
 
 
+def table_worth(unit: str) -> tuple[str, float, str] | None:
+    """What one unit of Balmorel's money is worth in an IAMC unit's currency, by pybalmorel's
+    price-level tables (backcasting/pricelevel.py).
+
+    Balmorel's money (balmorel_currency) is brought to the currency's year by the euro-area HICP,
+    then, for USD, exchanged at that year's mean EUR/USD rate.
+
+    Args:
+        unit (str): The IAMC unit, e.g. 'USD_2010/GJ'.
+
+    Returns:
+        tuple[str, float, str] | None: The currency (e.g. 'USD_2010'), what one balmorel_currency
+            is worth in it, and how the tables gave that; None if the unit's currency is neither
+            EUR nor USD of a year the tables cover.
+    """
+    found = re.search(table_currency, unit)
+    if found is None:
+        return None
+    kind, year = found.group(1), int(found.group(2))
+    if year not in pricelevel.hicp_euro_area or (kind == "USD" and year not in pricelevel.usd_per_eur):
+        return None
+    worth = 1 / pricelevel.to_price_year(1.0, year, kind, balmorel_price_year)
+    how = "the euro-area HICP" + (f" and the mean EUR/USD rate of {year}" if kind == "USD" else "")
+    return found.group(0), worth, how
+
+
 #%% ------------------------------- ###
 ###          8. Summing Up          ###
 ### ------------------------------- ###
@@ -1923,8 +1991,9 @@ def money_factor(from_unit: str, to_unit: str, currency: dict[str, float] | None
 def note_totals(long: pd.DataFrame, stems: pd.DataFrame, notes: list[dict]) -> None:
     """Say what a stem's total (stems.csv) counts, for every IAMC Scenario with values under it.
 
-    A total only counts what the stems that name it count, as Balmorel models it, so it and the
-    variables between it and those stems can be lower than a whole-economy model's.
+    A total only counts what the stems that name it count, as Balmorel models it, and what the
+    OptiFlow Mapping reports under it, so it and the variables between it and those stems can be
+    lower than a whole-economy model's.
 
     Args:
         long (pd.DataFrame): The reported rows, with the 'stem_total' column.
@@ -1932,7 +2001,7 @@ def note_totals(long: pd.DataFrame, stems: pd.DataFrame, notes: list[dict]) -> N
         notes (list[dict]): Conversion Notes, appended to.
     """
     counted = long[(long["stem_total"] != "") & (long["value"].abs() >= noise)]
-    for (scenario, total), _ in counted.groupby(["iamc_scenario", "stem_total"]):
+    for (scenario, total), rows in counted.groupby(["iamc_scenario", "stem_total"]):
         parts = []
         for quantity, rules in stems[stems["total"] == total].groupby("quantity", sort=False):
             commodities = []
@@ -1942,11 +2011,13 @@ def note_totals(long: pd.DataFrame, stems: pd.DataFrame, notes: list[dict]) -> N
                          else f" in {kinds[0]} areas" if kinds else "")
                 commodities.append(f"{commodity}{where}")
             parts.append(f"{quantity_label(quantity)} of {', '.join(commodities)}")
-        notes.append(note(scenario, "", total, (
-            f"Counts only {'; and '.join(parts)}, as Balmorel's results give them. What Balmorel doesn't "
-            f"model, such as other sectors' fuel use, or what the OptiFlow add-on uses, is not in it, nor in "
-            f"the IAMC Variables between it and those it sums (e.g. per Source), so they can be lower than a "
-            f"whole-economy model's.")))
+        text = f"Counts only {'; and '.join(parts)}, as Balmorel's results give them"
+        if (rows["quantity"] == optiflow_quantity).any():
+            text += ", and what the OptiFlow Mapping ('optiflow' rules) reports under it"
+        notes.append(note(scenario, "", total, text + (
+            ". What Balmorel doesn't model, such as the energy use and emissions of sectors it leaves out, or what "
+            "the OptiFlow add-on does that its Mapping doesn't report, is not in it, nor in the IAMC Variables "
+            "between it and those it sums, so they can be lower than a whole-economy model's.")))
 
 
 def copy_to_aggregates(long: pd.DataFrame, aggregates: pd.DataFrame, names: set[str]) -> pd.DataFrame:

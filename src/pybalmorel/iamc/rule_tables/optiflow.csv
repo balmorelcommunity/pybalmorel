@@ -1,5 +1,12 @@
 # OptiFlow Mapping: how results of a Balmorel run linked to OptiFlow are reported. OptiFlow
-# designs differ between studies, so no rows ship; pass them per study (rules={'optiflow': ...}).
+# designs differ between studies, so pass a study's rows with rules={'optiflow': ...}; they add to
+# the rows here. Only flows the add-on itself names, the same in every study, have rows here:
+#   HeatBuffer  The heat OptiFlow's processes give to district heating ('HEATFLOW' into the
+#               add-on's 'HeatBuffer'; Balmorel's heat balance, QHEQ, takes it in). It is in
+#               TWh, as Balmorel's heat is in MWh and the add-on's output file divides every flow
+#               by 1e6. Balmorel's results don't give it as output of any unit, so it is reported
+#               as Secondary Energy|Heat|Other, which counts towards Secondary Energy|Heat.
+# A study's rows must not report these flows again, as every row applies to every flow it matches.
 #
 # Each row matches OptiFlow flows (VFLOW_Opti_C) by from_process, to_process and flow: regular
 # expressions the whole name must match; empty matches anything. Every row applies to every flow
@@ -37,3 +44,4 @@
 #   Liquid_Hydrogen,Hydrogen_(FC_)?Eff,HYDROGEN_FLOW,report,,PJ,,Final Energy|Bunkers|Hydrogen,,,
 #   Jet_Source,Aviation_Fuel,,fuel,,Mt CO2,0.0732,,,Emissions|CO2|Energy|Demand|Bunkers|International Aviation,All aviation counted as international.
 from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note
+.*,HeatBuffer,HEATFLOW,report,,TWh,,Secondary Energy|Heat|Other,,,"The heat OptiFlow's processes give to district heating, e.g. excess heat from fuel synthesis or direct air capture. Not net of the heat OptiFlow takes from district heating, which is not final energy."

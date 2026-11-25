@@ -111,9 +111,9 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             columns. Defaults to None.
 
     Returns:
-        dict[str, pd.DataFrame]: The tables by name. The 'mapping' table has a 'priority'
-            column: 1 for the caller's rows, 0 for the shipped ones. The 'optiflow' table has
-            the caller's rows first; every row applies to every flow it matches.
+        dict[str, pd.DataFrame]: The tables by name. The 'mapping' and 'optiflow' tables have a
+            'priority' column: 1 for the caller's rows, 0 for the shipped ones. The 'optiflow'
+            table has the caller's rows first; every row applies to every flow it matches.
     """
     overrides = overrides or {}
     unknown = [name for name in overrides if name not in rule_tables]
@@ -133,7 +133,7 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         if name == "mapping":
             table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
         elif name == "optiflow":
-            table = pd.concat((caller, shipped), ignore_index=True)
+            table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
         elif name == "aggregates":
             replaced = shipped["aggregate"].isin(caller["aggregate"])
             table = pd.concat((caller, shipped[~replaced]), ignore_index=True)
