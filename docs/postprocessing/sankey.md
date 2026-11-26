@@ -32,7 +32,10 @@ both sides use the same names.
   electrolysers, draw from that commodity's node instead.
 - **Commodities** are Electricity, Heat, Hydrogen and Gases. Heat made in
   individual and industry areas goes to **On-site Heat**, because the IAMC
-  data counts it as final energy rather than as centralized heat.
+  data counts it as final energy rather than as centralized heat. In IAMC
+  data, a use that Primary Energy is reported by is a commodity too. For
+  example, **Liquids** holds the biomass that OptiFlow's biofuel plants take
+  in.
 - **Final Energy Sectors** such as Residential and Commercial or Industry
   receive the final demand whose sector Balmorel knows. All other final
   demand goes to **Final Energy**.
@@ -41,7 +44,8 @@ both sides use the same names.
 - **Losses** collects conversion losses, grid losses and storage losses.
 - **Ambient Heat** is the heat that heat pumps take from their surroundings.
 - **OptiFlow** appears when the results come from the OptiFlow add-on. It
-  shows what OptiFlow takes from Balmorel's commodities and what the OptiFlow
+  shows what OptiFlow takes from Balmorel's commodities, what the OptiFlow
+  Mapping reports it taking from Sources as Primary Energy, and what the
   Mapping reports it giving back.
 - **Unaccounted** balances each commodity. When more of a commodity flows in
   than out, or the other way round, the difference goes to or comes from
@@ -59,6 +63,11 @@ Each flow has a **Kind**:
 
 A unit's fuel input is split over what it makes in proportion to its output.
 Losses are netted for each pair of Source and commodity, as in the IAMC data.
+
+In IAMC data, the final energy of a carrier from a Source, such as
+`Final Energy|Gases|Biomass`, comes from the commodity node up to the amount
+that Source feeds into the commodity. Anything beyond that amount comes from
+the Source directly. This way the same biomass is not drawn twice.
 
 ## How-to guides
 
@@ -174,6 +183,10 @@ The two sides are meant to differ in some places:
   and district heat made from biomethane as made from biomass. MainResults
   draws them from Gases. On the IAMC side, the biomethane those plants burn
   shows as Unaccounted.
+- **Biofuels made by OptiFlow.** The IAMC data reports the biomass that the
+  plants take in and the biofuel that ships and aircraft use. It does not
+  report what the plants make. On the IAMC side, the plants' conversion
+  losses therefore show as Unaccounted from Liquids.
 - **Trade.** MainResults shows imports and exports in each direction. The IAMC
   data reports net exports. Heat moved between district heating and
   individual or industry areas is netted over the year too, whereas

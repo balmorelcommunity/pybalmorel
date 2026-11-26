@@ -642,11 +642,14 @@ def heat_exchange_links(rows: pd.DataFrame, level: str, names: list[str] | None,
 
 
 def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: list) -> None:
-    """Links of what the OptiFlow Mapping's 'report' rules say OptiFlow gives to Balmorel's
-    commodities (Secondary Energy) or to final use (Final Energy).
+    """Links of what the OptiFlow Mapping's 'report' rules say OptiFlow takes from Sources
+    (Primary Energy) and gives to Balmorel's commodities (Secondary Energy) or to final use
+    (Final Energy).
 
     OptiFlow's demand on a commodity (ENDO_OPTIFLOW) is net of what it gives back, so what it
-    gives back is added to it.
+    gives back is added to it. Each flow is drawn once under each of Primary, Secondary and
+    Final Energy at most, by the least detailed row that reports it there, as rows for e.g.
+    'Final Energy|Bunkers' and 'Final Energy|Bunkers|Liquids' match the same flows.
 
     Args:
         rows (pd.DataFrame): Rows of the long table in the selection.
@@ -656,9 +659,13 @@ def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: l
     flows = rows[rows["quantity"] == "flow"]
     if flows.empty:
         return
-    matched = match_optiflow_rules(flows[["from_process", "to_process", "flow", "value"]], tables["optiflow"])
+    flows = flows[["from_process", "to_process", "flow", "value"]].assign(flow_row=np.arange(len(flows)))
+    matched = match_optiflow_rules(flows, tables["optiflow"])
     matched = matched[(matched["role"] == "report") & matched["variable"].str.match(
-        f"({secondary_energy}|{final_energy})\\|")]
+        f"({primary_energy}|{secondary_energy}|{final_energy})\\|")]
+    matched = matched.assign(level=matched["variable"].str.split("|").str[0],
+                             depth=matched["variable"].str.count(r"\|"))
+    matched = matched.sort_values("depth", kind="stable").drop_duplicates(["flow_row", "level"])
     sectors = {rule.split("|")[0] for rule in tables["optiflow"]["sector"] if rule}
     for row in matched.itertuples():
         if row.value_unit not in units_per_twh:
@@ -667,7 +674,9 @@ def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: l
             continue
         value = row.value * to_twh(row.value_unit)
         segments = row.variable.split("|")
-        if segments[0] == secondary_energy:
+        if segments[0] == primary_energy:
+            links.append((segments[1], optiflow_node, "flow", value))
+        elif segments[0] == secondary_energy:
             links.append((optiflow_node, segments[1], "flow", value))
             links.append((segments[1], optiflow_node, "flow", value))
         elif row.sector:
@@ -711,7 +720,10 @@ def iamc_flows(data: pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame],
 
     made = first_levels(values, secondary_energy)
     used = first_levels(values, primary_energy)
-    commodities = set(commodity_nodes.values()) | {commodity for commodity, _ in made}
+    # Carriers that Primary Energy is reported by use for are nodes too, e.g. Liquids where
+    # 'Primary Energy|Biomass|Liquids' counts what biofuel plants take in
+    commodities = (set(commodity_nodes.values()) | {commodity for commodity, _ in made}
+                   | {use for _, use in used if use in iamc_carriers and use != other})
     links = []
     for (commodity, source), amount in made.items():
         if source in groups:
@@ -737,7 +749,10 @@ def iamc_flows(data: pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame],
         elif net_exports < 0:
             links.append((imports, commodity, "flow", -net_exports))
 
-    fed = {(start, end) for start, end, kind, _ in links if kind == "flow" and end in commodities}
+    fed = {}
+    for start, end, kind, value in links:
+        if kind == "flow" and end in commodities:
+            fed[(start, end)] = fed.get((start, end), 0.0) + value
     links += final_energy_links(values, tables, commodities, aggregates, fed)
     balance(links, {node for link in links for node in link[:2] if node in commodities})
     return tidy(links)
@@ -827,13 +842,14 @@ def first_levels(values: pd.Series, top: str) -> dict[tuple[str, str], float]:
 
 
 def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commodities: set[str],
-                       aggregates: set[str], fed: set[tuple[str, str]]) -> list[tuple[str, str, str, float]]:
+                       aggregates: set[str], fed: dict[tuple[str, str], float]) -> list[tuple[str, str, str, float]]:
     """Links of Final Energy: from each carrier's node to its sector, or to Final Energy for what
     no sector holds.
 
-    A carrier's node is its Source, e.g. Gas for 'Gases|Gas', or the commodity it sits below
-    where that Source feeds the commodity: 'Gases|Biomass' (biomethane) comes from Gases where
-    Biomass flows into Gases, so its biomass doesn't count twice. Only the most detailed
+    A carrier's node is its Source, e.g. Gas for 'Gases|Gas', or, as far as that Source feeds
+    the commodity it sits below, that commodity: 'Gases|Biomass' (biomethane) comes from Gases
+    up to what Biomass flows into Gases, so its biomass doesn't count twice, and from Biomass
+    beyond that, as fuel that is Primary Energy where it is used. Only the most detailed
     carriers count, not those with children or aggregates. A sector's Other, and sub-sectors
     (e.g. 'Final Energy|Carbon Management|Carbon Capture and Storage|...'), are left out.
 
@@ -842,8 +858,8 @@ def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commo
         tables (dict[str, pd.DataFrame]): The rule tables.
         commodities (set[str]): Commodity nodes.
         aggregates (set[str]): Names in the 'aggregates' table.
-        fed (set[tuple[str, str]]): (Source, commodity) pairs where the data shows the Source
-            flowing into the commodity.
+        fed (dict[tuple[str, str], float]): What the data shows each Source flowing into each
+            commodity, by (Source, commodity).
 
     Returns:
         list[tuple[str, str, str, float]]: The links.
@@ -857,13 +873,17 @@ def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commo
     sources = set(fuels["category"]) | {other}
     roots = set(iamc_carriers) | {carrier.split("|")[0] for carrier in carried} | commodities
 
-    def node_of(carrier: str) -> str:
+    left = dict(fed)
+
+    def drawn(carrier: str, end: str, value: float) -> list[tuple[str, str, str, float]]:
         if carrier in commodities:
-            return carrier
+            return [(carrier, end, "flow", value)]
         last = carrier.split("|")[-1]
         source = carried.get(carrier, last if last in sources else other)
         root = carrier.split("|")[0]
-        return root if (source, root) in fed else source
+        via = min(max(value, 0.0), left.get((source, root), 0.0))
+        left[(source, root)] = left.get((source, root), 0.0) - via
+        return [(root, end, "flow", via), (source, end, "flow", value - via)]
 
     def leaves(names: set[str]) -> set[str]:
         return {name for name in names
@@ -888,13 +908,13 @@ def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commo
         for carrier in leaves(set(carriers)):
             if carrier == other:
                 continue
-            links.append((node_of(carrier), sector, "flow", carriers[carrier]))
+            links += drawn(carrier, sector, carriers[carrier])
             in_sectors[carrier] = in_sectors.get(carrier, 0.0) + carriers[carrier]
     unsectored = by_sector.get("", {})
     for carrier in leaves(set(unsectored)):
         rest = unsectored[carrier] - in_sectors.get(carrier, 0.0)
         if rest > noise:
-            links.append((node_of(carrier), final_energy, "flow", rest))
+            links += drawn(carrier, final_energy, rest)
     return links
 
 
@@ -909,7 +929,7 @@ node_colours = {
     "Gas": fuel_colours["NATGAS"], "Oil": fuel_colours["OIL"], "Nuclear": fuel_colours["NUCLEAR"],
     "Biomass": fuel_colours["BIOMASS"], "Hydro": fuel_colours["WATER"], "Wind": fuel_colours["WIND"],
     "Solar": fuel_colours["SOLAR"], "Electricity": fuel_colours["ELECTRIC"], "Heat": fuel_colours["HEAT"],
-    "Gases": fuel_colours["BIOGAS"], "Hydrogen": "#9a9fd6", on_site_prefix + "Heat": "#6fbf73",
+    "Gases": fuel_colours["BIOGAS"], "Liquids": "#b07d1a", "Hydrogen": "#9a9fd6", on_site_prefix + "Heat": "#6fbf73",
     "Geothermal": "#a0522d", "Ocean": "#1f78b4", ambient_heat: "#f4a261", optiflow_node: "#8e6bbf",
     other: "#9e9e9e", grid: "#7f7f7f", losses: "#c4c4c4", unaccounted: "#9b9b9b",
 }

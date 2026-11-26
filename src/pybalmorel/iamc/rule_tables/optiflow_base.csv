@@ -24,8 +24,13 @@
 # (HeatBuffer_GJ, ElecBuffer_GJ, in PJ): its final energy, reported under Final Energy|Heat and
 # |Electricity and, by sector, under Carbon Management|Direct Air Capture. What OptiFlow's other
 # processes take from the buffers isn't reported, including the electricity for CO2 compression
-# (CO2_Comp_*). Nor is the biomass OptiFlow takes in (Straw_Source, Wood_Source, Manure_Source)
-# or the fossil fuel it burns reported as Primary Energy.
+# (CO2_Comp_*).
+#
+# Primary Energy counts the biomass OptiFlow's plants take in by what they make: liquid fuels
+# (BioFT_*, BioFT_H2_*, TG_*, Pyrolysis_Straw_*, from Biomass_Solid and STRAW) or biogas
+# (Digestion_Tank_*, from STRAW and Biomass_Wet). Balmorel's results carry the straw and wood on
+# its OPTIFLOW units, not the manure. Fossil ship and aircraft fuel counts where it is used, as
+# OptiFlow buys it refined.
 from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note,sector
 CO2_Source_Biogen,CO2_Comp_Bio,CO2_FLOW_BIO,balmorel,bio,Mt CO2,,,,,
 CO2_Grid,CO2_Seq,CO2_FLOW_BIO,store,bio,Mt CO2,,,,,
@@ -54,5 +59,10 @@ LBG_Buffer,LBG_Eff,,report,,PJ,,Final Energy|Bunkers|Gases|Biomass,,,
 LNG_Source,LNG_Eff,,report,,PJ,,Final Energy|Bunkers|Gases|Gas,,,
 ElecBuffer_GJ,Elec_Eff,,report,,PJ,,Final Energy|Bunkers|Electricity,,,
 Liquid_Hydrogen,Hydrogen_(FC_)?Eff,HYDROGEN_FLOW,report,,PJ,,Final Energy|Bunkers|Hydrogen,,,
+Biomass_Solid|STRAW,(BioFT(_H2)?|TG|Pyrolysis_Straw)(_\d+)?,BIOMASS_FLOW(_STRAW)?,report,,PJ,,Primary Energy|Biomass|Liquids|w/o CCS,,,"The straw and wood that OptiFlow's biofuel plants take in, which Balmorel's results carry on its OPTIFLOW units. What pyrolysis takes in counts in full, though it makes biochar too. The plants capture no CO2."
+STRAW|Biomass_Wet,Digestion_Tank_(Straw|Manure)(_\d+)?,BIOMASS_FLOW_(STRAW|MANURE),report,,PJ,,Primary Energy|Biomass|Gases|w/o CCS,,,"The straw and manure that OptiFlow's digesters take in. Biogas upgrading captures CO2 (under Carbon Capture|Energy|Supply|Gases|Biomass), but the biomass counts as w/o CCS, as the CO2 grid mixes that CO2 with that of direct air capture before part of it is stored."
+MDO_Source,MDO_Eff,,report,,PJ,,Primary Energy|Oil|Liquids|w/o CCS,,,"Fuel that OptiFlow buys refined, counted where ships and aircraft use it: what refining loses isn't counted."
+Jet_Source,Aviation_Fuel,,report,,PJ,,Primary Energy|Oil|Liquids|w/o CCS,,,"Fuel that OptiFlow buys refined, counted where ships and aircraft use it: what refining loses isn't counted."
+LNG_Source,LNG_Eff,,report,,PJ,,Primary Energy|Gas|Gases|w/o CCS,,,"Fuel that OptiFlow buys as LNG, counted where ships use it: what liquefying it loses isn't counted."
 HeatBuffer_GJ,CO2_DAC_.*,HEATFLOW_GJ,report,,PJ,,Final Energy|Heat,,,,Carbon Management|Direct Air Capture
 ElecBuffer_GJ,CO2_DAC_.*,ELECFLOW_GJ,report,,PJ,,Final Energy|Electricity,,,,Carbon Management|Direct Air Capture

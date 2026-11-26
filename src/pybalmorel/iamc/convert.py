@@ -1474,7 +1474,7 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
 
     direct = reported[~reported["sector_copy"]]
     placed = pd.DataFrame([
-        (scenario, variable, *place_reported(variable, set(variables), stems))
+        (scenario, variable, *place_reported(variable, set(variables), stems, names))
         for scenario, variables in direct.groupby("iamc_scenario")["variable"].unique().items()
         for variable in variables
     ], columns=["iamc_scenario", "variable", "parent", "stem", "path", "stem_total", "template_stem", "source_path"])
@@ -1530,7 +1530,8 @@ def note_base_mapping(flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[d
         notes.append(note(scenario, "", "", text))
 
 
-def place_reported(variable: str, reported: set[str], stems: pd.DataFrame) -> tuple[str, str, str, str, str, str]:
+def place_reported(variable: str, reported: set[str], stems: pd.DataFrame,
+                   names: set[str]) -> tuple[str, str, str, str, str, str]:
     """Say which IAMC Variables a variable the OptiFlow Mapping reports counts towards.
 
     Below a variable the Mapping reports itself in the same IAMC Scenario (the nearest one, its
@@ -1542,12 +1543,16 @@ def place_reported(variable: str, reported: set[str], stems: pd.DataFrame) -> tu
     stem, the one with its use where its segments after the Source start with one (e.g.
     'Primary Energy|{source}|Electricity'), else '<top>|{source}', so that copy_to_aggregates
     counts it towards the Source's aggregates too, e.g. 'Primary Energy|Biomass|Liquids' towards
-    'Primary Energy|Biomass|Modern'.
+    'Primary Energy|Biomass|Modern'. A segment right after the Source that the stems have no use
+    for is its use where the Source has a variable for the segments after it, so that those
+    count towards the Source too, as under a stem with the use: e.g.
+    'Primary Energy|Biomass|Liquids|w/o CCS' towards 'Primary Energy|Biomass|w/o CCS'.
 
     Args:
         variable (str): The IAMC Variable the Mapping reports, e.g. 'Final Energy|Bunkers|Liquids'.
         reported (set[str]): Every IAMC Variable the Mapping reports in the IAMC Scenario.
         stems (pd.DataFrame): The 'stems' rule table.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
 
     Returns:
         tuple[str, str, str, str, str, str]: The parent ('' for none), stem, path, stem_total,
@@ -1569,6 +1574,8 @@ def place_reported(variable: str, reported: set[str], stems: pd.DataFrame) -> tu
             continue
         source, *after = variable[len(top) + 1:].split("|")
         use = [segment for segment in template.split(source_placeholder)[1].split("|") if segment]
+        if not use and len(after) > 1 and "|".join([top, source, *after[1:]]) in names:
+            template, use = f"{template}|{after[0]}", after[:1]
         if after[:len(use)] == use:
             stem = template.replace(source_placeholder, source)
             return "", stem, variable[len(stem) + 1:], total, template, "|".join([source, *after[len(use):]])

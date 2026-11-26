@@ -1611,6 +1611,48 @@ def test_reported_primary_energy_counts_towards_aggregates(long: pd.DataFrame, f
     assert added("Primary Energy|Non-Biomass Renewables") == pytest.approx(0.0)
 
 
+def test_base_optiflow_mapping_primary_energy(carbon_long: pd.DataFrame, flows: pd.DataFrame,
+                                              primary_definitions: Path) -> None:
+    """The base OptiFlow Mapping counts the biomass OptiFlow's plants take in as Primary Energy by
+    what they make, and fossil ship and aircraft fuel where it is used. Reported by use and with
+    w/o CCS, they count towards the Source's w/o CCS level and its aggregates too, e.g.
+    'Primary Energy|Biomass|Liquids|w/o CCS' towards 'Primary Energy|Biomass|w/o CCS', though the
+    stems have no use template for Liquids."""
+    variables = pd.read_csv(primary_definitions / "variables.csv")
+    pd.concat((variables, pd.DataFrame({"variable": [
+        "Primary Energy|Biomass|Liquids", "Primary Energy|Biomass|Liquids|w/o CCS", "Primary Energy|Biomass|Gases",
+        "Primary Energy|Biomass|Gases|w/o CCS", "Primary Energy|Oil", "Primary Energy|Oil|w/o CCS",
+        "Primary Energy|Oil|Liquids", "Primary Energy|Oil|Liquids|w/o CCS", "Primary Energy|Fossil|Liquids",
+        "Primary Energy|Fossil|Liquids|w/o CCS",
+    ], "unit": "EJ/yr"}))).to_csv(primary_definitions / "variables.csv", index=False)
+    fuels = pd.DataFrame([
+        flow_row("Biomass_Solid", "BioFT_30", "BIOMASS_FLOW", 4),
+        flow_row("Biomass_Wet", "Digestion_Tank_Manure_30", "BIOMASS_FLOW_MANURE", 1),
+        flow_row("MDO_Source", "MDO_Eff", "MDO_FLOW", 2),
+        flow_row("Jet_Source", "Aviation_Fuel", "JET_FLOW", 3),
+    ])
+    data, notes = convert(pd.concat((carbon_long, flows, fuels)), "Balmorel", definitions=primary_definitions)
+    without, _ = convert(pd.concat((carbon_long, flows)), "Balmorel", definitions=primary_definitions)
+
+    def added(variable: str) -> float:
+        return value(data, variable, 2030) - (0.0 if is_empty(without, variable, 2030) else value(without, variable, 2030))
+
+    for variable in ["Primary Energy|Biomass|Liquids|w/o CCS", "Primary Energy|Biomass|Liquids"]:
+        assert added(variable) == pytest.approx(4 / 1e3), variable
+    for variable in ["Primary Energy|Biomass|Gases|w/o CCS", "Primary Energy|Biomass|Gases"]:
+        assert added(variable) == pytest.approx(1 / 1e3), variable
+    for variable in ["Primary Energy|Biomass", "Primary Energy|Biomass|w/o CCS", "Primary Energy|Biomass|Modern",
+                     "Primary Energy|Biomass|Modern|w/o CCS"]:
+        assert added(variable) == pytest.approx(5 / 1e3), variable
+    for variable in ["Primary Energy|Oil|Liquids|w/o CCS", "Primary Energy|Oil|Liquids", "Primary Energy|Oil",
+                     "Primary Energy|Oil|w/o CCS", "Primary Energy|Fossil|Liquids",
+                     "Primary Energy|Fossil|Liquids|w/o CCS", "Primary Energy|Fossil", "Primary Energy|Fossil|w/o CCS"]:
+        assert added(variable) == pytest.approx(5 / 1e3), variable
+    assert added("Primary Energy") == pytest.approx(10 / 1e3)
+    liquids = notes.loc[notes["Variable"] == "Primary Energy|Biomass|Liquids|w/o CCS", "Note"]
+    assert liquids.str.contains("biofuel plants take in").any()
+
+
 def test_prices_weighted_by_demand(long: pd.DataFrame, price_definitions: Path) -> None:
     """A country's price is its regions' mean weighted by demand, in the IAMC unit's currency. A
     country without demand has no price, as it would be an artifact of the LP. Years without

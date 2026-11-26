@@ -158,6 +158,43 @@ def test_selection_errors(long: pd.DataFrame):
         mainresults_flows(long, 2030, "S1")
 
 
+def test_optiflow_flow_drawn_once(long: pd.DataFrame):
+    # Rows for a variable and for variables below it match the same flows; each is drawn once
+    def flow(start: str, end: str, name: str, value: float) -> dict:
+        return {"scenario": "S1", "year": 2050, "country": "DENMARK", "quantity": "flow", "from_process": start,
+                "to_process": end, "flow": name, "value_unit": "PJ", "value": value}
+
+    long = pd.concat([long, pd.DataFrame([flow("Liquid_Hydrogen", "Hydrogen_Eff", "HYDROGEN_FLOW", 36.0),
+                                          flow("Biogas_Upgrading", "Gas_Grid", "GAS_FLOW", 7.2)])],
+                     ignore_index=True)
+    mapping = pd.DataFrame([
+        ["Liquid_Hydrogen", "Hydrogen_Eff", "", "report", "PJ", "Final Energy|Bunkers|Hydrogen"],
+        ["Liquid_Hydrogen", "Hydrogen_Eff", "", "report", "PJ", "Final Energy|Bunkers"],
+        ["Liquid_Hydrogen", "Hydrogen_Eff", "", "report", "PJ", "Final Energy|Bunkers|International Shipping"],
+        ["Biogas_Upgrading", "Gas_Grid", "", "report", "PJ", "Secondary Energy|Gases|Biomass"],
+        ["Biogas_Upgrading", "Gas_Grid", "", "report", "PJ", "Secondary Energy|Gases"],
+    ], columns=["from_process", "to_process", "flow", "role", "unit", "variable"]).assign(
+        pool="", removal="", emissions="")
+    flows = as_dict(mainresults_flows(long, 2050, "S1", countries="DENMARK", rules={"optiflow": mapping}))
+    assert flows[("OptiFlow", "Bunkers", "flow")] == pytest.approx(10.0)
+    assert flows[("OptiFlow", "Gases", "flow")] == pytest.approx(2.0)
+    assert flows[("Gases", "OptiFlow", "flow")] == pytest.approx(2.0)
+
+
+def test_optiflow_primary_energy(long: pd.DataFrame):
+    # Primary Energy rows are what OptiFlow takes from a Source, drawn once though two rows match
+    long = pd.concat([long, pd.DataFrame([{
+        "scenario": "S1", "year": 2050, "country": "DENMARK", "quantity": "flow", "from_process": "Biomass_Solid",
+        "to_process": "BioFT_30", "flow": "BIOMASS_FLOW", "value_unit": "PJ", "value": 18.0}])], ignore_index=True)
+    mapping = pd.DataFrame([
+        ["Biomass_Solid", "BioFT_30", "", "report", "PJ", "Primary Energy|Biomass|Liquids|w/o CCS"],
+        ["Biomass_Solid", "BioFT_30", "", "report", "PJ", "Primary Energy|Biomass|Liquids"],
+    ], columns=["from_process", "to_process", "flow", "role", "unit", "variable"]).assign(
+        pool="", removal="", emissions="")
+    flows = as_dict(mainresults_flows(long, 2050, "S1", countries="DENMARK", rules={"optiflow": mapping}))
+    assert flows[("Biomass", "OptiFlow", "flow")] == pytest.approx(5.0)
+
+
 def test_unit_and_filter(long: pd.DataFrame):
     flows = mainresults_flows(long, 2050, "S1", countries="DENMARK")
     in_pj = finish_flows(flows, "PJ", None)
@@ -211,6 +248,24 @@ def test_iamc_biomethane(iamc: pd.DataFrame):
     assert flows[("Gases", "Unaccounted", "unaccounted")] == pytest.approx(0.5)
     assert ("Biomass", "Industry", "flow") not in flows
     assert flows[("Gas", "Residential and Commercial", "flow")] == pytest.approx(2.5)
+
+
+def test_iamc_primary_energy_by_use(iamc: pd.DataFrame):
+    # Primary Energy reported by use makes the use a node, e.g. Liquids for what biofuel plants take
+    # in. A carrier's final energy comes from that node only up to what its Source fed into it: LNG's
+    # 1 of the 2.5 of fossil gas, the rest straight from Gas
+    extra = {"Primary Energy|Biomass|Liquids|w/o CCS": 4.0, "Primary Energy|Biomass|Liquids": 4.0,
+             "Final Energy|Bunkers|Liquids|Biomass": 3.0, "Primary Energy|Gas|Gases": 1.0}
+    rows = pd.DataFrame([["Balmorel", "S1", "Denmark", variable, "EJ/yr", value * twh_to_ej]
+                         for variable, value in extra.items()], columns=iamc.columns)
+    flows = as_dict(sankey_flows(pd.concat([iamc, rows]), 2050))
+    assert flows[("Biomass", "Liquids", "flow")] == pytest.approx(4.0)
+    assert flows[("Liquids", "Bunkers", "flow")] == pytest.approx(3.0)
+    assert flows[("Liquids", "Unaccounted", "unaccounted")] == pytest.approx(1.0)
+    assert ("Biomass", "Bunkers", "flow") not in flows
+    assert flows[("Gas", "Gases", "flow")] == pytest.approx(1.0)
+    assert flows[("Gases", "Residential and Commercial", "flow")] == pytest.approx(1.0)
+    assert flows[("Gas", "Residential and Commercial", "flow")] == pytest.approx(1.5)
 
 
 def test_iamc_shapes_and_selection(iamc: pd.DataFrame):

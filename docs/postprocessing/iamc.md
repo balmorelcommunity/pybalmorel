@@ -122,6 +122,20 @@ newest design, that of Fristed (2027), as the **base OptiFlow Mapping**.
 lists what the rows that match no flow would have reported. Many unmatched
 rows mean your study has another design.
 
+The base Mapping reports the fuel that ships and aircraft take in under
+`Final Energy|Bunkers`, the CO2 that OptiFlow captures and stores, and the
+heat and electricity that direct air capture uses. It also counts Primary
+Energy:
+
+- The biomass that OptiFlow's biofuel plants and digesters take in, by what
+  they make: `Primary Energy|Biomass|Liquids` and `Primary Energy|Biomass|Gases`.
+- The fossil fuel that ships and aircraft burn, at the point where they burn
+  it: `Primary Energy|Oil|Liquids` and `Primary Energy|Gas|Gases`. OptiFlow
+  buys this fuel already refined, so what refining loses is not counted.
+
+These amounts count towards the totals too, such as
+`Primary Energy|Biomass|w/o CCS`, `Primary Energy|Fossil` and `Primary Energy`.
+
 For another design, write your own Mapping. It replaces the base one as a
 whole: none of the base rows apply. Each row matches flows by
 `from_process`, `to_process` and `flow`, which are regular expressions, and
