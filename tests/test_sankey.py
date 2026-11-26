@@ -19,9 +19,11 @@ import pytest
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.colors import to_rgba
+from matplotlib.patches import Rectangle
 
 from pybalmorel.plotting import sankey_flows, compare_sankey_flows, plot_sankey
-from pybalmorel.plotting.sankey import mainresults_flows, finish_flows
+from pybalmorel.plotting.sankey import mainresults_flows, finish_flows, panels_of
 
 long_columns = ["scenario", "year", "country", "balmorel_region", "area", "unit_name", "tech_type", "fuel",
                 "commodity", "demand_category", "to_country", "to_balmorel_region", "to_area", "quantity",
@@ -196,6 +198,21 @@ def test_iamc_flows(iamc: pd.DataFrame):
         assert flows[link] == pytest.approx(value), link
 
 
+def test_iamc_biomethane(iamc: pd.DataFrame):
+    # Biomethane's final energy comes from Gases, which Primary Energy|Biomass|Gases feeds, not again
+    # from Biomass; fossil gas still comes from Gas
+    extra = {"Primary Energy|Biomass|Gases": 2.0, "Final Energy|Gases|Biomass": 1.5,
+             "Final Energy|Industry|Gases|Biomass": 1.5}
+    rows = pd.DataFrame([["Balmorel", "S1", "Denmark", variable, "EJ/yr", value * twh_to_ej]
+                         for variable, value in extra.items()], columns=iamc.columns)
+    flows = as_dict(sankey_flows(pd.concat([iamc, rows]), 2050))
+    assert flows[("Biomass", "Gases", "flow")] == pytest.approx(2.0)
+    assert flows[("Gases", "Industry", "flow")] == pytest.approx(1.5)
+    assert flows[("Gases", "Unaccounted", "unaccounted")] == pytest.approx(0.5)
+    assert ("Biomass", "Industry", "flow") not in flows
+    assert flows[("Gas", "Residential and Commercial", "flow")] == pytest.approx(2.5)
+
+
 def test_iamc_shapes_and_selection(iamc: pd.DataFrame):
     wide = sankey_flows(iamc, 2050)
     long_iamc = iamc.melt(id_vars=["Model", "Scenario", "Region", "Variable", "Unit"], var_name="Year",
@@ -254,3 +271,39 @@ def test_plot_sankey(long: pd.DataFrame, iamc: pd.DataFrame):
 
     with pytest.raises(Exception, match="no flows to draw"):
         plot_sankey(flows.assign(Value=0.0))
+
+
+def contrast(colour_a: tuple, colour_b: tuple) -> float:
+    """WCAG contrast ratio of two RGBA colours."""
+    def luminance(colour: tuple) -> float:
+        linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in colour[:3]]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    high, low = sorted([luminance(colour_a), luminance(colour_b)], reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+@pytest.mark.parametrize("dark", [False, True])
+def test_plot_sankey_style(long: pd.DataFrame, dark: bool):
+    flows = mainresults_flows(long, 2050, "S1", countries="DENMARK")
+    fig, ax = plot_sankey(flows, unit="TWh", title="Denmark 2050", dark=dark)
+    background = fig.get_facecolor()
+    assert (sum(background[:3]) < 0.5) == dark
+    # Labels are readable in either style
+    texts = [ax.title] + [text for text in ax.texts]
+    assert all(contrast(to_rgba(text.get_color()), background) >= 4.5 for text in texts)
+    # The dark style lightens dark fuel colours so every node stands out. The light style keeps
+    # the package's fuel colours, of which Wind, Solar and Heat are pale against white.
+    if dark:
+        nodes = [patch for patch in ax.patches if isinstance(patch, Rectangle)]
+        assert nodes and all(contrast(patch.get_facecolor(), background) >= 3 for patch in nodes)
+    plt.close(fig)
+
+
+def test_panels_share_one_threshold():
+    # 0.9 is below 0.1% of panel A's largest node (1050), so neither panel draws it, though it is
+    # above 0.1% of panel B's own largest node (150)
+    flows = pd.DataFrame({"From": ["Gas", "Wind", "Gas"], "To": ["Heat", "Electricity", "Electricity"],
+                          "Kind": "flow", "A": [0.9, 1000.0, 50.0], "B": [0.9, 100.0, 50.0]})
+    panels = panels_of(flows, ["A", "B"], 1e-3)
+    for panel in panels:
+        assert set(zip(panel["From"], panel["To"])) == {("Wind", "Electricity"), ("Gas", "Electricity")}

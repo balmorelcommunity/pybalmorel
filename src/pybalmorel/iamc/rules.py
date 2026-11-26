@@ -2,7 +2,8 @@
 IAMC Mapping Rules and Definitions Snapshot
 
 Loads the rule tables in `rule_tables/` (with rows passed by whoever converts taking
-precedence), the Definitions Snapshot in `definitions/` (or one passed in),
+precedence, or, for the OptiFlow Mapping, replacing the base one), the Definitions Snapshot in
+`definitions/` (or one passed in),
 and a Template's Extended List. Also applies the Mapping Rules to units and
 checks that every rule targets names the snapshot still has.
 
@@ -53,6 +54,12 @@ optiflow_roles = ("balmorel", "capture", "store", "report", "fuel")
 pool_roles = ("balmorel", "capture", "store")
 optiflow_patterns = ["from_process", "to_process", "flow"]
 optiflow_targets = ["variable", "removal", "emissions"]
+# Where an 'optiflow' rule comes from ('origin' column): the Mapping the caller passes, the base
+# OptiFlow Mapping shipped for the newest design (which the caller's replaces), or the shipped
+# rows for flows the add-on itself names (which apply either way)
+passed_origin = "passed"
+base_origin = "base"
+addon_origin = "add-on"
 # Area Kind of areas no pattern in the 'areas' table matches
 default_area_kind = "district heating"
 # What the 'final' column of the 'demand_categories' table may say: 'on-site' marks a category
@@ -115,12 +122,15 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         overrides (dict[str, str | Path | pd.DataFrame] | None, optional): Rows to add per table,
             keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries', 'areas',
             'demand_categories', 'optiflow'), as a CSV path or DataFrame with that table's
-            columns. Defaults to None.
+            columns. 'optiflow' rows replace the base OptiFlow Mapping. Defaults to None.
 
     Returns:
-        dict[str, pd.DataFrame]: The tables by name. The 'mapping' and 'optiflow' tables have a
-            'priority' column: 1 for the caller's rows, 0 for the shipped ones. The 'optiflow'
-            table has the caller's rows first; every row applies to every flow it matches.
+        dict[str, pd.DataFrame]: The tables by name. The 'mapping' table has a 'priority'
+            column: 1 for the caller's rows, 0 for the shipped ones. The caller's 'optiflow' rows
+            replace the base OptiFlow Mapping (optiflow_base.csv) as a whole; the shipped rows
+            for the add-on's own flows (optiflow.csv) come after either. Its 'origin' column says
+            which each row is (passed_origin, base_origin, addon_origin); every row applies to
+            every flow it matches.
     """
     overrides = overrides or {}
     unknown = [name for name in overrides if name not in rule_tables]
@@ -140,7 +150,12 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         if name == "mapping":
             table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
         elif name == "optiflow":
-            table = pd.concat((caller.assign(priority=1), shipped.assign(priority=0)), ignore_index=True)
+            # A study's Mapping is for its own design, so it replaces the base one rather than adding
+            # to it, which would count the flows both match twice
+            design = (caller.assign(origin=passed_origin) if name in overrides else
+                      read_table(rules_dir / "optiflow_base.csv", spec["columns"], name, optional).assign(
+                          origin=base_origin))
+            table = pd.concat((design, shipped.assign(origin=addon_origin)), ignore_index=True)
         elif name == "aggregates":
             replaced = shipped["aggregate"].isin(caller["aggregate"])
             table = pd.concat((caller, shipped[~replaced]), ignore_index=True)

@@ -21,10 +21,11 @@ import numpy as np
 import pandas as pd
 
 from .reader import read_mainresults
-from .rules import (carrier_placeholder, default_area_kind, fill_carrier, fill_source, final_quantity, import_unit,
-                    load_definitions, load_rules, load_template, match_area_kinds, match_mapping_rules,
-                    match_optiflow_rules, not_reported, on_site_final, optiflow_unit, pool_roles, sector_other,
-                    sector_variables, source_placeholder, stem_top)
+from .rules import (addon_origin, base_origin, carrier_placeholder, default_area_kind, fill_carrier, fill_source,
+                    final_quantity, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
+                    match_mapping_rules, match_optiflow_rules, not_reported, on_site_final, optiflow_targets,
+                    optiflow_unit, passed_origin, pool_roles, sector_other, sector_variables, source_placeholder,
+                    stem_top)
 from ..backcasting import pricelevel
 
 if TYPE_CHECKING:
@@ -128,7 +129,8 @@ def to_iamc(results: "MainResults",
     give no captured CO2, that of units marked w/ CCS is derived from their fuel input. Without
     OptiFlow, all captured CO2 counts as stored. For scenarios linked to OptiFlow, OptiFlow's
     results are reported as the 'optiflow' rules (the OptiFlow Mapping) say, which also give the
-    stored part. Primary Energy is units' fuel input, or what they make for nuclear and the
+    stored part: the study's, if passed, else the base one shipped for the newest OptiFlow
+    design. Primary Energy is units' fuel input, or what they make for nuclear and the
     non-biomass renewables (direct equivalent), per Source and what it is used for; net imports
     of electricity and hydrogen count as Secondary Energy Trade. Primary Energy and its totals
     per Source (e.g. Primary Energy|Gas) sum all of that, with the fuel of heat units in
@@ -160,7 +162,8 @@ def to_iamc(results: "MainResults",
             (variables.csv, regions.csv). Defaults to the snapshot shipped with pybalmorel.
         rules (dict[str, str | Path | pd.DataFrame] | None, optional): Rule rows that take
             precedence over the shipped ones, keyed by table ('fuels', 'mapping', 'stems',
-            'aggregates', 'countries', 'areas', 'demand_categories', 'optiflow'). Defaults to None.
+            'aggregates', 'countries', 'areas', 'demand_categories', 'optiflow'). 'optiflow' rows
+            replace the base OptiFlow Mapping as a whole. Defaults to None.
         backup_units (str, optional): 'supply' counts backup units' output as supply under their
             fuel, and reports their emissions; 'exclude' leaves both out. Their capacity is never
             reported. Defaults to 'supply'.
@@ -1436,14 +1439,7 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     """
     columns = ["iamc_scenario", "scenario", "region", "quantity", "stem", "path", "variable", "value_unit", "year",
                "value", "withheld", "template_stem", "source_path", "stem_total"]
-    if not (optiflow["priority"] == 1).any():
-        shipped = list_names(optiflow["variable"][optiflow["variable"] != ""])
-        for scenario in sorted(set(flows["iamc_scenario"])):
-            notes.append(note(scenario, "", "", (
-                "Linked to OptiFlow, but no OptiFlow Mapping ('optiflow' rules) was given: of OptiFlow's results, "
-                f"only what the rules shipped with pybalmorel cover is reported ({shipped or 'nothing'}). Pass the "
-                "study's with rules={'optiflow': ...}."
-            )))
+    note_base_mapping(flows, optiflow, notes)
     matched = match_optiflow_rules(flows, optiflow)
     matched = matched.merge(shares[["iamc_scenario", "year", "pool", "share"]], on=["iamc_scenario", "year", "pool"],
                             how="left")
@@ -1492,6 +1488,46 @@ def report_optiflow(flows: pd.DataFrame, optiflow: pd.DataFrame, shares: pd.Data
     copies = copies.assign(stem=copies["variable"], path="", stem_total="", template_stem="", source_path="")
     reported = pd.concat([direct, copies], ignore_index=True)
     return reported.assign(quantity=optiflow_quantity).reindex(columns=columns)
+
+
+def note_base_mapping(flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[dict]) -> None:
+    """Note which OptiFlow Mapping reports OptiFlow's results where the caller passed none.
+
+    The base OptiFlow Mapping is then used, which is made for one OptiFlow design. Its rows that
+    match no flow of an IAMC Scenario are named, as a sign that the scenario's design differs.
+    Where the caller passed an empty Mapping, only the rows for the add-on's own flows are left.
+
+    Args:
+        flows (pd.DataFrame): OptiFlow flows with IAMC Scenarios.
+        optiflow (pd.DataFrame): The 'optiflow' table from load_rules.
+        notes (list[dict]): Conversion Notes, appended to.
+    """
+    if (optiflow["origin"] == passed_origin).any():
+        return
+    scenarios = sorted(set(flows["iamc_scenario"]))
+    base = optiflow[optiflow["origin"] == base_origin].reset_index(drop=True)
+    if base.empty:
+        addon = list_names(optiflow.loc[(optiflow["origin"] == addon_origin) & (optiflow["variable"] != ""), "variable"])
+        for scenario in scenarios:
+            notes.append(note(scenario, "", "", (
+                "Linked to OptiFlow, but the OptiFlow Mapping ('optiflow' rules) given has no rows: of OptiFlow's "
+                f"results, only what the rows for the add-on's own flows cover is reported ({addon or 'nothing'})."
+            )))
+        return
+
+    matched = match_optiflow_rules(flows, base.assign(row=np.arange(len(base))))
+    # A row is named by what it reports, or else by its pool
+    targets = base[optiflow_targets].apply(lambda row: next((target for target in row if target), ""), axis=1)
+    names = targets.where(targets != "", "pool '" + base["pool"] + "'")
+    for scenario in scenarios:
+        missed = ~base.index.isin(matched.loc[matched["iamc_scenario"] == scenario, "row"])
+        text = ("Linked to OptiFlow, and no OptiFlow Mapping ('optiflow' rules) was given, so the base one shipped "
+                "with pybalmorel is used, made for the newest OptiFlow design.")
+        if missed.any():
+            text += (f" {missed.sum()} of its {len(base)} rows match no OptiFlow flow here, those for "
+                     f"{list_names(names[missed])}. If the study's OptiFlow design differs, pass its own Mapping "
+                     "with rules={'optiflow': ...}.")
+        notes.append(note(scenario, "", "", text))
 
 
 def place_reported(variable: str, reported: set[str], stems: pd.DataFrame) -> tuple[str, str, str, str, str, str]:

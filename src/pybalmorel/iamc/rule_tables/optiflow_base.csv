@@ -1,0 +1,58 @@
+# Base OptiFlow Mapping: how the results of the newest OptiFlow design are reported, that of
+# Fristed (2027). It is used where no study passes its own Mapping with
+# rules={'optiflow': ...}, which replaces it as a whole. The rows in optiflow.csv, for flows the
+# add-on itself names, apply either way. Its header explains the roles and columns; to change a
+# row of this design, pass a copy of this file with the change.
+# CO2 flows are in Mt CO2, fuel flows in PJ. CO2_Source_Biogen equals the CO2 Balmorel's units
+# capture from biomass (CC_YCRAG).
+#
+# CO2 is compressed per origin and keeps its flow name on the CO2 grid: biogenic CO2 from Balmorel
+# (CO2_FLOW_BIO, pool 'bio'), CO2 from biogas upgrading and DAC (CO2_FLOW, pool 'gen'), and fossil
+# CO2 from Balmorel (CO2_FLOW_FOSSIL, needs no pool for emissions). As 'gen' mixes biogas and DAC
+# CO2, Geological Storage|Biomass covers only CO2_FLOW_BIO, and |Direct Air Capture isn't given.
+#
+# Balmorel's results carry the CO2 of fossil jet fuel on the units marked OPTIFLOW, at 73.2 kt
+# CO2/PJ: the 'fuel' row. OptiFlow gives ships' CO2 itself (CO2DIR_FLOW from MDO_Eff and LNG_Eff to
+# CO2_Sink); their CO2PROC_FLOW is left out.
+#
+# Ship fuels are reported where they enter the ships' engines and fuel cells (*_Eff, *_All): what
+# leaves them is after their losses. All of it goes to cargo ships (Cargo_*); Transport_Ship_* and
+# Transport_Truck_* move fuel between countries and aren't fuel use. Aircraft fuel is reported
+# where it enters Aviation_Fuel. Ammonia, e-methanol and e-fuels (EFT_*) are made from hydrogen.
+#
+# Direct air capture (CO2_DAC_<vintage>) takes heat and electricity from OptiFlow's buffers
+# (HeatBuffer_GJ, ElecBuffer_GJ, in PJ): its final energy, reported under Final Energy|Heat and
+# |Electricity and, by sector, under Carbon Management|Direct Air Capture. What OptiFlow's other
+# processes take from the buffers isn't reported, including the electricity for CO2 compression
+# (CO2_Comp_*). Nor is the biomass OptiFlow takes in (Straw_Source, Wood_Source, Manure_Source)
+# or the fossil fuel it burns reported as Primary Energy.
+from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note,sector
+CO2_Source_Biogen,CO2_Comp_Bio,CO2_FLOW_BIO,balmorel,bio,Mt CO2,,,,,
+CO2_Grid,CO2_Seq,CO2_FLOW_BIO,store,bio,Mt CO2,,,,,
+CO2_DAC_.*,CO2_Comp_Gen,CO2_FLOW,capture,gen,Mt CO2,,Carbon Capture|Direct Air Capture,Carbon Removal|Geological Storage|Direct Air Capture,Emissions|CO2|Other Capture and Removal,
+Biogas_Upgrading_.*,CO2_Comp_Gen,CO2_FLOW,capture,gen,Mt CO2,,Carbon Capture|Energy|Supply|Gases|Biomass,Carbon Removal|Geological Storage|Biomass,Emissions|CO2|Energy|Supply|Gases|Biomass,
+CO2_Grid,CO2_Seq,CO2_FLOW,store,gen,Mt CO2,,,,,
+CO2_Grid,CO2_Seq,CO2_FLOW(_BIO|_FOSSIL)?,report,,Mt CO2,,Carbon Capture|Geological Storage,,,
+CO2_Grid,CO2_Seq,CO2_FLOW_BIO,report,,Mt CO2,,Carbon Capture|Geological Storage|Biomass,,,"Covers the CO2 Balmorel's units capture from biomass, not that of biogas upgrading, which the CO2 grid mixes with that of direct air capture."
+CO2_Grid,CO2_Seq,CO2_FLOW_FOSSIL,report,,Mt CO2,,Carbon Capture|Geological Storage|Fossil,,,
+Jet_Source,Aviation_Fuel,JET_FLOW,fuel,,Mt CO2,0.0732,,,Emissions|CO2|Energy|Demand|Bunkers|International Aviation,All aviation is counted as international.
+MDO_Eff|LNG_Eff,CO2_Sink,CO2DIR_FLOW,report,,Mt CO2,,Emissions|CO2|Energy|Demand|Bunkers|International Shipping,,,All shipping is counted as international. Covers the ships' CO2 from combustion (CO2DIR_FLOW); their CO2PROC_FLOW is left out.
+MDO_Source|LNG_Source|LBG_Buffer|Biooil_Buffer|Ammonia_Buffer|BioMethanol_Buffer|EMethanol_Buffer|EFT_Diesel_Buffer|ElecBuffer_GJ|Liquid_Hydrogen,(MDO|LNG|LBG|Biooil|EFT_Diesel|Elec|Hydrogen(_FC)?)_Eff|(Ammonia|Methanol)(_FC)?_All,,report,,PJ,,Final Energy|Bunkers,,,All shipping and aviation is counted as international.
+.*,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers,,,
+MDO_Source|LNG_Source|LBG_Buffer|Biooil_Buffer|Ammonia_Buffer|BioMethanol_Buffer|EMethanol_Buffer|EFT_Diesel_Buffer|ElecBuffer_GJ|Liquid_Hydrogen,(MDO|LNG|LBG|Biooil|EFT_Diesel|Elec|Hydrogen(_FC)?)_Eff|(Ammonia|Methanol)(_FC)?_All,,report,,PJ,,Final Energy|Bunkers|International Shipping,,,All shipping is counted as international.
+.*,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers|International Aviation,,,All aviation is counted as international.
+MDO_Source|Biooil_Buffer|Ammonia_Buffer|BioMethanol_Buffer|EMethanol_Buffer|EFT_Diesel_Buffer,(MDO|Biooil|EFT_Diesel)_Eff|(Ammonia|Methanol)(_FC)?_All,,report,,PJ,,Final Energy|Bunkers|Liquids,,,
+.*,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers|Liquids,,,
+Biooil_Buffer|BioMethanol_Buffer,Biooil_Eff|Methanol(_FC)?_All,,report,,PJ,,Final Energy|Bunkers|Liquids|Biomass,,,
+BioJet_Buffer,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers|Liquids|Biomass,,,
+Ammonia_Buffer|EMethanol_Buffer|EFT_Diesel_Buffer,EFT_Diesel_Eff|(Ammonia|Methanol)(_FC)?_All,,report,,PJ,,Final Energy|Bunkers|Liquids|Hydrogen,,,
+EFT_Jet_Buffer,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers|Liquids|Hydrogen,,,
+MDO_Source,MDO_Eff,,report,,PJ,,Final Energy|Bunkers|Liquids|Oil,,,
+Jet_Source,Aviation_Fuel,,report,,PJ,,Final Energy|Bunkers|Liquids|Oil,,,
+LNG_Source|LBG_Buffer,LNG_Eff|LBG_Eff,,report,,PJ,,Final Energy|Bunkers|Gases,,,
+LBG_Buffer,LBG_Eff,,report,,PJ,,Final Energy|Bunkers|Gases|Biomass,,,
+LNG_Source,LNG_Eff,,report,,PJ,,Final Energy|Bunkers|Gases|Gas,,,
+ElecBuffer_GJ,Elec_Eff,,report,,PJ,,Final Energy|Bunkers|Electricity,,,
+Liquid_Hydrogen,Hydrogen_(FC_)?Eff,HYDROGEN_FLOW,report,,PJ,,Final Energy|Bunkers|Hydrogen,,,
+HeatBuffer_GJ,CO2_DAC_.*,HEATFLOW_GJ,report,,PJ,,Final Energy|Heat,,,,Carbon Management|Direct Air Capture
+ElecBuffer_GJ,CO2_DAC_.*,ELECFLOW_GJ,report,,PJ,,Final Energy|Electricity,,,,Carbon Management|Direct Air Capture

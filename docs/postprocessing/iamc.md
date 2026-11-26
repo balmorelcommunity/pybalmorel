@@ -104,8 +104,9 @@ data, notes = results.to_iamc('Balmorel-DTU', rules=rules)
 ```
 
 Your row replaces the shipped row with the same key, e.g. the same `fuel`.
-`mapping` and `optiflow` rows have no key: yours are added and tried first.
-Then run `check_rules(rules=rules)`. It lists the rows whose IAMC Variables
+`mapping` rows have no key: yours are added and tried first. `optiflow`
+rows are different: they replace the base OptiFlow Mapping as a whole (see
+below). Then run `check_rules(rules=rules)`. It lists the rows whose IAMC Variables
 are not in the Definitions Snapshot.
 
 ### Report OptiFlow results
@@ -114,10 +115,17 @@ For a run linked to the OptiFlow add-on, `to_iamc` reads
 `Optiflow_<MainResults file>` from the folder of each MainResults file. To
 read another file, pass it per Balmorel scenario with `optiflow`.
 
-OptiFlow designs differ between studies, so each study writes its own
-OptiFlow Mapping. Each row matches flows by `from_process`, `to_process`
-and `flow`, which are regular expressions, and gives them a `role`. For
-example, a CSV file `optiflow_mystudy.csv`:
+OptiFlow designs differ between studies. An **OptiFlow Mapping** says how
+the results of one design are reported. pybalmorel ships the Mapping of the
+newest design, that of Fristed (2027), as the **base OptiFlow Mapping**.
+`to_iamc` uses it when you pass none. A Conversion Note then says so, and
+lists what the rows that match no flow would have reported. Many unmatched
+rows mean your study has another design.
+
+For another design, write your own Mapping. It replaces the base one as a
+whole: none of the base rows apply. Each row matches flows by
+`from_process`, `to_process` and `flow`, which are regular expressions, and
+gives them a `role`. For example, a CSV file `optiflow_mystudy.csv`:
 
 ```text
 from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note,sector
@@ -146,9 +154,19 @@ These rows do the following:
   `Final Energy|Heat`. The `sector` column also reports it under
   `Final Energy|Carbon Management|…`.
 
-Without a study's rows, the CO2 Balmorel's units capture has no stored
-share. The emissions and removal that depend on it are then left empty.
-The header of
+To change a few rows of the base design, copy
+[optiflow_base.csv](https://github.com/Mathias157/pybalmorel/blob/master/src/pybalmorel/iamc/rule_tables/optiflow_base.csv),
+edit it and pass the copy.
+
+Some flows are the same in every design, because the add-on itself names
+them: the heat and electricity OptiFlow gives to Balmorel through its
+`HeatBuffer` and `ElecBuffer`. pybalmorel reports these with its own rows,
+whichever Mapping applies. Your Mapping must not report them again, since
+every row applies to every flow it matches.
+
+If no row of the Mapping brings the CO2 Balmorel's units capture into a
+pool, that CO2 has no stored share. The emissions and removal that depend on
+it are then left empty. The header of
 [optiflow.csv](https://github.com/Mathias157/pybalmorel/blob/master/src/pybalmorel/iamc/rule_tables/optiflow.csv)
 explains every role and column.
 
@@ -209,4 +227,4 @@ Conversion has three layers
 | `countries` | Balmorel country to ISO3 code, which gives the IAMC Region |
 | `areas` | Area-name patterns for individual and industry areas. Other areas are district heating |
 | `demand_categories` | Which demand categories are final energy, and their Final Energy Sector |
-| `optiflow` | The OptiFlow Mapping: which OptiFlow flows to report, and how |
+| `optiflow` | The OptiFlow Mapping: which OptiFlow flows to report, and how. The base one is in `optiflow_base.csv`; `optiflow.csv` has the rows for the add-on's own flows |

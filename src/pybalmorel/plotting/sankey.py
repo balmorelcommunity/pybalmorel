@@ -737,7 +737,8 @@ def iamc_flows(data: pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame],
         elif net_exports < 0:
             links.append((imports, commodity, "flow", -net_exports))
 
-    links += final_energy_links(values, tables, commodities, aggregates)
+    fed = {(start, end) for start, end, kind, _ in links if kind == "flow" and end in commodities}
+    links += final_energy_links(values, tables, commodities, aggregates, fed)
     balance(links, {node for link in links for node in link[:2] if node in commodities})
     return tidy(links)
 
@@ -826,19 +827,23 @@ def first_levels(values: pd.Series, top: str) -> dict[tuple[str, str], float]:
 
 
 def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commodities: set[str],
-                       aggregates: set[str]) -> list[tuple[str, str, str, float]]:
+                       aggregates: set[str], fed: set[tuple[str, str]]) -> list[tuple[str, str, str, float]]:
     """Links of Final Energy: from each carrier's node to its sector, or to Final Energy for what
     no sector holds.
 
-    Only the most detailed carriers count, not those with children or aggregates. A sector's
-    Other, and sub-sectors (e.g. 'Final Energy|Carbon Management|Carbon Capture and Storage|...'),
-    are left out.
+    A carrier's node is its Source, e.g. Gas for 'Gases|Gas', or the commodity it sits below
+    where that Source feeds the commodity: 'Gases|Biomass' (biomethane) comes from Gases where
+    Biomass flows into Gases, so its biomass doesn't count twice. Only the most detailed
+    carriers count, not those with children or aggregates. A sector's Other, and sub-sectors
+    (e.g. 'Final Energy|Carbon Management|Carbon Capture and Storage|...'), are left out.
 
     Args:
         values (pd.Series): Values by IAMC Variable.
         tables (dict[str, pd.DataFrame]): The rule tables.
         commodities (set[str]): Commodity nodes.
         aggregates (set[str]): Names in the 'aggregates' table.
+        fed (set[tuple[str, str]]): (Source, commodity) pairs where the data shows the Source
+            flowing into the commodity.
 
     Returns:
         list[tuple[str, str, str, float]]: The links.
@@ -855,10 +860,10 @@ def final_energy_links(values: pd.Series, tables: dict[str, pd.DataFrame], commo
     def node_of(carrier: str) -> str:
         if carrier in commodities:
             return carrier
-        if carrier in carried:
-            return carried[carrier]
         last = carrier.split("|")[-1]
-        return last if last in sources else other
+        source = carried.get(carrier, last if last in sources else other)
+        root = carrier.split("|")[0]
+        return root if (source, root) in fed else source
 
     def leaves(names: set[str]) -> set[str]:
         return {name for name in names
@@ -908,10 +913,16 @@ node_colours = {
     "Geothermal": "#a0522d", "Ocean": "#1f78b4", ambient_heat: "#f4a261", optiflow_node: "#8e6bbf",
     other: "#9e9e9e", grid: "#7f7f7f", losses: "#c4c4c4", unaccounted: "#9b9b9b",
 }
-sink_colour = "#5b6770"
-grey_link = "#c4c4c4"
-text_colour = "#333333"
-link_alpha = 0.5
+# Styles: background, text, colours of final uses without one of their own and of grey links, how
+# opaque links are, and node colours. The dark style lightens the fuel colours that would fall
+# below 3:1 contrast against its background, keeping their hue.
+styles = {
+    "light": {"background": "#ffffff", "text": "#333333", "sink": "#5b6770", "grey": "#c4c4c4", "alpha": 0.5,
+              "nodes": node_colours},
+    "dark": {"background": "#191919", "text": "#e6e6e6", "sink": "#9aa5ae", "grey": "#c4c4c4", "alpha": 0.55,
+             "nodes": node_colours | {"Coal": "#717171", "Gas": "#b63d3f", "Oil": "#97655b", "Biomass": "#2a7d78",
+                                      "Electricity": "#ec483f"}},
+}
 # Vertical order of sources and of final uses; names not listed go before Other and Final
 # Energy. Commodities are ordered to cross the fewest links, ties in this order.
 source_order = [imports, "Coal", "Gas", "Oil", "Nuclear", "Biomass", "Hydro", "Wind", "Solar", "Geothermal",
@@ -931,7 +942,8 @@ def plot_sankey(flows: pd.DataFrame,
                 title: str | None = None,
                 min_share: float = 1e-3,
                 figsize: tuple[float, float] | None = None,
-                label_size: float = 8) -> tuple[Figure, Axes | np.ndarray]:
+                label_size: float = 8,
+                dark: bool = False) -> tuple[Figure, Axes | np.ndarray]:
     """Draw a Sankey diagram of a flow table, one panel per value column.
 
     Sources are on the left and final uses on the right, commodities in between: a commodity's
@@ -940,24 +952,29 @@ def plot_sankey(flows: pd.DataFrame,
     back to a commodity further left loop below the diagram. Panels share one scale, so the
     same height is the same amount in each.
 
+    The dark style draws on a near-black background with light text, and lightens the dark fuel
+    colours (Coal, Gas, Oil, Biomass and Electricity) so they stand out from it.
+
     Args:
         flows (pd.DataFrame): Columns From and To and the values: Value, or several value
             columns (e.g. MainResults and IAMC from sankey_flows with iamc=), each drawn in a
             panel of its own. Kind and Difference are not drawn.
         unit (str | None, optional): Unit of the values, for the labels. Defaults to None.
         title (str | None, optional): Title of the figure. Defaults to None.
-        min_share (float, optional): Links smaller than this share of the largest node are not
-            drawn. Defaults to 1e-3.
+        min_share (float, optional): Links smaller than this share of the largest node in any
+            panel are not drawn, so panels leave out the same links. Defaults to 1e-3.
         figsize (tuple[float, float] | None, optional): Figure size in inches. Defaults to None,
             11 by 6 inches per panel.
         label_size (float, optional): Font size of the node labels. Defaults to 8.
+        dark (bool, optional): Draw in the dark style. Defaults to False.
 
     Returns:
         tuple[Figure, Axes | np.ndarray]: The figure, and its axes, or an array of them where
             there are several panels.
     """
+    style = styles["dark" if dark else "light"]
     names = value_columns(flows)
-    panels = [panel_links(flows, name, min_share) for name in names]
+    panels = panels_of(flows, names, min_share)
     if all(panel.empty for panel in panels):
         raise Exception("There are no flows to draw: every value is zero or below min_share of the largest node.")
     columns, order = arrange(panels)
@@ -971,7 +988,8 @@ def plot_sankey(flows: pd.DataFrame,
     bottom = extent + gap + max(loop_depth(loop, gap) for loop in loops)
     top = -gap
 
-    figure, axes = plt.subplots(1, len(names), figsize=figsize or (11 * len(names), 6), squeeze=False)
+    figure, axes = plt.subplots(1, len(names), figsize=figsize or (11 * len(names), 6), squeeze=False,
+                                facecolor=style["background"])
     axes = axes[0]
     figure.subplots_adjust(left=0.01, right=0.99, top=0.9 if title and len(names) > 1 else 0.93, bottom=0.02,
                            wspace=0.04)
@@ -988,11 +1006,12 @@ def plot_sankey(flows: pd.DataFrame,
         axis.set_ylim(bottom, top)
         axis.axis("off")
         x_per_y = (box.height * figure.get_figheight() / (bottom - top)) * per_inch
-        draw_panel(axis, panel, nodes, loop, n_columns, extent + gap, gap, x_per_y, unit, label_size)
+        draw_panel(axis, panel, nodes, loop, n_columns, extent + gap, gap, x_per_y, unit, label_size, style)
         if len(names) > 1:
-            axis.set_title(name, color=text_colour)
+            axis.set_title(name, color=style["text"])
     if title:
-        (figure.suptitle(title, color=text_colour) if len(names) > 1 else axes[0].set_title(title, color=text_colour))
+        (figure.suptitle(title, color=style["text"]) if len(names) > 1
+         else axes[0].set_title(title, color=style["text"]))
     return (figure, axes[0]) if len(names) == 1 else (figure, axes)
 
 
@@ -1016,13 +1035,29 @@ def value_columns(flows: pd.DataFrame) -> list[str]:
     return names
 
 
-def panel_links(flows: pd.DataFrame, name: str, min_share: float) -> pd.DataFrame:
+def panels_of(flows: pd.DataFrame, names: list[str], min_share: float) -> list[pd.DataFrame]:
+    """The links of each panel, without those smaller than min_share of the largest node in any
+    panel. One threshold for all panels makes them leave out the same links.
+
+    Args:
+        flows (pd.DataFrame): The flow table.
+        names (list[str]): The value columns, one per panel.
+        min_share (float): Share of the largest node below which links are left out.
+
+    Returns:
+        list[pd.DataFrame]: Each panel's links, as panel_links gives them.
+    """
+    panels = [panel_links(flows, name) for name in names]
+    largest = max((max(node_sizes(panel).values()) for panel in panels if not panel.empty), default=0.0)
+    return [panel[panel["Value"] >= min_share * largest].reset_index(drop=True) for panel in panels]
+
+
+def panel_links(flows: pd.DataFrame, name: str) -> pd.DataFrame:
     """The links of one panel: kinds summed per pair of nodes, nodes drawn twice told apart.
 
     Args:
         flows (pd.DataFrame): The flow table.
         name (str): The value column.
-        min_share (float): Links smaller than this share of the largest node are left out.
 
     Returns:
         pd.DataFrame: Columns From, To and Value, From and To as node ids.
@@ -1032,9 +1067,6 @@ def panel_links(flows: pd.DataFrame, name: str, min_share: float) -> pd.DataFram
     links = links[links["Value"] > noise]
     links["From"] = links["From"].map(lambda node: f"{node}{side_marker}out" if node in two_sided else node)
     links["To"] = links["To"].map(lambda node: f"{node}{side_marker}in" if node in two_sided else node)
-    sizes = node_sizes(links)
-    if sizes:
-        links = links[links["Value"] >= min_share * max(sizes.values())]
     return links.reset_index(drop=True)
 
 
@@ -1221,24 +1253,25 @@ def label_text(node: str, value: float, unit: str | None) -> str:
     return f"{label_of(node)} {amount}" + (f" {unit}" if unit else "")
 
 
-def link_colour(start: str, end: str) -> str:
+def link_colour(start: str, end: str, style: dict) -> str:
     """Colour of a link: grey to Losses and to and from Unaccounted, else that of its start.
 
     Args:
         start (str): The node it leaves.
         end (str): The node it enters.
+        style (dict): The style, one of styles.
 
     Returns:
         str: The colour.
     """
     if label_of(end) in (losses, unaccounted) or label_of(start) == unaccounted:
-        return grey_link
-    return node_colours.get(label_of(start), sink_colour)
+        return style["grey"]
+    return style["nodes"].get(label_of(start), style["sink"])
 
 
 def draw_panel(axis: Axes, links: pd.DataFrame, placed: dict[str, tuple[int, float, float]], loops: pd.DataFrame,
                n_columns: int, bottom: float, gap: float, x_per_y: float, unit: str | None,
-               label_size: float) -> None:
+               label_size: float, style: dict) -> None:
     """Draw one panel's links, nodes and labels.
 
     Args:
@@ -1252,6 +1285,7 @@ def draw_panel(axis: Axes, links: pd.DataFrame, placed: dict[str, tuple[int, flo
         x_per_y (float): Width in x units of one y unit, so loops are as thick across as along.
         unit (str | None): Unit of the values.
         label_size (float): Font size of labels.
+        style (dict): The style, one of styles.
     """
     centre = {node: top + size / 2 for node, (_, top, size) in placed.items()}
     looped = set(zip(loops["From"], loops["To"]))
@@ -1276,7 +1310,7 @@ def draw_panel(axis: Axes, links: pd.DataFrame, placed: dict[str, tuple[int, flo
     lane = bottom
     reach = loop_offset
     for start, end, value in zip(links["From"], links["To"], links["Value"]):
-        colour = link_colour(start, end)
+        colour = link_colour(start, end, style)
         x_start = placed[start][0] + node_width
         x_end = placed[end][0]
         y_start, y_end = out_slot[(start, end)], in_slot[(start, end)]
@@ -1286,7 +1320,7 @@ def draw_panel(axis: Axes, links: pd.DataFrame, placed: dict[str, tuple[int, flo
                        (x_end - reach - across, lane + value), (x_end - reach - across, y_end), (x_end, y_end),
                        (x_end, y_end + value), (x_end - reach, y_end + value), (x_end - reach, lane),
                        (x_start + reach, lane), (x_start + reach, y_start + value), (x_start, y_start + value)]
-            axis.add_patch(Polygon(outline, closed=True, facecolor=colour, edgecolor="none", alpha=link_alpha,
+            axis.add_patch(Polygon(outline, closed=True, facecolor=colour, edgecolor="none", alpha=style["alpha"],
                                        zorder=1))
             lane += value + gap
             reach += across + loop_offset / 2
@@ -1296,21 +1330,22 @@ def draw_panel(axis: Axes, links: pd.DataFrame, placed: dict[str, tuple[int, flo
                     (x_end, y_end + value), (middle, y_end + value), (middle, y_start + value), (x_start, y_start + value),
                     (x_start, y_start)]
         codes = [DrawPath.MOVETO] + [DrawPath.CURVE4] * 3 + [DrawPath.LINETO] + [DrawPath.CURVE4] * 3 + [DrawPath.CLOSEPOLY]
-        axis.add_patch(PathPatch(DrawPath(vertices, codes), facecolor=colour, edgecolor="none", alpha=link_alpha,
+        axis.add_patch(PathPatch(DrawPath(vertices, codes), facecolor=colour, edgecolor="none", alpha=style["alpha"],
                                  zorder=1))
 
     for node, (column, top, size) in placed.items():
         name = label_of(node)
-        colour = node_colours.get(name, sink_colour if column == n_columns - 1 else node_colours[other])
+        colour = style["nodes"].get(name, style["sink"] if column == n_columns - 1 else style["nodes"][other])
         axis.add_patch(Rectangle((column, top), node_width, size, facecolor=colour, edgecolor="none", zorder=2))
         text = label_text(node, size, unit)
         if column == 0:
             axis.text(column - 0.01, centre[node], text, ha="right", va="center", fontsize=label_size,
-                      color=text_colour, zorder=3)
+                      color=style["text"], zorder=3)
         elif column == n_columns - 1:
             axis.text(column + node_width + 0.01, centre[node], text, ha="left", va="center", fontsize=label_size,
-                      color=text_colour, zorder=3)
+                      color=style["text"], zorder=3)
         else:
             axis.text(column + node_width + 0.01, centre[node], text, ha="left", va="center", fontsize=label_size,
-                      color=text_colour, zorder=3,
-                      bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none", "boxstyle": "round,pad=0.15"})
+                      color=style["text"], zorder=3,
+                      bbox={"facecolor": style["background"], "alpha": 0.7, "edgecolor": "none",
+                            "boxstyle": "round,pad=0.15"})

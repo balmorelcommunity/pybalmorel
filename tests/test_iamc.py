@@ -338,6 +338,12 @@ def flow_row(from_process: str, to_process: str, flow: str, value: float) -> dic
             "quantity": "flow", "value_unit": "", "value": value}
 
 
+def base_optiflow_rows() -> pd.DataFrame:
+    """The rows of the base OptiFlow Mapping, as load_rules gives them."""
+    optiflow = load_rules()["optiflow"]
+    return optiflow[optiflow["origin"] == "base"]
+
+
 @pytest.fixture
 def carbon_long() -> pd.DataFrame:
     """Danish units in a district heating area in 2030 that emit or capture CO2:
@@ -995,15 +1001,19 @@ def test_carbon_linked_to_optiflow(carbon_long: pd.DataFrame, flows: pd.DataFram
 
 
 @pytest.mark.parametrize("link", ["flows", "carried", "stored"])
-def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows: pd.DataFrame, definitions: Path,
-                                                link: str) -> None:
-    """Linked to OptiFlow by its flows, or by OptiFlow's emissions the results carry, but without
-    an OptiFlow Mapping, the stored part of the CO2 captured from biomass can't be known: what
-    it counts towards is left empty, and the rest is reported. Negative carried emissions, as
-    in 2027_madsen, are flagged as likely stored CO2."""
+def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, definitions: Path, link: str) -> None:
+    """Linked to OptiFlow by flows of a design the base OptiFlow Mapping doesn't fit, or by
+    OptiFlow's emissions the results carry, and without a Mapping of the study's own, the stored
+    part of the CO2 captured from biomass can't be known: what it counts towards is left empty,
+    and the rest is reported. Negative carried emissions, as in 2027_madsen, are flagged as
+    likely stored CO2."""
     carried_kt = -500 if link == "stored" else 500
     carried = pd.DataFrame([carbon_row("AROS3_ST_FUELOIL_EXT", "OPTIFLOW", "FUELOIL", "emissions", carried_kt)])
-    data, notes = convert(pd.concat((carbon_long, flows if link == "flows" else carried)), "Balmorel",
+    other_design = pd.DataFrame([
+        flow_row("CO2_Source_Biogen", "CO2", "CO2_FLOW", 200),
+        flow_row("CO2", "CO2_SEQUESTRATION", "CO2_FLOW", 150),
+    ])
+    data, notes = convert(pd.concat((carbon_long, other_design if link == "flows" else carried)), "Balmorel",
                           definitions=definitions)
 
     for variable in ("Emissions|CO2|Energy|Supply|Electricity", "Emissions|CO2|Energy|Supply|Heat",
@@ -1016,7 +1026,9 @@ def test_carbon_linked_without_optiflow_mapping(carbon_long: pd.DataFrame, flows
     text = " ".join(notes["Note"])
     assert "gives no share stored of the CO2 that units capture from biomass: 2030: 200 kt CO2 in Denmark" in text
     if link == "flows":
-        assert "no OptiFlow Mapping ('optiflow' rules) was given" in text
+        assert "so the base one shipped with pybalmorel is used" in text
+        assert f"{len(base_optiflow_rows())} of its {len(base_optiflow_rows())} rows match no OptiFlow flow here" in text
+        assert "pass its own Mapping with rules={'optiflow': ...}" in text
         assert "Final Energy|Bunkers|Hydrogen" not in set(data["Variable"])
     else:
         assert "Not reported as Balmorel's: OptiFlow's emissions that the results carry on units OPTIFLOW/FUELOIL, " \
@@ -1052,10 +1064,46 @@ def test_heat_buffer(long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd
     text = " ".join(notes["Note"])
     assert "The heat OptiFlow's processes give to district heating" in text
     assert "The electricity OptiFlow's processes give to the grid" in text
-    shipped_only = ("no OptiFlow Mapping ('optiflow' rules) was given: of OptiFlow's results, only what the rules "
-                    "shipped with pybalmorel cover is reported (Secondary Energy|Electricity|Other, "
-                    "Secondary Energy|Heat|Other)")
-    assert (shipped_only in text) == (not mapping)
+    assert ("so the base one shipped with pybalmorel is used" in text) == (not mapping)
+
+
+def test_passed_optiflow_mapping_replaces_base(optiflow_rules: pd.DataFrame) -> None:
+    """Without a passed OptiFlow Mapping, the base one applies; a passed one, even an empty one,
+    replaces it. The rows for the add-on's own flows (its HeatBuffer and ElecBuffer) apply either
+    way."""
+    default = load_rules()["optiflow"]
+    addon = default[default["origin"] == "add-on"]
+    assert set(default["origin"]) == {"base", "add-on"}
+    assert set(addon["to_process"]) == {"HeatBuffer", "ElecBuffer"}
+
+    passed = load_rules({"optiflow": optiflow_rules})["optiflow"]
+    assert passed["origin"].value_counts().to_dict() == {"passed": len(optiflow_rules), "add-on": len(addon)}
+    empty = load_rules({"optiflow": optiflow_rules.iloc[:0]})["optiflow"]
+    assert empty["origin"].value_counts().to_dict() == {"add-on": len(addon)}
+
+
+def test_base_optiflow_mapping(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,
+                               definitions: Path) -> None:
+    """Linked to OptiFlow and without a passed OptiFlow Mapping, OptiFlow's results are reported as
+    the base one says, and a note names what its rows that match no flow would report. A passed
+    Mapping replaces it: what only the base one reports is left out, and there is no such note."""
+    data, notes = convert(pd.concat((carbon_long, flows)), "Balmorel", definitions=definitions)
+    passed, passed_notes = convert(pd.concat((carbon_long, flows)), "Balmorel", definitions=definitions,
+                                   rules={"optiflow": optiflow_rules})
+
+    assert value(data, "Final Energy|Bunkers|Hydrogen", 2030) == pytest.approx(10 / 1e3)
+    # The base Mapping is in Mt CO2, the flows here in kt: only the shares are comparable
+    assert value(data, "Carbon Capture|Geological Storage|Biomass", 2030) == pytest.approx(150)
+    assert is_empty(passed, "Carbon Capture|Geological Storage|Biomass", 2030)
+
+    text = " ".join(notes["Note"])
+    assert "OptiFlow stores 2030: 0.75 of the CO2 entering pool 'bio'" in text
+    assert "OptiFlow stores 2030: 0.5 of the CO2 entering pool 'gen'" in text
+    assert "so the base one shipped with pybalmorel is used, made for the newest OptiFlow design" in text
+    unmatched = notes.loc[notes["Note"].str.contains("match no OptiFlow flow here"), "Note"].item()
+    assert "Carbon Capture|Geological Storage|Fossil" in unmatched
+    assert "Carbon Capture|Direct Air Capture" not in unmatched
+    assert "so the base one shipped" not in " ".join(passed_notes["Note"])
 
 
 @pytest.fixture

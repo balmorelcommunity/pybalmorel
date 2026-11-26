@@ -1,6 +1,8 @@
 # OptiFlow Mapping: how results of a Balmorel run linked to OptiFlow are reported. OptiFlow
-# designs differ between studies, so pass a study's rows with rules={'optiflow': ...}; they add to
-# the rows here. Only flows the add-on itself names, the same in every study, have rows here:
+# designs differ between studies. pybalmorel ships the Mapping of the newest design in
+# optiflow_base.csv, the base OptiFlow Mapping; a study of another design passes its own with
+# rules={'optiflow': ...}, which replaces the base one. The rows here apply either way: they are
+# for flows the add-on itself names, the same in every study:
 #   HeatBuffer  The heat OptiFlow's processes give to district heating ('HEATFLOW' into the
 #               add-on's 'HeatBuffer'; Balmorel's heat balance, QHEQ, takes it in). It is in
 #               TWh, as Balmorel's heat is in MWh and the add-on's output file divides every flow
@@ -11,7 +13,7 @@
 #               Secondary Energy|Electricity|Other.
 # What OptiFlow takes from district heating and the grid (out of the buffers) is not reported
 # here: it is final energy only for some processes, e.g. direct air capture, whose names differ
-# between studies, so a study's rows report it, e.g. under 'Final Energy|Heat' with sector
+# between designs, so the design's Mapping reports it, e.g. under 'Final Energy|Heat' with sector
 # 'Carbon Management|Direct Air Capture' (from 'HeatBuffer_GJ' to its processes, in PJ). Fuel
 # and biogas production that takes it is energy transformation.
 # A study's rows must not report these flows again, as every row applies to every flow it matches.

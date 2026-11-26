@@ -88,6 +88,19 @@ results.plot_sankey(2050, countries='DENMARK', unit='PJ')
 The units you can choose are TWh, GWh, MWh, PJ, TJ, GJ, EJ, Mtoe and ktoe,
 each also with `/yr`.
 
+### Draw it dark
+
+```python
+fig, ax = results.plot_sankey(2050, countries='DENMARK', dark=True)
+fig.savefig('sankey_dark.png')
+```
+
+![Dark Sankey diagram of Denmark in 2050](../img/sankey/sankey_denmark_dark.png)
+
+The dark style uses a near-black background and light text. Coal, Gas, Oil,
+Biomass and Electricity are drawn lighter than their usual colours so they
+show against it. `savefig` keeps the dark background.
+
 ### Show only part of the flows
 
 `filter` is a [pandas query](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html)
@@ -103,7 +116,8 @@ results.plot_sankey(2050, countries='DENMARK', filter="To == 'Hydrogen' or From 
 ```
 
 `min_share` hides flows smaller than that share of the largest node. The
-default is 0.001.
+default is 0.001. Side by side, the largest node of either diagram sets the
+limit, so both hide the same flows.
 
 ### Get the flows as a table
 
@@ -156,8 +170,14 @@ The two sides are meant to differ in some places:
 - **Heat in individual and industry areas.** MainResults draws it through
   On-site Heat. The IAMC data reports the fuel burnt for it as final energy of
   the sector, and the electricity used for it as Final Energy.
+- **Biomethane in power and heat plants.** The IAMC data counts electricity
+  and district heat made from biomethane as made from biomass. MainResults
+  draws them from Gases. On the IAMC side, the biomethane those plants burn
+  shows as Unaccounted.
 - **Trade.** MainResults shows imports and exports in each direction. The IAMC
-  data reports net exports.
+  data reports net exports. Heat moved between district heating and
+  individual or industry areas is netted over the year too, whereas
+  MainResults shows it in each direction.
 - **Nuclear.** MainResults shows its fuel input and losses. The IAMC data
   counts nuclear by what it makes (direct equivalent), so it has no losses.
 
