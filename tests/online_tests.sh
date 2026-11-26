@@ -17,6 +17,7 @@ python -m pytest tests/test_entsoe_maps.py
 python -m pytest tests/test_entsoe_profile.py
 python -m pytest tests/test_production_profile.py
 python -m pytest tests/test_iamc.py
+python -m pytest tests/test_sankey.py
 
 echo -e
 echo "NOTE:"

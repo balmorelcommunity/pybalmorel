@@ -90,6 +90,9 @@ optiflow_columns = {"Y": "year", "CCC": "country", "IPROCFROM": "from_process", 
 optiflow_prefix = "Optiflow_"
 # Columns naming where something is, whose country the Country column gives
 place_columns = ["Region", "Area", "From"]
+# Columns that give the Balmorel region of a row, and of where exchange goes, when the Reader
+# keeps regions (by_region); 'From' is the sending region of electricity and hydrogen exchange
+region_columns = {"Region": "balmorel_region", "From": "balmorel_region", "To region": "to_balmorel_region"}
 
 
 #%% ------------------------------- ###
@@ -97,7 +100,8 @@ place_columns = ["Region", "Area", "From"]
 ### ------------------------------- ###
 
 def read_mainresults(results: "MainResults",
-                     optiflow: dict[str, str | Path | None] | None = None) -> pd.DataFrame:
+                     optiflow: dict[str, str | Path | None] | None = None,
+                     by_region: bool = False) -> pd.DataFrame:
     """Read the long table of what each unit and area does from MainResults.
 
     Capacity is net: the sum of G_CAP_YCRAF's exogenous, endogenous and (negative)
@@ -116,6 +120,10 @@ def read_mainresults(results: "MainResults",
             scenario; None for a scenario without OptiFlow. Scenarios not listed use
             'Optiflow_<MainResults file>' next to their MainResults file, if it exists.
             Defaults to None.
+        by_region (bool, optional): Keep the Balmorel region of each row ('balmorel_region'),
+            and of where electricity and hydrogen exchange goes ('to_balmorel_region'), instead
+            of summing over the regions of a country. Prices and OptiFlow's flows have none.
+            Defaults to False.
 
     Returns:
         pd.DataFrame: One row per scenario, year, country, area, unit, fuel, commodity, demand
@@ -149,12 +157,15 @@ def read_mainresults(results: "MainResults",
         to_country = table["To"].astype(str).map(countries).fillna("") if "To" in table.columns else ""
 
         table = table.rename(columns=spec["renames"]).rename(columns=long_columns)
+        if by_region:
+            table = table.rename(columns=region_columns)
         if spec["commodity"] is not None:
             table["commodity"] = spec["commodity"]
-        for column in long_columns.values():
+        kept = list(long_columns.values()) + (list(dict.fromkeys(region_columns.values())) if by_region else [])
+        for column in kept:
             if column not in table.columns:
                 table[column] = ""
-        table = table[list(long_columns.values())].assign(to_country=to_country, stated_unit="")
+        table = table[kept].assign(to_country=to_country, stated_unit="")
         if "unit" in spec:
             stated = table["value_unit"].astype(str)
             table["stated_unit"] = stated.where(~stated.isin(spec["unit_aliases"]), "")
@@ -172,7 +183,10 @@ def read_mainresults(results: "MainResults",
     if not flows.empty:
         tables.append(flows)
     long = pd.concat(tables, ignore_index=True)
-    for column in list(long_columns.values()) + extra_columns:
+    columns = list(long_columns.values()) + extra_columns
+    if by_region:
+        columns += list(dict.fromkeys(region_columns.values()))
+    for column in columns:
         if column not in long.columns:
             long[column] = ""
         if column != "value":

@@ -254,3 +254,25 @@ Not reported: MainResults holds investment costs only as annuities spread over t
 **Conversion Notes**:
 The table returned with the IAMC data that says how its numbers were made and what was left out: the split methods used, fossil-only fallbacks, what went into Other, backup output, and amounts left out under Coverage. Each note names its IAMC Scenario, Region and Variable. When the same thing happens in several regions, there is one note per scenario that names the regions and gives the total, and its Region is left empty. They are also printed as warnings, and written as a Notes sheet next to the data.
 _Avoid_: Metadata, meta (IAMC uses those for scenario-level indicators)
+
+### Sankey diagrams
+
+**Sankey**:
+A diagram of the energy flows of one scenario in one year, summed over chosen countries, drawn either from MainResults or from IAMC data. Both use the same node names (IAMC's Sources, commodities and Final Energy Sectors), so that the two drawn side by side show where the IAMC data says something different from MainResults. One drawn from MainResults can also cover chosen regions or areas; one drawn from IAMC data only countries, as an IAMC Region is a country.
+_Avoid_: Energy balance (the Commodity Balance is a check, not a diagram)
+
+**On-site Heat**:
+The heat that units in individual and industry areas make, which IAMC doesn't report (see District-Heating Area / Individual Area / Industry Area). A node of a Sankey drawn from MainResults, between what those units take in and the sectors that use their heat; its Heat Exchange into district heating flows on to Heat. A Sankey drawn from IAMC data has no such node: there, what those units take in goes straight to final energy, as On-Site Fuel Use and On-Site Use.
+_Avoid_: Heat (alone: centralized heat, as in IAMC)
+
+**Ambient Heat**:
+The heat that heat pumps take from air, ground or water: what they make beyond the electricity they take in. A Source only in a Sankey drawn from MainResults, as IAMC has no such Source.
+_Avoid_: Geothermal (heat from deep wells, a Source of its own)
+
+**Unaccounted**:
+The node of a Sankey that takes whatever doesn't add up at another node, in either direction. Drawn from IAMC data, it holds the energy whose origin or destination the IAMC data doesn't give: the electricity, hydrogen and heat that units take in to make other energy, which no IAMC Variable reports (so the conversion leaves them out, without a note), and grid and storage losses. Drawn from either, it also gives what units make beyond what they take in, other than Ambient Heat, e.g. biomass units above 100% of their fuel's heating value. It shows what the conversion leaves out.
+_Avoid_: Losses
+
+**Losses**:
+The node of a Sankey that takes the energy the data says is lost: what units take in less what they make, and, drawn from MainResults, what the grid and storage lose. Drawn from IAMC data, only units fed by a Source have losses, as their Primary Energy less their Secondary Energy; everything else lost falls into Unaccounted.
+_Avoid_: Rejected energy

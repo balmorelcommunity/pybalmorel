@@ -22,6 +22,7 @@ from matplotlib.axes import Axes
 from .utils import symbol_to_df
 from .plotting.production_profile import plot_profile, plot_profiles
 from .plotting.maps_balmorel import plot_map
+from .plotting.sankey import sankey_flows, plot_sankey
 from .weatheryear.corres_to_energy_system_model import export_timeseries_to_xlsx
 from .weatheryear.to_balmorel import export_timeseries_to_balmorel_format
 from .weatheryear.additional_inc import create_additional_inc
@@ -352,6 +353,66 @@ class MainResults:
             Tuple[pd.DataFrame, pd.DataFrame]: The IAMC data and the Conversion Notes.
         """
         return to_iamc(self, model, **kwargs)
+
+    def sankey_flows(self, year: int, **kwargs) -> pd.DataFrame:
+        """Make the flow table of a Sankey diagram, see pybalmorel.plotting.sankey_flows for the options.
+
+        Args:
+            year (int): The year.
+
+        Returns:
+            pd.DataFrame: Columns From, To, Kind and Value; with iamc=, From, To, Kind,
+                MainResults, IAMC and Difference.
+        """
+        return sankey_flows(self, year, **kwargs)
+
+    def plot_sankey(self,
+                    year: int,
+                    scenario: str | int = 0,
+                    countries: str | list[str] | None = None,
+                    regions: str | list[str] | None = None,
+                    areas: str | list[str] | None = None,
+                    unit: str = 'TWh',
+                    filter: str | None = None,
+                    iamc: pd.DataFrame | Tuple[pd.DataFrame, pd.DataFrame] | None = None,
+                    iamc_scenario: str | int | None = None,
+                    rules: dict | None = None,
+                    optiflow: dict | None = None,
+                    definitions: str | Path | None = None,
+                    **kwargs) -> Tuple[Figure, Axes | np.ndarray]:
+        """Draw a Sankey diagram of one scenario and year, or of it beside its IAMC data.
+
+        See pybalmorel.plotting.sankey_flows for what the arguments choose, and
+        pybalmorel.plotting.plot_sankey for the keyword arguments of the drawing.
+
+        Args:
+            year (int): The year.
+            scenario (str | int, optional): The scenario, or its position. Defaults to 0.
+            countries (str | list[str] | None, optional): Countries to cover. Defaults to None, all.
+            regions (str | list[str] | None, optional): Regions to cover instead. Defaults to None.
+            areas (str | list[str] | None, optional): Areas to cover instead. Defaults to None.
+            unit (str, optional): Energy unit, e.g. 'TWh', 'PJ' or 'EJ/yr'. Defaults to 'TWh'.
+            filter (str | None, optional): A pandas query on From, To, Kind and Value that the
+                flows drawn must meet, e.g. "Kind != 'loss'". Defaults to None.
+            iamc (pd.DataFrame | Tuple[pd.DataFrame, pd.DataFrame] | None, optional): IAMC data of
+                these results, as to_iamc returns it, to draw beside them. Defaults to None.
+            iamc_scenario (str | int | None, optional): The IAMC Scenario to draw. Defaults to
+                None, the scenario's name.
+            rules (dict | None, optional): Rule rows, as in to_iamc. Defaults to None.
+            optiflow (dict | None, optional): OptiFlow result files, as in to_iamc. Defaults to None.
+            definitions (str | Path | None, optional): Your own Definitions Snapshot. Defaults to None.
+
+        Returns:
+            Tuple[Figure, Axes | np.ndarray]: The figure, and its axes, or both panels' axes with iamc=.
+        """
+        flows = sankey_flows(self, year, scenario, countries, regions, areas, unit, filter, iamc, iamc_scenario,
+                             rules, optiflow, definitions)
+        if 'title' not in kwargs:
+            name = self.sc[scenario] if isinstance(scenario, (int, np.integer)) else scenario
+            places = countries if countries is not None else (regions if regions is not None else areas)
+            places = ', '.join([places] if isinstance(places, str) else list(places)) if places is not None else None
+            kwargs['title'] = ', '.join(str(part) for part in (name, places, year) if part is not None)
+        return plot_sankey(flows, unit=unit, **kwargs)
 
     # For wrapping functions, makes it possible to add imported functions in __init__ easily
     def _existing_func_wrapper(self, function, *args, **kwargs):
