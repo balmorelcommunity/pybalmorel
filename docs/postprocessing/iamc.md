@@ -136,6 +136,18 @@ Energy:
 These amounts count towards the totals too, such as
 `Primary Energy|Biomass|w/o CCS`, `Primary Energy|Fossil` and `Primary Energy`.
 
+It also reports the fuel that OptiFlow's plants make, where it leaves the
+plants and before it is moved between countries:
+
+- Liquid fuels under `Secondary Energy|Liquids`: from biomass (Fischer-Tropsch
+  diesel and jet fuel, pyrolysis oil and methanol) under
+  `Secondary Energy|Liquids|Biomass`, and from hydrogen (ammonia, methanol and
+  Fischer-Tropsch fuel) under `Secondary Energy|Liquids|Hydrogen`.
+- Biomethane under `Secondary Energy|Gases` and `Secondary Energy|Gases|Biomass`.
+
+A plant that adds hydrogen to biomass or biogas, such as methanation, counts
+as making all of its fuel from biomass.
+
 For another design, write your own Mapping. It replaces the base one as a
 whole: none of the base rows apply. Each row matches flows by
 `from_process`, `to_process` and `flow`, which are regular expressions, and

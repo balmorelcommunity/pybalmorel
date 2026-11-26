@@ -1653,6 +1653,40 @@ def test_base_optiflow_mapping_primary_energy(carbon_long: pd.DataFrame, flows: 
     assert liquids.str.contains("biofuel plants take in").any()
 
 
+def test_base_optiflow_mapping_secondary_energy(carbon_long: pd.DataFrame, flows: pd.DataFrame,
+                                                definitions: Path) -> None:
+    """The base OptiFlow Mapping counts the fuels OptiFlow's plants make as Secondary Energy where
+    they leave the plants, before they move between countries: Fischer-Tropsch fuel from hydrogen
+    where it leaves EFT_Sum, which loses part of what the EFT plants make. Each level is reported
+    from its own rows."""
+    variables = pd.read_csv(definitions / "variables.csv")
+    pd.concat((variables, pd.DataFrame({"variable": [
+        "Secondary Energy|Liquids", "Secondary Energy|Liquids|Biomass", "Secondary Energy|Liquids|Hydrogen",
+        "Secondary Energy|Gases", "Secondary Energy|Gases|Biomass",
+    ], "unit": "EJ/yr"}))).to_csv(definitions / "variables.csv", index=False)
+    fuels = pd.DataFrame([
+        flow_row("BioFT_H2_30", "BioDiesel_Sum", "BIODIESEL_FLOW", 4),
+        flow_row("Methanol_synthesis_TG_30", "BioMethanol_Total", "METHANOL_FLOW_TG", 1),
+        flow_row("Ammonia_Synthesis_30", "Ammonia_Buffer", "AMMONIA_FLOW", 2),
+        flow_row("EFT_30", "EFT_Sum", "DROPIN_FLOW", 7),
+        flow_row("EFT_Sum", "EFT_Diesel_Buffer", "EDIESEL_FLOW", 3),
+        flow_row("EFT_Sum", "EFT_Jet_Buffer", "EJET_FLOW", 3),
+        flow_row("Transport_Ship_Ammonia", "Ammonia_Buffer", "AMMONIA_FLOW", 5),
+        flow_row("Biogas_Upgrading_30", "SNG_Total", "SNG_FLOW", 1.5),
+    ])
+    data, _ = convert(pd.concat((carbon_long, flows, fuels)), "Balmorel", definitions=definitions)
+    without, _ = convert(pd.concat((carbon_long, flows)), "Balmorel", definitions=definitions)
+
+    def added(variable: str) -> float:
+        return value(data, variable, 2030) - (0.0 if is_empty(without, variable, 2030) else value(without, variable, 2030))
+
+    assert added("Secondary Energy|Liquids|Biomass") == pytest.approx(5 / 1e3)
+    assert added("Secondary Energy|Liquids|Hydrogen") == pytest.approx(8 / 1e3)
+    assert added("Secondary Energy|Liquids") == pytest.approx(13 / 1e3)
+    for variable in ["Secondary Energy|Gases", "Secondary Energy|Gases|Biomass"]:
+        assert added(variable) == pytest.approx(1.5 / 1e3), variable
+
+
 def test_prices_weighted_by_demand(long: pd.DataFrame, price_definitions: Path) -> None:
     """A country's price is its regions' mean weighted by demand, in the IAMC unit's currency. A
     country without demand has no price, as it would be an artifact of the LP. Years without

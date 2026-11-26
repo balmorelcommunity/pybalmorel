@@ -30,12 +30,12 @@ both sides use the same names.
 - **Sources** are the Fuel Categories of what units burn, such as Biomass,
   Gas or Wind. Units that burn a commodity, such as heat pumps or
   electrolysers, draw from that commodity's node instead.
-- **Commodities** are Electricity, Heat, Hydrogen and Gases. Heat made in
-  individual and industry areas goes to **On-site Heat**, because the IAMC
-  data counts it as final energy rather than as centralized heat. In IAMC
-  data, a use that Primary Energy is reported by is a commodity too. For
-  example, **Liquids** holds the biomass that OptiFlow's biofuel plants take
-  in.
+- **Commodities** are Electricity, Heat, Hydrogen, Gases and Liquids. Heat
+  made in individual and industry areas goes to **On-site Heat**, because the
+  IAMC data counts it as final energy rather than as centralized heat.
+  **Liquids** and **Gases** hold the fuel that OptiFlow makes or buys, when
+  the OptiFlow Mapping reports it. In IAMC data, a use that Primary Energy is
+  reported by is a commodity too.
 - **Final Energy Sectors** such as Residential and Commercial or Industry
   receive the final demand whose sector Balmorel knows. All other final
   demand goes to **Final Energy**.
@@ -44,9 +44,14 @@ both sides use the same names.
 - **Losses** collects conversion losses, grid losses and storage losses.
 - **Ambient Heat** is the heat that heat pumps take from their surroundings.
 - **OptiFlow** appears when the results come from the OptiFlow add-on. It
-  shows what OptiFlow takes from Balmorel's commodities, what the OptiFlow
-  Mapping reports it taking from Sources as Primary Energy, and what the
-  Mapping reports it giving back.
+  shows what OptiFlow takes from Balmorel's commodities and what the OptiFlow
+  Mapping reports it taking from Sources as Primary Energy. Fuel the Mapping
+  reports OptiFlow making flows on to Liquids or Gases. Fuel OptiFlow buys
+  and uses as it is, such as marine diesel, flows from its Source straight to
+  Liquids or Gases. Ships and aircraft take their fuel from there, as far as
+  the Mapping says which fuel it is. Heat and electricity OptiFlow gives
+  back to Balmorel flow from OptiFlow to Heat or Electricity and back again,
+  because Balmorel's demand for OptiFlow is already net of them.
 - **Unaccounted** balances each commodity. When more of a commodity flows in
   than out, or the other way round, the difference goes to or comes from
   Unaccounted. It shows what the data leaves out. In IAMC data, for example,
@@ -183,10 +188,16 @@ The two sides are meant to differ in some places:
   and district heat made from biomethane as made from biomass. MainResults
   draws them from Gases. On the IAMC side, the biomethane those plants burn
   shows as Unaccounted.
-- **Biofuels made by OptiFlow.** The IAMC data reports the biomass that the
-  plants take in and the biofuel that ships and aircraft use. It does not
-  report what the plants make. On the IAMC side, the plants' conversion
-  losses therefore show as Unaccounted from Liquids.
+- **Fuel made by OptiFlow.** MainResults draws the biomass, hydrogen and
+  electricity OptiFlow takes in through the OptiFlow node, and what it makes
+  from OptiFlow to Liquids and Gases. The IAMC data has no OptiFlow node: it
+  draws the biomass straight into Liquids and Gases, with the plants'
+  conversion losses, and hydrogen into Liquids. Hydrogen and electricity
+  that ships use come from OptiFlow on the MainResults side and from
+  Hydrogen and Electricity on the IAMC side.
+- **Fuel moved between countries.** Both sides count OptiFlow's fuel where
+  it leaves the plants. What is lost moving it between countries shows as
+  Unaccounted from Liquids and Gases, on both sides.
 - **Trade.** MainResults shows imports and exports in each direction. The IAMC
   data reports net exports. Heat moved between district heating and
   individual or industry areas is netted over the year too, whereas

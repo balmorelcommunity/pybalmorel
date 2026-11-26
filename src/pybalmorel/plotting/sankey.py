@@ -29,8 +29,8 @@ from matplotlib.path import Path as DrawPath
 
 from ..formatting import fuel_colours
 from ..iamc.reader import read_mainresults
-from ..iamc.rules import (import_unit, load_definitions, load_rules, match_area_kinds, match_mapping_rules,
-                          match_optiflow_rules, not_reported, optiflow_unit)
+from ..iamc.rules import (addon_origin, import_unit, load_definitions, load_rules, match_area_kinds,
+                          match_mapping_rules, match_optiflow_rules, not_reported, optiflow_unit)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -403,7 +403,7 @@ def mainresults_flows(long: pd.DataFrame,
         transmission_links(rows, level, names, area_places, node_of, links, nodes)
     heat_exchange_links(rows, level, names, area_places, tables, node_of, links, nodes)
     if level == "country":
-        optiflow_links(rows[rows["inside"]], tables, links)
+        optiflow_links(rows[rows["inside"]], tables, links, nodes)
     other_end = {node: grid for node in grid_commodities} if level == "area" else None
     balance(links, nodes, other_end)
     return tidy(links)
@@ -641,20 +641,28 @@ def heat_exchange_links(rows: pd.DataFrame, level: str, names: list[str] | None,
             nodes.add(receiver)
 
 
-def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: list) -> None:
-    """Links of what the OptiFlow Mapping's 'report' rules say OptiFlow takes from Sources
-    (Primary Energy) and gives to Balmorel's commodities (Secondary Energy) or to final use
+def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: list, nodes: set) -> None:
+    """Links of what the OptiFlow rules' 'report' rows say OptiFlow takes from Sources (Primary
+    Energy), makes or gives to Balmorel's commodities (Secondary Energy), and gives to final use
     (Final Energy).
 
-    OptiFlow's demand on a commodity (ENDO_OPTIFLOW) is net of what it gives back, so what it
-    gives back is added to it. Each flow is drawn once under each of Primary, Secondary and
-    Final Energy at most, by the least detailed row that reports it there, as rows for e.g.
-    'Final Energy|Bunkers' and 'Final Energy|Bunkers|Liquids' match the same flows.
+    The add-on's own rows report what OptiFlow gives to Balmorel's district heating and grid.
+    OptiFlow's demand on a commodity (ENDO_OPTIFLOW) is net of that, so it is added to the
+    demand too. What the OptiFlow Mapping's rows say OptiFlow makes goes to its carrier's node,
+    e.g. Liquids. Fuel that OptiFlow buys and uses as it is goes from its Source to that node: a
+    flow that both a Primary and a Final Energy row report. Final Energy of a carrier and Source
+    that either feeds, e.g. 'Final Energy|Bunkers|Liquids|Biomass', comes from the carrier's node.
+    Other Final Energy, e.g. of the hydrogen OptiFlow takes from Balmorel, comes from OptiFlow.
+    Each flow is drawn once at most under each of Primary, Secondary and Final Energy, by the
+    least detailed row that reports it there. Rows for e.g. 'Final Energy|Bunkers' and
+    'Final Energy|Bunkers|Liquids' match the same flows. Its carrier and Source come from the
+    most detailed row that names a carrier.
 
     Args:
         rows (pd.DataFrame): Rows of the long table in the selection.
         tables (dict[str, pd.DataFrame]): The rule tables.
         links (list): Links (From, To, Kind, Value), appended to.
+        nodes (set): Commodity nodes to balance, added to.
     """
     flows = rows[rows["quantity"] == "flow"]
     if flows.empty:
@@ -663,27 +671,77 @@ def optiflow_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], links: l
     matched = match_optiflow_rules(flows, tables["optiflow"])
     matched = matched[(matched["role"] == "report") & matched["variable"].str.match(
         f"({primary_energy}|{secondary_energy}|{final_energy})\\|")]
-    matched = matched.assign(level=matched["variable"].str.split("|").str[0],
+    energy = matched["value_unit"].isin(list(units_per_twh))
+    for variable, unit in matched.loc[~energy, ["variable", "value_unit"]].drop_duplicates().itertuples(index=False):
+        print(f"Warning: the OptiFlow Mapping reports {variable} in '{unit}', not an energy unit; left out of "
+              "the Sankey.")
+    matched = matched[energy]
+    if matched.empty:
+        return
+    pairs = pd.DataFrame(matched["variable"].map(carrier_named).tolist(), index=matched.index,
+                         columns=["carrier", "source"])
+    matched = matched.assign(value=matched["value"] * matched["value_unit"].map(to_twh), **pairs,
+                             level=matched["variable"].str.split("|").str[0],
                              depth=matched["variable"].str.count(r"\|"))
-    matched = matched.sort_values("depth", kind="stable").drop_duplicates(["flow_row", "level"])
+
+    # What feeds a carrier's node: what the Mapping says OptiFlow makes, and fuel used as bought
+    used = set(matched.loc[matched["level"] == final_energy, "flow_row"])
+    feeding = matched[(matched["carrier"] != "") & (
+        ((matched["level"] == secondary_energy) & (matched["origin"] != addon_origin))
+        | ((matched["level"] == primary_energy) & matched["flow_row"].isin(used)))]
+    fed = set(zip(feeding["carrier"], feeding["source"])) | {(carrier, "") for carrier in feeding["carrier"]}
+    deepest = matched[matched["carrier"] != ""].sort_values("depth", kind="stable").drop_duplicates(
+        ["flow_row", "level"], keep="last")
+    named = {(flow_row, level): (carrier, source) for flow_row, level, carrier, source
+             in deepest[["flow_row", "level", "carrier", "source"]].itertuples(index=False)}
+
+    drawn = matched.sort_values("depth", kind="stable").drop_duplicates(["flow_row", "level"])
     sectors = {rule.split("|")[0] for rule in tables["optiflow"]["sector"] if rule}
-    for row in matched.itertuples():
-        if row.value_unit not in units_per_twh:
-            print(f"Warning: the OptiFlow Mapping reports {row.variable} in '{row.value_unit}', not an energy "
-                  "unit; left out of the Sankey.")
-            continue
-        value = row.value * to_twh(row.value_unit)
+    for row in drawn.itertuples():
+        carrier, source = named.get((row.flow_row, row.level), ("", ""))
         segments = row.variable.split("|")
-        if segments[0] == primary_energy:
-            links.append((segments[1], optiflow_node, "flow", value))
-        elif segments[0] == secondary_energy:
-            links.append((optiflow_node, segments[1], "flow", value))
-            links.append((segments[1], optiflow_node, "flow", value))
-        elif row.sector:
-            links.append((optiflow_node, row.sector.split("|")[0], "flow", value))
+        if row.level == primary_energy:
+            end = carrier if carrier and row.flow_row in used else optiflow_node
+            if end != optiflow_node:
+                nodes.add(end)
+            links.append((segments[1], end, "flow", row.value))
+        elif row.level == secondary_energy:
+            links.append((optiflow_node, segments[1], "flow", row.value))
+            if row.origin == addon_origin:
+                links.append((segments[1], optiflow_node, "flow", row.value))
+            else:
+                nodes.add(segments[1])
         else:
-            sector = segments[1] if segments[1] in sectors or segments[1] not in iamc_carriers else final_energy
-            links.append((optiflow_node, sector, "flow", value))
+            start = carrier if (carrier, source) in fed else optiflow_node
+            if start != optiflow_node:
+                nodes.add(start)
+            if row.sector:
+                sector = row.sector.split("|")[0]
+            else:
+                sector = segments[1] if segments[1] in sectors or segments[1] not in iamc_carriers else final_energy
+            links.append((start, sector, "flow", row.value))
+
+
+def carrier_named(variable: str) -> tuple[str, str]:
+    """The carrier an IAMC Variable names, and the Source of it.
+
+    Args:
+        variable (str): e.g. 'Final Energy|Bunkers|Liquids|Oil', 'Secondary Energy|Liquids|Biomass'
+            or 'Primary Energy|Oil|Liquids|w/o CCS'.
+
+    Returns:
+        tuple[str, str]: e.g. ('Liquids', 'Oil'), ('Liquids', 'Biomass') or ('Liquids', 'Oil');
+            the Source is '' where the variable names none, and both are '' where it names no
+            carrier.
+    """
+    segments = variable.split("|")
+    if segments[0] == primary_energy:
+        use = segments[2] if len(segments) > 2 and segments[2] in iamc_carriers else ""
+        return (use, segments[1]) if use else ("", "")
+    at = next((index for index in range(1, len(segments)) if segments[index] in iamc_carriers), None)
+    if at is None:
+        return "", ""
+    return segments[at], segments[at + 1] if at + 1 < len(segments) else ""
 
 
 #%% ------------------------------- ###
@@ -949,7 +1007,7 @@ source_order = [imports, "Coal", "Gas", "Oil", "Nuclear", "Biomass", "Hydro", "W
                 "Ocean", ambient_heat, other, unaccounted, grid]
 sink_order = ["Residential and Commercial", "Industry", "Transportation", "Carbon Management", "Bunkers",
               final_energy, optiflow_node, exports, losses, unaccounted, grid]
-inner_order = ["Electricity", "Hydrogen", "Gases", "Heat", on_site_prefix + "Heat", optiflow_node]
+inner_order = ["Electricity", "Hydrogen", "Gases", "Liquids", "Heat", on_site_prefix + "Heat", optiflow_node]
 # Geometry, in column spacings (x) and shares of the tallest column (y)
 node_width = 0.04
 gap_share = 0.04

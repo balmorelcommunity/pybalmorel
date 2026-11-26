@@ -31,6 +31,15 @@
 # (Digestion_Tank_*, from STRAW and Biomass_Wet). Balmorel's results carry the straw and wood on
 # its OPTIFLOW units, not the manure. Fossil ship and aircraft fuel counts where it is used, as
 # OptiFlow buys it refined.
+#
+# Secondary Energy counts what the fuel plants make, where it leaves them, before fuel moves
+# between countries (Transport_Ship_*, Transport_Truck_*): liquid biofuels (BioFT_*, BioFT_H2_*,
+# Pyrolysis_Straw_*, Methanol_synthesis_*), liquid fuels from hydrogen (Ammonia_Synthesis_*,
+# EMethanol_synthesis_*, EFT_*) and biomethane (Biogas_Upgrading_*, Methanation_*, into
+# SNG_Total). EFT_* plants make a raw product that EFT_Sum turns into diesel and jet fuel, losing
+# part of it; their fuel is counted where it leaves EFT_Sum, so the loss counts as part of making
+# it. A plant that adds hydrogen to biomass or biogas (BioFT_H2_*, Methanol_synthesis_TG_*,
+# Methanation_*) counts as making its whole output from biomass.
 from_process,to_process,flow,role,pool,unit,factor,variable,removal,emissions,note,sector
 CO2_Source_Biogen,CO2_Comp_Bio,CO2_FLOW_BIO,balmorel,bio,Mt CO2,,,,,
 CO2_Grid,CO2_Seq,CO2_FLOW_BIO,store,bio,Mt CO2,,,,,
@@ -64,5 +73,10 @@ STRAW|Biomass_Wet,Digestion_Tank_(Straw|Manure)(_\d+)?,BIOMASS_FLOW_(STRAW|MANUR
 MDO_Source,MDO_Eff,,report,,PJ,,Primary Energy|Oil|Liquids|w/o CCS,,,"Fuel that OptiFlow buys refined, counted where ships and aircraft use it: what refining loses isn't counted."
 Jet_Source,Aviation_Fuel,,report,,PJ,,Primary Energy|Oil|Liquids|w/o CCS,,,"Fuel that OptiFlow buys refined, counted where ships and aircraft use it: what refining loses isn't counted."
 LNG_Source,LNG_Eff,,report,,PJ,,Primary Energy|Gas|Gases|w/o CCS,,,"Fuel that OptiFlow buys as LNG, counted where ships use it: what liquefying it loses isn't counted."
+(BioFT(_H2)?|Pyrolysis_Straw|Methanol_synthesis_(TG|biogas)|Ammonia_Synthesis|EMethanol_synthesis)(_\d+)?|EFT_Sum,BioDiesel_Sum|BioJet_Sum|Biooil_Buffer|BioMethanol_Total|Ammonia_Buffer|EMethanol|EFT_(Diesel|Jet)_Buffer,,report,,PJ,,Secondary Energy|Liquids,,,"The liquid fuels OptiFlow's plants make, where they leave the plants. Oil products are not made in the model: OptiFlow buys them refined."
+(BioFT(_H2)?|Pyrolysis_Straw|Methanol_synthesis_(TG|biogas))(_\d+)?,BioDiesel_Sum|BioJet_Sum|Biooil_Buffer|BioMethanol_Total,,report,,PJ,,Secondary Energy|Liquids|Biomass,,,"Fischer-Tropsch diesel and jet fuel, pyrolysis oil and methanol from OptiFlow's biofuel plants. Plants that add hydrogen to the biomass (BioFT_H2_*, Methanol_synthesis_TG_*) count as making all of it from biomass."
+(Ammonia_Synthesis|EMethanol_synthesis)(_\d+)?|EFT_Sum,Ammonia_Buffer|EMethanol|EFT_(Diesel|Jet)_Buffer,,report,,PJ,,Secondary Energy|Liquids|Hydrogen,,,"Ammonia, methanol and Fischer-Tropsch fuels that OptiFlow makes from hydrogen."
+(Biogas_Upgrading|Methanation)(_\d+)?,SNG_Total,SNG_FLOW,report,,PJ,,Secondary Energy|Gases,,,"Biomethane that OptiFlow makes from biogas, by upgrading it or by methanation."
+(Biogas_Upgrading|Methanation)(_\d+)?,SNG_Total,SNG_FLOW,report,,PJ,,Secondary Energy|Gases|Biomass,,,"Biomethane that OptiFlow makes from biogas, by upgrading it or by methanation. Methanation adds hydrogen to the biogas, and its output counts as made from biomass in full."
 HeatBuffer_GJ,CO2_DAC_.*,HEATFLOW_GJ,report,,PJ,,Final Energy|Heat,,,,Carbon Management|Direct Air Capture
 ElecBuffer_GJ,CO2_DAC_.*,ELECFLOW_GJ,report,,PJ,,Final Energy|Electricity,,,,Carbon Management|Direct Air Capture

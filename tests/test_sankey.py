@@ -178,7 +178,42 @@ def test_optiflow_flow_drawn_once(long: pd.DataFrame):
     flows = as_dict(mainresults_flows(long, 2050, "S1", countries="DENMARK", rules={"optiflow": mapping}))
     assert flows[("OptiFlow", "Bunkers", "flow")] == pytest.approx(10.0)
     assert flows[("OptiFlow", "Gases", "flow")] == pytest.approx(2.0)
-    assert flows[("Gases", "OptiFlow", "flow")] == pytest.approx(2.0)
+    # What the Mapping says OptiFlow makes stays in the carrier's node; nothing uses it here
+    assert ("Gases", "OptiFlow", "flow") not in flows
+    assert flows[("Gases", "Unaccounted", "unaccounted")] == pytest.approx(2.0)
+
+
+def test_optiflow_fuels(long: pd.DataFrame):
+    # Fuel OptiFlow makes or buys reaches Bunkers through the carrier's node; what OptiFlow gives
+    # Balmorel's district heating (an add-on row, in TWh) goes back to OptiFlow, as Balmorel's demand is net of it
+    def flow(start: str, end: str, name: str, value: float) -> dict:
+        return {"scenario": "S1", "year": 2050, "country": "DENMARK", "quantity": "flow", "from_process": start,
+                "to_process": end, "flow": name, "value_unit": "PJ", "value": value}
+
+    long = pd.concat([long, pd.DataFrame([flow("Biomass_Solid", "BioFT_30", "BIOMASS_FLOW", 18.0),
+                                          flow("BioFT_30", "BioDiesel_Sum", "BIODIESEL_FLOW", 10.8),
+                                          flow("Biooil_Buffer", "Biooil_Eff", "BIOOIL_FLOW", 7.2),
+                                          flow("MDO_Source", "MDO_Eff", "MDO_FLOW", 3.6),
+                                          flow("BioFT_30", "HeatBuffer", "HEATFLOW", 0.5)])],
+                     ignore_index=True)
+    mapping = pd.DataFrame([
+        ["Biomass_Solid", "BioFT_30", "", "report", "PJ", "Primary Energy|Biomass|Liquids|w/o CCS"],
+        ["MDO_Source", "MDO_Eff", "", "report", "PJ", "Primary Energy|Oil|Liquids|w/o CCS"],
+        ["BioFT_30", "BioDiesel_Sum", "", "report", "PJ", "Secondary Energy|Liquids"],
+        ["BioFT_30", "BioDiesel_Sum", "", "report", "PJ", "Secondary Energy|Liquids|Biomass"],
+        ["Biooil_Buffer|MDO_Source", "Biooil_Eff|MDO_Eff", "", "report", "PJ", "Final Energy|Bunkers"],
+        ["Biooil_Buffer", "Biooil_Eff", "", "report", "PJ", "Final Energy|Bunkers|Liquids|Biomass"],
+        ["MDO_Source", "MDO_Eff", "", "report", "PJ", "Final Energy|Bunkers|Liquids|Oil"],
+    ], columns=["from_process", "to_process", "flow", "role", "unit", "variable"]).assign(
+        pool="", removal="", emissions="")
+    flows = as_dict(mainresults_flows(long, 2050, "S1", countries="DENMARK", rules={"optiflow": mapping}))
+    assert flows[("Biomass", "OptiFlow", "flow")] == pytest.approx(5.0)
+    assert flows[("OptiFlow", "Liquids", "flow")] == pytest.approx(3.0)
+    assert flows[("Oil", "Liquids", "flow")] == pytest.approx(1.0)
+    assert flows[("Liquids", "Bunkers", "flow")] == pytest.approx(3.0)
+    assert ("OptiFlow", "Bunkers", "flow") not in flows
+    assert flows[("OptiFlow", "Heat", "flow")] == pytest.approx(0.5)
+    assert flows[("Heat", "OptiFlow", "flow")] == pytest.approx(0.5)
 
 
 def test_optiflow_primary_energy(long: pd.DataFrame):
