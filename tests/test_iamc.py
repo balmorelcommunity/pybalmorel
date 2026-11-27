@@ -1435,6 +1435,36 @@ def test_optiflow_report_rows_by_sector(electricity_long: pd.DataFrame, total_de
                                     "Final Energy|Carbon Management|Moonlight|Electricity"}
 
 
+def test_base_optiflow_mapping_co2_compression(electricity_long: pd.DataFrame, total_definitions: Path) -> None:
+    """The base OptiFlow Mapping reports the electricity OptiFlow uses to compress CO2 (2.5 PJ) under
+    Carbon Capture and Storage, beside carbon capture's own 1 TWh, and direct air capture's 1 PJ
+    under Direct Air Capture: both count towards Final Energy|Electricity once, with a note."""
+    variables = pd.read_csv(total_definitions / "variables.csv")
+    sector = pd.DataFrame({
+        "variable": ["Final Energy|Carbon Management|Direct Air Capture|Electricity"],
+        "unit": "EJ/yr",
+    })
+    pd.concat((variables, sector)).to_csv(total_definitions / "variables.csv", index=False)
+    optiflow = pd.DataFrame([
+        flow_row("ElecBuffer_GJ", "CO2_DAC_Large", "ELECFLOW_GJ", 1),
+        flow_row("ElecBuffer_GJ", "CO2_Comp_Bio", "ELECFLOW_GJ", 2),
+        flow_row("ElecBuffer_GJ", "CO2_Comp_Fos", "ELECFLOW_GJ", 0.5),
+    ])
+    data, notes = convert(pd.concat((electricity_long, optiflow)), "Balmorel", definitions=total_definitions)
+
+    pj = 1e-3
+    assert value(data, "Final Energy|Electricity", 2030) == pytest.approx(21 * twh + 3.5 * pj)
+    assert value(data, "Final Energy", 2030) == pytest.approx(25 * twh + 3.5 * pj)
+    assert value(data, "Final Energy|Carbon Management|Electricity", 2030) == pytest.approx(1 * twh + 3.5 * pj)
+    assert value(data, "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+                 2030) == pytest.approx(1 * twh + 2.5 * pj)
+    assert value(data, "Final Energy|Carbon Management|Direct Air Capture|Electricity",
+                 2030) == pytest.approx(1 * pj)
+    ccs = notes.loc[notes["Variable"] == "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+                    "Note"]
+    assert ccs.str.contains("compress the CO2 it collects").any()
+
+
 def test_on_site_fuel_use(on_site_long: pd.DataFrame, final_definitions: Path) -> None:
     """The fuel heat units in individual and industry areas burn is final energy by carrier, and
     under Residential and Commercial or Industry, or the sector's Other where it has no such

@@ -13,6 +13,7 @@ Created on 23.11.2026
 ###        0. Script Settings       ###
 ### ------------------------------- ###
 
+import copy
 from pathlib import Path
 from typing import TYPE_CHECKING
 import gams.transfer as gt
@@ -101,7 +102,8 @@ region_columns = {"Region": "balmorel_region", "From": "balmorel_region", "To re
 
 def read_mainresults(results: "MainResults",
                      optiflow: dict[str, str | Path | None] | None = None,
-                     by_region: bool = False) -> pd.DataFrame:
+                     by_region: bool = False,
+                     scenarios: str | list[str] | None = None) -> pd.DataFrame:
     """Read the long table of what each unit and area does from MainResults.
 
     Capacity is net: the sum of G_CAP_YCRAF's exogenous, endogenous and (negative)
@@ -124,6 +126,9 @@ def read_mainresults(results: "MainResults",
             and of where electricity and hydrogen exchange goes ('to_balmorel_region'), instead
             of summing over the regions of a country. Prices and OptiFlow's flows have none.
             Defaults to False.
+        scenarios (str | list[str] | None, optional): Read only these scenarios, e.g. the one a
+            plot shows. OptiFlow results given for the others are left unread. Defaults to None,
+            all scenarios.
 
     Returns:
         pd.DataFrame: One row per scenario, year, country, area, unit, fuel, commodity, demand
@@ -135,6 +140,15 @@ def read_mainresults(results: "MainResults",
             several with the same columns; their 'weight' is the demand they hold for, NaN for
             the other quantities.
     """
+    optiflow = optiflow or {}
+    unknown = [scenario for scenario in optiflow if scenario not in results.sc]
+    if unknown:
+        raise Exception(f"OptiFlow results are given for scenarios {unknown}, which the results don't have "
+                        f"({results.sc}).")
+    if scenarios is not None:
+        results = select_scenarios(results, [scenarios] if isinstance(scenarios, str) else scenarios)
+        optiflow = {scenario: source for scenario, source in optiflow.items() if scenario in results.sc}
+
     tables = []
     # Country of each region and area, for where exchange goes
     countries = {}
@@ -179,7 +193,7 @@ def read_mainresults(results: "MainResults",
     prices = read_prices(results)
     if not prices.empty:
         tables.append(prices)
-    flows = read_optiflow(results, optiflow or {})
+    flows = read_optiflow(results, optiflow)
     if not flows.empty:
         tables.append(flows)
     long = pd.concat(tables, ignore_index=True)
@@ -193,6 +207,29 @@ def read_mainresults(results: "MainResults",
             long[column] = long[column].fillna("")
     long["year"] = long["year"].astype(int)
     return long
+
+
+def select_scenarios(results: "MainResults", scenarios: list[str]) -> "MainResults":
+    """Narrow the loaded results to some of their scenarios.
+
+    Args:
+        results (MainResults): The loaded result files.
+        scenarios (list[str]): The scenarios to keep, by name.
+
+    Returns:
+        MainResults: A shallow copy that has only these scenarios, in the order of results.sc,
+            and shares their loaded files.
+    """
+    missing = [scenario for scenario in scenarios if scenario not in results.sc]
+    if missing:
+        raise Exception(f"The results have no scenarios {missing}; they have {list(results.sc)}.")
+    kept = [index for index, scenario in enumerate(results.sc) if scenario in scenarios]
+    selected = copy.copy(results)
+    selected.sc = [results.sc[index] for index in kept]
+    selected.files = [results.files[index] for index in kept]
+    selected.paths = [results.paths[index] for index in kept]
+    selected.db = {scenario: results.db[scenario] for scenario in selected.sc}
+    return selected
 
 
 def read_prices(results: "MainResults") -> pd.DataFrame:
@@ -247,18 +284,13 @@ def read_optiflow(results: "MainResults", optiflow: dict[str, str | Path | None]
     Args:
         results (MainResults): The loaded result files.
         optiflow (dict[str, str | Path | None]): OptiFlow result file per scenario, as in
-            read_mainresults.
+            read_mainresults, for scenarios the results have.
 
     Returns:
         pd.DataFrame: Rows of quantity 'flow' with scenario, year, country, from_process,
             to_process, flow and value, without zero flows; no rows if no scenario has OptiFlow
             results.
     """
-    unknown = [scenario for scenario in optiflow if scenario not in results.sc]
-    if unknown:
-        raise Exception(f"OptiFlow results are given for scenarios {unknown}, which the results don't have "
-                        f"({results.sc}).")
-
     tables = []
     for scenario, path, file in zip(results.sc, results.paths, results.files):
         if scenario in optiflow:

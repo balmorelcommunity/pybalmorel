@@ -459,3 +459,24 @@ def test_prices_equal_raw_results(results: MainResults, raw: pd.DataFrame) -> No
     worth = (by_tables.loc[data.index[prices], years] / data.loc[prices, years]).stack().dropna()
     assert len(worth) > 0
     assert worth.to_numpy() == pytest.approx(1.2319, abs=1e-4)
+
+
+def test_read_only_some_scenarios(results: MainResults, raw: pd.DataFrame) -> None:
+    """Reading some scenarios gives their rows of the full long table, and the results keep all
+    of theirs. OptiFlow results given for a scenario not read are left alone, those for one the
+    results lack are refused, as is a scenario they lack."""
+    one = read_mainresults(results, scenarios="Example2", optiflow={"Example1": "nowhere/Optiflow_MainResults.gdx"})
+    two = read_mainresults(results, scenarios=["Example3", "Example1"])
+
+    assert set(one["scenario"]) == {"Example2"}
+    assert set(two["scenario"]) == {"Example1", "Example3"}
+    for selected, names in ((one, ["Example2"]), (two, ["Example1", "Example3"])):
+        expected = raw[raw["scenario"].isin(names)]
+        pd.testing.assert_frame_equal(selected.reset_index(drop=True), expected.reset_index(drop=True),
+                                      check_dtype=False, check_categorical=False)
+    assert results.sc == scenarios and list(results.db) == scenarios
+
+    with pytest.raises(Exception, match="have no scenarios \\['Example4'\\]"):
+        read_mainresults(results, scenarios=["Example4"])
+    with pytest.raises(Exception, match="OptiFlow results are given for scenarios \\['Example4'\\]"):
+        read_mainresults(results, scenarios="Example2", optiflow={"Example4": None})

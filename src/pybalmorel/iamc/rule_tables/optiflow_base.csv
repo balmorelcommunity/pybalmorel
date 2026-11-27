@@ -22,9 +22,12 @@
 #
 # Direct air capture (CO2_DAC_<vintage>) takes heat and electricity from OptiFlow's buffers
 # (HeatBuffer_GJ, ElecBuffer_GJ, in PJ): its final energy, reported under Final Energy|Heat and
-# |Electricity and, by sector, under Carbon Management|Direct Air Capture. What OptiFlow's other
-# processes take from the buffers isn't reported, including the electricity for CO2 compression
-# (CO2_Comp_*).
+# |Electricity and, by sector, under Carbon Management|Direct Air Capture. Compressing CO2 for the
+# CO2 grid (CO2_Comp_*) takes 0.324 GJ of electricity per tonne (90 kWh/t), reported under Final
+# Energy|Electricity and, by sector, under Carbon Management|Carbon Capture and Storage, beside
+# the electricity Balmorel's CCS units use (ENDO_CCS). It covers all the CO2 OptiFlow collects,
+# DAC's too, and also what is made into fuel, as IAMC has no sector for that. What OptiFlow's
+# other processes take from the buffers isn't reported.
 #
 # Primary Energy counts the biomass OptiFlow's plants take in by what they make: liquid fuels
 # (BioFT_*, BioFT_H2_*, TG_*, Pyrolysis_Straw_*, from Biomass_Solid and STRAW) or biogas
@@ -80,3 +83,4 @@ LNG_Source,LNG_Eff,,report,,PJ,,Primary Energy|Gas|Gases|w/o CCS,,,"Fuel that Op
 (Biogas_Upgrading|Methanation)(_\d+)?,SNG_Total,SNG_FLOW,report,,PJ,,Secondary Energy|Gases|Biomass,,,"Biomethane that OptiFlow makes from biogas, by upgrading it or by methanation. Methanation adds hydrogen to the biogas, and its output counts as made from biomass in full."
 HeatBuffer_GJ,CO2_DAC_.*,HEATFLOW_GJ,report,,PJ,,Final Energy|Heat,,,,Carbon Management|Direct Air Capture
 ElecBuffer_GJ,CO2_DAC_.*,ELECFLOW_GJ,report,,PJ,,Final Energy|Electricity,,,,Carbon Management|Direct Air Capture
+ElecBuffer_GJ,CO2_Comp_.*,ELECFLOW_GJ,report,,PJ,,Final Energy|Electricity,,,"Electricity OptiFlow uses to compress the CO2 it collects for its CO2 grid: from Balmorel's units with CCS, biogas upgrading and direct air capture, whether it is stored or made into fuel. IAMC has no sector for CO2 made into fuel, so all of it counts under Carbon Capture and Storage.",Carbon Management|Carbon Capture and Storage

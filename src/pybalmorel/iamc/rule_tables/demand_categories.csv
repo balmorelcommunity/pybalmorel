@@ -73,7 +73,7 @@ ELECTRICITY,ENDOGENOUS_ELECT2HEAT,on-site,Electricity
 ELECTRICITY,ON_SITE,yes,
 ELECTRICITY,ENDO_H2,no,
 ELECTRICITY,ENDO_BIOMETHANE,no,
-ELECTRICITY,ENDO_CCS,yes,,Carbon Management|Carbon Capture and Storage,"Only the electricity Balmorel's CCS units use for the CO2 they capture (ENDO_CCS). Direct air capture and other capture in the OptiFlow add-on use electricity within OptiFlow's demand (ENDO_OPTIFLOW), which is reported here only where the OptiFlow Mapping says so."
+ELECTRICITY,ENDO_CCS,yes,,Carbon Management|Carbon Capture and Storage,"Only the electricity Balmorel's CCS units use for the CO2 they capture (ENDO_CCS). Direct air capture and other capture in the OptiFlow add-on use electricity within OptiFlow's demand (ENDO_OPTIFLOW), which is reported here only where the OptiFlow Mapping says so, as the base one does for compressing CO2."
 ELECTRICITY,ENDO_OPTIFLOW,no,
 ELECTRICITY,ENDO_INTRASTO,no,
 ELECTRICITY,DIST_LOSSES,no,

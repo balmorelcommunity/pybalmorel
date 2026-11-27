@@ -169,7 +169,7 @@ def sankey_flows(data: "MainResults | pd.DataFrame | tuple[pd.DataFrame, pd.Data
         return finish_flows(flows, unit, filter)
 
     scenario = pick(scenario, list(data.sc), "scenario")
-    long = read_mainresults(data, optiflow, by_region=True)
+    long = read_mainresults(data, optiflow, by_region=True, scenarios=scenario)
     flows = finish_flows(mainresults_flows(long, year, scenario, countries, regions, areas, rules), unit, filter)
     if iamc is None:
         return flows

@@ -124,7 +124,11 @@ rows mean your study has another design.
 
 The base Mapping reports the fuel that ships and aircraft take in under
 `Final Energy|Bunkers`, the CO2 that OptiFlow captures and stores, and the
-heat and electricity that direct air capture uses. It also counts Primary
+heat and electricity that direct air capture uses. It reports the electricity
+that OptiFlow uses to compress CO2 under
+`Final Energy|Carbon Management|Carbon Capture and Storage|Electricity`,
+beside what Balmorel's CCS units use. This covers all the CO2 that OptiFlow
+collects, including CO2 that is made into fuel. It also counts Primary
 Energy:
 
 - The biomass that OptiFlow's biofuel plants and digesters take in, by what
