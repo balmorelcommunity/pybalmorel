@@ -49,10 +49,21 @@ The how-to guides below cover the other arguments of `to_iamc`. The
 
 - Capacity and Secondary Energy of electricity, heat and hydrogen, by Source
   and with or without CCS.
+- Capacity Additions of electricity, heat and hydrogen: new installations
+  per year (see below).
 - Final Energy by carrier, and by sector where Balmorel knows the sector.
+  The transport add-on's electricity counts under
+  `Final Energy|Transportation|Electricity`. The hydrogen that its synthetic
+  fuels are made of counts as liquids, under `Final Energy|Liquids|Hydrogen`
+  and `Final Energy|Transportation|Liquids|Hydrogen`, not under
+  `Final Energy|Hydrogen`.
 - Primary Energy by Source and use. Nuclear and the non-biomass renewables
   count by what they make (direct equivalent).
 - Emissions|CO2, Carbon Capture and Carbon Removal.
+- The emission intensity of electricity: its emissions per electricity made,
+  `Emission Intensity|CO2|Energy|Supply|Electricity`. An intensity can't be
+  summed. To aggregate regions, divide their summed emissions by their summed
+  electricity.
 - Net exports of electricity and hydrogen between countries, under Trade.
 - Prices of electricity, hydrogen and district heat, and the carbon price.
 
@@ -62,6 +73,15 @@ model's. A Conversion Note says so. Variables whose definition reaches
 beyond what Balmorel models are left out. So are investment and capital
 costs, because MainResults holds only their annuities. Only modelled years
 are reported.
+
+Capacity Additions follow IAMC's definition: new installations per year, not
+the net change in capacity. pybalmorel takes the rise in the capacity that
+Balmorel invested in (category `ENDOGENOUS` of `G_CAP_YCRAF`) since the
+previous model year, and divides it by the years between them. An investment
+therefore counts once, spread over those years, and nothing accumulates.
+Retirements are not subtracted; `Capacity|…` holds the capacity in place.
+Exogenous capacity is input data, so it adds nothing. The first model year of
+a Balmorel scenario has no year before it, so its additions are left empty.
 
 ## How-to guides
 
@@ -202,6 +222,12 @@ them: the heat and electricity OptiFlow gives to Balmorel through its
 whichever Mapping applies. Your Mapping must not report them again, since
 every row applies to every flow it matches.
 
+When OptiFlow makes the transport fuels, the transport add-on must not ask
+for the same fuels as hydrogen (`ENDO_OTHERTRANS`). Change the add-on's
+settings for such runs. Otherwise the fuels count twice: once as the hydrogen
+under `Final Energy|Liquids|Hydrogen`, and once as what OptiFlow reports.
+`to_iamc` doesn't check this.
+
 If no row of the Mapping brings the CO2 Balmorel's units capture into a
 pool, that CO2 has no stored share. The emissions and removal that depend on
 it are then left empty. The header of
@@ -264,5 +290,6 @@ Conversion has three layers
 | `aggregates` | Which Sources sum to an aggregate, e.g. `Coal`, `Gas` and `Oil` to `Fossil` |
 | `countries` | Balmorel country to ISO3 code, which gives the IAMC Region |
 | `areas` | Area-name patterns for individual and industry areas. Other areas are district heating |
-| `demand_categories` | Which demand categories are final energy, and their Final Energy Sector |
+| `demand_categories` | Which demand categories are final energy, their Final Energy Sector, and the carrier they count as |
+| `ratios` | IAMC Variables that divide one reported variable by another, e.g. an emission intensity |
 | `optiflow` | The OptiFlow Mapping: which OptiFlow flows to report, and how. The base one is in `optiflow_base.csv`; `optiflow.csv` has the rows for the add-on's own flows |

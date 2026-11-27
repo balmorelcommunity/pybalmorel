@@ -82,6 +82,9 @@ price_symbols = [
     {"symbol": "H_PRICE_YCRA", "commodity": "HEAT", "place": "Area", "demand": "H_DEMAND_YCRA"},
 ]
 price_category = "AVERAGE"
+# The G_CAP_YCRAF category of the capacity Balmorel has invested in up to a year, whose rises
+# give capacity additions
+invested_category = "ENDOGENOUS"
 price_unit = "money/MWh"
 price_unit_aliases = {"Money_per_MWh"}
 # OptiFlow's flows between processes, and the result file names next to a MainResults file
@@ -106,8 +109,8 @@ def read_mainresults(results: "MainResults",
                      scenarios: str | list[str] | None = None) -> pd.DataFrame:
     """Read the long table of what each unit and area does from MainResults.
 
-    Capacity is net: the sum of G_CAP_YCRAF's exogenous, endogenous and (negative)
-    decommissioning categories. Demand (EL_DEMAND_YCR and H2_DEMAND_YCR per region, H_DEMAND_YCRA
+    Capacity rows keep G_CAP_YCRAF's category ('demand_category'): exogenous, endogenous
+    (invested_category) and (negative) decommissioning, which sum to the net capacity. Demand (EL_DEMAND_YCR and H2_DEMAND_YCR per region, H_DEMAND_YCRA
     per area) and exchange (X_FLOW_YCR and XH2_FLOW_YCR, electricity and hydrogen transmission
     between regions; XH_FLOW_YCA, heat transmission from 'area' to 'to_area') are read where the
     results have them. Exchange rows say which country they go to. Emissions (EMI_YCRAG),
@@ -185,7 +188,7 @@ def read_mainresults(results: "MainResults",
             table["stated_unit"] = stated.where(~stated.isin(spec["unit_aliases"]), "")
             table["value_unit"] = spec["unit"]
         keys = [column for column in table.columns if column != "value"]
-        # Sums capacity categories and transmission between regions of the same two countries
+        # Sums transmission between regions of the same two countries
         table = table.groupby(keys, as_index=False, observed=True)["value"].sum()
         table["quantity"] = spec["quantity"]
         tables.append(table)

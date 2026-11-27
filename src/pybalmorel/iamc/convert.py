@@ -20,12 +20,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from .reader import read_mainresults
-from .rules import (addon_origin, base_origin, carrier_placeholder, default_area_kind, fill_carrier, fill_source,
-                    final_quantity, import_unit, load_definitions, load_rules, load_template, match_area_kinds,
-                    match_mapping_rules, match_optiflow_rules, not_reported, on_site_final, optiflow_targets,
-                    optiflow_unit, passed_origin, pool_roles, sector_other, sector_variables, source_placeholder,
-                    stem_top)
+from .reader import invested_category, read_mainresults
+from .rules import (addon_origin, base_origin, carrier_placeholder, default_area_kind, fill_carrier,
+                    fill_demand_carrier, fill_source, final_quantity, import_unit, load_definitions, load_rules,
+                    load_template, match_area_kinds, match_mapping_rules, match_optiflow_rules, not_reported,
+                    on_site_final, optiflow_targets, optiflow_unit, passed_origin, per_year, pool_roles, ratio_unit,
+                    sector_other, sector_variables, source_placeholder, stem_top)
 from ..backcasting import pricelevel
 
 if TYPE_CHECKING:
@@ -37,6 +37,7 @@ unit_factors = {
     ("GWh", "EJ/yr"): 3.6e-6,
     ("PJ", "EJ/yr"): 1e-3,
     ("MW", "GW"): 1e-3,
+    ("MW/yr", "GW/yr"): 1e-3,
     ("kt CO2", "Mt CO2/yr"): 1e-3,
     ("Mt CO2", "Mt CO2/yr"): 1.0,
     ("money/MWh", "money/GJ"): 1 / 3.6,
@@ -83,10 +84,12 @@ biogenic_category = "Biomass"
 mean_quantities = ("price",)
 # Quantity of the rows the OptiFlow Mapping reports
 optiflow_quantity = "optiflow"
+# Quantity of capacity additions, derived from capacity (derive_additions)
+additions_quantity = "additions"
 # How Conversion Notes name quantities that aren't plain words
 quantity_labels = {"captured": "captured CO2", "removal": "stored CO2 from biomass", "stored": "stored CO2",
                    "input": "fuel input", "primary": "primary energy", "imports": "net imports", "tax": "CO2 tax",
-                   final_quantity: "on-site fuel use"}
+                   final_quantity: "on-site fuel use", additions_quantity: "capacity additions"}
 # The commodity whose exchange between areas is Heat Exchange; exchange of the others is trade
 heat_commodity = "HEAT"
 # Demand category of the heat district heating sends net to an individual or industry area
@@ -119,13 +122,24 @@ def to_iamc(results: "MainResults",
     units of the Definitions Snapshot, per Balmorel country and modelled year. Transmission
     between countries, and what import units bring in from outside the model, are reported as
     Trade (net exports). Capacity is that of the commodity a unit makes, so electrolysers' is
-    their hydrogen output, as Balmorel states it. The electricity heat units in individual and
+    their hydrogen output, as Balmorel states it. Capacity Additions are new installations per
+    year: the rise in the capacity Balmorel has invested in (G_CAP_YCRAF's ENDOGENOUS) since the
+    previous model year, divided by the years between them. Retirements are not subtracted, and
+    exogenous capacity adds nothing; a Balmorel scenario's first model year is left empty. The
+    electricity heat units in individual and
     industry areas use counts as final energy, as their heat isn't centralized heat, and so does
     the fuel they burn, by carrier (e.g. Final Energy|Gases|Gas) and under Residential and
     Commercial (individual areas) or Industry; not for the share of their heat that Heat Exchange
     sends to district heating. Demand categories with a Final Energy Sector are also reported
-    under that sector, e.g. what carbon capture uses under Final Energy|Carbon Management. Emissions are net of the stored part of
-    the CO2 captured from biomass, which is also reported as Carbon Removal. Where the results
+    under that sector, e.g. what carbon capture uses under Final Energy|Carbon Management, and
+    the transport add-on's electricity (EXO_TRANS, ENDO_EV) under Final Energy|Transportation.
+    The hydrogen its synthetic fuels are made of (ENDO_OTHERTRANS) counts as liquids made of
+    hydrogen, Final Energy|Liquids|Hydrogen and Final Energy|Transportation|Liquids|Hydrogen,
+    not as Final Energy|Hydrogen. Where OptiFlow makes those fuels, the transport add-on must
+    not ask for them too, or they count twice; the conversion doesn't check this. Emissions are
+    net of the stored part of the CO2 captured from biomass, which is also reported as Carbon
+    Removal. The emission intensity of electricity is its emissions per electricity made
+    (Emission Intensity|CO2|Energy|Supply|Electricity). Where the results
     give no captured CO2, that of units marked w/ CCS is derived from their fuel input. Without
     OptiFlow, all captured CO2 counts as stored. For scenarios linked to OptiFlow, OptiFlow's
     results are reported as the 'optiflow' rules (the OptiFlow Mapping) say, which also give the
@@ -162,7 +176,7 @@ def to_iamc(results: "MainResults",
             (variables.csv, regions.csv). Defaults to the snapshot shipped with pybalmorel.
         rules (dict[str, str | Path | pd.DataFrame] | None, optional): Rule rows that take
             precedence over the shipped ones, keyed by table ('fuels', 'mapping', 'stems',
-            'aggregates', 'countries', 'areas', 'demand_categories', 'optiflow'). 'optiflow' rows
+            'aggregates', 'countries', 'areas', 'demand_categories', 'ratios', 'optiflow'). 'optiflow' rows
             replace the base OptiFlow Mapping as a whole. Defaults to None.
         backup_units (str, optional): 'supply' counts backup units' output as supply under their
             fuel, and reports their emissions; 'exclude' leaves both out. Their capacity is never
@@ -220,6 +234,7 @@ def convert(long: pd.DataFrame,
         long["weight"] = np.nan
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
+    long, first_years = derive_additions(long, notes)
     priced = long["quantity"].isin(["price", "tax"])
     prices = long[priced]
     long, carried, linked = drop_optiflow_units(long[~priced].drop(columns="weight"), tables["mapping"], notes)
@@ -256,9 +271,14 @@ def convert(long: pd.DataFrame,
         long = pd.concat((long, prices), ignore_index=True)
 
     data = sum_to_variables(long, variables, tables["aggregates"])
+    data = derive_ratios(data, tables["ratios"], variables, notes)
     if template is not None:
         data = limit_to_template(data, template, notes)
-    data = to_wide(data, model, modelled_years, set(prices["variable"]))
+    additions_stems = tables["stems"].loc[tables["stems"]["quantity"] == additions_quantity, "stem"]
+    added = {variable for variable in data["Variable"].unique()
+             if any(variable == stem or variable.startswith(f"{stem}|") for stem in additions_stems)}
+    data = to_wide(data, model, modelled_years, set(prices["variable"]) | set(tables["ratios"]["variable"]), added,
+                   first_years)
 
     notes = pd.DataFrame(notes, columns=note_columns).drop_duplicates(ignore_index=True)
     print_notes(notes)
@@ -314,6 +334,59 @@ def name_scenarios(long: pd.DataFrame, scenarios: dict[str, str] | None) -> pd.D
             f"{clashes.to_string()}"
         )
     return long
+
+
+def derive_additions(long: pd.DataFrame, notes: list[dict]) -> tuple[pd.DataFrame, pd.Series]:
+    """Derive capacity additions from the rise in each unit's invested capacity.
+
+    A unit's invested capacity (invested_category) is all Balmorel has invested in up to a
+    model year, so what it adds in a model year is the rise since the previous model year of
+    its Balmorel scenario, per year between them: new installations, as IAMC's Capacity
+    Additions count them. A fall, such as a vintage reaching the end of its lifetime, is a
+    retirement, not a negative addition, so it adds 0. Exogenous capacity, which the input
+    data set, adds nothing. A Balmorel scenario's first model year has no year before it, so
+    its additions are unknown, and a Conversion Note says so.
+
+    Args:
+        long (pd.DataFrame): The long table with IAMC Scenarios.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        tuple[pd.DataFrame, pd.Series]: The long table with rows of quantity 'additions', in
+            the capacity's unit per year (e.g. 'GW/yr'), for every unit with invested capacity and
+            every model year of its Balmorel scenario after the first; and the first model years
+            of the Balmorel scenarios, as lists per IAMC Scenario.
+    """
+    first_years = long.groupby("scenario")["year"].min()
+    by_scenario = long[["iamc_scenario", "scenario"]].drop_duplicates()
+    first_years = by_scenario.assign(year=by_scenario["scenario"].map(first_years)).groupby("iamc_scenario")[
+        "year"].agg(lambda years: sorted(set(years)))
+    invested = long[(long["quantity"] == "capacity") & (long["demand_category"] == invested_category)]
+    if invested.empty:
+        return long, first_years
+
+    keys = [column for column in invested.columns if column not in ("year", "value", "weight")]
+    tables = []
+    for scenario, stock in invested.groupby("scenario"):
+        years = sorted(long.loc[long["scenario"] == scenario, "year"].unique())
+        if len(years) < 2:
+            continue
+        by_year = (stock.groupby(keys + ["year"], observed=True, dropna=False)["value"].sum()
+                   .unstack("year", fill_value=0.0).reindex(columns=years, fill_value=0.0))
+        rises = by_year.diff(axis=1).iloc[:, 1:].clip(lower=0.0) / np.diff(years)
+        tables.append(rises.reset_index().melt(id_vars=keys, var_name="year", value_name="value"))
+    for scenario, years in first_years.items():
+        if (invested["iamc_scenario"] == scenario).any():
+            first = "the first model year" if len(years) == 1 else "the first model years of its Balmorel scenarios"
+            notes.append(note(scenario, "", "", (
+                f"Capacity Additions are left empty in {', '.join(map(str, years))}, {first}, as there is no "
+                "earlier model year to tell what was added by then.")))
+    if not tables:
+        return long, first_years
+    added = pd.concat(tables, ignore_index=True)
+    added = added.assign(quantity=additions_quantity, demand_category="", year=added["year"].astype(int),
+                         value_unit=added["value_unit"].astype(str) + per_year)
+    return pd.concat((long, added), ignore_index=True), first_years
 
 
 def count_trade(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
@@ -751,7 +824,7 @@ def carve_on_site(long: pd.DataFrame, stems: pd.DataFrame, demand_categories: pd
 
 
 def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
-    """Keep the demand in categories that count as final demand.
+    """Keep the demand in categories that count as final demand, with the carrier the rules report it as.
 
     Args:
         long (pd.DataFrame): The long table.
@@ -759,10 +832,13 @@ def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: li
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table without demand in other categories.
+        pd.DataFrame: The long table without demand in other categories, and the category's
+            carrier ('' for none) in the 'carrier' column of demand rows.
     """
     is_demand = long["quantity"] == "demand"
-    demand = long[is_demand].merge(demand_categories, on=["commodity", "demand_category"], how="left")
+    rules = demand_categories[["commodity", "demand_category", "final", "carrier"]].rename(
+        columns={"carrier": "category_carrier"})
+    demand = long[is_demand].merge(rules, on=["commodity", "demand_category"], how="left")
 
     unknown = demand[demand["final"].isna()]
     for (scenario, commodity, category, kind, value_unit), rows in unknown.groupby(
@@ -773,7 +849,8 @@ def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: li
             f"Demand of {commodity} in category {category}{where} is not reported (the "
             f"'demand_categories' rules have no row for it): {amounts(by_year)} {value_unit}."
         )))
-    kept = demand.loc[demand["final"] == "yes", long.columns]
+    kept = demand[demand["final"] == "yes"]
+    kept = kept.assign(carrier=kept["category_carrier"])[long.columns]
     return pd.concat((long[~is_demand], kept), ignore_index=True)
 
 
@@ -828,7 +905,7 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
                 f"whether {commodity} adds up isn't checked."
             )))
 
-        known = demand.merge(demand_categories, on=["commodity", "demand_category"])
+        known = demand.merge(demand_categories[["commodity", "demand_category"]], on=["commodity", "demand_category"])
         supply = output.groupby(keys)["value"].sum().sub(trade.groupby(keys)["value"].sum(), fill_value=0.0)
         balance = pd.concat({"supply": supply, "used": known.groupby(keys)["value"].sum()}, axis=1).fillna(0.0)
         balance = balance[balance.index.get_level_values("iamc_scenario").isin(with_demand)]
@@ -1623,8 +1700,10 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
 
     A stem row for the row's Area Kind beats one for any Area Kind. In a stem ending in the
     carrier placeholder, the carrier's first segment fills it in, and the rest stays as the
-    row's carrier (fill_carrier). On-site fuel use without a stem is not final energy, so it
-    goes unnoted.
+    row's carrier (fill_carrier). Demand in a category with a carrier goes under that carrier
+    instead of the commodity, e.g. 'Final Energy|Liquids' with 'Hydrogen' as the rest
+    (fill_demand_carrier). On-site fuel use without a stem is not final energy, so it goes
+    unnoted.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -1646,6 +1725,12 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
     long["stem"] = long["stem"].fillna(long.pop("stem_any")).fillna("")
     for column in ("stem_note", "stem_total", "stem_sector"):
         long[column] = long.pop(column).where(chosen, long.pop(f"{column}_any")).fillna("")
+    as_carrier = (long["quantity"] == "demand") & (long["carrier"] != "") & (long["stem"] != "")
+    if as_carrier.any():
+        filled = [fill_demand_carrier(stem, carrier) for stem, carrier in
+                  long.loc[as_carrier, ["stem", "carrier"]].itertuples(index=False)]
+        long.loc[as_carrier, "stem"] = [stem for stem, _ in filled]
+        long.loc[as_carrier, "carrier"] = [rest for _, rest in filled]
     carried = long["stem"].str.endswith(f"|{carrier_placeholder}")
     if carried.any():
         filled = [fill_carrier(stem, carrier) for stem, carrier in long.loc[carried, ["stem", "carrier"]].itertuples(
@@ -1685,8 +1770,11 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
 
     Each copy takes one of the sector's variables (sector_variables) as its stem, so it counts
     towards that variable only, while the row still counts under its own stem, e.g.
-    'Final Energy|Electricity', and towards the stem's total (e.g. Final Energy) once. A
-    category's note becomes a Conversion Note on each sector variable with values under it. The
+    'Final Energy|Electricity', and towards the stem's total (e.g. Final Energy) once. Demand in
+    a category with a carrier goes under the carrier there too, e.g.
+    'Final Energy|Transportation|Liquids|Hydrogen'. A category's note becomes a Conversion Note
+    on each sector variable with values under it, and on the variable its carrier puts it under
+    (with or without a sector). The
     sector of a stem row (stems.csv), e.g. Industry for on-site fuel use in industry areas,
     copies 'Final Energy|Gases' rows to 'Final Energy|Industry|Gases'; where the snapshot lacks
     a sector variable, the copies go to the sector's Other (sector_other) without their carrier,
@@ -1706,6 +1794,11 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
     with_sector = demand_categories.loc[demand_categories["sector"] != "",
                                         ["commodity", "demand_category", "sector", "note"]]
     demand = long[long["quantity"] == "demand"].merge(with_sector, on=["commodity", "demand_category"])
+    with_note = demand_categories.loc[demand_categories["note"] != "", ["commodity", "demand_category", "note"]]
+    carried = long[(long["quantity"] == "demand") & (long["carrier"] != "") & (long["value"].abs() >= noise)].merge(
+        with_note, on=["commodity", "demand_category"])
+    for (scenario, stem, carrier, text), _ in carried.groupby(["iamc_scenario", "stem", "carrier", "note"]):
+        notes.append(note(scenario, "", resolve(stem, carrier, names), text))
     copies = [
         rows.assign(stem=variable, stem_total="")
         for (stem, sector), rows in demand.groupby(["stem", "sector"])
@@ -1738,9 +1831,12 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
             "Snapshot; not reported."
         )))
     copies = copies[copies["stem"].isin(names)]
+    # Demand under its category's carrier gets the note on the carrier's variable; on-site fuel
+    # use, on the sector's variable for the carrier's first segment
     noted = copies[(copies["note"] != "") & (copies["value"].abs() >= noise)]
-    for (scenario, stem, text), _ in noted.groupby(["iamc_scenario", "stem", "note"]):
-        notes.append(note(scenario, "", stem, text))
+    noted = noted.assign(carrier=noted["carrier"].where(noted["quantity"] == "demand", ""))
+    for (scenario, stem, carrier, text), _ in noted.groupby(["iamc_scenario", "stem", "carrier", "note"]):
+        notes.append(note(scenario, "", resolve(stem, carrier, names), text))
     return pd.concat((long, copies.drop(columns=["sector", "note"])), ignore_index=True)
 
 
@@ -1751,8 +1847,9 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     'path' holds the segments the Mapping Rules give, and 'variable' the longest of its
     prefixes in the snapshot, or '<stem>|Other' when even its first segment is missing. Rows
     without a unit skip the Mapping Rules: demand, trade and net imports are reported under the
-    stem itself, and heat Heat Exchange could trace to no unit under Other. On-site fuel use
-    takes the rest of its carrier as its path instead, e.g. 'Gas' under 'Final Energy|Gases'.
+    stem itself, and heat Heat Exchange could trace to no unit under Other. On-site fuel use,
+    and demand in a category with a carrier, take the rest of their carrier as their path
+    instead, e.g. 'Gas' under 'Final Energy|Gases'.
 
     In a stem with the Source placeholder, e.g. 'Primary Energy|{source}|Electricity', the
     first segment is the Source and fills it in (fill_source): 'Gas|w/ CCS' is reported under
@@ -1793,7 +1890,7 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     long.loc[unmatched, "reason"] = "no Mapping Rule matches"
     long.loc[unmatched, "template"] = "Other"
     under_stem = no_unit & long["quantity"].isin(["demand", "trade", "imports"])
-    long.loc[under_stem, "template"] = ""
+    long.loc[under_stem, "template"] = long.loc[under_stem, "carrier"]
     long.loc[no_unit & ~under_stem, "template"] = "Other"
     long.loc[no_unit & ~under_stem, "reason"] = "Heat Exchange traced it to no unit"
     on_site_use = long["quantity"] == final_quantity
@@ -1828,13 +1925,14 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     other.loc[(other["reason"] == "") & (first_segment == "Other"), "reason"] = "Fuel Category Other"
     other.loc[other["reason"] == "", "reason"] = "no such IAMC Variable"
     # One note per variable, as where a unit goes depends on its name, type and fuel, not its region
+    other["what"] = np.where((other["tech_type"] != "") | (other["fuel"] != ""), other["tech_type"] + "/" + other["fuel"],
+                             np.where(other["quantity"] == "demand",
+                                      other["commodity"] + " demand in category " + other["demand_category"], "heat"))
     for (scenario, variable), rows in other.groupby(["iamc_scenario", "variable"]):
         what = [
-            f"{tech_type}/{fuel} ({reason}: '{path}')" if reason == "no such IAMC Variable"
-            else f"{tech_type}/{fuel} ({reason})" if tech_type or fuel
-            else f"heat ({reason})"
-            for tech_type, fuel, path, reason in rows[["tech_type", "fuel", "path", "reason"]]
-            .drop_duplicates().sort_values(["tech_type", "fuel", "path"]).itertuples(index=False)
+            f"{label} ({reason}: '{path}')" if reason == "no such IAMC Variable" else f"{label} ({reason})"
+            for label, path, reason in rows[["what", "path", "reason"]]
+            .drop_duplicates().sort_values(["what", "path"]).itertuples(index=False)
         ]
         where = "Other" if variable.endswith("|Other") else "the total only, as there is no Other"
         notes.append(note(scenario, "", variable,
@@ -1953,7 +2051,7 @@ def resolve(stem: str, path: str, names: set[str]) -> str:
 
 def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: str,
                        notes: list[dict]) -> pd.DataFrame:
-    """Drop backup units' capacity, and report or drop the rest of what they do, noting the amounts.
+    """Drop backup units' capacity and its additions, and report or drop the rest of what they do, noting the amounts.
 
     Args:
         long (pd.DataFrame): The long table with variables.
@@ -1966,7 +2064,7 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
         pd.DataFrame: The rows still reported.
     """
     backup = long["unit_name"].str.contains(backup_pattern, regex=True)
-    capacity = long["quantity"] == "capacity"
+    capacity = long["quantity"].isin(["capacity", additions_quantity])
 
     supply = backup_units == "supply"
     for (scenario, quantity, variable, value_unit), rows in long[backup & ~capacity].groupby(
@@ -2413,6 +2511,50 @@ def factor(from_unit: str, to_unit: str) -> float:
     return unit_factors[(from_unit, to_unit)]
 
 
+def derive_ratios(data: pd.DataFrame, ratios: pd.DataFrame, variables: pd.DataFrame,
+                  notes: list[dict]) -> pd.DataFrame:
+    """Add the IAMC Variables that divide one reported variable by another ('ratios' rules).
+
+    Per IAMC Scenario, region and year where the denominator is reported. A numerator the
+    scenario reports in other regions or years but not there is 0. The ratio is empty (NaN)
+    where the denominator is 0 or either is withheld, and isn't reported for a scenario that
+    reports no numerator at all. Ratios the snapshot lacks, or whose parts it lacks, are left
+    out (check_rules lists them).
+
+    Args:
+        data (pd.DataFrame): Long IAMC data from sum_to_variables.
+        ratios (pd.DataFrame): The 'ratios' rule table.
+        variables (pd.DataFrame): The snapshot's variables (variable, unit).
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The data with the ratios' rows.
+    """
+    units = variables.set_index("variable")["unit"]
+    keys = ["Scenario", "Region", "Year"]
+    tables = [data]
+    for variable, numerator, denominator, text in ratios[["variable", "numerator", "denominator", "note"]].itertuples(
+            index=False):
+        if not {variable, numerator, denominator} <= set(units.index):
+            continue
+        unit = ratio_unit(units[numerator], units[denominator])
+        if unit != units[variable]:
+            raise Exception(f"The 'ratios' rule for '{variable}' divides '{numerator}' by '{denominator}', which gives "
+                            f"'{unit}', but the Definitions Snapshot has '{units[variable]}'.")
+        above = data.loc[data["Variable"] == numerator, keys + ["Value"]]
+        below = data.loc[(data["Variable"] == denominator) & data["Scenario"].isin(above["Scenario"]), keys + ["Value"]]
+        both = below.merge(above, on=keys, how="left", suffixes=("", "_numerator"), indicator=True)
+        if both.empty:
+            continue
+        numerators = both["Value_numerator"].where(both.pop("_merge") == "both", 0.0)
+        both["Value"] = numerators / both["Value"].where(both["Value"] != 0)
+        tables.append(both[keys + ["Value"]].assign(Variable=variable, Unit=units[variable]))
+        if text:
+            for scenario in both.loc[both["Value"].notna(), "Scenario"].unique():
+                notes.append(note(scenario, "", variable, text))
+    return pd.concat(tables, ignore_index=True)
+
+
 def limit_to_template(data: pd.DataFrame, template: str | Path, notes: list[dict]) -> pd.DataFrame:
     """Keep the IAMC Variables a Template accepts, and note regions it doesn't list.
 
@@ -2434,19 +2576,24 @@ def limit_to_template(data: pd.DataFrame, template: str | Path, notes: list[dict
     return data[data["Variable"].isin(accepted_variables)]
 
 
-def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series, means: set[str] | None = None) -> pd.DataFrame:
+def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series, unfilled: set[str] | None = None,
+            unknown: set[str] | None = None, unknown_years: pd.Series | None = None) -> pd.DataFrame:
     """Pivot long IAMC data to one column per year.
 
     A variable reported in some of a scenario's modelled years is 0 in the others, unless it
-    is a mean, such as a price. Withheld values stay empty; a row empty in every year is
-    dropped.
+    is no amount, such as a price or a ratio. Withheld values stay empty; a row empty in every
+    year is dropped.
 
     Args:
         data (pd.DataFrame): Long IAMC data.
         model (str): The IAMC Model label.
         modelled_years (pd.Series): Modelled years per IAMC Scenario.
-        means (set[str] | None, optional): IAMC Variables that are means, whose missing years
-            stay empty. Defaults to None.
+        unfilled (set[str] | None, optional): IAMC Variables that are no amounts, such as
+            prices and ratios, whose missing years stay empty. Defaults to None.
+        unknown (set[str] | None, optional): IAMC Variables left empty in `unknown_years`, such
+            as Capacity Additions in a Balmorel scenario's first model year. Defaults to None.
+        unknown_years (pd.Series | None, optional): Years per IAMC Scenario in which the
+            variables in `unknown` are unknown. Defaults to None.
 
     Returns:
         pd.DataFrame: Columns Model, Scenario, Region, Variable, Unit, then the years.
@@ -2457,11 +2604,15 @@ def to_wide(data: pd.DataFrame, model: str, modelled_years: pd.Series, means: se
     cells = data.assign(Model=model).set_index(index + ["Year"])["Value"]
     wide = cells.unstack("Year")
     given = pd.Series(True, index=cells.index).unstack("Year", fill_value=False)
-    summed = ~wide.index.get_level_values("Variable").isin(list(means or ()))
+    summed = ~wide.index.get_level_values("Variable").isin(list(unfilled or ()))
     for scenario, years in modelled_years.items():
         rows = (wide.index.get_level_values("Scenario") == scenario) & summed
         columns = [year for year in years if year in wide.columns]
         wide.loc[rows, columns] = wide.loc[rows, columns].mask(~given.loc[rows, columns], 0.0)
+    is_unknown = wide.index.get_level_values("Variable").isin(list(unknown or ()))
+    for scenario, years in (unknown_years if unknown_years is not None else pd.Series(dtype=object)).items():
+        rows = (wide.index.get_level_values("Scenario") == scenario) & is_unknown
+        wide.loc[rows, [year for year in years if year in wide.columns]] = np.nan
     wide = wide.dropna(how="all").reindex(columns=sorted(wide.columns))
     wide.columns.name = None
     return wide.reset_index()

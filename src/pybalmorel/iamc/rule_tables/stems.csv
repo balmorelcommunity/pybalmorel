@@ -1,7 +1,9 @@
 # The IAMC Variable each Balmorel quantity and commodity is reported under, before the
 # Mapping Rules (mapping.csv) add segments below it. Sums never go above the stem.
 #
-# Quantities: capacity (net of G_CAP_YCRAF categories), output (PRO_YCRAGF), demand
+# Quantities: capacity (net of G_CAP_YCRAF categories), additions (capacity additions: the rise
+# in a unit's endogenous G_CAP_YCRAF capacity since the previous model year, per year between
+# them, 0 where it falls; empty in a Balmorel scenario's first model year), output (PRO_YCRAGF), demand
 # (H_DEMAND_YCRA per area, EL_DEMAND_YCR and H2_DEMAND_YCR per region, in the categories
 # demand_categories.csv counts as final), and trade (net exports: transmission to other countries
 # less transmission from them, less what import units bring in from outside the model). Demand
@@ -65,13 +67,16 @@
 # with no row here are left out without a Conversion Note.
 quantity,commodity,area_kind,stem,total,sector,note
 capacity,ELECTRICITY,,Capacity|Electricity
+additions,ELECTRICITY,,Capacity Additions|Electricity,,,"New installations per year: the rise in the capacity Balmorel has invested in since the previous model year, divided by the years between them, so an investment counts once, spread over those years. A unit whose invested capacity falls, as a vintage reaches the end of its lifetime, adds 0; retirements are not subtracted, as Capacity|… holds the capacity in place. Exogenous capacity is input data, so it adds nothing."
 output,ELECTRICITY,,Secondary Energy|Electricity
-demand,ELECTRICITY,,Final Energy|Electricity,Final Energy,,"Balmorel's exogenous electricity demand isn't split by sector, so only carbon capture's part is also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses, unless the OptiFlow Mapping reports it, e.g. that of direct air capture."
+demand,ELECTRICITY,,Final Energy|Electricity,Final Energy,,"Balmorel's exogenous electricity demand isn't split by sector, so only the parts of carbon capture and transport are also reported by sector. Includes the electricity that heat units in individual and industry areas use, and that of carbon capture, electric vehicles and the transport add-on where the results give it; leaves out what the OptiFlow add-on uses, unless the OptiFlow Mapping reports it, e.g. that of direct air capture."
 trade,ELECTRICITY,,Trade|Secondary Energy|Electricity [Volume]
 capacity,HEAT,district heating,Capacity|Heat
+additions,HEAT,district heating,Capacity Additions|Heat,,,"New installations per year: the rise in the capacity Balmorel has invested in since the previous model year, divided by the years between them, so an investment counts once, spread over those years. A unit whose invested capacity falls, as a vintage reaches the end of its lifetime, adds 0; retirements are not subtracted, as Capacity|… holds the capacity in place. Exogenous capacity is input data, so it adds nothing."
 output,HEAT,district heating,Secondary Energy|Heat
 demand,HEAT,district heating,Final Energy|Heat,Final Energy
 capacity,HYDROGEN,,Capacity|Hydrogen
+additions,HYDROGEN,,Capacity Additions|Hydrogen,,,"New installations per year: the rise in the capacity Balmorel has invested in since the previous model year, divided by the years between them, so an investment counts once, spread over those years. A unit whose invested capacity falls, as a vintage reaches the end of its lifetime, adds 0; retirements are not subtracted, as Capacity|… holds the capacity in place. Exogenous capacity is input data, so it adds nothing."
 output,HYDROGEN,,Secondary Energy|Hydrogen
 demand,HYDROGEN,,Final Energy|Hydrogen,Final Energy
 final,HEAT,individual,Final Energy|{carrier},Final Energy,Residential and Commercial,"Only the fuel that the heat units of Balmorel's individual and industry areas take in for the heat they keep there, not for heat they send to district heating. The electricity they use is under Final Energy|Electricity. Other fuel use in buildings and industry is not in Balmorel."

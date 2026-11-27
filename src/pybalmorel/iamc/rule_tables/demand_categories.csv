@@ -14,7 +14,13 @@
 # 'Final Energy|Carbon Management|Electricity' and
 # 'Final Energy|Carbon Management|Carbon Capture and Storage|Electricity'. Sector totals over
 # all carriers are not reported, as the results give no sector all the energy it uses.
-# note (optional): a Conversion Note on the sector's variables, e.g. on what they leave out.
+# carrier (optional, rows marked 'yes' only): the final energy carrier the category's demand is
+# reported as, instead of the commodity: its first segment takes the place of all after the
+# stem's first segment, and the rest goes below it. With carrier 'Liquids|Hydrogen', hydrogen
+# demand is reported under 'Final Energy|Liquids|Hydrogen' rather than 'Final Energy|Hydrogen',
+# and with sector Transportation also under 'Final Energy|Transportation|Liquids|Hydrogen'.
+# note (optional): a Conversion Note on the variables the sector or carrier puts the category's
+# demand under, e.g. on what they leave out.
 #
 # HEAT categories are those of H_DEMAND_YCRA. The storage categories and TRANS_LOSSES are
 # losses, which show as the difference between Secondary Energy|Heat and Final Energy|Heat.
@@ -24,7 +30,11 @@
 # its processes give back.
 #
 # HYDROGEN categories are those of H2_DEMAND_YCR. ENDO_REGIONAL is flexible exogenous demand
-# and ENDO_OTHERTRANS the transport add-on's demand when its synthetic fuel is hydrogen.
+# and ENDO_OTHERTRANS the transport add-on's demand when its synthetic fuel is hydrogen: the
+# hydrogen that the liquid fuels the add-on's transport demand needs are made of, so it is
+# reported as liquid fuels from hydrogen, at the hydrogen's energy content. Where OptiFlow makes
+# those fuels instead, the transport add-on should not ask for them too; that is the study's
+# setup to get right, not something the converter can tell.
 # ENDO_FUELCELL and ENDO_BIOMETHANE feed fuel cells and biomethanation, which turn it into
 # other energy. ENDO_OPTIFLOW is what the OptiFlow add-on takes, which its processes mostly turn
 # into ammonia, methanol, Fischer-Tropsch fuels, hydrotreated biofuels or methane. Some OptiFlow
@@ -32,8 +42,9 @@
 # results tell how much, so a study where that part matters can't fix it with a row here.
 # ENDO_INTERSTO is storage loading less discharge, and the LOSSES categories are losses.
 #
-# ELECTRICITY categories are those of EL_DEMAND_YCR. EXO_TRANS is the transport add-on's demand,
-# ENDO_EV that of electric vehicles, and ENDO_DR the net effect of demand response, which can be
+# ELECTRICITY categories are those of EL_DEMAND_YCR. EXO_TRANS is the transport add-on's
+# exogenous demand (its origin in Balmorel's code is not confirmed), ENDO_EV that of electric
+# vehicles, both counted in the Transportation sector, and ENDO_DR the net effect of demand response, which can be
 # negative and then lowers final demand. ENDOGENOUS_ELECT2HEAT is what heat units take in: those
 # of individual and industry areas make heat that isn't reported as centralized heat, so the
 # electricity they use is final; that of district heating units is not, as their heat is. ENDO_H2
@@ -49,7 +60,7 @@
 # OptiFlow's demand, but results of runs linked to OptiFlow have been seen to give ENDO_OPTIFLOW
 # as VFLOWBUFFER itself, OptiFlow's net supply: the wrong sign. As the category isn't final, that
 # changes nothing reported; the Commodity Balance notes name the regions it leaves unbalanced.
-commodity,demand_category,final,fuel_category,sector,note
+commodity,demand_category,final,fuel_category,sector,carrier,note
 HEAT,EXOGENOUS,yes,
 HEAT,NET_EXCHANGE,yes,
 HEAT,ENDO_INTRASTO,no,
@@ -58,7 +69,7 @@ HEAT,ENDO_OPTIFLOW,no,
 HEAT,TRANS_LOSSES,no,
 HYDROGEN,EXOGENOUS,yes,
 HYDROGEN,ENDO_REGIONAL,yes,
-HYDROGEN,ENDO_OTHERTRANS,yes,
+HYDROGEN,ENDO_OTHERTRANS,yes,,Transportation,Liquids|Hydrogen,"The hydrogen the transport add-on's liquid fuels are made of (ENDO_OTHERTRANS), at the hydrogen's energy content, and not under Final Energy|Hydrogen: Balmorel doesn't model turning it into those fuels, so their losses are not in it."
 HYDROGEN,ENDO_FUELCELL,no,
 HYDROGEN,ENDO_BIOMETHANE,no,
 HYDROGEN,ENDO_OPTIFLOW,no,
@@ -66,14 +77,14 @@ HYDROGEN,ENDO_INTERSTO,no,
 HYDROGEN,DIST_LOSSES,no,
 HYDROGEN,TRANS_LOSSES,no,
 ELECTRICITY,EXOGENOUS,yes,
-ELECTRICITY,EXO_TRANS,yes,
-ELECTRICITY,ENDO_EV,yes,
+ELECTRICITY,EXO_TRANS,yes,,Transportation,,"The transport add-on's exogenous electricity demand (EXO_TRANS) and that of electric vehicles (ENDO_EV), where the results give them. Balmorel's exogenous electricity demand isn't split by sector, so any transport use within it is not here."
+ELECTRICITY,ENDO_EV,yes,,Transportation,,"The transport add-on's exogenous electricity demand (EXO_TRANS) and that of electric vehicles (ENDO_EV), where the results give them. Balmorel's exogenous electricity demand isn't split by sector, so any transport use within it is not here."
 ELECTRICITY,ENDO_DR,yes,
 ELECTRICITY,ENDOGENOUS_ELECT2HEAT,on-site,Electricity
 ELECTRICITY,ON_SITE,yes,
 ELECTRICITY,ENDO_H2,no,
 ELECTRICITY,ENDO_BIOMETHANE,no,
-ELECTRICITY,ENDO_CCS,yes,,Carbon Management|Carbon Capture and Storage,"Only the electricity Balmorel's CCS units use for the CO2 they capture (ENDO_CCS). Direct air capture and other capture in the OptiFlow add-on use electricity within OptiFlow's demand (ENDO_OPTIFLOW), which is reported here only where the OptiFlow Mapping says so, as the base one does for compressing CO2."
+ELECTRICITY,ENDO_CCS,yes,,Carbon Management|Carbon Capture and Storage,,"Only the electricity Balmorel's CCS units use for the CO2 they capture (ENDO_CCS). Direct air capture and other capture in the OptiFlow add-on use electricity within OptiFlow's demand (ENDO_OPTIFLOW), which is reported here only where the OptiFlow Mapping says so, as the base one does for compressing CO2."
 ELECTRICITY,ENDO_OPTIFLOW,no,
 ELECTRICITY,ENDO_INTRASTO,no,
 ELECTRICITY,DIST_LOSSES,no,

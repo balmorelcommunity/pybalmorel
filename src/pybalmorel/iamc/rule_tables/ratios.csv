@@ -1,0 +1,12 @@
+# IAMC Variables that are one reported IAMC Variable divided by another, e.g. an emission
+# intensity. They are computed per IAMC Scenario, region and year from the two variables'
+# values in their IAMC units, after those are summed, so the ratio's unit must be the
+# numerator's per the denominator's (per year cancels: Mt CO2/yr per EJ/yr is Mt CO2/EJ).
+# A ratio is given where its denominator is reported, and left empty where that is 0 or
+# withheld, or where the numerator is withheld. A numerator the IAMC Scenario reports in other
+# regions or years but not there is 0 (e.g. no emissions where all electricity is renewable); a
+# scenario that reports no numerator at all gets no ratio. Being a ratio, it can't be summed over
+# regions or years: whoever aggregates regions must divide the sums of numerator and denominator.
+# note (optional): a Conversion Note for every IAMC Scenario with values of the ratio.
+variable,numerator,denominator,note
+Emission Intensity|CO2|Energy|Supply|Electricity,Emissions|CO2|Energy|Supply|Electricity,Secondary Energy|Electricity,"Emissions|CO2|Energy|Supply|Electricity per Secondary Energy|Electricity. The emissions are net of the stored CO2 from biomass, so the intensity is negative where biomass with carbon capture outweighs the rest. Units making both heat and electricity have their emissions split over the two by their output (Output-Share Split), which sets how much counts here. To aggregate regions, divide the sum of the emissions by that of the electricity; don't sum or average the intensities."

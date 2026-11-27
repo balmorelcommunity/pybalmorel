@@ -35,11 +35,15 @@ rule_tables = {
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
-    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category", "sector", "note"],
-                          "optional": ["fuel_category", "sector", "note"], "key": ["commodity", "demand_category"]},
+    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category", "sector", "carrier",
+                                      "note"],
+                          "optional": ["fuel_category", "sector", "carrier", "note"],
+                          "key": ["commodity", "demand_category"]},
     "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
                              "removal", "emissions", "note", "sector"], "optional": ["factor", "note", "sector"],
                  "key": None},
+    "ratios": {"columns": ["variable", "numerator", "denominator", "note"], "optional": ["note"],
+               "key": ["variable"]},
 }
 mapping_keys = ["tech_type", "fuel", "commodity", "unit_pattern"]
 not_reported = "-"
@@ -77,6 +81,8 @@ source_placeholder = "{source}"
 carrier_placeholder = "{carrier}"
 # Quantity of on-site fuel use: fuel input of units whose output isn't reported, as final energy
 final_quantity = "final"
+# Suffix of IAMC units per year, which cancels in a ratio of two such variables (see ratio_unit)
+per_year = "/yr"
 
 
 #%% ------------------------------- ###
@@ -121,7 +127,7 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
     Args:
         overrides (dict[str, str | Path | pd.DataFrame] | None, optional): Rows to add per table,
             keyed by table name ('fuels', 'mapping', 'stems', 'aggregates', 'countries', 'areas',
-            'demand_categories', 'optiflow'), as a CSV path or DataFrame with that table's
+            'demand_categories', 'optiflow', 'ratios'), as a CSV path or DataFrame with that table's
             columns. 'optiflow' rows replace the base OptiFlow Mapping. Defaults to None.
 
     Returns:
@@ -207,6 +213,12 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
         raise Exception(
             "'demand_categories' rows with a sector need 'yes' under final, as a Final Energy Sector is a part of "
             f"final energy:\n{demand_categories[sector_not_final].to_string()}"
+        )
+    carrier_not_final = (demand_categories["carrier"] != "") & (demand_categories["final"] != "yes")
+    if carrier_not_final.any():
+        raise Exception(
+            "'demand_categories' rows with a carrier need 'yes' under final, as only final demand is reported by "
+            f"carrier:\n{demand_categories[carrier_not_final].to_string()}"
         )
     stem_rules = tables["stems"]
     misplaced = stem_rules["stem"].str.contains(carrier_placeholder, regex=False) & (
@@ -327,6 +339,38 @@ def fill_carrier(stem: str, carrier: str) -> tuple[str, str]:
         return stem, carrier
     first, _, rest = carrier.partition("|")
     return stem.replace(carrier_placeholder, first), rest
+
+
+def fill_demand_carrier(stem: str, carrier: str) -> tuple[str, str]:
+    """Put demand under the carrier its demand category is reported as ('carrier' column of the 'demand_categories' table).
+
+    Args:
+        stem (str): The demand stem of the commodity, e.g. 'Final Energy|Hydrogen'.
+        carrier (str): The category's carrier, e.g. 'Liquids|Hydrogen', or '' for none.
+
+    Returns:
+        tuple[str, str]: The stem with the carrier's first segment in place of all after its
+            own first segment, and the carrier's other segments, to go below it:
+            ('Final Energy|Liquids', 'Hydrogen'). Without a carrier, the stem and ''.
+    """
+    if not carrier:
+        return stem, ""
+    return fill_carrier(f"{stem.split('|')[0]}|{carrier_placeholder}", carrier)
+
+
+def ratio_unit(numerator: str, denominator: str) -> str:
+    """Give the unit of one IAMC Variable divided by another.
+
+    Args:
+        numerator (str): The numerator's unit, e.g. 'Mt CO2/yr'.
+        denominator (str): The denominator's unit, e.g. 'EJ/yr'.
+
+    Returns:
+        str: E.g. 'Mt CO2/EJ', as the years cancel when both are per year.
+    """
+    if numerator.endswith(per_year) and denominator.endswith(per_year):
+        numerator, denominator = numerator.removesuffix(per_year), denominator.removesuffix(per_year)
+    return f"{numerator}/{denominator}"
 
 
 def check_optiflow_rules(optiflow: pd.DataFrame) -> None:
@@ -658,10 +702,18 @@ def check_rules(definitions: str | Path | None = None,
                 problems.append(("optiflow", variable, f"sector '{sector}' gives no IAMC Variable"))
 
     demand_stems = tables["stems"][tables["stems"]["quantity"] == "demand"]
-    with_sector = tables["demand_categories"][tables["demand_categories"]["sector"] != ""]
-    for commodity, sector in with_sector[["commodity", "sector"]].drop_duplicates().itertuples(index=False):
+    categories = tables["demand_categories"]
+    placed = categories[(categories["sector"] != "") | (categories["carrier"] != "")]
+    for commodity, sector, carrier in placed[["commodity", "sector", "carrier"]].drop_duplicates().itertuples(
+            index=False):
         for stem in demand_stems.loc[demand_stems["commodity"] == commodity, "stem"].unique():
-            for variable in sector_variables(stem, sector):
+            filled, rest = fill_demand_carrier(stem, carrier)
+            if carrier and "|".join(filter(None, [filled, rest])) not in names:
+                problems.append(("demand_categories", "|".join(filter(None, [filled, rest])),
+                                 f"carrier '{carrier}' gives no IAMC Variable"))
+                continue
+            for variable in sector_variables(filled, sector) if sector else []:
+                variable = "|".join(filter(None, [variable, rest]))
                 if variable not in names:
                     problems.append(("demand_categories", variable, f"sector '{sector}' gives no IAMC Variable"))
 
@@ -680,6 +732,17 @@ def check_rules(definitions: str | Path | None = None,
                                                         f"'{carrier}'"))
                 elif variable not in names and sector_other(variable, sector) not in names:
                     problems.append(("stems", variable, f"sector '{sector}' gives no IAMC Variable, nor an Other"))
+
+    units = variables.set_index("variable")["unit"]
+    for variable, numerator, denominator in tables["ratios"][["variable", "numerator", "denominator"]].itertuples(
+            index=False):
+        missing = [name for name in (variable, numerator, denominator) if name not in names]
+        if missing:
+            problems.append(("ratios", variable, f"{missing} are not IAMC Variables"))
+        elif ratio_unit(units[numerator], units[denominator]) != units[variable]:
+            problems.append(("ratios", variable, (
+                f"unit '{units[variable]}' is not that of '{numerator}' ('{units[numerator]}') per '{denominator}' "
+                f"('{units[denominator]}')")))
 
     kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
     for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:

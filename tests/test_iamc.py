@@ -7,12 +7,13 @@ Created on 23.11.2026
          Mathias Berg Rosendal, PostDoc at DTU Wind and Energy Systems
 """
 from pathlib import Path
+import numpy as np
 import pandas as pd
 import pytest
 
 from pybalmorel.backcasting import pricelevel
 from pybalmorel.iamc import check_rules, convert, load_rules, write_iamc
-from pybalmorel.iamc.convert import amounts, money_factor
+from pybalmorel.iamc.convert import amounts, derive_ratios, money_factor
 from pybalmorel.iamc.rules import definitions_dir
 
 #%% ------------------------------- ###
@@ -43,7 +44,8 @@ hydrogen_capacity_names = ["Capacity|Hydrogen", "Capacity|Hydrogen|Electricity",
 hydrogen_names = [
     "Secondary Energy|Hydrogen", "Secondary Energy|Hydrogen|Electricity", "Secondary Energy|Hydrogen|Gas",
     "Secondary Energy|Hydrogen|Gas|w/o CCS", "Secondary Energy|Hydrogen|Fossil", "Final Energy|Hydrogen",
-    "Trade|Secondary Energy|Hydrogen [Volume]",
+    "Trade|Secondary Energy|Hydrogen [Volume]", "Final Energy|Liquids", "Final Energy|Liquids|Hydrogen",
+    "Final Energy|Transportation", "Final Energy|Transportation|Liquids", "Final Energy|Transportation|Liquids|Hydrogen",
 ]
 carbon_names = [
     "Emissions|CO2|Energy|Supply|Electricity", "Emissions|CO2|Energy|Supply|Heat",
@@ -67,7 +69,7 @@ bunker_names = ["Final Energy|Bunkers|Hydrogen"]
 electricity_names = [
     "Final Energy|Electricity", "Trade|Secondary Energy|Electricity [Volume]", "Final Energy|Carbon Management",
     "Final Energy|Carbon Management|Electricity",
-    "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
+    "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity", "Final Energy|Transportation|Electricity",
 ]
 primary_names = [
     "Primary Energy", "Primary Energy|Gas", "Primary Energy|Gas|Electricity",
@@ -608,7 +610,9 @@ def test_final_electricity(electricity_long: pd.DataFrame, definitions: Path) ->
     # Exogenous demand, electric vehicles, the heat pump outside district heating and carbon capture
     assert value(data, "Final Energy|Electricity", 2030) == pytest.approx((15 + 2 + 3 + 1) * twh)
     assert value(data, "Final Energy|Electricity", 2030, "Germany") == pytest.approx(8 * twh)
-    # Carbon capture also by sector, but not the sector's total over all carriers
+    # Carbon capture and electric vehicles also by sector, but not the sectors' totals over all carriers
+    assert value(data, "Final Energy|Transportation|Electricity", 2030) == pytest.approx(2 * twh)
+    assert is_empty(data, "Final Energy|Transportation|Electricity", 2030, "Germany")
     assert value(data, "Final Energy|Carbon Management|Electricity", 2030) == pytest.approx(1 * twh)
     assert value(data, "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
                  2030) == pytest.approx(1 * twh)
@@ -714,7 +718,15 @@ def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> N
     assert value(data, "Secondary Energy|Hydrogen", 2030, "Germany") == pytest.approx(2 * twh)
     # Fuel cells, losses and storage are not final
     assert value(data, "Final Energy|Hydrogen", 2030) == pytest.approx(9 * twh)
-    assert value(data, "Final Energy|Hydrogen", 2030, "Germany") == pytest.approx(6.5 * twh)
+    # The transport add-on's hydrogen is that of liquid fuels, in the Transportation sector, not
+    # Final Energy|Hydrogen, and no sector total is reported
+    assert value(data, "Final Energy|Hydrogen", 2030, "Germany") == pytest.approx(6 * twh)
+    assert value(data, "Final Energy|Liquids|Hydrogen", 2030, "Germany") == pytest.approx(0.5 * twh)
+    assert value(data, "Final Energy|Liquids", 2030, "Germany") == pytest.approx(0.5 * twh)
+    assert value(data, "Final Energy|Transportation|Liquids|Hydrogen", 2030, "Germany") == pytest.approx(0.5 * twh)
+    assert value(data, "Final Energy|Transportation|Liquids", 2030, "Germany") == pytest.approx(0.5 * twh)
+    assert "Final Energy|Transportation" not in set(data["Variable"])
+    assert is_empty(data, "Final Energy|Liquids|Hydrogen", 2030)
     # Net exports: transmission between countries, less imports from outside the model
     assert value(data, "Trade|Secondary Energy|Hydrogen [Volume]", 2030) == pytest.approx((6 - 1 - 3) * twh)
     assert value(data, "Trade|Secondary Energy|Hydrogen [Volume]", 2030, "Germany") == pytest.approx(-5 * twh)
@@ -723,6 +735,15 @@ def test_hydrogen_variables(hydrogen_long: pd.DataFrame, definitions: Path) -> N
     assert "Import units (ELECTROLYZER/IMPORT_H2) brought 2030: 3 TWh of HYDROGEN" in text
     assert "doesn't add up" not in text
     assert "have no row for it" not in text
+    noted = notes[notes["Note"].str.contains("ENDO_OTHERTRANS")]
+    assert set(noted["Variable"]) == {"Final Energy|Liquids|Hydrogen", "Final Energy|Transportation|Liquids|Hydrogen"}
+    assert "losses are not in it" in noted["Note"].iloc[0]
+
+
+def test_hydrogen_transport_counts_once(hydrogen_long: pd.DataFrame, total_definitions: Path) -> None:
+    """The transport add-on's hydrogen counts towards Final Energy once, as liquid fuels."""
+    data, _ = convert(hydrogen_long, "Balmorel", definitions=total_definitions)
+    assert value(data, "Final Energy", 2030, "Germany") == pytest.approx(6.5 * twh)
 
 
 def test_hydrogen_balance_is_checked(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
@@ -873,6 +894,26 @@ def test_sector_without_variables_is_listed(definitions: Path) -> None:
 
     listed = problems[problems["table"] == "demand_categories"]
     assert listed["value"].tolist() == ["Final Energy|Carbon Management|Moonlight|Electricity"]
+
+
+def test_demand_carrier_without_variables_is_listed(definitions: Path) -> None:
+    """A demand category's carrier is checked under every demand stem of its commodity, with its sector."""
+    demand_categories = pd.DataFrame([
+        {"commodity": "HYDROGEN", "demand_category": "ENDO_OTHERTRANS", "final": "yes", "carrier": "Gases|Hydrogen"},
+        {"commodity": "HYDROGEN", "demand_category": "ENDO_REGIONAL", "final": "yes", "sector": "Industry",
+         "carrier": "Liquids|Hydrogen"},
+    ])
+    problems = check_rules(definitions, {"demand_categories": demand_categories})
+
+    listed = problems[problems["table"] == "demand_categories"]
+    assert sorted(listed["value"]) == ["Final Energy|Gases|Hydrogen", "Final Energy|Industry|Liquids|Hydrogen"]
+
+
+def test_demand_carrier_needs_final_demand() -> None:
+    demand_categories = pd.DataFrame([{"commodity": "HYDROGEN", "demand_category": "ENDO_FUELCELL", "final": "no",
+                                       "carrier": "Liquids|Hydrogen"}])
+    with pytest.raises(Exception, match="with a carrier need 'yes'"):
+        load_rules({"demand_categories": demand_categories})
 
 
 def test_carbon_not_linked_to_optiflow(carbon_long: pd.DataFrame, definitions: Path) -> None:
@@ -1869,3 +1910,181 @@ def test_carbon_price_without_tax(carbon_long: pd.DataFrame, price_definitions: 
     assert value(data, "Price|Carbon", 2030) == pytest.approx(75)
     assert is_empty(data, "Price|Carbon", 2050)
     assert (notes["Note"] == "Carbon price not reported for 2050: no unit pays CO2 tax in 2050.").any()
+
+
+additions_names = [
+    "Capacity Additions|Electricity", "Capacity Additions|Electricity|Gas",
+    "Capacity Additions|Electricity|Gas|w/o CCS", "Capacity Additions|Electricity|Wind",
+    "Capacity Additions|Electricity|Wind|Onshore", "Capacity Additions|Electricity|Wind|Offshore",
+    "Capacity Additions|Heat", "Capacity Additions|Heat|Gas", "Capacity Additions|Hydrogen",
+    "Capacity Additions|Hydrogen|Electricity",
+]
+
+
+@pytest.fixture
+def additions_definitions(definitions: Path) -> Path:
+    """The small Definitions Snapshot with Capacity Additions (GW/yr)."""
+    variables = pd.read_csv(definitions / "variables.csv")
+    additions = pd.DataFrame({"variable": additions_names, "unit": "GW/yr"})
+    pd.concat((variables, additions)).to_csv(definitions / "variables.csv", index=False)
+    return definitions
+
+
+def capacity_row(year: int, unit_name: str, tech_type: str, fuel: str, category: str, value: float,
+                 commodity: str = "ELECTRICITY") -> dict:
+    """A long-table row of one Danish unit's capacity (GW) of one G_CAP_YCRAF category in scenario S1."""
+    return {"scenario": "S1", "year": year, "country": "DENMARK", "area": "DENMARK_A", "unit_name": unit_name,
+            "tech_type": tech_type, "fuel": fuel, "commodity": commodity, "demand_category": category,
+            "quantity": "capacity", "value_unit": "GW", "value": value}
+
+
+@pytest.fixture
+def capacity_long() -> pd.DataFrame:
+    """Danish capacity by G_CAP_YCRAF category in 2030, 2040 and 2050:
+
+    - Onshore wind: 3, 4 and 5 GW exogenous, and 2 GW invested in by 2040, 5 by 2050.
+    - Offshore wind: 4 GW invested in by 2050.
+    - Gas: 2 GW exogenous, 1 of it decommissioned by 2050, and 4 GW invested in by 2030, a 3 GW
+      vintage of which reaches the end of its lifetime by 2040.
+    - A gas boiler in district heating: 1 GW invested in by 2030 and 2040, 3 by 2050.
+    - An electrolyser: 1 GW invested in throughout.
+    - A backup unit and a hydrogen import unit, both invested in more and more.
+    """
+    invested = {
+        ("GNR_WT_ON", "WIND-ON", "WIND", "ELECTRICITY"): {2040: 2, 2050: 5},
+        ("GNR_WT_OFF", "WIND-OFF", "WIND", "ELECTRICITY"): {2050: 4},
+        ("GNR_CC_NGAS", "CONDENSING", "NATGAS", "ELECTRICITY"): {2030: 4, 2040: 1, 2050: 1},
+        ("GNR_BO_NGAS", "BOILERS", "NATGAS", "HEAT"): {2030: 1, 2040: 1, 2050: 3},
+        ("GNR_ELYS", "ELECTROLYZER", "ELECTRIC", "HYDROGEN"): {2030: 1, 2040: 1, 2050: 1},
+        ("GNR_BACKUP_ELECTRICITY", "CONDENSING", "NATGAS", "ELECTRICITY"): {2040: 50, 2050: 100},
+        ("GNR_H2_IMPORT", "ELECTROLYZER", "IMPORT_H2", "HYDROGEN"): {2040: 5, 2050: 10},
+    }
+    rows = [capacity_row(year, unit_name, tech_type, fuel, "ENDOGENOUS", capacity, commodity)
+            for (unit_name, tech_type, fuel, commodity), by_year in invested.items()
+            for year, capacity in by_year.items()]
+    for year, wind in ((2030, 3), (2040, 4), (2050, 5)):
+        rows.append(capacity_row(year, "GNR_WT_ON", "WIND-ON", "WIND", "EXOGENOUS", wind))
+        rows.append(capacity_row(year, "GNR_CC_NGAS", "CONDENSING", "NATGAS", "EXOGENOUS", 2))
+    rows.append(capacity_row(2050, "GNR_CC_NGAS", "CONDENSING", "NATGAS", "DECOMMISSIONING", -1))
+    return pd.DataFrame(rows)
+
+
+def test_capacity_additions(capacity_long: pd.DataFrame, additions_definitions: Path) -> None:
+    """Additions are the rises in invested capacity per year between model years. Falls, exogenous
+    capacity, backup and import units add nothing, and the first model year is left empty."""
+    data, notes = convert(capacity_long, "Balmorel", definitions=additions_definitions)
+
+    # Capacity stays net of every category
+    assert value(data, "Capacity|Electricity", 2050) == pytest.approx(5 + 5 + 4 + (2 - 1 + 1))
+    assert is_empty(data, "Capacity Additions|Electricity", 2030)
+    assert value(data, "Capacity Additions|Electricity", 2040) == pytest.approx(2 / 10)
+    assert value(data, "Capacity Additions|Electricity", 2050) == pytest.approx((5 - 2) / 10 + 4 / 10)
+    assert value(data, "Capacity Additions|Electricity|Wind|Onshore", 2050) == pytest.approx(3 / 10)
+    # A model year without additions under a variable that has some is 0
+    assert value(data, "Capacity Additions|Electricity|Wind|Offshore", 2040) == 0.0
+    assert value(data, "Capacity Additions|Electricity|Wind|Offshore", 2050) == pytest.approx(4 / 10)
+    assert value(data, "Capacity Additions|Electricity|Gas|w/o CCS", 2040) == 0.0
+    assert value(data, "Capacity Additions|Heat|Gas", 2050) == pytest.approx(2 / 10)
+    assert value(data, "Capacity Additions|Hydrogen", 2050) == 0.0
+    assert set(data.loc[data["Variable"].str.startswith("Capacity Additions"), "Unit"]) == {"GW/yr"}
+
+    assert (notes["Note"] == "Capacity Additions are left empty in 2030, the first model year, as there is no "
+            "earlier model year to tell what was added by then.").any()
+    stem_notes = notes[notes["Note"].str.startswith("New installations per year")]
+    # Hydrogen adds nothing, so it gets no note
+    assert sorted(stem_notes["Variable"]) == ["Capacity Additions|Electricity", "Capacity Additions|Heat"]
+
+
+def test_capacity_additions_without_invested_capacity(long: pd.DataFrame, additions_definitions: Path) -> None:
+    """Capacity without categories, or only exogenous capacity, gives no additions and no note."""
+    data, notes = convert(long, "Balmorel", definitions=additions_definitions)
+    assert not data["Variable"].str.startswith("Capacity Additions").any()
+    assert not notes["Note"].str.contains("Capacity Additions").any()
+
+
+def test_capacity_additions_of_combined_runs(capacity_long: pd.DataFrame, additions_definitions: Path) -> None:
+    """Balmorel scenarios combined into one IAMC Scenario each leave their first model year empty,
+    rather than taking what was added from the other."""
+    later_run = capacity_long.assign(scenario="S2", year=capacity_long["year"] + 5)
+    data, notes = convert(pd.concat((capacity_long, later_run)), "Balmorel", scenarios={"S1": "LTS", "S2": "LTS"},
+                          definitions=additions_definitions)
+
+    assert is_empty(data, "Capacity Additions|Electricity", 2030)
+    assert is_empty(data, "Capacity Additions|Electricity", 2035)
+    assert value(data, "Capacity Additions|Electricity", 2045) == pytest.approx(2 / 10)
+    assert value(data, "Capacity Additions|Electricity", 2055) == pytest.approx(7 / 10)
+    assert notes["Note"].str.startswith("Capacity Additions are left empty in 2030, 2035, the first model years of "
+                                        "its Balmorel scenarios").any()
+
+
+@pytest.fixture
+def intensity_definitions(definitions: Path) -> Path:
+    """The small Definitions Snapshot with the emission intensity of electricity."""
+    variables = pd.read_csv(definitions / "variables.csv")
+    intensity = pd.DataFrame({"variable": ["Emission Intensity|CO2|Energy|Supply|Electricity"], "unit": ["Mt CO2/EJ"]})
+    pd.concat((variables, intensity)).to_csv(definitions / "variables.csv", index=False)
+    return definitions
+
+
+def test_emission_intensity(long: pd.DataFrame, intensity_definitions: Path) -> None:
+    """The emissions of electricity per electricity made; 0 in a year without emissions."""
+    emissions = pd.DataFrame([carbon_row("GNR_CC_NGAS", "CONDENSING", "NATGAS", "emissions", 100)])
+    data, notes = convert(pd.concat((long, emissions)), "Balmorel", definitions=intensity_definitions)
+
+    intensity = "Emission Intensity|CO2|Energy|Supply|Electricity"
+    assert value(data, intensity, 2030) == pytest.approx((100 / 1e3) / ((10 + 5 + 6 + 12 + 1 + 1) * twh))
+    assert value(data, intensity, 2050) == 0.0
+    assert data.loc[data["Variable"] == intensity, "Unit"].tolist() == ["Mt CO2/EJ"]
+    assert notes.loc[notes["Variable"] == intensity, "Note"].str.startswith(
+        "Emissions|CO2|Energy|Supply|Electricity per Secondary Energy|Electricity.").any()
+
+    # Without emissions in the results, there is no intensity
+    data, _ = convert(long, "Balmorel", definitions=intensity_definitions)
+    assert intensity not in set(data["Variable"])
+
+
+def test_ratios_where_parts_are_missing() -> None:
+    """A ratio is empty where its denominator is 0 or either part is withheld, uses 0 for a
+    numerator reported only in other regions or years, and is left out for a scenario without
+    numerator."""
+    variables = pd.DataFrame({"variable": ["A", "B", "A per B"], "unit": ["Mt CO2/yr", "EJ/yr", "Mt CO2/EJ"]})
+    ratios = pd.DataFrame([{"variable": "A per B", "numerator": "A", "denominator": "B", "note": "Divided."}])
+    data = pd.DataFrame([
+        ("S1", "Denmark", "A", 2030, 2.0), ("S1", "Denmark", "B", 2030, 4.0),
+        ("S1", "Germany", "B", 2030, 4.0),
+        ("S1", "Denmark", "A", 2050, 1.0), ("S1", "Denmark", "B", 2050, 0.0),
+        ("S1", "Germany", "A", 2050, np.nan), ("S1", "Germany", "B", 2050, 2.0),
+        ("S2", "Denmark", "B", 2030, 4.0),
+    ], columns=["Scenario", "Region", "Variable", "Year", "Value"]).assign(Unit="")
+    notes = []
+    ratio = derive_ratios(data, ratios, variables, notes)
+    ratio = ratio[ratio["Variable"] == "A per B"].set_index(["Scenario", "Region", "Year"])["Value"]
+
+    assert ratio[("S1", "Denmark", 2030)] == pytest.approx(0.5)
+    assert ratio[("S1", "Germany", 2030)] == 0.0
+    assert np.isnan(ratio[("S1", "Denmark", 2050)])
+    assert np.isnan(ratio[("S1", "Germany", 2050)])
+    assert "S2" not in ratio.index.get_level_values("Scenario")
+    assert [(entry["Scenario"], entry["Variable"], entry["Note"]) for entry in notes] == [("S1", "A per B", "Divided.")]
+
+    variables.loc[variables["variable"] == "A per B", "unit"] = "Mt CO2/yr"
+    with pytest.raises(Exception, match="gives 'Mt CO2/EJ'"):
+        derive_ratios(data, ratios, variables, [])
+
+
+def test_ratio_rules_are_checked(intensity_definitions: Path) -> None:
+    """Ratios whose names the snapshot lacks, or whose unit isn't the numerator's per the
+    denominator's, are listed."""
+    ratios = pd.DataFrame([
+        {"variable": "Emission Intensity|CO2|Energy|Supply|Moonlight",
+         "numerator": "Emissions|CO2|Energy|Supply|Electricity", "denominator": "Secondary Energy|Electricity"},
+        {"variable": "Emission Intensity|CO2|Energy|Supply|Electricity",
+         "numerator": "Emissions|CO2|Energy|Supply|Heat", "denominator": "Capacity|Electricity"},
+    ])
+    problems = check_rules(intensity_definitions, {"ratios": ratios})
+
+    listed = problems[problems["table"] == "ratios"].set_index("value")["problem"]
+    assert sorted(listed.index) == ["Emission Intensity|CO2|Energy|Supply|Electricity",
+                                    "Emission Intensity|CO2|Energy|Supply|Moonlight"]
+    assert "are not IAMC Variables" in listed["Emission Intensity|CO2|Energy|Supply|Moonlight"]
+    assert "unit 'Mt CO2/EJ' is not that of" in listed["Emission Intensity|CO2|Energy|Supply|Electricity"]
