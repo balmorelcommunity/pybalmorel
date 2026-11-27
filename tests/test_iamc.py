@@ -595,6 +595,20 @@ def test_heat_variables(heat_long: pd.DataFrame, definitions: Path) -> None:
     assert "doesn't add up" not in text
 
 
+def test_backup_capacity_counts_in_no_note(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """Backup units' capacity, which is never reported, counts in no Conversion Note, not even in
+    the one on heat outside district heating being left out on purpose."""
+    rows = unit_rows("S1", 2030, "DENMARK", "GNR_BACKUP_HEAT", "BOILERS", "NATGAS", 500, 0.1, "HEAT",
+                     "DK_IDVU-SPACEHEAT")
+    data, notes = convert(pd.concat((heat_long, pd.DataFrame(rows))), "Balmorel", definitions=definitions)
+
+    left_out = [line for line in notes["Note"] if "is not reported as heat" in line]
+    # Only the heat pump's capacity
+    assert "capacity of HEAT in individual areas (2030: 1 GW)" in left_out[0]
+    assert not notes["Note"].str.contains("501 GW|500 GW").any()
+    assert value(data, "Capacity|Heat", 2030) == pytest.approx(1)
+
+
 def test_notes_name_their_regions(heat_long: pd.DataFrame, definitions: Path) -> None:
     """Heat left out in several regions gets one note per scenario, with the total, that names them."""
     german = unit_rows("S1", 2030, "GERMANY", "GNR_BO_WOOD", "BOILERS", "WOODCHIPS", 1, 2, "HEAT", "DE_IND-MT-DH")

@@ -238,6 +238,7 @@ def convert(long: pd.DataFrame,
         long["weight"] = np.nan
     long = name_scenarios(long, scenarios)
     modelled_years = long.groupby("iamc_scenario")["year"].unique()
+    long = drop_backup_capacity(long, backup_pattern)
     long, first_years = derive_additions(long, notes)
     priced = long["quantity"].isin(["price", "tax"])
     prices = long[priced]
@@ -2268,9 +2269,28 @@ def resolve(stem: str, path: str, names: set[str]) -> str:
 ###         6. Backup Units         ###
 ### ------------------------------- ###
 
+def drop_backup_capacity(long: pd.DataFrame, backup_pattern: str) -> pd.DataFrame:
+    """Drop backup units' capacity, which is never reported.
+
+    Backup units stand ready in every region so that demand is always met, so their capacity can
+    be orders of magnitude above the rest. It goes before anything is derived from capacity or
+    noted about it, so it adds no Capacity Additions and counts in no Conversion Note.
+
+    Args:
+        long (pd.DataFrame): The long table.
+        backup_pattern (str): Regular expression marking backup units by name.
+
+    Returns:
+        pd.DataFrame: The long table without backup units' capacity.
+    """
+    backup = long["unit_name"].str.contains(backup_pattern, regex=True, na=False)
+    return long[~(backup & (long["quantity"] == "capacity"))]
+
+
 def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: str,
                        notes: list[dict]) -> pd.DataFrame:
-    """Drop backup units' capacity and its additions, and report or drop the rest of what they do, noting the amounts.
+    """Report or drop what backup units do, noting the amounts. Their capacity is gone already
+    (drop_backup_capacity).
 
     Args:
         long (pd.DataFrame): The long table with variables.
@@ -2282,11 +2302,10 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
     Returns:
         pd.DataFrame: The rows still reported.
     """
-    backup = long["unit_name"].str.contains(backup_pattern, regex=True)
-    capacity = long["quantity"].isin(["capacity", additions_quantity])
+    backup = long["unit_name"].str.contains(backup_pattern, regex=True, na=False)
 
     supply = backup_units == "supply"
-    for (scenario, quantity, variable, value_unit), rows in long[backup & ~capacity].groupby(
+    for (scenario, quantity, variable, value_unit), rows in long[backup].groupby(
             ["iamc_scenario", "quantity", "variable", "value_unit"]):
         by_region = per_region(rows)
         if by_region.empty:
@@ -2299,8 +2318,7 @@ def treat_backup_units(long: pd.DataFrame, backup_units: str, backup_pattern: st
             f"{what} {amounts(by_region.sum())} {value_unit} in {list_regions(by_region.index)}; {treatment}."
         )))
 
-    leave_out = backup & capacity if supply else backup
-    return long[~leave_out]
+    return long if supply else long[~backup]
 
 
 #%% ------------------------------- ###
