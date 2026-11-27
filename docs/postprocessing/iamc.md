@@ -6,6 +6,14 @@ IAMC Variable, with one column per year. Names and units follow the
 [IAMC common definitions](https://github.com/IAMconsortium/common-definitions).
 It reads `MainResults`, so it needs a GAMS installation.
 
+:::{tip}
+Once in the IAMC format, Balmorel scenarios can take part in model
+intercomparison projects and be submitted to the scenario databases that
+IPCC assessment reports draw on, such as the AR7 Scenarios Database. A set
+of scenarios along different emission pathways is the most useful, e.g.
+net zero by 2050, a later target and current policies.
+:::
+
 ## Quick start
 
 ```python
@@ -249,7 +257,7 @@ Conversion has three layers
    pybalmorel never invents names.
 
 | Table | What its rows give |
-|---|---|
+| --- | --- |
 | `fuels` | Per Balmorel fuel: its Fuel Category (e.g. `Gas`), how it counts as Primary Energy, and its Final Energy carrier |
 | `mapping` | Per technology type, fuel, commodity or unit-name pattern: the segments below the stem, e.g. `Wind\|Offshore` or `{category}\|w/ CCS` |
 | `stems` | Per quantity, commodity and area kind: the stem, e.g. `Secondary Energy\|Electricity`, and the total it counts towards |

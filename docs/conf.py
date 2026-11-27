@@ -15,7 +15,17 @@ extensions = [
     "myst_parser",  # in order to use markdown
     "autoapi.extension",  # in order to use markdown
     "sphinx_copybutton",
+    "sphinx.ext.napoleon",  # in order to read Google-style docstrings (Args:, Returns:)
 ]
+
+# the package uses Google-style docstrings only
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
+# The classes pybalmorel re-exports are documented twice (pybalmorel.IncFile and
+# pybalmorel.classes.IncFile), so a docstring type naming one has two targets. Both are the
+# same class, so the 'more than one target' warnings are silenced
+suppress_warnings = ["ref.python"]
 
 # search this directory for Python files
 autoapi_dirs = ["../src/pybalmorel"]
