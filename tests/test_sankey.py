@@ -110,19 +110,19 @@ def test_mainresults_flows(long: pd.DataFrame):
     expected = {
         ("Biomass", "Electricity", "flow"): 3.0,
         ("Biomass", "Electricity", "loss"): 0.75,
-        ("Biomass", "Heat", "flow"): 5.0,
-        ("Biomass", "Heat", "loss"): 1.25,
+        ("Biomass", "District Heat", "flow"): 5.0,
+        ("Biomass", "District Heat", "loss"): 1.25,
         ("Electricity", "Losses", "loss"): 0.75 + 0.5,
-        ("Heat", "Losses", "loss"): 1.25,
-        ("Electricity", "Heat", "flow"): 1.0,
-        ("Ambient Heat", "Heat", "ambient"): 2.0,
+        ("District Heat", "Losses", "loss"): 1.25,
+        ("Electricity", "District Heat", "flow"): 1.0,
+        ("Ambient Heat", "District Heat", "ambient"): 2.0,
         ("Wind", "Electricity", "flow"): 6.0,
         ("Gas", "On-site Heat", "flow"): 2.0,
         ("Gas", "On-site Heat", "loss"): 0.5,
         ("On-site Heat", "Losses", "loss"): 0.5,
         ("On-site Heat", "Residential and Commercial", "flow"): 2.0,
         ("Electricity", "Final Energy", "flow"): 7.0,
-        ("Heat", "Final Energy", "flow"): 8.0,
+        ("District Heat", "Final Energy", "flow"): 8.0,
         ("Electricity", "Exports", "flow"): 0.5,
     }
     assert flows.keys() == expected.keys()
@@ -145,7 +145,7 @@ def test_regions_and_areas(long: pd.DataFrame):
     # Electricity demand is per region, so an area's electricity goes to the Grid
     flows = as_dict(mainresults_flows(long, 2050, "S1", areas=district_heating))
     assert flows[("Electricity", "Grid", "flow")] == pytest.approx(9.0 - 1.0)
-    assert flows[("Heat", "Final Energy", "flow")] == pytest.approx(8.0)
+    assert flows[("District Heat", "Final Energy", "flow")] == pytest.approx(8.0)
     assert not any(end == "On-site Heat" for _, end, _ in flows)
 
 
@@ -212,8 +212,8 @@ def test_optiflow_fuels(long: pd.DataFrame):
     assert flows[("Oil", "Liquids", "flow")] == pytest.approx(1.0)
     assert flows[("Liquids", "Bunkers", "flow")] == pytest.approx(3.0)
     assert ("OptiFlow", "Bunkers", "flow") not in flows
-    assert flows[("OptiFlow", "Heat", "flow")] == pytest.approx(0.5)
-    assert flows[("Heat", "OptiFlow", "flow")] == pytest.approx(0.5)
+    assert flows[("OptiFlow", "District Heat", "flow")] == pytest.approx(0.5)
+    assert flows[("District Heat", "OptiFlow", "flow")] == pytest.approx(0.5)
 
 
 def test_optiflow_primary_energy(long: pd.DataFrame):
@@ -254,15 +254,15 @@ def test_iamc_flows(iamc: pd.DataFrame):
     expected = {
         ("Biomass", "Electricity", "flow"): 3.0,
         ("Biomass", "Electricity", "loss"): 0.75,
-        ("Biomass", "Heat", "flow"): 5.0,
-        ("Biomass", "Heat", "loss"): 1.25,
+        ("Biomass", "District Heat", "flow"): 5.0,
+        ("Biomass", "District Heat", "loss"): 1.25,
         ("Electricity", "Losses", "loss"): 0.75,
-        ("Heat", "Losses", "loss"): 1.25,
-        ("Electricity", "Heat", "flow"): 3.0,
+        ("District Heat", "Losses", "loss"): 1.25,
+        ("Electricity", "District Heat", "flow"): 3.0,
         ("Wind", "Electricity", "flow"): 6.0,
         ("Gas", "Residential and Commercial", "flow"): 2.5,
         ("Electricity", "Final Energy", "flow"): 5.5,
-        ("Heat", "Final Energy", "flow"): 8.0,
+        ("District Heat", "Final Energy", "flow"): 8.0,
         ("Electricity", "Exports", "flow"): 0.5,
     }
     assert flows.keys() == expected.keys()
@@ -339,7 +339,7 @@ def test_compare(long: pd.DataFrame, iamc: pd.DataFrame):
     assert compared["Difference"].to_numpy() == pytest.approx((compared["IAMC"] - compared["MainResults"]).to_numpy())
     both = as_dict(compared, "Difference")
     assert both[("Wind", "Electricity", "flow")] == pytest.approx(0.0)
-    assert both[("Ambient Heat", "Heat", "ambient")] == pytest.approx(-2.0)
+    assert both[("Ambient Heat", "District Heat", "ambient")] == pytest.approx(-2.0)
     assert both[("Gas", "Residential and Commercial", "flow")] == pytest.approx(2.5)
 
 
@@ -382,7 +382,7 @@ def test_plot_sankey_style(long: pd.DataFrame, dark: bool):
     texts = [ax.title] + [text for text in ax.texts]
     assert all(contrast(to_rgba(text.get_color()), background) >= 4.5 for text in texts)
     # The dark style lightens dark fuel colours so every node stands out. The light style keeps
-    # the package's fuel colours, of which Wind, Solar and Heat are pale against white.
+    # the package's fuel colours, of which Wind, Solar and District Heat are pale against white.
     if dark:
         nodes = [patch for patch in ax.patches if isinstance(patch, Rectangle)]
         assert nodes and all(contrast(patch.get_facecolor(), background) >= 3 for patch in nodes)
@@ -392,7 +392,7 @@ def test_plot_sankey_style(long: pd.DataFrame, dark: bool):
 def test_panels_share_one_threshold():
     # 0.9 is below 0.1% of panel A's largest node (1050), so neither panel draws it, though it is
     # above 0.1% of panel B's own largest node (150)
-    flows = pd.DataFrame({"From": ["Gas", "Wind", "Gas"], "To": ["Heat", "Electricity", "Electricity"],
+    flows = pd.DataFrame({"From": ["Gas", "Wind", "Gas"], "To": ["District Heat", "Electricity", "Electricity"],
                           "Kind": "flow", "A": [0.9, 1000.0, 50.0], "B": [0.9, 100.0, 50.0]})
     panels = panels_of(flows, ["A", "B"], 1e-3)
     for panel in panels:

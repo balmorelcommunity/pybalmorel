@@ -35,10 +35,10 @@ rule_tables = {
     "aggregates": {"columns": ["aggregate", "component"], "key": ["aggregate"]},
     "countries": {"columns": ["country", "iso3"], "key": ["country"]},
     "areas": {"columns": ["pattern", "area_kind"], "key": ["pattern"]},
-    "demand_categories": {"columns": ["commodity", "demand_category", "final", "fuel_category", "sector", "carrier",
-                                      "note"],
-                          "optional": ["fuel_category", "sector", "carrier", "note"],
-                          "key": ["commodity", "demand_category"]},
+    "demand_categories": {"columns": ["commodity", "demand_category", "area_kind", "final", "fuel_category", "sector",
+                                      "carrier", "note"],
+                          "optional": ["area_kind", "fuel_category", "sector", "carrier", "note"],
+                          "key": ["commodity", "demand_category", "area_kind"]},
     "optiflow": {"columns": ["from_process", "to_process", "flow", "role", "pool", "unit", "factor", "variable",
                              "removal", "emissions", "note", "sector"], "optional": ["factor", "note", "sector"],
                  "key": None},
@@ -220,7 +220,22 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             "'demand_categories' rows with a carrier need 'yes' under final, as only final demand is reported by "
             f"carrier:\n{demand_categories[carrier_not_final].to_string()}"
         )
+    on_site_per_kind = (demand_categories["final"] == on_site_final) & (demand_categories["area_kind"] != "")
+    if on_site_per_kind.any():
+        raise Exception(
+            f"'demand_categories' rows marked '{on_site_final}' apply to every Area Kind, so they take no area_kind; "
+            f"give the part used on site its own rows instead, in category ON_SITE:\n"
+            f"{demand_categories[on_site_per_kind].to_string()}"
+        )
     stem_rules = tables["stems"]
+    left_out = stem_rules["stem"] == not_reported
+    unclear = left_out & ((stem_rules["note"] == "") | (stem_rules["total"] != "") | (stem_rules["sector"] != ""))
+    if unclear.any():
+        raise Exception(
+            f"Stems '{not_reported}' (not reported on purpose) need a note saying why, and take no total or sector:\n"
+            f"{stem_rules[unclear].to_string()}"
+        )
+    stem_rules = reported_stems(stem_rules)
     misplaced = stem_rules["stem"].str.contains(carrier_placeholder, regex=False) & (
         (stem_rules["quantity"] != final_quantity)
         | (stem_rules["stem"].str.count(re.escape(carrier_placeholder)) != 1)
@@ -283,6 +298,19 @@ def load_rules(overrides: dict[str, str | Path | pd.DataFrame] | None = None) ->
             raise Exception(f"The 'areas' pattern '{pattern}' is no regular expression: {error}")
     check_optiflow_rules(tables["optiflow"])
     return tables
+
+
+def reported_stems(stems: pd.DataFrame) -> pd.DataFrame:
+    """The rows of the 'stems' table that report something, without those that leave a quantity
+    and commodity out on purpose (stem not_reported).
+
+    Args:
+        stems (pd.DataFrame): The 'stems' rule table.
+
+    Returns:
+        pd.DataFrame: Its rows whose stem is an IAMC Variable or a template of one.
+    """
+    return stems[stems["stem"] != not_reported]
 
 
 def sector_variables(stem: str, sector: str) -> list[str]:
@@ -471,6 +499,30 @@ def match_area_kinds(areas: pd.Series, area_rules: pd.DataFrame) -> pd.Series:
     return areas.map(kinds)
 
 
+def match_demand_categories(rows: pd.DataFrame, demand_categories: pd.DataFrame, kinds: pd.Series) -> pd.DataFrame:
+    """Find the 'demand_categories' rule of each demand row: that for the Area Kind where it is used, else that for any.
+
+    Args:
+        rows (pd.DataFrame): Demand rows, with 'commodity' and 'demand_category'.
+        demand_categories (pd.DataFrame): The 'demand_categories' table from load_rules.
+        kinds (pd.Series): The Area Kind where each row's demand is used ('' for none), on the
+            index of `rows`.
+
+    Returns:
+        pd.DataFrame: The rule's other columns ('final', 'fuel_category', 'sector', 'carrier',
+            'note') on the index of `rows`; NaN for rows no rule covers.
+    """
+    keys = ["commodity", "demand_category"]
+    columns = [column for column in demand_categories.columns if column not in keys + ["area_kind"]]
+    for_kind = demand_categories[demand_categories["area_kind"] != ""].set_index(keys + ["area_kind"])[columns]
+    for_any = demand_categories[demand_categories["area_kind"] == ""].set_index(keys)[columns]
+    at_kind = pd.MultiIndex.from_arrays([rows["commodity"], rows["demand_category"], kinds.to_numpy()])
+    found = for_any.reindex(pd.MultiIndex.from_frame(rows[keys])).set_axis(rows.index)
+    by_kind = at_kind.isin(for_kind.index)
+    found.loc[by_kind] = for_kind.reindex(at_kind[by_kind]).to_numpy()
+    return found
+
+
 def match_mapping_rules(units: pd.DataFrame, mapping: pd.DataFrame, column: str = "segments") -> pd.Series:
     """Find the segments template, or another column, of the Mapping Rule that wins for each unit.
 
@@ -622,6 +674,7 @@ def check_rules(definitions: str | Path | None = None,
     """
     variables, regions = load_definitions(definitions)
     tables = load_rules(rules)
+    tables["stems"] = reported_stems(tables["stems"])
     names = set(variables["variable"])
     stems = tables["stems"]["stem"].unique()
     segment_names = {segment for name in names for segment in name.split("|")}
@@ -745,7 +798,8 @@ def check_rules(definitions: str | Path | None = None,
                 f"('{units[denominator]}')")))
 
     kinds = set(tables["areas"]["area_kind"]) | {default_area_kind}
-    for kind in set(tables["stems"]["area_kind"]) - kinds - {""}:
-        problems.append(("stems", kind, f"is no Area Kind of the 'areas' rules, which give {sorted(kinds)}"))
+    for name in ("stems", "demand_categories"):
+        for kind in set(tables[name]["area_kind"]) - kinds - {""}:
+            problems.append((name, kind, f"is no Area Kind of the 'areas' rules, which give {sorted(kinds)}"))
 
     return pd.DataFrame(problems, columns=["table", "value", "problem"])

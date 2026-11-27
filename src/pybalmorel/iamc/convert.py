@@ -23,9 +23,10 @@ import pandas as pd
 from .reader import invested_category, read_mainresults
 from .rules import (addon_origin, base_origin, carrier_placeholder, default_area_kind, fill_carrier,
                     fill_demand_carrier, fill_source, final_quantity, import_unit, load_definitions, load_rules,
-                    load_template, match_area_kinds, match_mapping_rules, match_optiflow_rules, not_reported,
+                    load_template, match_area_kinds, match_demand_categories, match_mapping_rules,
+                    match_optiflow_rules, not_reported,
                     on_site_final, optiflow_targets, optiflow_unit, passed_origin, per_year, pool_roles, ratio_unit,
-                    sector_other, sector_variables, source_placeholder, stem_top)
+                    reported_stems, sector_other, sector_variables, source_placeholder, stem_top)
 from ..backcasting import pricelevel
 
 if TYPE_CHECKING:
@@ -78,6 +79,9 @@ unit_columns = ["unit_name", "tech_type", "fuel", "commodity"]
 carbon_quantities = ("emissions", "captured")
 # Quantities per unit but not per commodity, split over the commodities a unit makes
 per_unit_quantities = carbon_quantities + ("primary", final_quantity)
+# Joins the commodities a row of a per-unit quantity is shared over, where it can't be split
+# over them (split_by_output, share_stems)
+shared_separator = "+"
 # Fuel Category of the fuels whose captured CO2 is removed from the atmosphere when stored
 biogenic_category = "Biomass"
 # Quantities that are means rather than amounts, so Conversion Notes don't sum them
@@ -253,18 +257,19 @@ def convert(long: pd.DataFrame,
     flows = name_regions(flows, tables["countries"], regions, notes)
     long = attach_area_kinds(long, tables["areas"])
     long = exchange_heat(long, tables["mapping"], notes)
-    long = carve_on_site(long, tables["stems"], tables["demand_categories"], tables["fuels"], notes)
-    check_balances(long, tables["stems"], tables["mapping"], tables["demand_categories"], notes)
+    reporting = reported_stems(tables["stems"])
+    long = carve_on_site(long, reporting, tables["demand_categories"], tables["fuels"], notes)
+    check_balances(long, reporting, tables["mapping"], tables["demand_categories"], notes)
     long = select_demand(long, tables["demand_categories"], notes)
     long = net_emissions(long, shares, linked, tables, notes)
     long = attach_stems(long, tables["stems"], names, notes)
     long = attach_sectors(long, tables["demand_categories"], names, notes)
     long = attach_segments(long, tables, names, notes)
     long = treat_backup_units(long, backup_units, backup_pattern, notes)
-    reported = report_optiflow(flows, tables["optiflow"], shares, tables["stems"], names, notes)
+    reported = report_optiflow(flows, tables["optiflow"], shares, reporting, names, notes)
     if not reported.empty:
         long = pd.concat((long, reported), ignore_index=True)
-    note_totals(long, tables["stems"], notes)
+    note_totals(long, reporting, notes)
     long = copy_to_aggregates(long, tables["aggregates"], names)
     prices = report_prices(prices, tables, regions, variables, currency, notes)
     if not prices.empty:
@@ -274,7 +279,7 @@ def convert(long: pd.DataFrame,
     data = derive_ratios(data, tables["ratios"], variables, notes)
     if template is not None:
         data = limit_to_template(data, template, notes)
-    additions_stems = tables["stems"].loc[tables["stems"]["quantity"] == additions_quantity, "stem"]
+    additions_stems = reporting.loc[reporting["quantity"] == additions_quantity, "stem"]
     added = {variable for variable in data["Variable"].unique()
              if any(variable == stem or variable.startswith(f"{stem}|") for stem in additions_stems)}
     data = to_wide(data, model, modelled_years, set(prices["variable"]) | set(tables["ratios"]["variable"]), added,
@@ -501,7 +506,8 @@ def attach_area_kinds(long: pd.DataFrame, area_rules: pd.DataFrame) -> pd.DataFr
 
     Returns:
         pd.DataFrame: The long table with 'area_kind' ('' for rows per region, without an area)
-            and 'to_area_kind' ('' without a receiving area) columns.
+            and 'to_area_kind' ('' without a receiving area) columns. Later on, 'to_area_kind' of
+            demand rows is the Area Kind where the demand is used, if not its own (used_in).
     """
     kinds = match_area_kinds(long["area"], area_rules).where(long["area"] != "", "")
     long = long.assign(area_kind=kinds, to_area_kind="")
@@ -510,12 +516,28 @@ def attach_area_kinds(long: pd.DataFrame, area_rules: pd.DataFrame) -> pd.DataFr
     return long
 
 
+def used_in(rows: pd.DataFrame) -> pd.Series:
+    """Give the Area Kind where each demand row's energy is used: 'to_area_kind' if it has one, else its own.
+
+    Heat that district heating sends to an individual or industry area (NET_EXCHANGE) is
+    demand of the district heating area, used in the receiving one; electricity used on site
+    (ON_SITE) is demand per region, used in the areas of the units that take it in.
+
+    Args:
+        rows (pd.DataFrame): Rows with 'area_kind' and 'to_area_kind'.
+
+    Returns:
+        pd.Series: The Area Kind per row, '' for demand per region used in no particular kind of area.
+    """
+    return rows["to_area_kind"].where(rows["to_area_kind"] != "", rows["area_kind"])
+
+
 def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
     """Turn Heat Exchange between district heating and other areas into demand and output.
 
     Heat transmission is netted per pair of areas and year. Heat district heating sends net to
     an individual or industry area becomes demand of the district heating area, in the category
-    NET_EXCHANGE. Heat it receives net becomes output of the district heating area, split over
+    NET_EXCHANGE, with the receiving area's kind as 'to_area_kind' (used_in). Heat it receives net becomes output of the district heating area, split over
     the units that made it: the sending area's units, and those of the individual and industry
     areas that sent heat to it, in proportion to the heat each area had (Output-Share Split).
     Units whose output the Mapping Rules don't report (storage) make no heat for this. Heat
@@ -545,8 +567,7 @@ def exchange_heat(long: pd.DataFrame, mapping: pd.DataFrame, notes: list[dict]) 
     into_dh = flows[~from_dh & to_dh]
     among = flows[~from_dh & ~to_dh]
 
-    demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_country="",
-                             to_area_kind="")
+    demand = out_of_dh.assign(quantity="demand", demand_category=net_exchange, to_area="", to_country="")
     supplied = trace_heat(long, into_dh, among, out_of_dh, mapping)
     long = deduct_sent(long, supplied)
     supplied = supplied.drop(columns="origin_area")
@@ -748,7 +769,8 @@ def carve_on_site(long: pd.DataFrame, stems: pd.DataFrame, demand_categories: pd
     output has an 'output' stem for their Area Kind, such as heat pumps in individual and
     industry areas, whose heat isn't centralized heat, are where the energy ends up: their
     fuel input of the row's Fuel Category moves from the category to category ON_SITE, per
-    IAMC Region and year. Totals don't change, so the Commodity Balance is checked as before.
+    IAMC Region, year and the units' Area Kind, which ON_SITE rows keep as 'to_area_kind'
+    (used_in). Totals don't change, so the Commodity Balance is checked as before.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds, with fuel input.
@@ -792,7 +814,9 @@ def carve_on_site(long: pd.DataFrame, stems: pd.DataFrame, demand_categories: pd
         given = demand.groupby(keys)["value"].sum().reindex(amount.index, fill_value=0.0)
         rest = demand.groupby(keys)["value"].sum().sub(amount, fill_value=0.0)
         carved = amount.reset_index().assign(quantity="demand", commodity=rule.commodity)
-        moved += [carved.assign(demand_category=on_site),
+        by_kind = taken.groupby(keys + ["area_kind"], as_index=False)["value"].sum().rename(
+            columns={"area_kind": "to_area_kind"})
+        moved += [by_kind.assign(quantity="demand", commodity=rule.commodity, demand_category=on_site),
                   carved.assign(demand_category=rule.demand_category, value=-carved["value"])]
 
         for (scenario, value_unit), rows in taken.groupby(["iamc_scenario", "value_unit"]):
@@ -836,9 +860,9 @@ def select_demand(long: pd.DataFrame, demand_categories: pd.DataFrame, notes: li
             carrier ('' for none) in the 'carrier' column of demand rows.
     """
     is_demand = long["quantity"] == "demand"
-    rules = demand_categories[["commodity", "demand_category", "final", "carrier"]].rename(
-        columns={"carrier": "category_carrier"})
-    demand = long[is_demand].merge(rules, on=["commodity", "demand_category"], how="left")
+    demand = long[is_demand]
+    rules = match_demand_categories(demand, demand_categories, used_in(demand))
+    demand = demand.assign(final=rules["final"], category_carrier=rules["carrier"])
 
     unknown = demand[demand["final"].isna()]
     for (scenario, commodity, category, kind, value_unit), rows in unknown.groupby(
@@ -905,7 +929,8 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
                 f"whether {commodity} adds up isn't checked."
             )))
 
-        known = demand.merge(demand_categories[["commodity", "demand_category"]], on=["commodity", "demand_category"])
+        known = demand.merge(demand_categories[["commodity", "demand_category"]].drop_duplicates(),
+                             on=["commodity", "demand_category"])
         supply = output.groupby(keys)["value"].sum().sub(trade.groupby(keys)["value"].sum(), fill_value=0.0)
         balance = pd.concat({"supply": supply, "used": known.groupby(keys)["value"].sum()}, axis=1).fillna(0.0)
         balance = balance[balance.index.get_level_values("iamc_scenario").isin(with_demand)]
@@ -944,7 +969,9 @@ def check_balances(long: pd.DataFrame, stems: pd.DataFrame, mapping: pd.DataFram
                          f"the wrong sign makes a gap of twice its size, with the opposite sign: taken with the "
                          f"opposite sign, {left}.")
             notes.append(note(scenario, region, "", text))
-        final = demand_categories.set_index(["commodity", "demand_category"])["final"]
+        # A category's rule for any Area Kind, else its first
+        final = demand_categories.sort_values("area_kind", key=lambda kinds: kinds != "", kind="stable").drop_duplicates(
+            ["commodity", "demand_category"]).set_index(["commodity", "demand_category"])["final"]
         for (scenario, value_unit, category), places in wrong_sign.items():
             regions = [region for region, _ in places]
             total = pd.concat([amount for _, amount in places]).groupby(level=0).sum()
@@ -1221,8 +1248,14 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
     Emissions, captured CO2, primary energy and on-site fuel use are per unit but not per
     commodity. A unit that
     makes several commodities, such as a CHP unit, gets them split by its output of each
-    (Output-Share Split). The unit's output is looked up by its fuel, else without it. What
-    units with no output have of them is left out.
+    (Output-Share Split). The unit's output is looked up by its fuel, else without it.
+
+    A unit with no output in its area and year gets the commodities it makes in the results'
+    other years and areas, or, if it makes nothing anywhere, those it has capacity for. Where
+    that is one commodity, all of it goes to that commodity. Where it is several, the row is
+    shared over them: its commodity joins them with shared_separator, e.g. 'ELECTRICITY+HEAT',
+    and share_stems finds the IAMC Variable it counts towards. What units with neither have is
+    left out.
 
     Args:
         long (pd.DataFrame): The long table with IAMC Scenarios.
@@ -1230,7 +1263,7 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: The long table with emissions, captured CO2, primary energy and on-site fuel use
-            per commodity.
+            per commodity, or shared over several.
     """
     is_per_unit = long["quantity"].isin(per_unit_quantities)
     per_unit = long[is_per_unit].drop(columns="commodity")
@@ -1251,7 +1284,7 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
     split = pd.concat(split, ignore_index=True)
     split["value"] = split["value"] * split.pop("share")
 
-    # Say how the split was made, and what no output could be found for
+    # Say how the split was made
     several = split.groupby(["iamc_scenario"] + keys + ["quantity"])["commodity"].transform("nunique") > 1
     for scenario, rows in split[several].groupby("iamc_scenario"):
         commodities = " and ".join(sorted(set(rows["commodity"])))
@@ -1261,21 +1294,64 @@ def split_by_output(long: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
             f"several commodities ({commodities}), they are split over them in proportion to the unit's output of "
             "each (Output-Share Split)."
         )))
-    for (scenario, quantity, value_unit), rows in left.groupby(["iamc_scenario", "quantity", "value_unit"]):
-        by_year = rows.groupby("year")["value"].sum()
-        same = per_unit[(per_unit["iamc_scenario"] == scenario) & (per_unit["quantity"] == quantity)]
-        total = same["value"].abs().groupby(same["year"]).sum().reindex(by_year.index)
-        by_year = by_year[by_year.abs() >= noise + relative_noise * total]
-        if by_year.empty:
-            continue
+
+    # Units with no output where they are: drop solver residue, then look for what they make elsewhere
+    scale = per_unit.assign(value=per_unit["value"].abs()).groupby(["iamc_scenario", "quantity", "year"])["value"].sum()
+    at = pd.MultiIndex.from_frame(left[["iamc_scenario", "quantity", "year"]])
+    left = left[left["value"].abs().to_numpy() >= noise + relative_noise * scale.reindex(at).to_numpy()]
+    elsewhere = commodities_elsewhere(left, long)
+    moved = left.assign(commodity=elsewhere)[elsewhere != ""]
+    left = left[elsewhere == ""]
+
+    one = moved[~moved["commodity"].str.contains(shared_separator, regex=False)]
+    for (scenario, quantity, commodity, value_unit), rows in one.groupby(
+            ["iamc_scenario", "quantity", "commodity", "value_unit"]):
         notes.append(note(scenario, "", "", (
-            f"Units whose output the results don't give had {quantity_label(quantity)} of {amounts(by_year)} "
-            f"{value_unit}; not reported, as it can't be split over commodities. Units: "
-            f"{list_names(rows['unit_name'])}."
+            f"Units whose output the results don't give in some years or areas had {quantity_label(quantity)} of "
+            f"{amounts(rows.groupby('year')['value'].sum())} {value_unit} there; counted towards {commodity}, the "
+            f"only commodity they make in the results' other years and areas (or, making none, have capacity for). "
+            f"Units: {list_names(rows['unit_name'])}."
+        )))
+    for (scenario, quantity, value_unit), rows in left.groupby(["iamc_scenario", "quantity", "value_unit"]):
+        notes.append(note(scenario, "", "", (
+            f"Units whose output the results don't give, in any year or area, nor their capacity, had "
+            f"{quantity_label(quantity)} of {amounts(rows.groupby('year')['value'].sum())} {value_unit}; not "
+            f"reported, as there is no commodity to count it towards. Units: {list_names(rows['unit_name'])}."
         )))
 
+    split = pd.concat((split, moved), ignore_index=True)
     split = split[split["value"].abs() >= noise]
     return pd.concat((long, split), ignore_index=True)
+
+
+def commodities_elsewhere(rows: pd.DataFrame, long: pd.DataFrame) -> pd.Series:
+    """Find the commodities units make in any year or area of the results, or else have capacity for.
+
+    A unit's name, type and fuel tell what it makes, wherever it is. It is looked up by its
+    fuel, else without it, as in split_by_output.
+
+    Args:
+        rows (pd.DataFrame): Rows of units, with 'unit_name', 'tech_type' and 'fuel'.
+        long (pd.DataFrame): The long table, with output and capacity.
+
+    Returns:
+        pd.Series: Per row of `rows`, the commodities joined by shared_separator in alphabetical
+            order, e.g. 'ELECTRICITY+HEAT'; '' where the unit makes nothing and has no capacity.
+    """
+    found = pd.Series("", index=rows.index, dtype=object)
+    for quantity in ("output", "capacity"):
+        made = long[(long["quantity"] == quantity) & (long["value"] >= noise) & (long["unit_name"] != "")]
+        if made.empty:
+            continue
+        for unit_keys in (["unit_name", "tech_type", "fuel"], ["unit_name", "tech_type"]):
+            open_rows = found == ""
+            if not open_rows.any():
+                return found
+            commodities = made.groupby(unit_keys)["commodity"].agg(
+                lambda names: shared_separator.join(sorted(set(names))))
+            at = pd.MultiIndex.from_frame(rows.loc[open_rows, unit_keys])
+            found[open_rows] = commodities.reindex(at).fillna("").to_numpy()
+    return found
 
 
 def pool_shares(flows: pd.DataFrame, optiflow: pd.DataFrame, notes: list[dict]) -> pd.DataFrame:
@@ -1703,7 +1779,9 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
     row's carrier (fill_carrier). Demand in a category with a carrier goes under that carrier
     instead of the commodity, e.g. 'Final Energy|Liquids' with 'Hydrogen' as the rest
     (fill_demand_carrier). On-site fuel use without a stem is not final energy, so it goes
-    unnoted.
+    unnoted. Rows whose stem row says not_reported are left out on purpose: its note, with
+    their amounts, becomes one Conversion Note per IAMC Scenario. Rows shared over several
+    commodities (split_by_output) get their stem from share_stems.
 
     Args:
         long (pd.DataFrame): The long table with Area Kinds.
@@ -1712,9 +1790,12 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
         notes (list[dict]): Conversion Notes, appended to.
 
     Returns:
-        pd.DataFrame: The long table with 'stem' ('' for none), 'stem_note', 'stem_total' and
-            'stem_sector' columns.
+        pd.DataFrame: The long table with 'stem' ('' for none), 'stem_note', 'stem_total',
+            'stem_sector' and 'shared' (see share_stems) columns.
     """
+    is_shared = long["commodity"].str.contains(shared_separator, regex=False)
+    shared = long[is_shared]
+    long = long[~is_shared]
     for_kind = stems[stems["area_kind"] != ""].rename(
         columns={"note": "stem_note", "total": "stem_total", "sector": "stem_sector"})
     for_any = stems[stems["area_kind"] == ""].drop(columns="area_kind").rename(
@@ -1725,6 +1806,9 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
     long["stem"] = long["stem"].fillna(long.pop("stem_any")).fillna("")
     for column in ("stem_note", "stem_total", "stem_sector"):
         long[column] = long.pop(column).where(chosen, long.pop(f"{column}_any")).fillna("")
+    long["shared"] = False
+    if not shared.empty:
+        long = pd.concat((long, share_stems(shared, stems, names, notes)), ignore_index=True)
     as_carrier = (long["quantity"] == "demand") & (long["carrier"] != "") & (long["stem"] != "")
     if as_carrier.any():
         filled = [fill_demand_carrier(stem, carrier) for stem, carrier in
@@ -1741,13 +1825,15 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
     # Name the Area Kind only where the stems tell kinds apart. Prices without a stem go unnoted:
     # they say nothing of what is left out of a reported total. Nor does on-site fuel use, which is
     # final energy only where it has a stem.
-    unreported = long[(long["stem"] == "") & ~long["quantity"].isin(mean_quantities + (final_quantity,))]
+    unreported = long[long["stem"].isin(["", not_reported]) & ~long["quantity"].isin(mean_quantities + (final_quantity,))]
     kind_specific = for_kind.set_index(["quantity", "commodity"]).index
     by_kind = unreported.set_index(["quantity", "commodity"]).index.isin(kind_specific) & (unreported["area_kind"] != "")
-    unreported = unreported.assign(where=np.where(by_kind, " in " + unreported["area_kind"] + " areas", ""))
-    for (scenario, quantity, commodity, where, value_unit), rows in unreported.groupby(
-            ["iamc_scenario", "quantity", "commodity", "where", "value_unit"]):
-        what = f"{quantity_label(quantity)} of {commodity}{where}"
+    unreported = unreported.assign(what=[f"{quantity_label(quantity)} of {commodity}" for quantity, commodity in
+                                         unreported[["quantity", "commodity"]].itertuples(index=False)])
+    unreported["what"] += np.where(by_kind, " in " + unreported["area_kind"] + " areas", "")
+    without_row = unreported[unreported["stem"] == ""]
+    for (scenario, what, quantity, value_unit), rows in without_row.groupby(
+            ["iamc_scenario", "what", "quantity", "value_unit"]):
         by_region = per_region(rows)
         if by_region.empty:
             continue
@@ -1757,11 +1843,140 @@ def match_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes:
             text += f" Fuels: {list_names(rows.loc[rows['value'].abs() >= noise, 'fuel'])}."
         notes.append(note(scenario, "", "", text))
 
+    # Rows that a stem row leaves out on purpose: one note per IAMC Scenario and reason
+    left_out = unreported[unreported["stem"] == not_reported]
+    for (scenario, reason), rows in left_out.groupby(["iamc_scenario", "stem_note"]):
+        parts = []
+        places = set()
+        for (what, value_unit), part in rows.groupby(["what", "value_unit"]):
+            by_region = per_region(part)
+            if not by_region.empty:
+                parts.append(f"{what} ({amounts(by_region.sum())} {value_unit})")
+                places |= set(by_region.index)
+        if parts:
+            notes.append(note(scenario, "", "", f"{reason} Not reported: {'; '.join(parts)}; in {list_regions(places)}."))
+
     templated = long["stem"].str.contains(source_placeholder, regex=False)
-    lacking = (long["stem"] != "") & ~long["stem"].isin(names) & ~templated
+    lacking = ~long["stem"].isin(["", not_reported]) & ~long["stem"].isin(names) & ~templated
     for (scenario, stem), _ in long[lacking].groupby(["iamc_scenario", "stem"]):
         notes.append(note(scenario, "", stem, "This stem is not in the Definitions Snapshot; not reported."))
     return long
+
+
+def share_stems(long: pd.DataFrame, stems: pd.DataFrame, names: set[str], notes: list[dict]) -> pd.DataFrame:
+    """Find the stem of rows that split_by_output shares over several commodities.
+
+    What a unit whose output the results don't give, but which makes several commodities
+    elsewhere, has per unit can't be split over them. It counts towards the deepest IAMC
+    Variable that the stems of all of them count towards anyway (common_stem): their common
+    parent, where it lies on the way to the total they share (stems.csv), e.g.
+    'Emissions|CO2|Energy|Supply' for emissions of units that make electricity and heat. Such a
+    row has no segments below its stem. Under stems with the Source placeholder the common
+    parent keeps it, e.g. 'Primary Energy|{source}', so the row counts towards the Source's own
+    variable and the totals. Commodities with one stem, e.g. 'Carbon Capture|Geological
+    Storage', need no parent. Rows of a commodity without a stem, or whose stems share no total
+    (e.g. captured CO2), are left out. Conversion Notes say which.
+
+    Args:
+        long (pd.DataFrame): Rows whose commodity joins several with shared_separator.
+        stems (pd.DataFrame): The 'stems' rule table.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+        notes (list[dict]): Conversion Notes, appended to.
+
+    Returns:
+        pd.DataFrame: The rows with a stem, with 'stem', 'stem_note', 'stem_total', 'stem_sector'
+            and 'shared' (True where the stem is a common parent without the Source placeholder,
+            so the row has no segments below it).
+    """
+    rules = stems.set_index(["quantity", "commodity", "area_kind"])
+    keys = ["quantity", "commodity", "area_kind"]
+    found = []
+    for quantity, commodity, kind in long[keys].drop_duplicates().itertuples(index=False):
+        parts = []
+        for part in commodity.split(shared_separator):
+            key = next(((quantity, part, area_kind) for area_kind in (kind, "") if (quantity, part, area_kind) in rules.index),
+                       None)
+            parts.append(None if key is None else rules.loc[key])
+        found.append((quantity, commodity, kind) + common_stem(parts, names)
+                     + (any(part is not None for part in parts),))
+    found = pd.DataFrame(found, columns=keys + ["stem", "stem_note", "stem_total", "stem_sector", "how", "any_stem"])
+    long = long.merge(found, on=keys, how="left")
+
+    # On-site fuel use is final energy only where it has a stem, so it goes unnoted where none of the commodities has
+    noted = (long["how"] != "same") & ~((long["quantity"] == final_quantity) & ~long["any_stem"])
+    long["what"] = [" and ".join(commodity.split(shared_separator)) for commodity in long["commodity"]]
+    for (scenario, quantity, what, stem, how, value_unit), rows in long[noted].groupby(
+            ["iamc_scenario", "quantity", "what", "stem", "how", "value_unit"]):
+        by_region = per_region(rows)
+        if by_region.empty:
+            continue
+        had = (f"{quantity_label(quantity)} of units whose output the results don't give, but which make {what} in "
+               f"the results' other years and areas: {amounts(by_region.sum())} {value_unit} in "
+               f"{list_regions(by_region.index)}")
+        units = f"Units: {list_names(rows['unit_name'])}."
+        if how == "parent":
+            notes.append(note(scenario, "", stem, (
+                f"Includes {had}. As it can't be split over those commodities, it counts only towards this IAMC "
+                f"Variable and those above it, so the variables below it by commodity sum to less. {units}"
+            )))
+        elif how == "source":
+            notes.append(note(scenario, "", "", (
+                f"{had[0].upper()}{had[1:]}. As it can't be split over those commodities, it counts only towards "
+                f"'{stem_top(stem)}|<Source>' and the totals above it, not the variables by what is made. {units}"
+            )))
+        else:
+            notes.append(note(scenario, "", "", (
+                f"{had[0].upper()}{had[1:]}. Not reported, as it can't be split over those commodities, and the "
+                f"'stems' rules give them no common parent on the way to a total they share to count it towards. "
+                f"{units}"
+            )))
+    long = long[long["stem"] != ""]
+    return long.assign(shared=long["how"] == "parent").drop(columns=["how", "what", "any_stem"])
+
+
+def common_stem(parts: list[pd.Series | None], names: set[str]) -> tuple[str, str, str, str, str]:
+    """Find the stem that rows shared over several commodities count towards (share_stems).
+
+    Args:
+        parts (list[pd.Series | None]): The stem row of each commodity for the rows' quantity and
+            Area Kind, with 'stem', 'note', 'total' and 'sector'; None where there is none.
+        names (set[str]): IAMC Variables in the Definitions Snapshot.
+
+    Returns:
+        tuple[str, str, str, str, str]: The stem ('' for none), its note, total and sector, and
+            how it was found: 'same' (all commodities have this stem), 'parent' (their common
+            parent), 'source' (their common parent, which has the Source placeholder) or ''
+            (none).
+    """
+    none = ("", "", "", "", "")
+    rows = [part for part in parts if part is not None and part["stem"] != not_reported]
+    if len(rows) < len(parts):
+        return none
+    stems = sorted({row["stem"] for row in rows})
+    totals = {row["total"] for row in rows}
+    sectors = {row["sector"] for row in rows}
+    if len(totals) > 1 or len(sectors) > 1:
+        return none
+    total, sector = totals.pop(), sectors.pop()
+    if len(stems) == 1:
+        stem_notes = {row["note"] for row in rows}
+        return stems[0], stem_notes.pop() if len(stem_notes) == 1 else "", total, sector, "same"
+    if not total or sector or any(carrier_placeholder in stem for stem in stems):
+        return none
+
+    common = []
+    for segments in zip(*(stem.split("|") for stem in stems)):
+        if len(set(segments)) > 1:
+            break
+        common.append(segments[0])
+    if any(source_placeholder in stem for stem in stems):
+        return ("|".join(common), "", total, "", "source") if source_placeholder in common else none
+    parent = "|".join(common)
+    while parent not in names and parent != total and "|" in parent:
+        parent = parent.rpartition("|")[0]
+    if parent in names and (parent == total or parent.startswith(f"{total}|")):
+        return parent, "", total, "", "parent"
+    return none
 
 
 def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: set[str],
@@ -1772,7 +1987,10 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
     towards that variable only, while the row still counts under its own stem, e.g.
     'Final Energy|Electricity', and towards the stem's total (e.g. Final Energy) once. Demand in
     a category with a carrier goes under the carrier there too, e.g.
-    'Final Energy|Transportation|Liquids|Hydrogen'. A category's note becomes a Conversion Note
+    'Final Energy|Transportation|Liquids|Hydrogen'. A category's rule is that for the Area Kind
+    where the demand is used (used_in), else that for any: heat district heating sends to
+    individual areas (NET_EXCHANGE) is also reported under
+    'Final Energy|Residential and Commercial|Heat'. A category's note becomes a Conversion Note
     on each sector variable with values under it, and on the variable its carrier puts it under
     (with or without a sector). The
     sector of a stem row (stems.csv), e.g. Industry for on-site fuel use in industry areas,
@@ -1791,12 +2009,11 @@ def attach_sectors(long: pd.DataFrame, demand_categories: pd.DataFrame, names: s
         pd.DataFrame: The long table with the copies added, without the 'stem_sector' column, and
             with 'stem_note' kept only for stems with the Source placeholder.
     """
-    with_sector = demand_categories.loc[demand_categories["sector"] != "",
-                                        ["commodity", "demand_category", "sector", "note"]]
-    demand = long[long["quantity"] == "demand"].merge(with_sector, on=["commodity", "demand_category"])
-    with_note = demand_categories.loc[demand_categories["note"] != "", ["commodity", "demand_category", "note"]]
-    carried = long[(long["quantity"] == "demand") & (long["carrier"] != "") & (long["value"].abs() >= noise)].merge(
-        with_note, on=["commodity", "demand_category"])
+    demand = long[long["quantity"] == "demand"]
+    rules = match_demand_categories(demand, demand_categories, used_in(demand)).fillna("")
+    demand = demand.assign(sector=rules["sector"], note=rules["note"])
+    carried = demand[(demand["carrier"] != "") & (demand["note"] != "") & (demand["value"].abs() >= noise)]
+    demand = demand[demand["sector"] != ""]
     for (scenario, stem, carrier, text), _ in carried.groupby(["iamc_scenario", "stem", "carrier", "note"]):
         notes.append(note(scenario, "", resolve(stem, carrier, names), text))
     copies = [
@@ -1896,6 +2113,8 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
     on_site_use = long["quantity"] == final_quantity
     long.loc[on_site_use, "template"] = long.loc[on_site_use, "carrier"]
     long.loc[on_site_use, "reason"] = ""
+    # Rows shared over several commodities count towards their stem only (share_stems)
+    long.loc[long["shared"], ["template", "reason"]] = ""
     long["path"] = [
         template.replace("{category}", category)
         for template, category in zip(long["template"], long["category"])
@@ -1938,7 +2157,7 @@ def attach_segments(long: pd.DataFrame, tables: dict[str, pd.DataFrame], names: 
         notes.append(note(scenario, "", variable,
                           f"Reported under {where} in {list_regions(rows['region'])}: {'; '.join(what)}."))
 
-    return long.drop(columns=["template", "reason", "source_kind"])
+    return long.drop(columns=["template", "reason", "source_kind", "shared"])
 
 
 def fill_sources(long: pd.DataFrame, names: set[str], notes: list[dict]) -> pd.DataFrame:

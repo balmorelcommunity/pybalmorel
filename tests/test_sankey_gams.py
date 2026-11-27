@@ -41,7 +41,7 @@ pytestmark = pytest.mark.skipif(not (definitions_dir / "variables.csv").exists()
 scenarios = ["Example1", "Example2", "Example3"]
 scenario_years = [("Example1", 2030), ("Example1", 2050), ("Example2", 2030), ("Example2", 2050),
                   ("Example3", 2020), ("Example3", 2050)]
-commodities = ["Electricity", "Heat", "Hydrogen", "Gases", "On-site Heat"]
+commodities = ["Electricity", "District Heat", "Hydrogen", "Gases", "On-site Heat"]
 not_conversion = ["Imports", "Unaccounted", "Grid", "OptiFlow", "Ambient Heat"] + commodities
 
 
@@ -96,8 +96,8 @@ def test_conversion_agrees_with_iamc(long: pd.DataFrame, converted: tuple[pd.Dat
     left = mainresults_flows(long, year, scenario, countries="DENMARK")
     right = sankey_flows(converted, year, scenario=scenario, countries="DENMARK")
     compared = compare_sankey_flows(left, right)
-    conversion = compared[(compared["Kind"] == "flow") & compared["To"].isin(["Electricity", "Heat", "Hydrogen"])
-                          & ~compared["From"].isin(not_conversion)]
+    made = compared["To"].isin(["Electricity", "District Heat", "Hydrogen"])
+    conversion = compared[(compared["Kind"] == "flow") & made & ~compared["From"].isin(not_conversion)]
     assert not conversion.empty
     scale = conversion[["MainResults", "IAMC"]].abs().max(axis=1)
     assert conversion["IAMC"].to_numpy() == pytest.approx(conversion["MainResults"].to_numpy(), rel=1e-6, abs=1e-6), (

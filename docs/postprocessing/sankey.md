@@ -30,9 +30,11 @@ both sides use the same names.
 - **Sources** are the Fuel Categories of what units burn, such as Biomass,
   Gas or Wind. Units that burn a commodity, such as heat pumps or
   electrolysers, draw from that commodity's node instead.
-- **Commodities** are Electricity, Heat, Hydrogen, Gases and Liquids. Heat
-  made in individual and industry areas goes to **On-site Heat**, because the
-  IAMC data counts it as final energy rather than as centralized heat.
+- **Commodities** are Electricity, District Heat, Hydrogen, Gases and
+  Liquids. **District Heat** is the heat made in district heating areas,
+  which the IAMC data calls Heat (`Secondary Energy|Heat`). Heat made in
+  individual and industry areas goes to **On-site Heat**, because the IAMC
+  data counts it as final energy rather than as centralized heat.
   **Liquids** and **Gases** hold the fuel that OptiFlow makes or buys, when
   the OptiFlow Mapping reports it. In IAMC data, a use that Primary Energy is
   reported by is a commodity too.
@@ -50,8 +52,8 @@ both sides use the same names.
   and uses as it is, such as marine diesel, flows from its Source straight to
   Liquids or Gases. Ships and aircraft take their fuel from there, as far as
   the Mapping says which fuel it is. Heat and electricity OptiFlow gives
-  back to Balmorel flow from OptiFlow to Heat or Electricity and back again,
-  because Balmorel's demand for OptiFlow is already net of them.
+  back to Balmorel flow from OptiFlow to District Heat or Electricity and
+  back again, because Balmorel's demand for OptiFlow is already net of them.
 - **Unaccounted** balances each commodity. When more of a commodity flows in
   than out, or the other way round, the difference goes to or comes from
   Unaccounted. It shows what the data leaves out. In IAMC data, for example,
@@ -145,7 +147,7 @@ flows = results.sankey_flows(2050, countries='DENMARK')
 | From | To | Kind | Value |
 |---|---|---|---|
 | Biomass | Electricity | flow | 4.70 |
-| Biomass | Heat | flow | 14.02 |
+| Biomass | District Heat | flow | 14.02 |
 | Electricity | Final Energy | flow | 66.07 |
 | ... | ... | ... | ... |
 
@@ -182,8 +184,11 @@ The two sides are meant to differ in some places:
 - **Heat pumps.** The IAMC data counts all of a heat pump's heat as made from
   electricity. MainResults splits it into electricity and Ambient Heat.
 - **Heat in individual and industry areas.** MainResults draws it through
-  On-site Heat. The IAMC data reports the fuel burnt for it as final energy of
-  the sector, and the electricity used for it as Final Energy.
+  On-site Heat. The IAMC data reports what these areas take in as final
+  energy of their sector: the fuel burnt for the heat, the electricity used
+  for it, and the district heat they get net from district heating. So the
+  IAMC side draws District Heat straight to Residential and Commercial or
+  Industry, where MainResults draws it through On-site Heat.
 - **Biomethane in power and heat plants.** The IAMC data counts electricity
   and district heat made from biomethane as made from biomass. MainResults
   draws them from Gases. On the IAMC side, the biomethane those plants burn

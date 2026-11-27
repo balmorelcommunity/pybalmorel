@@ -38,6 +38,7 @@ heat_capacity_names = ["Capacity|Heat", "Capacity|Heat|Gas"]
 heat_names = [
     "Secondary Energy|Heat", "Secondary Energy|Heat|Gas", "Secondary Energy|Heat|Biomass",
     "Secondary Energy|Heat|Electricity", "Secondary Energy|Heat|Other", "Final Energy|Heat",
+    "Final Energy|Industry|Heat", "Final Energy|Residential and Commercial|Heat",
 ]
 hydrogen_capacity_names = ["Capacity|Hydrogen", "Capacity|Hydrogen|Electricity", "Capacity|Hydrogen|Gas",
                            "Capacity|Hydrogen|Gas|w/o CCS"]
@@ -70,6 +71,7 @@ electricity_names = [
     "Final Energy|Electricity", "Trade|Secondary Energy|Electricity [Volume]", "Final Energy|Carbon Management",
     "Final Energy|Carbon Management|Electricity",
     "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity", "Final Energy|Transportation|Electricity",
+    "Final Energy|Residential and Commercial|Electricity", "Final Energy|Industry|Electricity",
 ]
 primary_names = [
     "Primary Energy", "Primary Energy|Gas", "Primary Energy|Gas|Electricity",
@@ -568,15 +570,24 @@ def test_heat_variables(heat_long: pd.DataFrame, definitions: Path) -> None:
     assert value(data, "Secondary Energy|Heat|Gas", 2030) == pytest.approx(3 * twh)
     assert value(data, "Secondary Energy|Heat|Biomass", 2030) == pytest.approx(3 * twh)
     assert value(data, "Secondary Energy|Heat", 2050) == pytest.approx(3 * twh)
-    # Exogenous demand and the 1 TWh sent net to an industry area
+    # Exogenous demand and the 1 TWh sent net to an industry area, which is also industry's
     assert value(data, "Final Energy|Heat", 2030) == pytest.approx((4 + 1) * twh)
+    assert value(data, "Final Energy|Industry|Heat", 2030) == pytest.approx(1 * twh)
+    assert "Final Energy|Residential and Commercial|Heat" not in set(data["Variable"])
+    industry = notes[notes["Variable"] == "Final Energy|Industry|Heat"]["Note"]
+    assert industry.str.startswith("Only the district heat that Balmorel's industry areas get net").any()
     # Capacity in district heating only, without storage
     assert value(data, "Capacity|Heat", 2030) == pytest.approx(1)
     assert "Secondary Energy|Heat|Electricity" not in set(data["Variable"])
 
     text = " ".join(notes["Note"])
-    assert "Not reported, as the 'stems' rules have no row for it: output of HEAT in industry areas, 2030: 8 TWh" in text
-    assert "output of HEAT in individual areas" in text
+    # Heat outside district heating is left out on purpose, in one note with every amount
+    left_out = [line for line in notes["Note"] if "is not reported as heat" in line]
+    assert len(left_out) == 1
+    assert "output of HEAT in industry areas (2030: 8 TWh)" in left_out[0]
+    assert "output of HEAT in individual areas (2030: 2 TWh)" in left_out[0]
+    assert "capacity of HEAT in industry areas (2030: 2 GW)" in left_out[0]
+    assert "have no row for it: output of HEAT" not in text
     assert ("Demand of HEAT in category ENDO_UNKNOWN in district heating areas is not reported (the "
             "'demand_categories' rules have no row for it): 2030: 0.3 TWh.") in text
     assert "Heat Exchange: district heating sent 2030: 1 TWh" in text
@@ -591,7 +602,8 @@ def test_notes_name_their_regions(heat_long: pd.DataFrame, definitions: Path) ->
                        definitions=definitions)
     industry = notes[notes["Note"].str.contains("output of HEAT in industry areas", regex=False)]
     assert len(industry) == 1 and industry["Region"].iloc[0] == ""
-    assert industry["Note"].iloc[0].endswith("2030: 10 TWh in 2 regions: Denmark, Germany.")
+    assert "output of HEAT in industry areas (2030: 10 TWh)" in industry["Note"].iloc[0]
+    assert industry["Note"].iloc[0].endswith("; in 2 regions: Denmark, Germany.")
 
 
 def test_heat_balance_is_checked(heat_long: pd.DataFrame, definitions: Path) -> None:
@@ -617,6 +629,12 @@ def test_final_electricity(electricity_long: pd.DataFrame, definitions: Path) ->
     assert value(data, "Final Energy|Carbon Management|Carbon Capture and Storage|Electricity",
                  2030) == pytest.approx(1 * twh)
     assert "Final Energy|Carbon Management" not in set(data["Variable"])
+    # The heat pump in the individual area is the Residential and Commercial sector's
+    assert value(data, "Final Energy|Residential and Commercial|Electricity", 2030) == pytest.approx(3 * twh)
+    assert is_empty(data, "Final Energy|Residential and Commercial|Electricity", 2030, "Germany")
+    assert "Final Energy|Industry|Electricity" not in set(data["Variable"])
+    buildings = notes[notes["Variable"] == "Final Energy|Residential and Commercial|Electricity"]["Note"]
+    assert buildings.str.startswith("Only the electricity that the heat units of Balmorel's individual areas use").any()
     assert value(data, "Trade|Secondary Energy|Electricity [Volume]", 2030) == pytest.approx(4 * twh)
     assert value(data, "Trade|Secondary Energy|Electricity [Volume]", 2030, "Germany") == pytest.approx(-4 * twh)
     # Fuel input is not reported as such
@@ -856,7 +874,7 @@ def test_area_kinds_follow_caller_rules(heat_long: pd.DataFrame, definitions: Pa
     assert value(data, "Final Energy|Heat", 2030) == pytest.approx((4 + 4) * twh)
 
 
-@pytest.mark.parametrize("change", ["final", "fuel_category", "sector"])
+@pytest.mark.parametrize("change", ["final", "fuel_category", "sector", "area_kind"])
 def test_unclear_demand_categories_are_refused(change: str) -> None:
     demand_categories = load_rules()["demand_categories"]
     on_site = demand_categories["final"] == "on-site"
@@ -866,11 +884,31 @@ def test_unclear_demand_categories_are_refused(change: str) -> None:
     elif change == "fuel_category":
         demand_categories.loc[on_site, "fuel_category"] = "Moonlight"
         message = "need a fuel_category"
-    else:
+    elif change == "sector":
         demand_categories.loc[on_site, "sector"] = "Residential and Commercial"
         message = "with a sector need 'yes'"
+    else:
+        demand_categories.loc[on_site, "area_kind"] = "individual"
+        message = "apply to every Area Kind"
     with pytest.raises(Exception, match=message):
         load_rules({"demand_categories": demand_categories[on_site]})
+
+
+def test_demand_categories_by_area_kind(heat_long: pd.DataFrame, definitions: Path) -> None:
+    """A caller's row for an Area Kind gives heat sent there its own sector, and the rules check the kind exists."""
+    to_industry = pd.DataFrame([{"commodity": "HEAT", "demand_category": "NET_EXCHANGE", "area_kind": "industry",
+                                 "final": "yes", "sector": "Residential and Commercial"}])
+    data, _ = convert(heat_long, "Balmorel", definitions=definitions, rules={"demand_categories": to_industry})
+    assert value(data, "Final Energy|Residential and Commercial|Heat", 2030) == pytest.approx(1 * twh)
+    assert "Final Energy|Industry|Heat" not in set(data["Variable"])
+    # A row for the kind can leave it out of final demand altogether, unlike the row for any kind
+    left_out = pd.DataFrame([{"commodity": "HEAT", "demand_category": "NET_EXCHANGE", "area_kind": "industry",
+                              "final": "no"}])
+    data, _ = convert(heat_long, "Balmorel", definitions=definitions, rules={"demand_categories": left_out})
+    assert value(data, "Final Energy|Heat", 2030) == pytest.approx(4 * twh)
+
+    listed = check_rules(definitions, {"demand_categories": to_industry.assign(area_kind="harbour")})
+    assert listed[listed["table"] == "demand_categories"]["value"].tolist() == ["harbour"]
 
 
 def test_repeated_rule_keys_are_refused() -> None:
@@ -1230,7 +1268,8 @@ def test_carbon_notes(long: pd.DataFrame, definitions: Path) -> None:
 
     text = " ".join(notes["Note"])
     assert "The results give no captured CO2" in text
-    assert "Units whose output the results don't give had emissions of 2030: 7 kt CO2;" in text
+    assert ("Units whose output the results don't give, in any year or area, nor their capacity, had emissions of "
+            "2030: 7 kt CO2; not reported") in text
     assert "GNR_ENG_NOOUTPUT" in text
     assert "The results state 'mton' as the unit of emissions; it is taken to be kt CO2" in text
     assert "Backup units' emissions came to 2030: 20 kt CO2 in Denmark; reported." in text
@@ -1239,6 +1278,49 @@ def test_carbon_notes(long: pd.DataFrame, definitions: Path) -> None:
                           backup_units="exclude")
     assert value(data, "Emissions|CO2|Energy|Supply|Electricity", 2030) == pytest.approx(30 / 1e3)
     assert notes["Note"].str.contains("Backup units' emissions came to 2030: 20 kt CO2 in Denmark; left out.").any()
+
+
+def test_units_without_output_count_where_they_belong(carbon_long: pd.DataFrame, total_definitions: Path,
+                                                      primary_definitions: Path) -> None:
+    """What units have in a year they make nothing counts towards the commodity they make in other
+    years, or, if they make several, towards the common parent of those commodities' stems on the
+    way to their total (under the Source for primary energy). Captured CO2, whose stems share no
+    total, is left out, but the stored CO2, which has one stem, is reported."""
+    rows = unit_rows("S1", 2030, "DENMARK", "GNR_ST_NGAS_CCS", "CHP-EXTRACTION", "NATGAS", 1, 4)
+    rows += unit_rows("S1", 2030, "DENMARK", "GNR_ST_NGAS_CCS", "CHP-EXTRACTION", "NATGAS", None, 1, "HEAT")
+    rows += [
+        carbon_row("GNR_ST_NGAS_CCS", "CHP-EXTRACTION", "NATGAS", "emissions", 30, year=2050),
+        carbon_row("GNR_ST_NGAS_CCS", "CHP-EXTRACTION", "NATGAS", "captured", 70, year=2050),
+        input_row("GNR_ST_NGAS_CCS", "CHP-EXTRACTION", "NATGAS", 2, year=2050),
+        carbon_row("GNR_BO_NGAS", "BOILERS", "NATGAS", "emissions", 10, year=2050),
+    ]
+    data, notes = convert(pd.concat((carbon_long, pd.DataFrame(rows))), "Balmorel", definitions=total_definitions)
+    text = " ".join(notes["Note"])
+
+    # The boiler makes only heat
+    assert value(data, "Emissions|CO2|Energy|Supply|Heat", 2050) == pytest.approx(10 / 1e3)
+    assert "counted towards HEAT, the only commodity they make" in text
+    # The CHP unit makes electricity and heat
+    assert value(data, "Emissions|CO2|Energy|Supply", 2050) == pytest.approx(40 / 1e3)
+    assert value(data, "Emissions|CO2", 2050) == pytest.approx(40 / 1e3)
+    assert is_empty(data, "Emissions|CO2|Energy|Supply|Electricity", 2050) or value(data, "Emissions|CO2|Energy|Supply|Electricity", 2050) == 0.0
+    parent = notes.loc[notes["Variable"] == "Emissions|CO2|Energy|Supply", "Note"]
+    assert parent.str.contains("Includes emissions of units whose output the results don't give, but which make "
+                               "ELECTRICITY and HEAT").any()
+    assert parent.str.contains("GNR_ST_NGAS_CCS").any()
+    assert is_empty(data, "Carbon Capture|Energy|Supply|Electricity", 2050) or value(data, "Carbon Capture|Energy|Supply|Electricity", 2050) == 0.0
+    assert ("Captured CO2 of units whose output the results don't give, but which make ELECTRICITY and HEAT in the "
+            "results' other years and areas: 2050: 70 kt CO2 in Denmark. Not reported") in text
+    assert value(data, "Carbon Capture|Geological Storage", 2050) == pytest.approx(70 / 1e3)
+    # On-site fuel use of units in district heating isn't final energy, shared or not
+    assert "on-site fuel use of units" not in text
+
+    data, notes = convert(pd.concat((carbon_long, pd.DataFrame(rows))), "Balmorel", definitions=primary_definitions)
+    for variable in ("Primary Energy|Gas", "Primary Energy|Gas|w/ CCS", "Primary Energy|Fossil", "Primary Energy"):
+        assert value(data, variable, 2050) == pytest.approx(2 * twh), variable
+    assert is_empty(data, "Primary Energy|Gas|Electricity", 2050) or value(data, "Primary Energy|Gas|Electricity", 2050) == 0.0
+    assert notes["Note"].str.contains("it counts only towards 'Primary Energy|<Source>' and the totals above it",
+                                      regex=False).any()
 
 
 def test_hydrogen_carbon(hydrogen_long: pd.DataFrame, definitions: Path) -> None:
@@ -1583,6 +1665,16 @@ def test_invalid_on_site_fuel_use_rules_are_refused() -> None:
     for commodity, kind in (("HEAT", "district heating"), ("HEAT", ""), ("ELECTRICITY", "individual")):
         with pytest.raises(Exception, match="can't cover a commodity and Area Kind"):
             load_rules(stem_rule("final", commodity, kind, "Final Energy|{carrier}"))
+
+
+@pytest.mark.parametrize("change", [{"note": ""}, {"total": "Final Energy"}, {"sector": "Industry"}])
+def test_unclear_left_out_stems_are_refused(change: dict) -> None:
+    """A stem row that leaves a quantity out on purpose ('-') needs a note saying why, and takes no total or sector."""
+    row = {"quantity": "output", "commodity": "HEAT", "area_kind": "industry", "stem": "-", "total": "",
+           "sector": "", "note": "Made where it is used."}
+    with pytest.raises(Exception, match="not reported on purpose"):
+        load_rules({"stems": pd.DataFrame([row | change])})
+    assert "-" in set(load_rules({"stems": pd.DataFrame([row])})["stems"]["stem"])
 
 
 def test_carbon_totals(carbon_long: pd.DataFrame, flows: pd.DataFrame, optiflow_rules: pd.DataFrame,

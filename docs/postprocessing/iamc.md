@@ -47,11 +47,18 @@ The how-to guides below cover the other arguments of `to_iamc`. The
 
 ## What is reported
 
-- Capacity and Secondary Energy of electricity, heat and hydrogen, by Source
-  and with or without CCS.
-- Capacity Additions of electricity, heat and hydrogen: new installations
-  per year (see below).
+- Capacity and Secondary Energy of electricity, district heat and hydrogen,
+  by Source and with or without CCS. IAMC calls district heat `Heat`.
+- Capacity Additions of electricity, district heat and hydrogen: new
+  installations per year (see below).
 - Final Energy by carrier, and by sector where Balmorel knows the sector.
+  Heat that individual and industry areas make where it is used is not
+  reported as heat, because the common definitions count only centralized
+  heat under `Heat`. What those areas take in is reported instead, as Final
+  Energy of `Residential and Commercial` (individual areas) or `Industry`
+  (industry areas): the fuel their heat units burn, the electricity those
+  units use, and the district heat the areas get net from district heating.
+  Their emissions count as demand-side emissions.
   The transport add-on's electricity counts under
   `Final Energy|Transportation|Electricity`. The hydrogen that its synthetic
   fuels are made of counts as liquids, under `Final Energy|Liquids|Hydrogen`
@@ -286,10 +293,10 @@ Conversion has three layers
 | --- | --- |
 | `fuels` | Per Balmorel fuel: its Fuel Category (e.g. `Gas`), how it counts as Primary Energy, and its Final Energy carrier |
 | `mapping` | Per technology type, fuel, commodity or unit-name pattern: the segments below the stem, e.g. `Wind\|Offshore` or `{category}\|w/ CCS` |
-| `stems` | Per quantity, commodity and area kind: the stem, e.g. `Secondary Energy\|Electricity`, and the total it counts towards |
+| `stems` | Per quantity, commodity and area kind: the stem, e.g. `Secondary Energy\|Electricity`, and the total it counts towards, or `-` to leave it out on purpose, with a Conversion Note saying why |
 | `aggregates` | Which Sources sum to an aggregate, e.g. `Coal`, `Gas` and `Oil` to `Fossil` |
 | `countries` | Balmorel country to ISO3 code, which gives the IAMC Region |
 | `areas` | Area-name patterns for individual and industry areas. Other areas are district heating |
-| `demand_categories` | Which demand categories are final energy, their Final Energy Sector, and the carrier they count as |
+| `demand_categories` | Which demand categories are final energy, their Final Energy Sector, and the carrier they count as. A row can be for the area kind where the demand is used |
 | `ratios` | IAMC Variables that divide one reported variable by another, e.g. an emission intensity |
 | `optiflow` | The OptiFlow Mapping: which OptiFlow flows to report, and how. The base one is in `optiflow_base.csv`; `optiflow.csv` has the rows for the add-on's own flows |

@@ -30,7 +30,8 @@ from matplotlib.path import Path as DrawPath
 from ..formatting import fuel_colours
 from ..iamc.reader import read_mainresults
 from ..iamc.rules import (addon_origin, import_unit, load_definitions, load_rules, match_area_kinds,
-                          match_mapping_rules, match_optiflow_rules, not_reported, optiflow_unit)
+                          match_demand_categories, match_mapping_rules, match_optiflow_rules, not_reported,
+                          optiflow_unit, reported_stems)
 
 if TYPE_CHECKING:
     from ..classes import MainResults
@@ -68,6 +69,11 @@ grid = "Grid"
 optiflow_node = "OptiFlow"
 final_energy = "Final Energy"
 other = "Other"
+# Names flow tables give nodes in place of the name used to build them: centralized heat, which
+# the IAMC data calls Heat, is district heat in Balmorel. Heat made where it isn't centralized
+# heat stays On-site Heat.
+shown_names = {"Heat": "District Heat"}
+district_heat = shown_names["Heat"]
 # Nodes drawn twice: what flows out of them with the sources, what flows into them with the uses
 two_sided = (unaccounted, grid)
 # Commodities whose residual goes to and from the Grid when areas are chosen, as their demand
@@ -110,15 +116,16 @@ def sankey_flows(data: "MainResults | pd.DataFrame | tuple[pd.DataFrame, pd.Data
     Rules give), imports, and the heat heat pumps take from their surroundings. A unit's input
     is split over what it makes in proportion to its output: what it makes flows from the
     Source to the commodity ('flow'), what it loses flows from the Source to the commodity and
-    on to Losses ('loss'). Heat made in areas where it isn't centralized heat goes to On-site
-    Heat. Final demand goes to its Final Energy Sector, or to Final Energy where it has none;
-    transmission to and from places outside the selection to Exports and from Imports, per
-    direction. The OptiFlow add-on's demand goes to OptiFlow, and what the OptiFlow Mapping
-    reports it giving back flows from OptiFlow. Where a commodity's inflow and outflow don't
-    add up, the rest goes to or comes from Unaccounted.
+    on to Losses ('loss'). Heat made in district heating areas goes to District Heat, and heat
+    made in areas where it isn't centralized heat to On-site Heat. Final demand goes to its
+    Final Energy Sector, or to Final Energy where it has none; transmission to and from places
+    outside the selection to Exports and from Imports, per direction. The OptiFlow add-on's
+    demand goes to OptiFlow, and what the OptiFlow Mapping reports it giving back flows from
+    OptiFlow. Where a commodity's inflow and outflow don't add up, the rest goes to or comes
+    from Unaccounted.
 
     From IAMC data, Secondary Energy flows from its Source (or the commodity it was made of) to
-    its commodity; where Primary Energy by Source and use is reported too, the difference is
+    its commodity, Heat being District Heat; where Primary Energy by Source and use is reported too, the difference is
     'loss'. Final Energy flows from its carrier's node to its sector, or to Final Energy for
     what no sector holds, and Trade to Exports or from Imports, net. Commodities' residuals go
     to Unaccounted, which shows what the IAMC data leaves out, such as what electrolysers take
@@ -300,6 +307,18 @@ def tidy(links: list[tuple[str, str, str, float]] | pd.DataFrame) -> pd.DataFram
     return links[links["Value"] >= noise].sort_values(["From", "To", "Kind"], ignore_index=True)
 
 
+def shown(flows: pd.DataFrame) -> pd.DataFrame:
+    """Give a flow table's nodes the names it shows, e.g. District Heat for Heat.
+
+    Args:
+        flows (pd.DataFrame): The flow table, with the names used to build it.
+
+    Returns:
+        pd.DataFrame: The flow table, in the same order.
+    """
+    return flows.assign(From=flows["From"].replace(shown_names), To=flows["To"].replace(shown_names))
+
+
 def balance(links: list[tuple[str, str, str, float]], nodes: set[str],
             other_end: dict[str, str] | None = None) -> None:
     """Send what each node's inflow and outflow don't account for to or from Unaccounted.
@@ -383,7 +402,7 @@ def mainresults_flows(long: pd.DataFrame,
     with_area = rows["area"] != ""
     rows.loc[with_area, "area_kind"] = match_area_kinds(rows.loc[with_area, "area"], tables["areas"])
 
-    stems = tables["stems"]
+    stems = reported_stems(tables["stems"])
     output_kinds = stems[stems["quantity"] == "output"].groupby("commodity")["area_kind"].agg(set).to_dict()
     final_sectors = stems[(stems["quantity"] == "final") & (stems["sector"] != "")].set_index(
         ["commodity", "area_kind"])["sector"].map(lambda sector: sector.split("|")[0]).to_dict()
@@ -406,7 +425,7 @@ def mainresults_flows(long: pd.DataFrame,
         optiflow_links(rows[rows["inside"]], tables, links, nodes)
     other_end = {node: grid for node in grid_commodities} if level == "area" else None
     balance(links, nodes, other_end)
-    return tidy(links)
+    return shown(tidy(links))
 
 
 def long_flows(long: pd.DataFrame, scenario: str, year: int) -> pd.DataFrame:
@@ -560,20 +579,17 @@ def demand_links(rows: pd.DataFrame, tables: dict[str, pd.DataFrame], node_of, f
     demand = rows[rows["quantity"] == "demand"]
     if areas_only:
         demand = demand[demand["area"] != ""]
-    categories = tables["demand_categories"].set_index(["commodity", "demand_category"])
     demand = demand.groupby(["commodity", "demand_category", "area_kind"], as_index=False)["value"].sum()
-    for row in demand.itertuples():
+    rules = match_demand_categories(demand, tables["demand_categories"], demand["area_kind"])
+    for row, final, rule_sector in zip(demand.itertuples(), rules["final"], rules["sector"]):
         node = node_of(row.commodity, row.area_kind)
         nodes.add(node)
         if row.demand_category in loss_categories:
             links.append((node, losses, "loss", row.value))
         elif row.demand_category == optiflow_category:
             links.append((node, optiflow_node, "flow", row.value))
-        elif (row.commodity, row.demand_category) in categories.index:
-            rule = categories.loc[(row.commodity, row.demand_category)]
-            if rule["final"] != "yes":
-                continue
-            sector = rule["sector"].split("|")[0] if rule["sector"] else ""
+        elif final == "yes":
+            sector = rule_sector.split("|")[0] if rule_sector else ""
             if not sector and node.startswith(on_site_prefix):
                 sector = final_sectors.get((row.commodity, row.area_kind), "")
             links.append((node, sector or final_energy, "flow", row.value))
@@ -608,8 +624,8 @@ def transmission_links(rows: pd.DataFrame, level: str, names: list[str] | None, 
 
 def heat_exchange_links(rows: pd.DataFrame, level: str, names: list[str] | None, area_places: dict[str, pd.Series],
                         tables: dict[str, pd.DataFrame], node_of, links: list, nodes: set) -> None:
-    """Links of heat exchange between areas: between On-site Heat and Heat within the selection,
-    else into and out of it.
+    """Links of heat exchange between areas: between On-site Heat and District Heat within the
+    selection, else into and out of it.
 
     Args:
         rows (pd.DataFrame): Rows of the long table, with 'inside' and 'area_kind'.
@@ -813,7 +829,7 @@ def iamc_flows(data: pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame],
             fed[(start, end)] = fed.get((start, end), 0.0) + value
     links += final_energy_links(values, tables, commodities, aggregates, fed)
     balance(links, {node for link in links for node in link[:2] if node in commodities})
-    return tidy(links)
+    return shown(tidy(links))
 
 
 def iamc_values(data: pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame], year: int, scenario: str | int,
@@ -986,7 +1002,7 @@ node_colours = {
     imports: fuel_colours["IMPORT"], exports: fuel_colours["IMPORT"], "Coal": fuel_colours["COAL"],
     "Gas": fuel_colours["NATGAS"], "Oil": fuel_colours["OIL"], "Nuclear": fuel_colours["NUCLEAR"],
     "Biomass": fuel_colours["BIOMASS"], "Hydro": fuel_colours["WATER"], "Wind": fuel_colours["WIND"],
-    "Solar": fuel_colours["SOLAR"], "Electricity": fuel_colours["ELECTRIC"], "Heat": fuel_colours["HEAT"],
+    "Solar": fuel_colours["SOLAR"], "Electricity": fuel_colours["ELECTRIC"], district_heat: fuel_colours["HEAT"],
     "Gases": fuel_colours["BIOGAS"], "Liquids": "#b07d1a", "Hydrogen": "#9a9fd6", on_site_prefix + "Heat": "#6fbf73",
     "Geothermal": "#a0522d", "Ocean": "#1f78b4", ambient_heat: "#f4a261", optiflow_node: "#8e6bbf",
     other: "#9e9e9e", grid: "#7f7f7f", losses: "#c4c4c4", unaccounted: "#9b9b9b",
@@ -1007,7 +1023,7 @@ source_order = [imports, "Coal", "Gas", "Oil", "Nuclear", "Biomass", "Hydro", "W
                 "Ocean", ambient_heat, other, unaccounted, grid]
 sink_order = ["Residential and Commercial", "Industry", "Transportation", "Carbon Management", "Bunkers",
               final_energy, optiflow_node, exports, losses, unaccounted, grid]
-inner_order = ["Electricity", "Hydrogen", "Gases", "Liquids", "Heat", on_site_prefix + "Heat", optiflow_node]
+inner_order = ["Electricity", "Hydrogen", "Gases", "Liquids", district_heat, on_site_prefix + "Heat", optiflow_node]
 # Geometry, in column spacings (x) and shares of the tallest column (y)
 node_width = 0.04
 gap_share = 0.04
